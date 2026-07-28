@@ -2,6 +2,13 @@
  * Invalidates every client cache that projects canonical listing or service
  * identity. Prefix invalidation is deliberate: filters, cursor state and user
  * IDs live deeper in each key and must all observe lifecycle changes.
+ *
+ * @param {import('@tanstack/react-query').QueryClient} queryClient
+ * @param {{
+ *   parentType?: string | null,
+ *   parentId?: string | null,
+ *   kind?: string | null,
+ * }} [options]
  */
 export async function invalidateCanonicalParentQueries(queryClient, {
   parentType,

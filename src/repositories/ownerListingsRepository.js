@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { PUBLIC_LISTING_SELECT } from '@/repositories/publicListingsRepository';
 import { applyDescendingCreatedAtCursor } from '@/services/keysetPagination';
 
-const OWNER_LISTING_SELECT = `${PUBLIC_LISTING_SELECT}, moderation_reason, submitted_at`;
+const OWNER_LISTING_SELECT = PUBLIC_LISTING_SELECT;
 
 function repositoryFailure(message, error) {
   const failure = new Error(message);
@@ -23,6 +23,16 @@ export async function findOwnerListings(request) {
     .limit(request.limit + 1);
 
   if (error) throw repositoryFailure('Unable to load your listings', error);
+  return data ?? [];
+}
+
+export async function findOwnerListingNotes(listingIds) {
+  if (!listingIds.length) return [];
+  const { data, error } = await supabase.rpc('owner_listing_notes', {
+    p_listing_ids: listingIds,
+  });
+
+  if (error) throw repositoryFailure('Unable to load listing review notes', error);
   return data ?? [];
 }
 

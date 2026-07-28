@@ -77,7 +77,7 @@ export default function SellerProfile() {
         <div className="mx-auto max-w-3xl">
           <div className="flex items-center gap-4">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary">
-              {avatarUrl ? <img src={avatarUrl} alt={`${sellerName} profile`} className="h-full w-full object-cover" /> : <User className="h-9 w-9 text-primary-foreground" />}
+              {avatarUrl ? <img src={avatarUrl} alt={`${sellerName} profile`} loading="eager" decoding="async" className="h-full w-full object-cover" /> : <User className="h-9 w-9 text-primary-foreground" />}
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-xl font-bold">{sellerName}</h2>

@@ -6,7 +6,7 @@ import TourReportDialog from '@/components/tours/TourReportDialog';
 import { useAuth } from '@/lib/AuthContext';
 import { cn } from '@/lib/utils';
 
-export default function TourReportAction({ tourId, title, sellerId, onReported, className }) {
+export default function TourReportAction({ tourId, title, sellerId, onReported, className = null }) {
   const { user } = useAuth();
   const location = useLocation();
   const [dialogOpen, setDialogOpen] = useState(false);

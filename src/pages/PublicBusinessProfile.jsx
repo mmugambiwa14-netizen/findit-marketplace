@@ -77,7 +77,7 @@ export default function PublicBusinessProfile() {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10">
-              {profile.avatar_url ? <img src={profile.avatar_url} alt={`${profile.company_name} logo`} className="h-full w-full object-cover" /> : <Building2 className="h-11 w-11 text-primary" />}
+              {profile.avatar_url ? <img src={profile.avatar_url} alt={`${profile.company_name} logo`} loading="eager" decoding="async" className="h-full w-full object-cover" /> : <Building2 className="h-11 w-11 text-primary" />}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-primary">{dealer ? 'Vehicle dealer' : 'Business'}</p>

@@ -33,7 +33,7 @@ export default function ListingReviewStep({
 
       <article className="overflow-hidden rounded-2xl border bg-card">
         <div className="aspect-[16/10] bg-muted">
-          {media[0]?.previewUrl ? <img src={media[0].previewUrl} alt="Listing cover preview" className="h-full w-full object-cover" /> : null}
+          {media[0]?.previewUrl ? <img src={media[0].previewUrl} alt="Listing cover preview" loading="eager" decoding="async" className="h-full w-full object-cover" /> : null}
         </div>
         <div className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-4">

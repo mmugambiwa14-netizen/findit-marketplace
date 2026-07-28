@@ -13,7 +13,7 @@
 // Flags read from Vite env vars so they can differ per environment
 // (e.g. turn payments on in staging before production) without a code change.
 
-const viteEnv = import.meta.env || {};
+const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
 
 const flag = (envVar, fallback = false) => {
   const raw = viteEnv[envVar];

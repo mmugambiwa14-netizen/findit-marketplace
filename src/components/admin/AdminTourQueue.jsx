@@ -42,6 +42,14 @@ const decisionCopy = {
   suspend: ['Suspend seller', 'Suspend this account because of repeated Tour policy violations.'],
 };
 
+/**
+ * @typedef {{
+ *   action: 'approve' | 'reject' | 'restore' | 'remove' | 'suspend',
+ *   tour: Record<string, any>,
+ *   reason?: string,
+ * }} TourModerationMutationInput
+ */
+
 function durationLabel(seconds) {
   const value = Math.max(0, Math.floor(Number(seconds) || 0));
   return `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`;
@@ -68,7 +76,8 @@ export default function AdminTourQueue() {
   });
 
   const mutation = useMutation({
-    mutationFn: async ({ action, tour, reason: actionReason }) => {
+    mutationFn: async (/** @type {TourModerationMutationInput} */ input) => {
+      const { action, tour, reason: actionReason } = input;
       if (action === 'approve') return approveListingTour(tour.tour_id, actionReason);
       if (action === 'reject') return rejectListingTour(tour.tour_id, actionReason);
       if (action === 'restore') {
@@ -128,7 +137,7 @@ export default function AdminTourQueue() {
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>Review Tour media</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">{reviewTour?.parent_title}</p>
-          {media.isLoading ? <div className="flex aspect-video items-center justify-center rounded-xl bg-muted" role="status"><Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" /><span className="sr-only">Loading review media</span></div> : media.error ? <div className="space-y-3 rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert"><p>{media.error.message}</p><Button type="button" size="sm" variant="outline" onClick={() => media.refetch()}>Retry review media</Button></div> : media.data?.playbackUrl ? <video src={media.data.playbackUrl} poster={media.data.thumbnailUrl || undefined} controls playsInline preload="metadata" className="aspect-video w-full rounded-xl bg-black object-contain" /> : media.data?.thumbnailUrl ? <img src={media.data.thumbnailUrl} alt="Tour review thumbnail" className="aspect-video w-full rounded-xl bg-muted object-contain" /> : <div className="flex aspect-video items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">No processed review media is available for this state.</div>}
+          {media.isLoading ? <div className="flex aspect-video items-center justify-center rounded-xl bg-muted" role="status"><Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" /><span className="sr-only">Loading review media</span></div> : media.error ? <div className="space-y-3 rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert"><p>{media.error.message}</p><Button type="button" size="sm" variant="outline" onClick={() => media.refetch()}>Retry review media</Button></div> : media.data?.playbackUrl ? <video src={media.data.playbackUrl} poster={media.data.thumbnailUrl || undefined} controls playsInline preload="metadata" className="aspect-video w-full rounded-xl bg-black object-contain" /> : media.data?.thumbnailUrl ? <img src={media.data.thumbnailUrl} alt="Tour review thumbnail" loading="lazy" decoding="async" className="aspect-video w-full rounded-xl bg-muted object-contain" /> : <div className="flex aspect-video items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">No processed review media is available for this state.</div>}
           <div className="flex flex-wrap justify-end gap-2">
             {reviewTour?.parent_path && <Button asChild variant="outline"><Link to={reviewTour.parent_path} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />View parent</Link></Button>}
             {reviewTour?.status === 'ready' && reviewTour?.moderation_status === 'pending' && <><Button onClick={() => openDecision('approve', reviewTour)}>Approve</Button><Button variant="destructive" onClick={() => openDecision('reject', reviewTour)}>Reject</Button></>}

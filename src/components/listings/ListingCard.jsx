@@ -63,7 +63,7 @@ function tourSummary(listing) {
   };
 }
 
-export default function ListingCard({ listing, type = 'property', onSave, isSaved = false }) {
+export default function ListingCard({ listing, type = 'property', onSave = null, isSaved = false }) {
   const [liked, setLiked] = useState(isSaved);
   const [guestOpen, setGuestOpen] = useState(false);
   const { user } = useAuth();

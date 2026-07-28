@@ -34,7 +34,7 @@ export default function SellerProfileFields({ user, onSaved }) {
       <div className="flex items-center gap-4">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            <img src={avatarUrl} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" />
           ) : (
             <span className="text-2xl font-bold text-primary-foreground">{initial}</span>
           )}

@@ -216,7 +216,7 @@ export default function EditListingDialog({ listing, ownerId, open, onOpenChange
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {media.map((item, index) => (
                   <div key={item.path} className="relative aspect-square overflow-hidden rounded-xl border">
-                    <img src={item.previewUrl} alt={`Listing image ${index + 1}`} className="h-full w-full object-cover" />
+                    <img src={item.previewUrl} alt={`Listing image ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     {!item.legacy && <Button type="button" size="icon" variant="destructive" className="absolute right-2 top-2 h-11 w-11" onClick={() => removeImage(item)} disabled={saving} aria-label={`Remove listing image ${index + 1}`}><Trash2 className="h-4 w-4" /></Button>}
                   </div>
                 ))}

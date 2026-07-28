@@ -291,7 +291,7 @@ function TourPanel({ title, playback, posterUrl, state, error, onRetry, onPlayba
   const loading = state === "loading";
   return (
     <div className="relative flex h-full items-center justify-center bg-black">
-      {posterUrl && <img src={posterUrl} alt="" className="absolute inset-0 h-full w-full object-cover opacity-45" />}
+      {posterUrl && <img src={posterUrl} alt="" loading="eager" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-45" />}
       <div className="relative z-10 mx-6 max-w-sm rounded-2xl border border-white/10 bg-black/65 p-5 text-center text-white backdrop-blur-md">
         {loading ? (
           <LoaderCircle className="mx-auto h-8 w-8 animate-spin" aria-hidden="true" />

@@ -1,23 +1,23 @@
 {
-  "generatedAt": "2026-07-27T23:40:10.872Z",
+  "generatedAt": "2026-07-28T18:56:44.558Z",
   "scope": {
-    "sourceModules": 221,
+    "sourceModules": 226,
     "routedPatterns": 42,
     "pageModules": 34,
-    "uniqueControlInstances": 539,
-    "pageExpandedControlInstances": 731
+    "uniqueControlInstances": 542,
+    "pageExpandedControlInstances": 734
   },
   "controlsByElement": {
     "a": 3,
     "AlertDialog": 4,
-    "button": 74,
+    "button": 75,
     "Button": 186,
     "Checkbox": 1,
     "Dialog": 18,
     "DropdownMenuTrigger": 1,
     "form": 9,
     "Input": 74,
-    "Link": 83,
+    "Link": 85,
     "PopoverTrigger": 1,
     "Select": 26,
     "SelectTrigger": 26,

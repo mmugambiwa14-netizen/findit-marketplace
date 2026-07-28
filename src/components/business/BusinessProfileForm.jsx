@@ -90,7 +90,7 @@ export default function BusinessProfileForm({ profile, onSubmit, onCancel, isPen
       <div className="flex items-center gap-3 rounded-xl border bg-muted/30 p-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
           {logoPreview ? (
-            <img src={logoPreview} alt={`${form.company_name || 'Business'} logo`} className="h-full w-full object-cover" />
+            <img src={logoPreview} alt={`${form.company_name || 'Business'} logo`} loading="eager" decoding="async" className="h-full w-full object-cover" />
           ) : (
             <Building2 className="h-7 w-7 text-primary" aria-hidden="true" />
           )}

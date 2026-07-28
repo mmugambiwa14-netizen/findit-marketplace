@@ -4,6 +4,7 @@ import { collectActiveV1SourceGraph } from './lib/activeV1SourceGraph.mjs';
 
 const projectRoot = resolve(import.meta.dirname, '..');
 const graph = collectActiveV1SourceGraph(projectRoot);
+const sourceFiles = graph.files.filter((file) => /\.(?:[cm]?[jt]sx?)$/i.test(file));
 const configPath = resolve(projectRoot, 'jsconfig.json');
 const config = ts.readConfigFile(configPath, ts.sys.readFile);
 
@@ -18,10 +19,10 @@ if (config.error) {
 
 const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, projectRoot);
 const program = ts.createProgram({
-  rootNames: graph.files,
+  rootNames: sourceFiles,
   options: { ...parsed.options, noEmit: true },
 });
-const activeFiles = new Set(graph.files.map((file) => resolve(file).toLowerCase()));
+const activeFiles = new Set(sourceFiles.map((file) => resolve(file).toLowerCase()));
 const diagnostics = ts.getPreEmitDiagnostics(program).filter(
   (diagnostic) => !diagnostic.file
     || activeFiles.has(resolve(diagnostic.file.fileName).toLowerCase()),
@@ -34,9 +35,9 @@ if (diagnostics.length > 0) {
     getNewLine: () => '\n',
   }));
   console.error(
-    `Active V1 typecheck failed: ${diagnostics.length} diagnostics across ${graph.files.length} source modules.`,
+    `Active V1 typecheck failed: ${diagnostics.length} diagnostics across ${sourceFiles.length} source modules.`,
   );
   process.exit(1);
 }
 
-console.log(`Active V1 typecheck passed: ${graph.files.length} source modules.`);
+console.log(`Active V1 typecheck passed: ${sourceFiles.length} source modules.`);

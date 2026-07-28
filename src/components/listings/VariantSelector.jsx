@@ -16,7 +16,7 @@ export default function VariantSelector({ variants = [], selectedIndex, onSelect
       </div>
       <div className="p-2 space-y-2">
         {valid.map((v, i) => (
-          <button type="button"
+          <button
             key={i}
             type="button"
             aria-pressed={selectedIndex === i}

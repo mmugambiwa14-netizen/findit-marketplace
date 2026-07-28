@@ -3,7 +3,7 @@ import { extname, join, relative } from 'node:path';
 
 const root = process.cwd();
 const ignoredDirectories = new Set(['.git', 'node_modules', 'dist', 'coverage']);
-const ignoredExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.pdf', '.zip', '.woff', '.woff2', '.ttf']);
+const ignoredExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.mp4', '.webm', '.pdf', '.zip', '.woff', '.woff2', '.ttf']);
 const textFiles = [];
 const failures = [];
 

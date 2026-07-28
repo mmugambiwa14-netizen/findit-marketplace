@@ -3,11 +3,14 @@ import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command, mode }) => ({
   // GitHub Pages serves the staging build beneath the repository name. Keep
   // local and custom-domain builds rooted at "/" unless a deploy explicitly
   // supplies VITE_BASE_PATH.
   base: process.env.VITE_BASE_PATH || '/',
+  // Mock media is for local/manual preview only. Keeping it outside `public`
+  // prevents Vite from copying the 7 MB fixture set into production output.
+  publicDir: command === 'serve' || mode === 'preview' ? 'preview-assets' : false,
   logLevel: 'error', // Suppress warnings, only show errors
   resolve: {
     alias: {
@@ -28,4 +31,4 @@ export default defineConfig({
   plugins: [
     react(),
   ]
-});
+}));

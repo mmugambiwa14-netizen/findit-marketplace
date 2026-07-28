@@ -36,6 +36,19 @@ test('maps a normalized property to the existing card contract', () => {
   assert.equal(listing.verified, false);
 });
 
+test('uses the privacy-safe public location label when exact location rows are hidden', () => {
+  const listing = mapPublicListing({
+    ...sharedRow,
+    kind: 'property',
+    location: null,
+    public_location_label: 'Harare',
+    property_details: [{ property_type: 'house', bedrooms: 3, bathrooms: 2 }],
+  });
+
+  assert.equal(listing.location_id, 'Harare');
+  assert.equal(listing.city, 'Harare');
+});
+
 test('maps car brand to the legacy make field', () => {
   const listing = mapPublicListing({
     ...sharedRow,

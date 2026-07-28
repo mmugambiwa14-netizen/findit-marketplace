@@ -88,7 +88,7 @@ export default function BusinessProfiles() {
           <Card>
             <CardHeader className="flex-row items-start gap-4 space-y-0">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
-                {profile.avatar_url ? <img src={profile.avatar_url} alt={`${profile.company_name} logo`} className="h-full w-full object-cover" /> : <Building2 className="h-8 w-8 text-primary" />}
+                {profile.avatar_url ? <img src={profile.avatar_url} alt={`${profile.company_name} logo`} loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <Building2 className="h-8 w-8 text-primary" />}
               </div>
               <div className="min-w-0 flex-1">
                 <CardTitle className="truncate text-xl">{profile.company_name}</CardTitle>

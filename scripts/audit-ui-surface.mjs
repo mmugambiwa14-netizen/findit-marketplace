@@ -205,7 +205,7 @@ for (const file of files) {
           'src/components/ui/input.jsx',
           'src/components/ui/textarea.jsx',
           'src/components/ui/PhoneInput.jsx',
-        ].includes(relative(root, file));
+        ].includes(posixPath(relative(root, file)));
         const inputType = String(attrs.type || '');
         if (!reusablePrimitive && !['hidden', 'file'].includes(inputType) && !attrs['aria-label'] && !attrs['aria-labelledby'] && !(attrs.id && labels.has(attrs.id))) {
           addFinding(open, 'FIELD_LABEL', 'medium', `${name} has no associated label or accessible name in its module.`);

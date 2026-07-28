@@ -30,6 +30,21 @@ function run(name, command, args, options = {}) {
   if (result.status !== 0) throw new Error(`${name} failed with exit code ${result.status}`);
 }
 
+function runPackageScript(name, script) {
+  if (process.platform === 'win32') {
+    run(name, process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', `npm.cmd run ${script}`]);
+    return;
+  }
+
+  const npmExecPath = process.env.npm_execpath?.trim();
+  if (npmExecPath) {
+    run(name, process.execPath, [npmExecPath, 'run', script]);
+    return;
+  }
+
+  run(name, 'npm', ['run', script]);
+}
+
 async function exists(path) {
   try { await access(path, fsConstants.F_OK); return true; } catch { return false; }
 }
@@ -64,6 +79,12 @@ const productionBase = {
   VITE_FEATURE_BUSINESS_PROFILES: 'true',
   VITE_FEATURE_MESSAGING: 'true',
   VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: 'true',
+  VITE_AUTH_GOOGLE_ENABLED: 'true',
+  VITE_FEATURE_GOOGLE_OAUTH: 'true',
+  VITE_FEATURE_INTERNATIONAL_LISTING: 'true',
+  VITE_FEATURE_MANUAL_LOCATION: 'true',
+  VITE_FEATURE_CURRENT_LOCATION: 'true',
+  VITE_FEATURE_REPORTING: 'true',
   VITE_FEATURE_PAYMENTS: 'false',
   VITE_FEATURE_SUBSCRIPTIONS: 'false',
   VITE_FEATURE_ESCROW: 'false',
@@ -74,6 +95,8 @@ const productionBase = {
   VITE_FEATURE_AI_SUPPORT_CHAT: 'false',
   VITE_FEATURE_SCHEDULED_REMINDERS: 'false',
   VITE_FEATURE_MARKETING_EMAILS: 'false',
+  VITE_FEATURE_LISTING_EXPIRY: 'false',
+  VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: 'false',
   VITE_FEATURE_TOURS_PREVIEW: 'false',
   FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
   FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: 'release-notification-fanout-secret',
@@ -126,7 +149,7 @@ try {
       ['Active source check', 'typecheck:active'],
       ['Production build', 'build'],
       ['Production dependency audit', 'audit:production'],
-    ]) run(name, process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', script]);
+    ]) runPackageScript(name, script);
   } else {
     const installBlockReason = process.env.FINDIT_INSTALL_BLOCK_REASON?.trim()
       || 'Locked dependencies are not installed in this workspace.';

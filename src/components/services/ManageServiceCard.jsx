@@ -76,7 +76,7 @@ export default function ManageServiceCard({ service, onChanged }) {
       <button type="button" onClick={() => navigate(`/service/${service.id}`)} className="w-full text-left flex gap-3 p-3">
         <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted flex-shrink-0">
           {service.photos?.[0] ? (
-            <img src={service.photos[0]} alt={service.title} className="w-full h-full object-cover" />
+            <img src={service.photos[0]} alt={service.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
           ) : (
             <div className={`w-full h-full flex items-center justify-center ${category?.color || "bg-muted"}`}>
               {Icon && <Icon className="w-8 h-8 text-white/90" />}

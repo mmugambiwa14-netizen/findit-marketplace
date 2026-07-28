@@ -168,7 +168,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
 
           <div className="flex items-center gap-3 rounded-2xl border border-border bg-background/70 p-2.5">
             <Link to={listingPath(conversation)} className="h-14 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted" aria-label={`View ${conversation.listing_title}`}>
-              {conversation.listing_photo ? <img src={conversation.listing_photo} alt="" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center"><ImageOff className="h-5 w-5 text-muted-foreground" /></span>}
+              {conversation.listing_photo ? <img src={conversation.listing_photo} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center"><ImageOff className="h-5 w-5 text-muted-foreground" /></span>}
             </Link>
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">

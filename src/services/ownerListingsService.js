@@ -1,6 +1,7 @@
 import {
   deleteOwnerListingRow,
   countOwnerListingRows,
+  findOwnerListingNotes,
   findOwnerListings,
   updateOwnerListingRow,
 } from '@/repositories/ownerListingsRepository';
@@ -18,8 +19,14 @@ import { createKeysetPage } from '@/services/keysetPagination';
 export async function getOwnerListingsPage(ownerId, input = {}) {
   const request = normalizeOwnerListingsPageRequest(ownerId, input);
   const page = createKeysetPage(await findOwnerListings(request), request.limit);
+  const notes = await findOwnerListingNotes(page.items.map((listing) => listing.id));
+  const notesById = new Map(notes.map((note) => [note.id, note]));
+  const ownerRows = page.items.map((listing) => ({
+    ...listing,
+    ...notesById.get(listing.id),
+  }));
   return {
-    items: (await hydrateListingImages(page.items)).map(mapPublicListing),
+    items: (await hydrateListingImages(ownerRows)).map(mapPublicListing),
     nextCursor: page.nextCursor,
   };
 }

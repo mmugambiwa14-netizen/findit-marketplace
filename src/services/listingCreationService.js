@@ -47,7 +47,7 @@ function safeLegacyUrl(value) {
 
 export async function resolveListingImages(values) {
   const photos = Array.isArray(values) ? values : [];
-  const storagePaths = photos.filter(isTrustedListingImagePath);
+  const storagePaths = [...new Set(photos.filter(isTrustedListingImagePath))];
   const signedByPath = new Map();
   if (storagePaths.length) {
     const signedRows = await signListingImagePaths(storagePaths);
@@ -59,10 +59,27 @@ export async function resolveListingImages(values) {
 }
 
 export async function hydrateListingImages(rows) {
-  return Promise.all((rows ?? []).map(async (row) => ({
+  const listings = Array.isArray(rows) ? rows : [];
+  const storagePaths = [...new Set(
+    listings.flatMap((row) => (
+      Array.isArray(row?.photos) ? row.photos.filter(isTrustedListingImagePath) : []
+    )),
+  )];
+  const signedByPath = new Map();
+
+  if (storagePaths.length) {
+    const signedRows = await signListingImagePaths(storagePaths);
+    signedRows.forEach((row, index) => {
+      if (row?.signedUrl) signedByPath.set(storagePaths[index], row.signedUrl);
+    });
+  }
+
+  return listings.map((row) => ({
     ...row,
     photo_paths: Array.isArray(row.photos) ? row.photos.filter(isTrustedListingImagePath) : [],
     has_legacy_media: Array.isArray(row.photos) && row.photos.some((value) => !isTrustedListingImagePath(value)),
-    photos: await resolveListingImages(row.photos),
-  })));
+    photos: (Array.isArray(row.photos) ? row.photos : [])
+      .map((value) => signedByPath.get(value) ?? safeLegacyUrl(value))
+      .filter(Boolean),
+  }));
 }

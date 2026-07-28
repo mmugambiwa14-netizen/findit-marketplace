@@ -24,7 +24,7 @@ export default function ProfileHeader({ user }) {
       <div className="flex items-center gap-4">
         <div className="w-20 h-20 rounded-2xl border-4 border-card shadow-lg shadow-primary/20 overflow-hidden bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
           {avatarUrl ? (
-            <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt="" loading="eager" decoding="async" className="w-full h-full object-cover" />
           ) : (
             <User className="w-9 h-9 text-primary-foreground" />
           )}

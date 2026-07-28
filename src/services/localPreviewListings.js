@@ -138,7 +138,7 @@ export function filterLocalPreviewListings(request) {
     if (request.sort === 'price_asc') return left.price - right.price;
     if (request.sort === 'price_desc') return right.price - left.price;
     if (request.sort === 'most_viewed') return right.views - left.views;
-    return new Date(right.created_at) - new Date(left.created_at);
+    return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
   });
 }
 

@@ -294,7 +294,7 @@ function ListingRow({ listing, onDelete, onRenew, onEdit, onPublish, onPause, on
   return (
     <div className={cn("flex gap-3 bg-card border rounded-xl p-3 transition-opacity", isExpired ? "border-border/30 opacity-70" : "border-border/50")}>
       <Link to={link} className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 relative">
-        <img src={photo} alt={listing.title} className={cn("w-full h-full object-cover", isExpired && "grayscale")} />
+        <img src={photo} alt={listing.title} loading="lazy" decoding="async" className={cn("w-full h-full object-cover", isExpired && "grayscale")} />
         {isExpired && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="text-white text-[9px] font-bold tracking-wide">EXPIRED</span>

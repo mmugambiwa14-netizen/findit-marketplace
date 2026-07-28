@@ -31,7 +31,7 @@ export default function PublishSuccess({
       </div>
 
       <div className="w-full rounded-2xl border bg-card p-4 text-left">
-        {listing.photos?.[0] && <img src={listing.photos[0]} alt="" className="mb-3 h-40 w-full rounded-xl object-cover" />}
+        {listing.photos?.[0] && <img src={listing.photos[0]} alt="" loading="eager" decoding="async" className="mb-3 h-40 w-full rounded-xl object-cover" />}
         <p className="font-bold">{listing.title}</p>
         <p className="mt-1 font-extrabold text-primary">{priceLabel}</p>
         <p className="mt-3 text-xs font-medium text-muted-foreground">Status: Live</p>

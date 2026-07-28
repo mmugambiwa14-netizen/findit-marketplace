@@ -327,7 +327,7 @@ export default function CreateService() {
               {uploading ? <><Loader2 className="h-7 w-7 animate-spin text-primary" /><span className="mt-2 text-sm">Validating and uploading…</span></> : <><Camera className="h-8 w-8 text-muted-foreground" /><span className="mt-2 text-sm font-semibold">Add service images</span></>}
             </button>
             <input ref={imageInputRef} className="hidden" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={uploadImages} />
-            {media.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{media.map((item, index) => <div key={item.path} className="relative aspect-square overflow-hidden rounded-xl border"><img src={item.previewUrl} alt={`Service image ${index + 1}`} className="h-full w-full object-cover" /><Button type="button" size="icon" variant="destructive" className="absolute right-2 top-2 h-9 w-9" onClick={() => removeImage(item)} aria-label={`Remove service image ${index + 1}`}><Trash2 className="h-4 w-4" /></Button></div>)}</div>}
+            {media.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{media.map((item, index) => <div key={item.path} className="relative aspect-square overflow-hidden rounded-xl border"><img src={item.previewUrl} alt={`Service image ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-cover" /><Button type="button" size="icon" variant="destructive" className="absolute right-2 top-2 h-9 w-9" onClick={() => removeImage(item)} aria-label={`Remove service image ${index + 1}`}><Trash2 className="h-4 w-4" /></Button></div>)}</div>}
             {mediaError && <p role="alert" className="text-sm text-destructive">{mediaError}</p>}
           </div>
 

@@ -128,7 +128,7 @@ function ConversationRow({ conversation, onOpen }) {
   return (
     <button type="button" onClick={onOpen} className="flex min-h-24 w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/50">
       <div className="relative h-14 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
-        {conversation.listing_photo ? <img src={conversation.listing_photo} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><ImageOff className="h-5 w-5 text-muted-foreground" /></div>}
+        {conversation.listing_photo ? <img src={conversation.listing_photo} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><ImageOff className="h-5 w-5 text-muted-foreground" /></div>}
         {conversation.has_tour && <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-white"><Play className="h-2.5 w-2.5 fill-current" />{duration || 'Tour'}</span>}
       </div>
       <div className="min-w-0 flex-1">
