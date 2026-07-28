@@ -1,0 +1,68 @@
+{
+  "milestone": "A \u2014 Redesign without Tours backend",
+  "completedAt": "2026-07-27",
+  "scope": [
+    "Baseline capture",
+    "Dark design foundation and shared UI primitives",
+    "Discover, Tours-preview, Post, Chats and Profile navigation hierarchy",
+    "Minimal Discover page with no listing-feed queries",
+    "Search/category UI decomposition without replacing marketplace services",
+    "Unified listing and service card system with dormant Tour-ready contract",
+    "Shared media viewer and consolidated property, vehicle, machinery and service detail layouts",
+    "Canonical /post and /chats routes with compatibility redirects and protected return paths"
+  ],
+  "repositoryChanges": {
+    "modifiedFiles": 47,
+    "newFiles": 23,
+    "deletedFiles": 0
+  },
+  "checks": {
+    "contractTests": {
+      "status": "passed",
+      "passed": 95,
+      "failed": 0
+    },
+    "sourceSyntax": {
+      "status": "passed",
+      "files": 244,
+      "parseDiagnostics": 0
+    },
+    "localImports": {
+      "status": "passed",
+      "sourceModules": 192,
+      "missingImports": 0
+    },
+    "base44Elimination": {
+      "status": "passed"
+    },
+    "productionEnvironmentValidation": {
+      "status": "passed",
+      "toursEnabled": false,
+      "toursPreviewEnabled": false
+    },
+    "dependencyInstall": {
+      "status": "blocked",
+      "reason": "Package registry was unavailable/unfinished in the execution environment (repeated HTTP 503 and final install timeout). No dependency versions were changed."
+    },
+    "lint": {
+      "status": "not-run",
+      "blockedBy": "dependencyInstall"
+    },
+    "repositoryTypecheck": {
+      "status": "not-run",
+      "blockedBy": "dependencyInstall"
+    },
+    "viteBuildAndBundleBudget": {
+      "status": "not-run",
+      "blockedBy": "dependencyInstall"
+    },
+    "productionDependencyAudit": {
+      "status": "not-run",
+      "blockedBy": "dependencyInstall"
+    }
+  },
+  "publicToursBackend": {
+    "status": "not-built",
+    "reason": "Outside Milestone A; all Tour production flags remain false."
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "milestone": 7,
+  "title": "Scale Hardening and Release Certification",
+  "generatedAt": "2026-07-27T06:07:03.528875Z",
+  "status": "conditionally-passed",
+  "passed": {
+    "repositoryContracts": "215/215",
+    "tourContracts": "97/97",
+    "sourceGraph": {
+      "modulesParsed": 308,
+      "unresolvedLocalImports": 0
+    },
+    "base44Elimination": true,
+    "productionEnvironmentClosedTours": true,
+    "productionEnvironmentAcceptedTours": true,
+    "packageLockGraphValidated": true,
+    "jsonFilesInFinalArchive": 21,
+    "workflowYamlFilesValidated": 5,
+    "supabaseTomlValidated": true,
+    "highConfidenceSecretHits": 0,
+    "repositoryHygiene": {
+      "textFilesInspected": 497,
+      "failures": 0
+    },
+    "sqlBoundary": {
+      "migrations": 42,
+      "rollbackCapsules": 13,
+      "failures": 0
+    },
+    "releaseCertificationManifest": "conditionally-passed"
+  },
+  "blocked": [
+    {
+      "gate": "Locked install, ESLint, TypeScript checks, Vite production build and production dependency audit",
+      "reason": "The package registry was unavailable and node_modules is absent.",
+      "requiredAction": "Rerun the release-candidate workflow with working registry access."
+    },
+    {
+      "gate": "Live PostgreSQL/Supabase migrations, scale smokes and rollback rehearsal",
+      "reason": "No authorized local or staging Supabase runtime was available in the packaging environment.",
+      "requiredAction": "Apply migrations through 0042 and run the guarded staging acceptance workflow."
+    },
+    {
+      "gate": "Real-device browser, accessibility and low-bandwidth playback acceptance",
+      "reason": "No deployed staging frontend or physical-device matrix was available.",
+      "requiredAction": "Complete the manual acceptance checklist before production activation."
+    }
+  ]
+}

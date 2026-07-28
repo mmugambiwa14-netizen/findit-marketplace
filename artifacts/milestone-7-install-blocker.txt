@@ -1,0 +1,6 @@
+Milestone 7 installed-toolchain gate blocker
+
+Command: npm ci --ignore-scripts --fetch-retries=0 --fetch-timeout=30000
+Result: blocked in packaging environment
+Reason: configured npm registry returned HTTP 503 Service Temporarily Unavailable for required package tarballs.
+Required follow-up: rerun locked install, lint, all typechecks, production build and dependency audit in release CI.

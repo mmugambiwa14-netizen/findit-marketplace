@@ -1,0 +1,95 @@
+name: Deploy staging to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: github-pages
+    env:
+      NODE_ENV: production
+      VITE_MODE: staging
+      VITE_BASE_PATH: /-findit-marketplace/
+      VITE_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+      VITE_AUTH_GOOGLE_ENABLED: ${{ vars.FINDIT_AUTH_GOOGLE_ENABLED }}
+      VITE_AUTH_APPLE_ENABLED: ${{ vars.FINDIT_AUTH_APPLE_ENABLED }}
+      VITE_FEATURE_BUSINESS_PROFILES: "true"
+      VITE_FEATURE_MESSAGING: "true"
+      VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
+      VITE_FEATURE_PAYMENTS: "false"
+      VITE_FEATURE_SUBSCRIPTIONS: "false"
+      VITE_FEATURE_ESCROW: "false"
+      VITE_FEATURE_PREMIUM_LISTINGS: "false"
+      VITE_FEATURE_AI_MODERATION: "false"
+      VITE_FEATURE_AI_BAN_EVASION: "false"
+      VITE_FEATURE_AI_TICKET_TRIAGE: "false"
+      VITE_FEATURE_AI_SUPPORT_CHAT: "false"
+      VITE_FEATURE_SCHEDULED_REMINDERS: "false"
+      VITE_FEATURE_MARKETING_EMAILS: "false"
+      VITE_FEATURE_TOURS: ${{ vars.FINDIT_STAGING_TOURS_ENABLED }}
+      VITE_FEATURE_TOURS_PREVIEW: ${{ vars.FINDIT_STAGING_TOURS_PREVIEW }}
+      TOURS_BACKEND_ENABLED: ${{ vars.FINDIT_STAGING_TOURS_BACKEND_ENABLED }}
+      TOUR_PROCESSOR_URL: ${{ vars.FINDIT_TOUR_PROCESSOR_URL }}
+      TOUR_PROCESSOR_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSOR_SECRET }}
+      TOUR_PROCESSING_CALLBACK_URL: ${{ vars.FINDIT_TOUR_PROCESSING_CALLBACK_URL }}
+      FINDIT_TOUR_PROCESSING_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSING_WORKER_SECRET }}
+      FINDIT_TOUR_CLEANUP_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
+      FINDIT_TOUR_CACHE_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
+      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
+      FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: ${{ vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED }}
+      FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
+      FINDIT_TOURS_RELEASE_ACCEPTED: "false"
+      FINDIT_TOURS_ACCEPTANCE_ID: ""
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate staging environment
+        run: npm run validate:env
+
+      - name: Build staging application
+        run: npm run build
+
+      - name: Add single-page application fallback
+        shell: bash
+        run: cp dist/index.html dist/404.html
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}

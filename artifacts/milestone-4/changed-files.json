@@ -1,0 +1,48 @@
+{
+  "added": [
+    "MILESTONE_4_LISTING_TOUR_INTEGRATION.md",
+    "artifacts/milestone-4/changed-files.json",
+    "artifacts/milestone-4/verification.json",
+    "scripts/tours-listing-integration-smoke-local.mjs",
+    "src/lib/canonicalQueryInvalidation.js",
+    "supabase/migrations/0037_v1_listing_tour_integration.sql",
+    "supabase/rollback/0037_v1_listing_tour_integration.rollback.sql",
+    "tests/tourMilestone4ListingIntegration.test.mjs"
+  ],
+  "modified": [
+    "CHANGELOG.md",
+    "PROJECT_STATUS.md",
+    "package.json",
+    "src/components/dealers/DealerListings.jsx",
+    "src/components/listings/ContactButtons.jsx",
+    "src/components/listings/EditListingDialog.jsx",
+    "src/components/listings/ListingMediaViewer.jsx",
+    "src/components/marketplace/MarketplaceCard.jsx",
+    "src/components/messaging/ConversationThread.jsx",
+    "src/components/services/EditServiceDialog.jsx",
+    "src/components/services/ManageServiceCard.jsx",
+    "src/components/services/ServiceCard.jsx",
+    "src/components/tours/TourManagementPanel.jsx",
+    "src/pages/Inquiries.jsx",
+    "src/pages/MyListings.jsx",
+    "src/pages/PublicBusinessProfile.jsx",
+    "src/repositories/businessProfilesRepository.js",
+    "src/repositories/listingToursRepository.js",
+    "src/repositories/publicListingsRepository.js",
+    "src/services/businessProfilesService.js",
+    "src/services/favouritesService.js",
+    "src/services/listingToursService.js",
+    "src/services/messagingService.js",
+    "src/services/publicListingsService.js",
+    "src/services/sellerProfilesService.js",
+    "src/services/servicesService.js",
+    "supabase/rollback/README.md",
+    "tests/favouritesMigrationBoundary.test.mjs"
+  ],
+  "removed": [],
+  "counts": {
+    "added": 8,
+    "modified": 28,
+    "removed": 0
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "milestone": "3 / C \u2014 Seller Tours",
+  "date": "2026-07-27",
+  "implementationComplete": true,
+  "releaseVerificationComplete": false,
+  "releaseVerificationBlockers": [
+    "Dependency installation was unavailable: internal registry returned HTTP 503 and the direct public-registry retry failed with DNS EAI_AGAIN",
+    "No explicitly authorized Supabase local or staging runtime was available"
+  ],
+  "gates": {
+    "tourContracts": {
+      "status": "pass",
+      "passed": 45,
+      "failed": 0
+    },
+    "allContracts": {
+      "status": "pass",
+      "passed": 140,
+      "failed": 0
+    },
+    "repositorySyntaxParse": {
+      "status": "pass",
+      "filesChecked": 276,
+      "parseFailures": 0
+    },
+    "localImportResolution": {
+      "status": "pass",
+      "filesChecked": 276,
+      "missingLocalImports": 0
+    },
+    "base44Elimination": {
+      "status": "pass"
+    },
+    "environmentValidation": {
+      "status": "pass",
+      "developmentToursClosed": true,
+      "productionToursClosed": true
+    },
+    "repositoryJsonParse": {
+      "status": "pass",
+      "filesChecked": 12
+    },
+    "workflowYamlParse": {
+      "status": "pass",
+      "filesChecked": 3
+    },
+    "secretHygiene": {
+      "status": "pass",
+      "matches": 0
+    },
+    "lockedDependencyInstall": {
+      "status": "blocked_by_environment",
+      "reason": "Internal npm registry returned HTTP 503; direct registry.npmjs.org retry failed with EAI_AGAIN"
+    },
+    "lintTypecheckBuildAudit": {
+      "status": "not_executed",
+      "reason": "A complete locked node_modules tree was unavailable because both configured and direct registry access failed"
+    },
+    "supabasePgTapAndApiSmoke": {
+      "status": "not_executed",
+      "reason": "No explicitly authorized Supabase runtime or credentials were available"
+    }
+  },
+  "runtimeAuditFixes": [
+    "Removed a duplicated legal-service Tour JSX condition that would have stopped production parsing",
+    "Added a contract assertion requiring the legal-service Tour exclusion to appear exactly once",
+    "Preserved rejected Tour reasons and required explicit owner removal before corrected replacement",
+    "Preserved the local file and exact resumable upload intent after edit-screen backend refresh",
+    "Prevented listing/service navigation or save actions while Tour selection and mutation work is active"
+  ]
+}

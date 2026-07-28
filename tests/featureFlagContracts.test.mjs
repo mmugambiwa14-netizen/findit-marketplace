@@ -1,0 +1,89 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { collectActiveV1SourceGraph } from '../scripts/lib/activeV1SourceGraph.mjs';
+import { featureFlags } from '../src/lib/featureFlags.js';
+
+const projectRoot = resolve(import.meta.dirname, '..');
+const [appSource, packageSource] = await Promise.all([
+  readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../package.json', import.meta.url), 'utf8'),
+]);
+
+const deferredFlags = [
+  'payments',
+  'subscriptions',
+  'escrow',
+  'premiumListings',
+  'aiContentModeration',
+  'aiBanEvasionDetection',
+  'aiTicketTriage',
+  'aiSupportChat',
+  'scheduledReminders',
+  'marketingEmails',
+];
+
+const releaseEnvironment = {
+  ...process.env,
+  NODE_ENV: 'production',
+  VITE_MODE: 'production',
+  VITE_SUPABASE_URL: 'https://findit-release-gate.supabase.co',
+  VITE_SUPABASE_ANON_KEY: 'sb_publishable_release_gate_only',
+  VITE_FEATURE_BUSINESS_PROFILES: 'true',
+  VITE_FEATURE_MESSAGING: 'true',
+  VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: 'true',
+  VITE_FEATURE_PAYMENTS: 'false',
+  VITE_FEATURE_SUBSCRIPTIONS: 'false',
+  VITE_FEATURE_ESCROW: 'false',
+  VITE_FEATURE_PREMIUM_LISTINGS: 'false',
+  VITE_FEATURE_AI_MODERATION: 'false',
+  VITE_FEATURE_AI_BAN_EVASION: 'false',
+  VITE_FEATURE_AI_TICKET_TRIAGE: 'false',
+  VITE_FEATURE_AI_SUPPORT_CHAT: 'false',
+  VITE_FEATURE_SCHEDULED_REMINDERS: 'false',
+  VITE_FEATURE_MARKETING_EMAILS: 'false',
+  VITE_FEATURE_TOURS: 'false',
+  VITE_FEATURE_TOURS_PREVIEW: 'false',
+  TOURS_BACKEND_ENABLED: 'false',
+  FINDIT_TOURS_RELEASE_ACCEPTED: 'false',
+  FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
+  FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: 'release-gate-worker-secret',
+};
+
+function validateRelease(overrides = {}) {
+  return spawnSync(process.execPath, ['./scripts/validate-env.mjs'], {
+    cwd: projectRoot,
+    env: { ...releaseEnvironment, ...overrides },
+    encoding: 'utf8',
+  });
+}
+
+test('all deferred V1 flags default off', () => {
+  for (const name of deferredFlags) assert.equal(featureFlags[name], false, `${name} must default off`);
+});
+
+test('the active route graph contains no commerce or premium screen', () => {
+  const graph = collectActiveV1SourceGraph(projectRoot);
+  const blocked = ['PaymentPage.jsx', 'Pricing.jsx', 'TransactionHistory.jsx', 'Step7Package.jsx', 'Step8Package.jsx'];
+  const violations = graph.files.filter((file) => blocked.some((name) => file.endsWith(name)));
+  assert.deepEqual(violations, []);
+  assert.doesNotMatch(appSource, /path=["']\/(?:payment|pricing|transactions)/);
+
+  const packageJson = JSON.parse(packageSource);
+  assert.equal(packageJson.dependencies['@stripe/react-stripe-js'], undefined);
+  assert.equal(packageJson.dependencies['@stripe/stripe-js'], undefined);
+});
+
+test('the production release gate requires MVP flags on and deferred flags off', () => {
+  assert.equal(validateRelease().status, 0);
+
+  const commerceEnabled = validateRelease({ VITE_FEATURE_PAYMENTS: 'true' });
+  assert.notEqual(commerceEnabled.status, 0);
+  assert.match(commerceEnabled.stderr, /VITE_FEATURE_PAYMENTS must be false/);
+
+  const aiEnabled = validateRelease({ VITE_FEATURE_AI_MODERATION: 'true' });
+  assert.notEqual(aiEnabled.status, 0);
+  assert.match(aiEnabled.stderr, /VITE_FEATURE_AI_MODERATION must be false/);
+});

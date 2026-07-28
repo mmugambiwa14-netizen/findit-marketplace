@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-07-27T12:00:00+03:00",
+  "scope": {
+    "routePatterns": 42,
+    "pageModules": 34,
+    "uniqueControls": 539,
+    "pageExpandedControls": 731,
+    "sourceModulesParsed": 323,
+    "textFilesInspected": 531,
+    "migrations": 44,
+    "rollbackCapsules": 15
+  },
+  "passed": [
+    {
+      "gate": "Complete repository contracts",
+      "result": "239/239"
+    },
+    {
+      "gate": "Tours contracts",
+      "result": "97/97"
+    },
+    {
+      "gate": "Source graph",
+      "result": "323 modules, 0 unresolved imports"
+    },
+    {
+      "gate": "Product surface audit",
+      "result": "0 failures, 0 warnings"
+    },
+    {
+      "gate": "Repository hygiene",
+      "result": "531 text files in the clean delivery package"
+    },
+    {
+      "gate": "SQL boundary",
+      "result": "44 contiguous migrations, 15 rollback capsules"
+    },
+    {
+      "gate": "Base44 elimination",
+      "result": "passed"
+    },
+    {
+      "gate": "Environment validation",
+      "result": "development, closed production, accepted production passed with non-secret placeholders"
+    },
+    {
+      "gate": "Configuration parsing",
+      "result": "28 JSON, 5 YAML, 1 TOML"
+    },
+    {
+      "gate": "Package-lock graph",
+      "result": "npm ls --package-lock-only --all exited 0; optional peer packages remain optional"
+    },
+    {
+      "gate": "Production dependency audit",
+      "result": "no reachable Moderate, High, or Critical advisories in lockfile analysis"
+    }
+  ],
+  "blocked": [
+    {
+      "gate": "npm ci / lint / TypeScript / Vite build",
+      "reason": "Internal registry HTTP 503; public registry DNS resolution unavailable."
+    },
+    {
+      "gate": "npm audit online advisory resolution",
+      "reason": "Registry access unavailable."
+    },
+    {
+      "gate": "Live Supabase and hosted smokes",
+      "reason": "No authorized project credentials/runtime."
+    },
+    {
+      "gate": "Interactive browser/device acceptance",
+      "reason": "No runnable installed application/backend in this environment."
+    }
+  ],
+  "verdict": "conditionally-passed-static-audit; not production-certified"
+}

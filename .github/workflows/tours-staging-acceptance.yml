@@ -1,0 +1,145 @@
+name: Tours staging acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      acceptance_note:
+        description: Human release note or change-ticket reference
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tours-staging-acceptance
+  cancel-in-progress: false
+
+jobs:
+  accept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: staging-tours
+    env:
+      NODE_ENV: production
+      FINDIT_ALLOW_HOSTED_SMOKE: staging
+      FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
+      FINDIT_SMOKE_ORIGIN: ${{ vars.FINDIT_SMOKE_ORIGIN }}
+      FINDIT_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+      FINDIT_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+      FINDIT_SUPABASE_SECRET_KEY: ${{ secrets.FINDIT_SUPABASE_SECRET_KEY }}
+      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
+      VITE_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+      VITE_FEATURE_BUSINESS_PROFILES: "true"
+      VITE_FEATURE_MESSAGING: "true"
+      VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
+      VITE_FEATURE_PAYMENTS: "false"
+      VITE_FEATURE_SUBSCRIPTIONS: "false"
+      VITE_FEATURE_ESCROW: "false"
+      VITE_FEATURE_PREMIUM_LISTINGS: "false"
+      VITE_FEATURE_AI_MODERATION: "false"
+      VITE_FEATURE_AI_BAN_EVASION: "false"
+      VITE_FEATURE_AI_TICKET_TRIAGE: "false"
+      VITE_FEATURE_AI_SUPPORT_CHAT: "false"
+      VITE_FEATURE_SCHEDULED_REMINDERS: "false"
+      VITE_FEATURE_MARKETING_EMAILS: "false"
+      VITE_FEATURE_TOURS: "true"
+      VITE_FEATURE_TOURS_PREVIEW: "false"
+      TOURS_BACKEND_ENABLED: "true"
+      FINDIT_TOURS_RELEASE_ACCEPTED: "true"
+      TOUR_PROCESSOR_URL: ${{ vars.FINDIT_TOUR_PROCESSOR_URL }}
+      TOUR_PROCESSOR_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSOR_SECRET }}
+      TOUR_PROCESSING_CALLBACK_URL: ${{ vars.FINDIT_TOUR_PROCESSING_CALLBACK_URL }}
+      FINDIT_TOUR_PROCESSING_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSING_WORKER_SECRET }}
+      FINDIT_TOUR_CLEANUP_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
+      FINDIT_TOUR_CACHE_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
+      FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
+      FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Create acceptance identity
+        shell: bash
+        run: echo "FINDIT_TOURS_ACCEPTANCE_ID=tour-acceptance-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_ENV"
+
+      - name: Validate accepted release environment
+        run: npm run validate:env
+
+      - name: Run static release gates
+        run: |
+          npm run verify:source-graph
+          npm run verify:hygiene
+          npm run verify:sql-boundary
+          npm run audit:product-surface
+          npm run test:contracts
+          npm run lint
+          npm run typecheck
+          npm run typecheck:migration
+          npm run typecheck:active
+          npm run build
+          npm run audit:production
+
+      - name: Run hosted Tours lifecycle acceptance
+        run: |
+          npm run test:tours-upload-hosted
+          npm run test:tours-processing-hosted
+          npm run test:tours-seller-hosted
+          npm run test:tours-integration-hosted
+          npm run test:tours-discovery-hosted
+          npm run test:tours-moderation-hosted
+          npm run test:tours-scale-hosted
+
+      - name: Run hosted scale and observability acceptance
+        run: |
+          npm run test:search-scale-hosted
+          npm run test:messaging-scale-hosted
+          npm run test:notification-scale-hosted
+          npm run test:tours-observability-hosted
+
+      - name: Write acceptance record
+        shell: bash
+        env:
+          ACCEPTANCE_NOTE: ${{ inputs.acceptance_note }}
+        run: |
+          mkdir -p artifacts
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const record = {
+            acceptanceId: process.env.FINDIT_TOURS_ACCEPTANCE_ID,
+            acceptedAt: new Date().toISOString(),
+            commit: process.env.GITHUB_SHA,
+            runId: process.env.GITHUB_RUN_ID,
+            runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+            actor: process.env.GITHUB_ACTOR,
+            environment: 'staging-tours',
+            note: process.env.ACCEPTANCE_NOTE,
+            result: 'passed',
+            gates: [
+              'locked install', 'environment validation', 'source graph', 'repository hygiene', 'SQL boundary', 'product surface audit', 'contracts', 'lint',
+              'typechecks', 'production build', 'dependency audit',
+              'Tours upload', 'processing', 'seller workflow', 'listing integration',
+              'public catalogue', 'moderation', 'Tours scale', 'public search scale', 'messaging scale', 'notification scale', 'observability'
+            ]
+          };
+          fs.writeFileSync('artifacts/tours-staging-acceptance.json', JSON.stringify(record, null, 2) + '\n');
+          NODE
+
+      - name: Upload acceptance record
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.FINDIT_TOURS_ACCEPTANCE_ID }}
+          path: artifacts/tours-staging-acceptance.json
+          if-no-files-found: error
+          retention-days: 90

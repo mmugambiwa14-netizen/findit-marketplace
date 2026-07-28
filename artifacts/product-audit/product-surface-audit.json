@@ -1,0 +1,334 @@
+{
+  "generatedAt": "2026-07-27T23:40:10.872Z",
+  "scope": {
+    "sourceModules": 221,
+    "routedPatterns": 42,
+    "pageModules": 34,
+    "uniqueControlInstances": 539,
+    "pageExpandedControlInstances": 731
+  },
+  "controlsByElement": {
+    "a": 3,
+    "AlertDialog": 4,
+    "button": 74,
+    "Button": 186,
+    "Checkbox": 1,
+    "Dialog": 18,
+    "DropdownMenuTrigger": 1,
+    "form": 9,
+    "Input": 74,
+    "Link": 83,
+    "PopoverTrigger": 1,
+    "Select": 26,
+    "SelectTrigger": 26,
+    "Sheet": 3,
+    "Slider": 1,
+    "Switch": 4,
+    "TabsTrigger": 5,
+    "Textarea": 20
+  },
+  "routes": [
+    {
+      "path": "/login",
+      "kind": "public",
+      "component": "Login",
+      "source": "src/pages/Login",
+      "line": 122
+    },
+    {
+      "path": "/register",
+      "kind": "public",
+      "component": "Register",
+      "source": "src/pages/Register",
+      "line": 123
+    },
+    {
+      "path": "/forgot-password",
+      "kind": "public",
+      "component": "ForgotPassword",
+      "source": "src/pages/ForgotPassword",
+      "line": 124
+    },
+    {
+      "path": "/reset-password",
+      "kind": "public",
+      "component": "ResetPassword",
+      "source": "src/pages/ResetPassword",
+      "line": 125
+    },
+    {
+      "path": "/",
+      "kind": "public",
+      "component": "Home",
+      "source": "src/pages/Home",
+      "line": 128
+    },
+    {
+      "path": "/search",
+      "kind": "public",
+      "component": "Search",
+      "source": "src/pages/Search",
+      "line": 129
+    },
+    {
+      "path": "/property/:id",
+      "kind": "public",
+      "component": "PropertyDetail",
+      "source": "src/pages/PropertyDetail",
+      "line": 130
+    },
+    {
+      "path": "/car/:id",
+      "kind": "public",
+      "component": "CarDetail",
+      "source": "src/pages/CarDetail",
+      "line": 131
+    },
+    {
+      "path": "/machinery/:id",
+      "kind": "public",
+      "component": "MachineryDetail",
+      "source": "src/pages/MachineryDetail",
+      "line": 132
+    },
+    {
+      "path": "/seller/:email",
+      "kind": "public",
+      "component": "SellerProfile",
+      "source": "src/pages/SellerProfile",
+      "line": 133
+    },
+    {
+      "path": "/business/:id",
+      "kind": "public",
+      "component": "PublicBusinessProfile",
+      "source": "src/pages/PublicBusinessProfile",
+      "line": 134
+    },
+    {
+      "path": "/dealer/:id",
+      "kind": "public",
+      "component": "PublicBusinessProfile",
+      "source": "src/pages/PublicBusinessProfile",
+      "line": 135
+    },
+    {
+      "path": "/services",
+      "kind": "public",
+      "component": "Services",
+      "source": "src/pages/Services",
+      "line": 136
+    },
+    {
+      "path": "/service/:id",
+      "kind": "public",
+      "component": "ServiceDetail",
+      "source": "src/pages/ServiceDetail",
+      "line": 137
+    },
+    {
+      "path": "/tours",
+      "kind": "public",
+      "component": "Tours",
+      "source": "src/pages/Tours",
+      "line": 138
+    },
+    {
+      "path": "/tours",
+      "kind": "public",
+      "component": "ToursPlaceholder",
+      "source": "src/pages/ToursPlaceholder",
+      "line": 139
+    },
+    {
+      "path": "/help",
+      "kind": "public",
+      "component": "FAQs",
+      "source": "src/pages/FAQs",
+      "line": 140
+    },
+    {
+      "path": "/help/contact",
+      "kind": "public",
+      "component": "ContactSupport",
+      "source": "src/pages/ContactSupport",
+      "line": 141
+    },
+    {
+      "path": "/legal/:document",
+      "kind": "public",
+      "component": "LegalPage",
+      "source": "src/pages/LegalPage",
+      "line": 142
+    },
+    {
+      "path": "/faqs",
+      "kind": "compatibility",
+      "component": "Navigate",
+      "source": "",
+      "line": 143
+    },
+    {
+      "path": "/support",
+      "kind": "compatibility",
+      "component": "Navigate",
+      "source": "",
+      "line": 144
+    },
+    {
+      "path": "/create",
+      "kind": "compatibility",
+      "component": "LegacyPathRedirect",
+      "source": "",
+      "line": 145
+    },
+    {
+      "path": "/messages",
+      "kind": "compatibility",
+      "component": "LegacyPathRedirect",
+      "source": "",
+      "line": 146
+    },
+    {
+      "path": "/messages/:conversationId",
+      "kind": "compatibility",
+      "component": "LegacyConversationRedirect",
+      "source": "",
+      "line": 147
+    },
+    {
+      "path": "/post",
+      "kind": "protected",
+      "component": "CreateListing",
+      "source": "src/pages/CreateListing",
+      "line": 152
+    },
+    {
+      "path": "/create-service",
+      "kind": "protected",
+      "component": "CreateService",
+      "source": "src/pages/CreateService",
+      "line": 153
+    },
+    {
+      "path": "/my-services",
+      "kind": "protected",
+      "component": "MyServices",
+      "source": "src/pages/MyServices",
+      "line": 154
+    },
+    {
+      "path": "/saved",
+      "kind": "protected",
+      "component": "Saved",
+      "source": "src/pages/Saved",
+      "line": 155
+    },
+    {
+      "path": "/profile",
+      "kind": "protected",
+      "component": "Profile",
+      "source": "src/pages/Profile",
+      "line": 156
+    },
+    {
+      "path": "/my-listings",
+      "kind": "protected",
+      "component": "MyListings",
+      "source": "src/pages/MyListings",
+      "line": 157
+    },
+    {
+      "path": "/settings",
+      "kind": "protected",
+      "component": "Settings",
+      "source": "src/pages/Settings",
+      "line": 158
+    },
+    {
+      "path": "/chats",
+      "kind": "protected",
+      "component": "Inquiries",
+      "source": "src/pages/Inquiries",
+      "line": 159
+    },
+    {
+      "path": "/chats/:conversationId",
+      "kind": "protected",
+      "component": "Inquiries",
+      "source": "src/pages/Inquiries",
+      "line": 160
+    },
+    {
+      "path": "/business-profiles",
+      "kind": "protected",
+      "component": "BusinessProfiles",
+      "source": "src/pages/BusinessProfiles",
+      "line": 161
+    },
+    {
+      "path": "/notifications",
+      "kind": "protected",
+      "component": "NotificationCenter",
+      "source": "src/pages/NotificationCenter",
+      "line": 162
+    },
+    {
+      "path": "/admin",
+      "kind": "admin",
+      "component": "AdminDashboard",
+      "source": "src/pages/admin/AdminDashboard",
+      "line": 168
+    },
+    {
+      "path": "/admin/listings",
+      "kind": "admin",
+      "component": "AdminListings",
+      "source": "src/pages/admin/AdminListings",
+      "line": 169
+    },
+    {
+      "path": "/admin/users",
+      "kind": "admin",
+      "component": "AdminUsers",
+      "source": "src/pages/admin/AdminUsers",
+      "line": 170
+    },
+    {
+      "path": "/admin/reports",
+      "kind": "admin",
+      "component": "AdminReports",
+      "source": "src/pages/admin/AdminReports",
+      "line": 171
+    },
+    {
+      "path": "/admin/categories",
+      "kind": "admin",
+      "component": "AdminCategories",
+      "source": "src/pages/admin/AdminCategories",
+      "line": 172
+    },
+    {
+      "path": "/admin/audit-log",
+      "kind": "admin",
+      "component": "AdminAuditLog",
+      "source": "src/pages/admin/AdminAuditLog",
+      "line": 173
+    },
+    {
+      "path": "*",
+      "kind": "fallback",
+      "component": "PageNotFound",
+      "source": "src/lib/PageNotFound",
+      "line": 177
+    }
+  ],
+  "failures": [],
+  "warnings": [],
+  "summary": {
+    "failureCount": 0,
+    "warningCount": 0,
+    "failureSeverity": {},
+    "warningSeverity": {}
+  }
+}

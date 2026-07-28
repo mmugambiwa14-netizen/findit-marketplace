@@ -1,0 +1,38 @@
+{
+  "added": [
+    "MILESTONE_3_SELLER_TOURS.md",
+    "artifacts/milestone-3/changed-files.json",
+    "artifacts/milestone-3/verification.json",
+    "scripts/tours-seller-workflow-smoke-local.mjs",
+    "src/components/tours/TourFailureState.jsx",
+    "src/components/tours/TourManagementPanel.jsx",
+    "src/components/tours/TourProcessingState.jsx",
+    "src/components/tours/TourRecordingGuide.jsx",
+    "src/components/tours/TourUploadProgress.jsx",
+    "src/components/tours/TourUploader.jsx",
+    "supabase/migrations/0036_v1_seller_tour_workflow.sql",
+    "supabase/rollback/0036_v1_seller_tour_workflow.rollback.sql",
+    "tests/tourMilestone3SellerWorkflow.test.mjs"
+  ],
+  "modified": [
+    "CHANGELOG.md",
+    "package.json",
+    "scripts/lib/tour-smoke-fixtures.mjs",
+    "src/components/create-listing/ListingMediaContactStep.jsx",
+    "src/components/create-listing/ListingReviewStep.jsx",
+    "src/components/create-listing/PublishSuccess.jsx",
+    "src/components/listings/EditListingDialog.jsx",
+    "src/components/services/EditServiceDialog.jsx",
+    "src/pages/CreateListing.jsx",
+    "src/pages/CreateService.jsx",
+    "src/services/listingToursService.js",
+    "supabase/rollback/README.md",
+    "supabase/tests/v1_tour_foundation.sql"
+  ],
+  "removed": [],
+  "counts": {
+    "added": 13,
+    "modified": 13,
+    "removed": 0
+  }
+}

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">Property image placeholder</title><desc id="desc">A simple outline of a house.</desc>
+  <rect width="800" height="500" fill="#11151C"/><path d="M185 255 400 95l215 160v175H185Z" fill="#171C24" stroke="#3B82F6" stroke-width="18" stroke-linejoin="round"/><path d="M335 430V280h130v150M285 260h60v60h-60Zm170 0h60v60h-60Z" fill="none" stroke="#B5BDC9" stroke-width="16"/><path d="M125 430h550" stroke="#7F8998" stroke-width="14" stroke-linecap="round"/>
+</svg>

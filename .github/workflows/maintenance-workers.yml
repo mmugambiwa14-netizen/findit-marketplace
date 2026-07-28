@@ -1,0 +1,152 @@
+name: Run marketplace maintenance workers
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+    - cron: "23 2 * * *"
+    - cron: "*/5 * * * *"
+    - cron: "37 * * * *"
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: findit-maintenance-workers
+  cancel-in-progress: false
+
+jobs:
+  media-cleanup:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 * * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Process due media cleanup jobs
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_MEDIA_CLEANUP_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "${SUPABASE_URL}/functions/v1/media-lifecycle-cleanup"
+
+  listing-expiry:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '23 2 * * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Expire due listings
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_LISTING_EXPIRY_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "${SUPABASE_URL}/functions/v1/listing-expiry-worker"
+
+
+  tour-processing:
+    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch due Tour processing jobs
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSING_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"batchSize":5}' \
+            "${SUPABASE_URL}/functions/v1/tour-processing-worker"
+
+  tour-cleanup:
+    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '37 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Process due Tour media cleanup jobs
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"batchSize":20}' \
+            "${SUPABASE_URL}/functions/v1/tour-lifecycle-cleanup"
+
+  tour-cache-invalidation:
+    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Process Tour cache invalidations
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"batchSize":100}' \
+            "${SUPABASE_URL}/functions/v1/tour-cache-invalidation"
+
+  tour-observability:
+    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate Tour operational health
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "${SUPABASE_URL}/functions/v1/tour-observability-monitor"
+
+  essential-notification-fanout:
+    if: vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Process bounded essential notification fan-out
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"jobLimit":10,"recipientLimit":200}' \
+            "${SUPABASE_URL}/functions/v1/essential-notification-fanout"

@@ -1,0 +1,50 @@
+{
+  "extends": "./jsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [
+      "vite/client"
+    ]
+  },
+  "include": [
+    "src/lib/supabaseClient.js",
+    "src/lib/chartStyleSafety.js",
+    "src/services/adminContracts.js",
+    "src/services/adminService.js",
+    "src/services/authService.js",
+    "src/services/businessProfileContracts.js",
+    "src/services/businessProfilesService.js",
+    "src/services/contactSupportContracts.js",
+    "src/services/contactSupportService.js",
+    "src/services/favouritesService.js",
+    "src/services/listingMappers.js",
+    "src/services/listingCreationService.js",
+    "src/services/listingSubmissionContracts.js",
+    "src/services/locationsService.js",
+    "src/services/marketplaceImageContracts.js",
+    "src/services/marketplaceImagesService.js",
+    "src/services/messagingContracts.js",
+    "src/services/messagingService.js",
+    "src/services/notificationContracts.js",
+    "src/services/notificationsService.js",
+    "src/services/ownerListingContracts.js",
+    "src/services/ownerListingsService.js",
+    "src/services/profileContracts.js",
+    "src/services/profileService.js",
+    "src/services/sellerProfileContracts.js",
+    "src/services/sellerProfilesService.js",
+    "src/services/serviceContracts.js",
+    "src/services/servicesService.js",
+    "src/services/searchContracts.js",
+    "src/services/publicListingsService.js",
+    "src/services/reportsService.js",
+    "src/services/listingTourContracts.js",
+    "src/services/listingToursService.js",
+    "src/services/listingTourQueryKeys.js",
+    "src/repositories/**/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

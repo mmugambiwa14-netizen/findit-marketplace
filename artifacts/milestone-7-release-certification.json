@@ -1,0 +1,97 @@
+{
+  "milestone": 7,
+  "title": "Scale Hardening and Release Certification",
+  "generatedAt": "2026-07-27T08:01:13.000Z",
+  "result": "conditionally-passed",
+  "results": [
+    {
+      "name": "Complete repository contracts",
+      "status": "passed",
+      "durationMs": 3762
+    },
+    {
+      "name": "Tours contracts",
+      "status": "passed",
+      "durationMs": 1222
+    },
+    {
+      "name": "Source graph",
+      "status": "passed",
+      "durationMs": 1656
+    },
+    {
+      "name": "Repository hygiene",
+      "status": "passed",
+      "durationMs": 607
+    },
+    {
+      "name": "SQL boundary",
+      "status": "passed",
+      "durationMs": 130
+    },
+    {
+      "name": "Product surface audit",
+      "status": "passed",
+      "durationMs": 1700
+    },
+    {
+      "name": "Base44 elimination",
+      "status": "passed",
+      "durationMs": 122
+    },
+    {
+      "name": "JSON configuration validation",
+      "status": "passed",
+      "files": 28
+    },
+    {
+      "name": "Closed Tours production environment",
+      "status": "passed",
+      "durationMs": 108
+    },
+    {
+      "name": "Accepted Tours production environment",
+      "status": "passed",
+      "durationMs": 106
+    },
+    {
+      "name": "ESLint",
+      "status": "blocked",
+      "reason": "Internal npm registry returned HTTP 503 and the public npm registry was not resolvable in this environment."
+    },
+    {
+      "name": "TypeScript project check",
+      "status": "blocked",
+      "reason": "Internal npm registry returned HTTP 503 and the public npm registry was not resolvable in this environment."
+    },
+    {
+      "name": "Migration TypeScript check",
+      "status": "blocked",
+      "reason": "Internal npm registry returned HTTP 503 and the public npm registry was not resolvable in this environment."
+    },
+    {
+      "name": "Active source check",
+      "status": "blocked",
+      "reason": "Internal npm registry returned HTTP 503 and the public npm registry was not resolvable in this environment."
+    },
+    {
+      "name": "Production build",
+      "status": "blocked",
+      "reason": "Internal npm registry returned HTTP 503 and the public npm registry was not resolvable in this environment."
+    },
+    {
+      "name": "Production dependency audit",
+      "status": "blocked",
+      "reason": "Internal npm registry returned HTTP 503 and the public npm registry was not resolvable in this environment."
+    }
+  ],
+  "liveAcceptance": {
+    "status": "required",
+    "gates": [
+      "Apply migrations through 0043 to an authorized local and staging Supabase runtime.",
+      "Run Tour, messaging, listing-search, notification fan-out, observability and lifecycle smoke suites against staging.",
+      "Inspect production-scale query plans and worker queues.",
+      "Complete mobile/browser playback acceptance and rollback rehearsal."
+    ]
+  }
+}

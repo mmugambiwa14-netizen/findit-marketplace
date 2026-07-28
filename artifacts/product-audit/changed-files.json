@@ -1,0 +1,51 @@
+{
+  "baseline": "FindIt-Extensive-Product-Audit-Remediated-2026-07-27.zip",
+  "generatedAt": "2026-07-27T12:00:00+03:00",
+  "summary": {
+    "added": 5,
+    "modified": 32,
+    "deleted": 0
+  },
+  "added": [
+    "src/components/admin/CursorPager.jsx",
+    "src/hooks/useCursorStack.js",
+    "supabase/migrations/0044_v1_admin_keyset_pagination.sql",
+    "supabase/rollback/0044_v1_admin_keyset_pagination.rollback.sql",
+    "tests/adminKeysetPaginationAudit.test.mjs"
+  ],
+  "modified": [
+    "CHANGELOG.md",
+    "FINDIT_EXTENSIVE_PRODUCT_AUDIT_2026-07-27.md",
+    "artifacts/extensive-audit/extensive-audit-verification.json",
+    "artifacts/extensive-audit/page-control-matrix.csv",
+    "artifacts/extensive-audit/page-control-matrix.json",
+    "artifacts/extensive-audit/ui-control-inventory.csv",
+    "artifacts/extensive-audit/ui-control-inventory.json",
+    "artifacts/product-audit/findings.json",
+    "artifacts/product-audit/page-control-matrix.csv",
+    "artifacts/product-audit/product-surface-audit.json",
+    "artifacts/product-audit/verification.json",
+    "scripts/audit-product-surface.mjs",
+    "scripts/phase3-admin-smoke-local.mjs",
+    "scripts/phase3-messaging-smoke-local.mjs",
+    "scripts/tours-moderation-admin-smoke-local.mjs",
+    "scripts/tours-release-certification.mjs",
+    "scripts/verify-sql-boundary.mjs",
+    "src/components/admin/AdminTourQueue.jsx",
+    "src/components/admin/SupportRequestInbox.jsx",
+    "src/pages/admin/AdminAuditLog.jsx",
+    "src/pages/admin/AdminListings.jsx",
+    "src/pages/admin/AdminReports.jsx",
+    "src/pages/admin/AdminUsers.jsx",
+    "src/repositories/adminRepository.js",
+    "src/repositories/listingToursRepository.js",
+    "src/services/adminContracts.js",
+    "src/services/adminService.js",
+    "src/services/listingTourContracts.js",
+    "src/services/listingToursService.js",
+    "tests/adminContracts.test.mjs",
+    "tests/repositoryReleaseHygiene.test.mjs",
+    "tests/tourMilestone6ModerationAdmin.test.mjs"
+  ],
+  "deleted": []
+}

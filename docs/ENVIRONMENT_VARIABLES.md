@@ -1,0 +1,85 @@
+# Environment Variables
+
+Reviewed: 2026-07-27
+
+Never commit real values. Only `VITE_` variables may enter browser builds.
+
+## Browser/build variables
+
+| Name | Purpose | Required | Secret | Example |
+|---|---|---:|---:|---|
+| `VITE_SUPABASE_URL` | Supabase API/Auth URL | Yes | No | `https://project-ref.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Public publishable/anon key protected by RLS | Yes | No | `sb_publishable_...` |
+| `VITE_BASE_PATH` | Optional Vite/Router deployment subpath | Host-specific | No | `/-findit-marketplace/` |
+| `VITE_AUTH_GOOGLE_ENABLED` | Shows Google login only after provider acceptance | No; default `false` | No | `false` |
+| `VITE_AUTH_APPLE_ENABLED` | Shows Apple login only after provider acceptance | No; default `false` | No | `false` |
+| `VITE_FEATURE_BUSINESS_PROFILES` | V1 business/dealer profiles | Production `true` | No | `true` |
+| `VITE_FEATURE_MESSAGING` | V1 text-only messaging | Production `true` | No | `true` |
+| `VITE_FEATURE_ESSENTIAL_NOTIFICATIONS` | V1 operational notifications | Production `true` | No | `true` |
+| `VITE_FEATURE_TOURS` | Tour UI exposure | Milestone 2 production `false` | No | `false` |
+| `VITE_FEATURE_TOURS_PREVIEW` | Staging-only placeholder | Production `false` | No | `false` |
+| `VITE_FEATURE_PAYMENTS` | Deferred payments | Production `false` | No | `false` |
+| `VITE_FEATURE_SUBSCRIPTIONS` | Deferred subscriptions | Production `false` | No | `false` |
+| `VITE_FEATURE_ESCROW` | Deferred escrow | Production `false` | No | `false` |
+| `VITE_FEATURE_PREMIUM_LISTINGS` | Deferred premium listings | Production `false` | No | `false` |
+| `VITE_FEATURE_AI_MODERATION` | Deferred AI moderation | Production `false` | No | `false` |
+| `VITE_FEATURE_AI_BAN_EVASION` | Deferred AI detection | Production `false` | No | `false` |
+| `VITE_FEATURE_AI_TICKET_TRIAGE` | Deferred AI triage | Production `false` | No | `false` |
+| `VITE_FEATURE_AI_SUPPORT_CHAT` | Deferred AI support | Production `false` | No | `false` |
+| `VITE_FEATURE_SCHEDULED_REMINDERS` | Deferred reminders | Production `false` | No | `false` |
+| `VITE_FEATURE_MARKETING_EMAILS` | Deferred marketing | Production `false` | No | `false` |
+
+## Edge/server variables
+
+| Name | Purpose | Required | Secret |
+|---|---|---:|---:|
+| `SUPABASE_URL` | Project URL supplied to Edge Functions | Yes | No |
+| `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_ANON_KEY` | User-context validation | Yes | No |
+| `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | Privileged internal database/storage work | Yes | Yes |
+| `FINDIT_ALLOWED_ORIGINS` | Exact comma-separated upload origins | Hosted | No |
+| `FINDIT_MEDIA_CLEANUP_WORKER_SECRET` | Scheduler bearer for cleanup worker | Hosted | Yes |
+| `FINDIT_LISTING_EXPIRY_WORKER_SECRET` | Scheduler bearer for expiry worker | Hosted | Yes |
+| `FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED` | Enables bounded essential-notification fan-out workers | Production notifications | No |
+| `FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET` | Scheduler bearer for saved-listing notification fan-out | Worker enabled | Yes |
+| `TOURS_BACKEND_ENABLED` | Server-side Tour kill switch | Tours environments | No |
+| `FINDIT_TOURS_RELEASE_ACCEPTED` | Explicit production acceptance gate | Production Tours | No |
+| `FINDIT_TOURS_ACCEPTANCE_ID` | Named staging acceptance record | Accepted production Tours | No |
+| `FINDIT_TOUR_PROCESSING_WORKER_SECRET` | Processing scheduler bearer | Tours enabled | Yes |
+| `FINDIT_TOUR_CLEANUP_WORKER_SECRET` | Tour cleanup scheduler bearer | Tours enabled | Yes |
+| `FINDIT_TOUR_CACHE_WORKER_SECRET` | Cache invalidation scheduler bearer | Tours enabled | Yes |
+| `FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET` | Operational alert evaluator bearer | Tours enabled | Yes |
+| `TOUR_PROCESSOR_URL` | External transcoding job endpoint | Tours enabled | No |
+| `TOUR_PROCESSOR_SECRET` | Dispatch and callback HMAC secret | Tours enabled | Yes |
+| `TOUR_PROCESSING_CALLBACK_URL` | FindIt callback endpoint | Tours enabled | No |
+| `TOUR_CACHE_PURGE_URL` | Optional CDN purge endpoint | Optional | No |
+| `TOUR_CACHE_PURGE_SECRET` | Optional CDN purge credential | With purge URL | Yes |
+
+## Operations/test-only variables
+
+| Name | Purpose |
+|---|---|
+| `FINDIT_SUPABASE_URL` | Explicit smoke/backup target |
+| `FINDIT_SUPABASE_ANON_KEY` | Public smoke key |
+| `FINDIT_SUPABASE_SECRET_KEY` | Admin fixture key; process-only |
+| `FINDIT_ALLOW_HOSTED_SMOKE=staging` | Required destructive-safety opt-in |
+| `FINDIT_ALLOW_HOSTED_BACKUP=staging` | Required hosted-backup opt-in |
+| `FINDIT_EXPECTED_PROJECT_REF` | Exact target guard |
+| `FINDIT_SMOKE_ORIGIN` | Exact hosted upload origin |
+| `FINDIT_BACKUP_DIRECTORY` | Explicit logical-backup output path |
+| `FINDIT_MAILPIT_URL` | Local Auth email test endpoint |
+| `FINDIT_EXPECT_GOOGLE_OAUTH` | Expected hosted Google provider status for `verify:oauth-providers` |
+| `FINDIT_EXPECT_APPLE_OAUTH` | Expected hosted Apple provider status for `verify:oauth-providers` |
+
+Google and Apple OAuth secrets are server/provider credentials and never use a
+`VITE_` prefix. For local-only Auth containers the documented variables are
+`SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` and
+`SUPABASE_AUTH_EXTERNAL_APPLE_SECRET`; hosted credentials belong in Supabase
+Auth provider settings. See `OAUTH_SETUP.md`.
+
+`OPENAI_API_KEY`, Twilio, experimental S3, payment, AI, scanning, SMTP and
+observability secrets are not application requirements while their
+features/providers are disabled. Add them only with an approved provider,
+owner, rotation policy and corresponding documentation.
+
+Validation is `npm run validate:env`. A closed production build requires HTTPS, all three existing MVP flags on, the essential-notification fan-out worker enabled, all deferred browser flags off, and both Tour flags off. A Tours-enabled production build additionally requires `FINDIT_TOURS_RELEASE_ACCEPTED=true`, a valid `FINDIT_TOURS_ACCEPTANCE_ID`, the browser and backend Tour flags enabled, and the complete processor, cleanup, cache, observability, and notification fan-out worker configuration above.
+
