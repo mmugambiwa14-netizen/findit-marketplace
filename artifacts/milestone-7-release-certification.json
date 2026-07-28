@@ -1,43 +1,43 @@
 {
   "milestone": 7,
   "title": "Scale Hardening and Release Certification",
-  "generatedAt": "2026-07-28T19:00:11.756Z",
+  "generatedAt": "2026-07-28T21:41:38.704Z",
   "result": "passed",
   "results": [
     {
       "name": "Complete repository contracts",
       "status": "passed",
-      "durationMs": 23837
+      "durationMs": 19893
     },
     {
       "name": "Tours contracts",
       "status": "passed",
-      "durationMs": 4366
+      "durationMs": 1853
     },
     {
       "name": "Source graph",
       "status": "passed",
-      "durationMs": 13596
+      "durationMs": 5196
     },
     {
       "name": "Repository hygiene",
       "status": "passed",
-      "durationMs": 6545
+      "durationMs": 10137
     },
     {
       "name": "SQL boundary",
       "status": "passed",
-      "durationMs": 668
+      "durationMs": 805
     },
     {
       "name": "Product surface audit",
       "status": "passed",
-      "durationMs": 15939
+      "durationMs": 15965
     },
     {
       "name": "Base44 elimination",
       "status": "passed",
-      "durationMs": 415
+      "durationMs": 443
     },
     {
       "name": "JSON configuration validation",
@@ -47,42 +47,42 @@
     {
       "name": "Closed Tours production environment",
       "status": "passed",
-      "durationMs": 295
+      "durationMs": 896
     },
     {
       "name": "Accepted Tours production environment",
       "status": "passed",
-      "durationMs": 355
+      "durationMs": 534
     },
     {
       "name": "ESLint",
       "status": "passed",
-      "durationMs": 52488
+      "durationMs": 57733
     },
     {
       "name": "TypeScript project check",
       "status": "passed",
-      "durationMs": 27148
+      "durationMs": 27918
     },
     {
       "name": "Migration TypeScript check",
       "status": "passed",
-      "durationMs": 10005
+      "durationMs": 8104
     },
     {
       "name": "Active source check",
       "status": "passed",
-      "durationMs": 21590
+      "durationMs": 28725
     },
     {
       "name": "Production build",
       "status": "passed",
-      "durationMs": 67216
+      "durationMs": 65958
     },
     {
       "name": "Production dependency audit",
       "status": "passed",
-      "durationMs": 27099
+      "durationMs": 21906
     }
   ],
   "liveAcceptance": {

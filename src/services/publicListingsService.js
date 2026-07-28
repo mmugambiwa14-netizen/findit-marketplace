@@ -14,6 +14,7 @@ import {
   findLocalPreviewListing,
   findLocalPreviewSuggestions,
   localPreviewListingsEnabled,
+  paginateLocalPreviewListings,
 } from '@/services/localPreviewListings';
 
 const MAX_HOME_RESULTS = 24;
@@ -67,13 +68,13 @@ export async function getPublicListing(kind, id) {
 export async function searchPublicListingsPage(input) {
   const request = normalizePublicSearchPageRequest(input);
   if (localPreviewListingsEnabled()) {
-    if (request.cursor) return { items: [], nextCursor: null };
+    const page = paginateLocalPreviewListings(request);
     return {
       items: await attachPublicTourSummaries(
-        filterLocalPreviewListings(request).slice(0, request.pageSize).map(mapPublicListing),
+        page.items.map(mapPublicListing),
         'listing',
       ),
-      nextCursor: null,
+      nextCursor: page.nextCursor,
     };
   }
   const rows = await findPublicListingsPage(request);

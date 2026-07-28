@@ -15,7 +15,7 @@ export default function ToursPlaceholder() {
       <header className="glass-bar sticky top-0 z-40 border-b px-4 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">FindIt Tours</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">FindIt Peek</p>
             <h1 className="mt-1 text-xl font-bold">A clearer way to inspect listings</h1>
           </div>
           <Link to="/search" aria-label="Search listings" className="flex h-11 w-11 items-center justify-center rounded-xl border border-border-strong bg-card text-muted-foreground hover:text-foreground">
@@ -31,9 +31,9 @@ export default function ToursPlaceholder() {
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
               <Video className="h-7 w-7" />
             </div>
-            <h2 className="mt-6 text-3xl font-black tracking-tight sm:text-4xl">Tours are being prepared</h2>
+            <h2 className="mt-6 text-3xl font-black tracking-tight sm:text-4xl">Peeks are being prepared</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-              Tours will remain attached to active marketplace listings. This preview is visible for design acceptance while secure video upload and processing stay disabled.
+              Peeks remain attached to active marketplace listings so buyers can inspect an item before making an enquiry.
             </p>
             <Button asChild className="mt-7">
               <Link to="/search">Browse listings <ArrowRight className="h-4 w-4" /></Link>

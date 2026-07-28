@@ -14,7 +14,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import * as authService from '@/services/authService';
 import { deriveAuthState, toAuthError } from '@/lib/authState';
-import { localPreviewModeEnabled } from '@/lib/localPreview';
+import { localPreviewAuthBypassEnabled } from '@/lib/localPreview';
 
 const AuthContext = createContext(null);
 
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    if (localPreviewModeEnabled()) {
+    if (localPreviewAuthBypassEnabled()) {
       setUser(null);
       setIsAuthenticated(false);
       setBlockedAccount(null);

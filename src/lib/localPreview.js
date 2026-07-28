@@ -10,6 +10,17 @@ export function isPrivatePreviewHost(hostname) {
 
 export function localPreviewModeEnabled() {
   if (!featureFlags.toursPreview) return false;
+  if (featureFlags.previewFixtures) return true;
+
+  try {
+    return isPrivatePreviewHost(new URL(import.meta.env.VITE_SUPABASE_URL).hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function localPreviewAuthBypassEnabled() {
+  if (!featureFlags.toursPreview) return false;
 
   try {
     return isPrivatePreviewHost(new URL(import.meta.env.VITE_SUPABASE_URL).hostname);

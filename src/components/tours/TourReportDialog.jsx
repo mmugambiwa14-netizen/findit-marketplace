@@ -33,16 +33,16 @@ export default function TourReportDialog({ open, onOpenChange, tourId, title, on
       setReason('misleading_representation');
       onOpenChange(false);
       onReported?.(tourId);
-      toast.success('Tour reported for review');
+      toast.success('Peek reported for review');
     },
-    onError: (error) => toast.error(error.message || 'Unable to report this Tour'),
+    onError: (error) => toast.error(error.message || 'Unable to report this Peek'),
   });
 
   return (
     <Dialog open={open} onOpenChange={(next) => !mutation.isPending && onOpenChange(next)}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Flag className="h-5 w-5 text-destructive" />Report Tour</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Flag className="h-5 w-5 text-destructive" />Report Peek</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">Report only the video attached to <span className="font-medium text-foreground">{title}</span>. The parent listing remains a separate moderation target.</p>
         <div className="space-y-2">
@@ -66,7 +66,7 @@ export default function TourReportDialog({ open, onOpenChange, tourId, title, on
           <p className="text-right text-xs text-muted-foreground">{description.length}/2000</p>
         </div>
         <Button type="button" variant="destructive" disabled={mutation.isPending} onClick={() => mutation.mutate()}>
-          {mutation.isPending ? 'Submitting…' : 'Submit Tour report'}
+          {mutation.isPending ? 'Submitting…' : 'Submit Peek report'}
         </Button>
       </DialogContent>
     </Dialog>

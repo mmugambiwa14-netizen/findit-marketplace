@@ -27,10 +27,13 @@ import {
   normalizeTourAdminQueueRequest,
   normalizeTourUploadIntent,
 } from '@/services/listingTourContracts';
+import {
+  findLocalPreviewListing,
+  getLocalPreviewPeekListings,
+  localPreviewListingHasPeek,
+} from '@/services/localPreviewListings';
 
-const LOCAL_PREVIEW_TOUR_ID = '40000000-0000-4000-8000-000000000001';
-const LOCAL_PREVIEW_LISTING_ID = '20000000-0000-4000-8000-000000000001';
-const LOCAL_PREVIEW_SELLER_ID = '10000000-0000-4000-8000-000000000001';
+const LOCAL_PREVIEW_DURATION_SECONDS = 8;
 
 function isLocalTourPreview() {
   return featureFlags.toursPreview && localPreviewModeEnabled();
@@ -42,51 +45,98 @@ function localPreviewAsset(filename) {
   return new URL(`${basePath.replace(/^\//, '')}mock/${filename}`, `${origin}/`).toString();
 }
 
+function localPreviewTourId(listingId) {
+  return `40000000-0000-4000-8000-${String(listingId).slice(-12)}`;
+}
+
 function localPreviewPlayback(parent) {
+  const listing = parent.parentType === 'listing'
+    ? findLocalPreviewListing('property', parent.parentId)
+      || findLocalPreviewListing('car', parent.parentId)
+      || findLocalPreviewListing('machinery', parent.parentId)
+    : null;
+  if (!listing || !localPreviewListingHasPeek(listing)) {
+    throw new Error('Peek playback is unavailable for this listing');
+  }
   return {
-    tourId: LOCAL_PREVIEW_TOUR_ID,
+    tourId: localPreviewTourId(parent.parentId),
     parentType: parent.parentType,
     parentId: parent.parentId,
-    durationSeconds: 8,
+    durationSeconds: LOCAL_PREVIEW_DURATION_SECONDS,
     width: 1280,
     height: 720,
     playbackUrl: localPreviewAsset('findit-tour-preview.mp4'),
     thumbnailUrl: localPreviewAsset('findit-tour-thumbnail.webp'),
     expiresInSeconds: 3600,
-    publishedAt: '2026-07-28T00:00:00.000Z',
+    publishedAt: listing.created_at,
+  };
+}
+
+function localPreviewSummaryAttributes(listing) {
+  if (listing.kind === 'car') {
+    return [
+      String(listing.car_details.year),
+      `${Number(listing.car_details.mileage).toLocaleString()} km`,
+      listing.car_details.transmission,
+    ];
+  }
+  if (listing.kind === 'property') {
+    return [
+      listing.property_details.bedrooms ? `${listing.property_details.bedrooms} bedrooms` : listing.category.replaceAll('_', ' '),
+      listing.property_details.bathrooms ? `${listing.property_details.bathrooms} bathrooms` : 'Commercial',
+      `${Number(listing.property_details.size_sqm).toLocaleString()} m2`,
+    ];
+  }
+  return [
+    String(listing.machinery_details.year),
+    `${Number(listing.machinery_details.usage_hours).toLocaleString()} hours`,
+    listing.machinery_details.condition,
+  ];
+}
+
+function localPreviewFeedItem(listing) {
+  return {
+    tourId: localPreviewTourId(listing.id),
+    parentType: 'listing',
+    parentId: listing.id,
+    listingType: listing.kind,
+    title: listing.title,
+    price: listing.price,
+    currency: listing.currency,
+    pricingType: null,
+    publicLocation: listing.location.name,
+    coverImageUrl: listing.photos[0] || null,
+    thumbnailUrl: listing.photos[0] || null,
+    durationSeconds: LOCAL_PREVIEW_DURATION_SECONDS,
+    availability: listing.status,
+    summaryAttributes: localPreviewSummaryAttributes(listing),
+    sellerId: listing.seller_id,
+    sellerDisplayName: listing.seller_name,
+    sellerType: 'seller',
+    publishedAt: listing.created_at,
   };
 }
 
 function localPreviewFeedPage(request) {
-  const item = {
-    tourId: LOCAL_PREVIEW_TOUR_ID,
-    parentType: 'listing',
-    parentId: LOCAL_PREVIEW_LISTING_ID,
-    listingType: 'car',
-    title: 'Toyota Hilux 2.8 GD-6 double cab',
-    price: 28500,
-    currency: 'USD',
-    pricingType: null,
-    publicLocation: 'Harare',
-    coverImageUrl: localPreviewAsset('findit-tour-thumbnail.webp'),
-    thumbnailUrl: localPreviewAsset('findit-tour-thumbnail.webp'),
-    durationSeconds: 8,
-    availability: 'available',
-    summaryAttributes: ['2021', '64,000 km', 'automatic'],
-    sellerId: LOCAL_PREVIEW_SELLER_ID,
-    sellerDisplayName: 'FindIt Preview Seller',
-    sellerType: 'seller',
-    publishedAt: '2026-07-28T00:00:00.000Z',
-  };
   const query = request.query.toLowerCase();
   const location = request.location.toLowerCase();
-  const matches = !request.cursor
-    && (request.category === 'all' || request.category === item.listingType)
-    && (!query || `${item.title} ${item.sellerDisplayName} ${item.publicLocation}`.toLowerCase().includes(query))
-    && (!location || item.publicLocation.toLowerCase().includes(location));
+  const rows = getLocalPreviewPeekListings()
+    .map(localPreviewFeedItem)
+    .filter((item) => (
+      (request.category === 'all' || request.category === item.listingType)
+      && (!query || `${item.title} ${item.sellerDisplayName} ${item.publicLocation}`.toLowerCase().includes(query))
+      && (!location || item.publicLocation.toLowerCase().includes(location))
+    ));
+  const cursorIndex = request.cursor
+    ? rows.findIndex((item) => item.tourId === request.cursor.id)
+    : -1;
+  const start = cursorIndex >= 0 ? cursorIndex + 1 : 0;
+  const items = rows.slice(start, start + request.limit);
+  const hasMore = start + items.length < rows.length;
+  const last = hasMore ? items.at(-1) : null;
   return {
-    items: matches ? [item] : [],
-    nextCursor: null,
+    items,
+    nextCursor: last ? { id: last.tourId, publishedAt: last.publishedAt } : null,
     signedAssetLifetimeSeconds: 3600,
   };
 }
@@ -344,13 +394,13 @@ export async function attachPublicTourSummaries(items, parentType) {
   if (isLocalTourPreview()) {
     return items.map((item) => ({
       ...item,
-      tour: parentType === 'listing' && item.id === LOCAL_PREVIEW_LISTING_ID
+      tour: parentType === 'listing' && localPreviewListingHasPeek(item)
         ? {
-            id: LOCAL_PREVIEW_TOUR_ID,
+            id: localPreviewTourId(item.id),
             status: 'ready',
             moderationStatus: 'approved',
-            durationSeconds: 8,
-            publishedAt: '2026-07-28T00:00:00.000Z',
+            durationSeconds: LOCAL_PREVIEW_DURATION_SECONDS,
+            publishedAt: item.created_at,
             isReady: true,
           }
         : null,

@@ -58,7 +58,7 @@ test('Discover is minimal and performs no listing-feed query', () => {
 });
 
 test('canonical navigation and compatibility routes are present', () => {
-  for (const label of ['Discover', 'Tours', 'Post', 'Chats', 'Profile']) {
+  for (const label of ['Discover', 'Peek', 'Post', 'Chats', 'Profile']) {
     assert.match(navigation, new RegExp(`label: ['"]${label}['"]`));
   }
   assert.match(bottomNav, /PRIMARY_NAV_ITEMS/);
@@ -67,6 +67,7 @@ test('canonical navigation and compatibility routes are present', () => {
   assert.match(app, /path="\/chats\/:conversationId"/);
   assert.match(app, /path="\/create" element={<LegacyPathRedirect to="\/post" \/>}/);
   assert.match(app, /path="\/messages" element={<LegacyPathRedirect to="\/chats" \/>}/);
+  assert.match(app, /path="\/tours" element={<LegacyPathRedirect to="\/peek" \/>}/);
   assert.match(app, /LegacyConversationRedirect/);
 });
 
@@ -89,7 +90,7 @@ test('all public detail types use the shared media contract', () => {
     assert.match(source, /ListingMediaViewer/);
   }
   assert.match(serviceDetail, /See their work/);
-  assert.match(propertyDetail, /Watch tour/);
+  assert.match(propertyDetail, /Watch Peek/);
 });
 
 test('protected sign-in and registration retain the requested internal destination', () => {

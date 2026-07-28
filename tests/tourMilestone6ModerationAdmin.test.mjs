@@ -95,7 +95,7 @@ test('public users can report the video from catalogue and detail playback', () 
   assert.match(reportDialog, /duplicate_content/);
   assert.match(reportDialog, /reportListingTour/);
   assert.match(reportAction, /GuestPromptSheet/);
-  assert.match(tourCard, /Report Tour/);
+  assert.match(tourCard, /Report Peek/);
   assert.match(mediaViewer, /TourReportAction/);
   assert.match(mediaViewer, /setTourReported\(true\)/);
 });

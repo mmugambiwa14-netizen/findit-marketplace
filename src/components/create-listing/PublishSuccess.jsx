@@ -41,10 +41,10 @@ export default function PublishSuccess({
         <div className="w-full rounded-xl border border-success/25 bg-success/5 p-4 text-left">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Film className="h-4 w-4 text-success" />
-            Tour uploaded
+            Peek uploaded
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            The listing is live while the Tour is processed. If processing fails, the listing remains available.
+            The listing is live while the Peek is processed. If processing fails, the listing remains available.
           </p>
         </div>
       )}
@@ -53,19 +53,19 @@ export default function PublishSuccess({
         <div className="w-full rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-left" role="alert">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <AlertTriangle className="h-4 w-4 text-destructive" />
-            The listing is live, but the Tour upload did not finish
+            The listing is live, but the Peek upload did not finish
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{tour.error || 'The video upload was interrupted.'}</p>
           {tourProgress && <div className="mt-3"><TourUploadProgress progress={tourProgress} /></div>}
           <div className="mt-3 flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" onClick={onRetryTour} disabled={retryingTour || discardingTour}>
               {retryingTour ? <Loader2 className="animate-spin" /> : <RotateCcw />}
-              Resume Tour upload
+              Resume Peek upload
             </Button>
             {onDiscardTour && (
               <Button type="button" size="sm" variant="ghost" onClick={onDiscardTour} disabled={retryingTour || discardingTour}>
                 {discardingTour ? <Loader2 className="animate-spin" /> : <Trash2 />}
-                Discard unfinished Tour
+                Discard unfinished Peek
               </Button>
             )}
           </div>

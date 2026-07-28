@@ -21,9 +21,9 @@ export default function TourReportAction({ tourId, title, sellerId, onReported, 
   return (
     <>
       <button type="button" onClick={open} className={cn('flex min-h-11 items-center gap-1.5 rounded-full border border-white/15 bg-black/60 px-3 text-xs font-semibold text-white backdrop-blur-md hover:bg-black/80', className)}>
-        <Flag className="h-3.5 w-3.5" />Report Tour
+        <Flag className="h-3.5 w-3.5" />Report Peek
       </button>
-      <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action="report this Tour" returnTo={`${location.pathname}${location.search}`} />
+      <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action="report this Peek" returnTo={`${location.pathname}${location.search}`} />
       <TourReportDialog open={dialogOpen} onOpenChange={setDialogOpen} tourId={tourId} title={title} onReported={onReported} />
     </>
   );

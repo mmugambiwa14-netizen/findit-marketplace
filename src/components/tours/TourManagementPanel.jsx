@@ -90,18 +90,18 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
     onSuccess: async () => {
       setDraft(null);
       await refresh();
-      toast.success('Tour removed');
+      toast.success('Peek removed');
     },
-    onError: (error) => toast.error(error.message || 'The Tour could not be removed'),
+    onError: (error) => toast.error(error.message || 'The Peek could not be removed'),
   });
 
   const retryMutation = useMutation({
     mutationFn: retryListingTour,
     onSuccess: async () => {
       await refresh();
-      toast.success('Tour processing queued again');
+      toast.success('Peek processing queued again');
     },
-    onError: (error) => toast.error(error.message || 'The Tour could not be retried'),
+    onError: (error) => toast.error(error.message || 'The Peek could not be retried'),
   });
 
   const mutationBusy = removeMutation.isPending || retryMutation.isPending;
@@ -126,22 +126,22 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
     <section className={`space-y-4 ${compact ? '' : 'rounded-2xl border border-border bg-card p-4'}`} aria-labelledby={`tour-management-${parentId}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 id={`tour-management-${parentId}`} className="flex items-center gap-2 font-semibold"><Film className="h-5 w-5 text-primary" />Tour video</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">One Tour stays attached to this {parentType}. Replacements become public after processing and activation.</p>
+          <h3 id={`tour-management-${parentId}`} className="flex items-center gap-2 font-semibold"><Film className="h-5 w-5 text-primary" />Peek video</h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">One Peek stays attached to this {parentType}. Replacements become public after processing and activation.</p>
         </div>
-        {query.isFetching && <Loader2 className="mt-1 h-4 w-4 animate-spin text-muted-foreground" aria-label="Refreshing Tour status" />}
+        {query.isFetching && <Loader2 className="mt-1 h-4 w-4 animate-spin text-muted-foreground" aria-label="Refreshing Peek status" />}
       </div>
 
       {query.isLoading && (
         <div className="flex min-h-20 items-center justify-center rounded-xl border border-border bg-muted/10" role="status">
           <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Loading Tour status...</span>
+          <span className="text-sm text-muted-foreground">Loading Peek status...</span>
         </div>
       )}
 
       {query.isError && (
         <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive" role="alert">
-          <p>{query.error?.message || 'Tour status could not be loaded.'}</p>
+          <p>{query.error?.message || 'Peek status could not be loaded.'}</p>
           <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => query.refetch()}>Try again</Button>
         </div>
       )}
@@ -152,7 +152,7 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
             <div className="flex gap-3">
               <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" />
               <div>
-                <p className="text-sm font-semibold">Current public Tour</p>
+                <p className="text-sm font-semibold">Current public Peek</p>
                 <p className="mt-1 text-xs text-muted-foreground">Visible while this {parentType} remains publicly available.</p>
               </div>
             </div>
@@ -184,7 +184,7 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
         </div>
       )}
 
-      {current && (pending || latestIssue) && <p className="rounded-xl bg-primary/5 p-3 text-xs text-muted-foreground">Your current public Tour remains visible until the replacement is active. A failed replacement does not remove it.</p>}
+      {current && (pending || latestIssue) && <p className="rounded-xl bg-primary/5 p-3 text-xs text-muted-foreground">Your current public Peek remains visible until the replacement is active. A failed replacement does not remove it.</p>}
 
       {!query.isLoading && !query.isError && (!blockingPending || resumablePending) && (
         <TourUploader
@@ -197,10 +197,10 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
           onUploaded={async () => {
             setDraft(null);
             await refresh();
-            toast.success('Tour uploaded and queued for processing');
+            toast.success('Peek uploaded and queued for processing');
           }}
           disabled={mutationBusy}
-          heading={current ? 'Replace Tour' : 'Add a Tour'}
+          heading={current ? 'Replace Peek' : 'Add a Peek'}
           onBusyChange={setUploadBusy}
         />
       )}
@@ -208,11 +208,11 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
       <AlertDialog open={Boolean(removeCandidate)} onOpenChange={(open) => { if (!open && !removeMutation.isPending) setRemoveCandidate(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{removeCandidate && isCurrent(removeCandidate) ? 'Remove the public Tour?' : 'Remove this Tour version?'}</AlertDialogTitle>
+            <AlertDialogTitle>{removeCandidate && isCurrent(removeCandidate) ? 'Remove the public Peek?' : 'Remove this Peek version?'}</AlertDialogTitle>
             <AlertDialogDescription>
               {removeCandidate && isCurrent(removeCandidate)
-                ? `The Tour will be removed from this ${parentType}. The ${parentType} and its photos will remain.`
-                : 'The unfinished or replacement Tour version will be cancelled and removed.'}
+                ? `The Peek will be removed from this ${parentType}. The ${parentType} and its photos will remain.`
+                : 'The unfinished or replacement Peek version will be cancelled and removed.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -222,7 +222,7 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
               disabled={removeMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {removeMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />Removing</> : 'Remove Tour'}
+              {removeMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />Removing</> : 'Remove Peek'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

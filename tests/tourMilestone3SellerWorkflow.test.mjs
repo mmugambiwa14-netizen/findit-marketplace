@@ -63,10 +63,10 @@ test('listing creation stages an optional Tour and uploads only after canonical 
   assert.match(creation, /parentId: result\.id/);
   assert.match(creation, /status: 'error'/);
   assert.match(creation, /setSubmittedListing\(/);
-  assert.match(reviewStep, /A Tour failure will not remove or block the listing/);
-  assert.match(successStep, /The listing is live, but the Tour upload did not finish/);
-  assert.match(successStep, /Resume Tour upload/);
-  assert.match(successStep, /Discard unfinished Tour/);
+  assert.match(reviewStep, /A Peek failure will not remove or block the listing/);
+  assert.match(successStep, /The listing is live, but the Peek upload did not finish/);
+  assert.match(successStep, /Resume Peek upload/);
+  assert.match(successStep, /Discard unfinished Peek/);
 });
 
 test('seller can add, replace, remove and retry Tours from listing and service editing', () => {
@@ -76,7 +76,7 @@ test('seller can add, replace, remove and retry Tours from listing and service e
   assert.match(editService, /parentType="service"/);
   assert.match(management, /removeListingTour/);
   assert.match(management, /retryListingTour/);
-  assert.match(management, /current public Tour remains visible until the replacement is active/i);
+  assert.match(management, /current public Peek remains visible until the replacement is active/i);
   assert.match(management, /Cancel this version/);
   assert.match(management, /const newestAfterCurrent/);
   assert.match(management, /const latestIssue/);
@@ -103,7 +103,7 @@ test('record and upload controls enforce the two-minute, direct-storage contract
   assert.match(uploader, /TOUR_MAX_DURATION_SECONDS/);
   assert.match(uploader, /TOUR_MAX_SOURCE_BYTES/);
   assert.match(uploader, /normalizeTourVideoFile/);
-  assert.match(uploader, /Upload Tour/);
+  assert.match(uploader, /Upload Peek/);
   assert.match(uploader, /up to 2 minutes and 250 MB/);
   assert.match(uploader, />Skip<\/Button>/);
   assert.match(uploader, /onBusyChange\?\.\(true\)/);
@@ -138,9 +138,9 @@ test('service creation uses the same parent-attached Tour boundary and preserves
   assert.match(createService, /parentType: 'service'/);
   assert.match(createService, /parentId: service\.id/);
   assert.match(createService, /setPublishedService\(service\)/);
-  assert.match(createService, /Resume Tour upload/);
+  assert.match(createService, /Resume Peek upload/);
   assert.match(createService, /resumeUpload: tourDraft\.resumeUpload/);
-  assert.match(createService, /Continue without Tour/);
+  assert.match(createService, /Continue without Peek/);
   assert.match(createService, /removeListingTour\(tourDraft\.resumeUpload\.tourId\)/);
 });
 

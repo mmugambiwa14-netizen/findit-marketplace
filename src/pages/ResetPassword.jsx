@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import * as authService from "@/services/authService";
+import { PASSWORD_MIN_LENGTH, passwordPolicyError } from "@/lib/passwordPolicy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,8 +73,9 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters");
+    const policyError = passwordPolicyError(newPassword);
+    if (policyError) {
+      setError(policyError);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -181,12 +183,12 @@ export default function ResetPassword() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="pl-10 h-12"
-              minLength={8}
+              minLength={PASSWORD_MIN_LENGTH}
               aria-describedby="password-requirements"
               required
             />
           </div>
-          <p id="password-requirements" className="text-xs text-muted-foreground">Use at least 8 characters.</p>
+          <p id="password-requirements" className="text-xs text-muted-foreground">Use at least 10 characters with lowercase, uppercase and a number.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm Password</Label>
@@ -200,7 +202,7 @@ export default function ResetPassword() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="pl-10 h-12"
-              minLength={8}
+              minLength={PASSWORD_MIN_LENGTH}
               required
             />
           </div>

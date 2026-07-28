@@ -54,7 +54,7 @@ export default function ListingReviewStep({
             {tourDraft && (
               <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-primary">
                 <Film className="h-3.5 w-3.5" />
-                Tour · {durationLabel(tourDraft.durationSeconds)}
+                Peek | {durationLabel(tourDraft.durationSeconds)}
               </span>
             )}
           </div>
@@ -65,10 +65,10 @@ export default function ListingReviewStep({
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Film className="h-4 w-4 text-primary" />
-            Optional Tour selected
+            Optional Peek selected
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            FindIt creates the listing first, uploads the video, then processes it separately. A Tour failure will not remove or block the listing.
+            FindIt creates the listing first, uploads the video, then processes it separately. A Peek failure will not remove or block the listing.
           </p>
         </div>
       )}
@@ -89,7 +89,7 @@ export default function ListingReviewStep({
 
       <label className="flex cursor-pointer items-start gap-3 rounded-xl border p-4">
         <Checkbox checked={accepted} onCheckedChange={(value) => setAccepted(value === true)} aria-label="Accept marketplace rules" />
-        <span className="text-sm">I confirm this advert and its optional Tour are accurate, I may advertise them, and they follow the marketplace rules.</span>
+        <span className="text-sm">I confirm this advert and its optional Peek are accurate, I may advertise them, and they follow the marketplace rules.</span>
       </label>
 
       <div className="grid gap-3 sm:grid-cols-2">

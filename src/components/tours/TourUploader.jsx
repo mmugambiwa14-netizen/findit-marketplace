@@ -62,7 +62,7 @@ export default function TourUploader({
   onUploaded = null,
   onUploadFailed = null,
   disabled = false,
-  heading = 'Tour video',
+  heading = 'Peek video',
   onBusyChange = null,
   onSkip = null,
 }) {
@@ -87,11 +87,11 @@ export default function TourUploader({
     setError('');
     try {
       if (!TOUR_ALLOWED_MIME_TYPES.includes(file.type)) throw new TypeError('Use an MP4, MOV, or WebM video.');
-      if (file.size < 1 || file.size > TOUR_MAX_SOURCE_BYTES) throw new RangeError('Tour videos must be 250 MB or smaller.');
+      if (file.size < 1 || file.size > TOUR_MAX_SOURCE_BYTES) throw new RangeError('Peek videos must be 250 MB or smaller.');
       const inspected = await inspectVideo(file);
       if (inspected.durationSeconds > TOUR_MAX_DURATION_SECONDS) {
         URL.revokeObjectURL(inspected.previewUrl);
-        throw new RangeError(`Tour videos must be ${TOUR_MAX_DURATION_SECONDS} seconds or shorter.`);
+        throw new RangeError(`Peek videos must be ${TOUR_MAX_DURATION_SECONDS} seconds or shorter.`);
       }
       normalizeTourVideoFile(file, inspected.durationSeconds);
       if (draft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(draft.previewUrl);
@@ -105,7 +105,7 @@ export default function TourUploader({
         error: '',
       });
     } catch (failure) {
-      setError(failure.message || 'The Tour video could not be selected.');
+      setError(failure.message || 'The Peek video could not be selected.');
     } finally {
       setSelecting(false);
       onBusyChange?.(false);
@@ -138,14 +138,14 @@ export default function TourUploader({
           onChange?.({ ...draft, status: 'uploading', progress: next });
         },
       });
-      const completed = { ...draft, status: 'uploaded', tourId: result.tourId, progress: { percent: 100, message: 'Tour queued for processing' }, resumeUpload: null };
+      const completed = { ...draft, status: 'uploaded', tourId: result.tourId, progress: { percent: 100, message: 'Peek queued for processing' }, resumeUpload: null };
       onChange?.(completed);
       onUploaded?.(result);
     } catch (failure) {
       const failed = {
         ...draft,
         status: 'error',
-        error: failure.message || 'The Tour upload was interrupted.',
+        error: failure.message || 'The Peek upload was interrupted.',
         resumeUpload: failure.resumeUpload || draft.resumeUpload || null,
       };
       onChange?.(failed);
@@ -178,12 +178,12 @@ export default function TourUploader({
       {draft && (
         <div className="overflow-hidden rounded-xl border border-border bg-muted/10">
           <div className="relative aspect-video bg-black">
-            <video src={draft.previewUrl} className="h-full w-full object-contain" controls preload="metadata" aria-label="Selected Tour preview" />
+            <video src={draft.previewUrl} className="h-full w-full object-contain" controls preload="metadata" aria-label="Selected Peek preview" />
             <span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-2 py-1 text-xs font-semibold text-white">{durationLabel(draft.durationSeconds)}</span>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 p-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold"><Film className="mr-1 inline h-4 w-4" />{draft.file?.name || 'Selected Tour video'}</p>
+              <p className="truncate text-sm font-semibold"><Film className="mr-1 inline h-4 w-4" />{draft.file?.name || 'Selected Peek video'}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">{sizeLabel(draft.file?.size)} · {durationLabel(draft.durationSeconds)}</p>
             </div>
             {!uploading && draft.status !== 'uploaded' && <Button type="button" size="sm" variant="ghost" onClick={clear} disabled={disabled}><Trash2 />Remove</Button>}
@@ -192,16 +192,16 @@ export default function TourUploader({
       )}
 
       {(uploading || draft?.status === 'uploading') && <TourUploadProgress progress={progress || draft?.progress} />}
-      {draft?.status === 'uploaded' && <p className="rounded-xl bg-success/10 p-3 text-sm font-medium text-success">Tour uploaded. Processing and moderation continue separately from the {parentLabel}.</p>}
+      {draft?.status === 'uploaded' && <p className="rounded-xl bg-success/10 p-3 text-sm font-medium text-success">Peek uploaded. Processing and moderation continue separately from the {parentLabel}.</p>}
       {error && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
 
       {draft && parentId && draft.status !== 'uploaded' && !uploading && (
         <Button type="button" className="h-11 w-full rounded-xl" onClick={upload} disabled={disabled || selecting}>
-          {draft.status === 'error' ? <><RotateCcw />Resume upload</> : <><Upload />Upload Tour</>}
+          {draft.status === 'error' ? <><RotateCcw />Resume upload</> : <><Upload />Upload Peek</>}
         </Button>
       )}
       {draft && !parentId && <p className="text-xs text-muted-foreground">The video will upload after the {parentLabel} record is created. Publishing does not wait for video processing.</p>}
-      {!draft && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Tour later from {managementLabel}.</p>}
+      {!draft && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Peek later from {managementLabel}.</p>}
     </section>
   );
 }

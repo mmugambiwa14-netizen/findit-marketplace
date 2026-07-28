@@ -4,6 +4,7 @@ import { ArrowLeft, Check, Eye, EyeOff, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
 import * as authService from "@/services/authService";
+import { PASSWORD_MIN_LENGTH, passwordPolicyError } from "@/lib/passwordPolicy";
 import { updateOwnProfile } from "@/services/profileService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,8 +44,9 @@ export default function Settings() {
       toast.error("Passwords do not match");
       return;
     }
-    if (passwords.next.length < 8) {
-      toast.error("Password must be at least 8 characters");
+    const policyError = passwordPolicyError(passwords.next);
+    if (policyError) {
+      toast.error(policyError);
       return;
     }
     if (!passwords.current) {
@@ -126,6 +128,7 @@ export default function Settings() {
                       id={`settings-${field}-password`}
                       type={showPasswords[field] ? "text" : "password"}
                       autoComplete={field === "current" ? "current-password" : "new-password"}
+                      minLength={field === "current" ? undefined : PASSWORD_MIN_LENGTH}
                       className="rounded-xl pr-10"
                       value={passwords[field]}
                       onChange={(event) => setPasswords((current) => ({ ...current, [field]: event.target.value }))}

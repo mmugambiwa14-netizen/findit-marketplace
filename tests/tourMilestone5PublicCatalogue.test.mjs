@@ -90,7 +90,7 @@ test('feed signing boundary exposes only signed card assets and withholds playba
 test('catalogue UI is cinematic but not a social-video feed', () => {
   assert.match(page, /useInfiniteQuery/);
   assert.match(page, /getNextPageParam/);
-  assert.match(page, /Load more Tours/);
+  assert.match(page, /Load more Peeks/);
   assert.match(page, /TourCategoryChips/);
   assert.match(header, /Search listings, sellers or locations/);
   for (const label of ['All', 'Property', 'Vehicles', 'Equipment', 'Services']) assert.match(chips, new RegExp(label));
@@ -112,14 +112,14 @@ test('playback is thumbnail-first, explicit, low-data aware and resilient', () =
   assert.match(card, /muted/);
   assert.match(card, /onError=\{\(\) => \{ setPlayback\(null\); setPlaybackError\(true\); \}\}/);
   assert.match(card, /expiresAt > Date\.now\(\) \+ 10_000/);
-  assert.match(card, /Tour playback failed/);
+  assert.match(card, /Peek playback failed/);
   assert.match(card, /writeStoredString\('session', playbackKey/);
   assert.match(card, /readStoredString\('session', playbackKey/);
 });
 
 test('feed filters and return position survive canonical navigation', () => {
   assert.match(page, /useSearchParams/);
-  assert.match(page, /findit:tours:catalogue-state/);
+  assert.match(page, /findit:peek:catalogue-state/);
   assert.match(page, /scrollY: window\.scrollY/);
   assert.match(page, /window\.scrollTo/);
   assert.match(page, /activeTourId/);
@@ -131,9 +131,10 @@ test('feed filters and return position survive canonical navigation', () => {
   assert.match(invalidation, /\['listing-tours', 'feed'\]/);
 });
 
-test('production route uses the real catalogue only when Tours is enabled', () => {
+test('production route uses the real Peek catalogue only when Tours is enabled', () => {
   assert.match(app, /const Tours = lazy/);
-  assert.match(app, /featureFlags\.tours && <Route path="\/tours" element=\{<Tours \/>\}/);
+  assert.match(app, /featureFlags\.tours && <Route path="\/peek" element=\{<Tours \/>\}/);
+  assert.match(app, /path="\/tours" element=\{<LegacyPathRedirect to="\/peek" \/>\}/);
   assert.match(app, /!featureFlags\.tours && featureFlags\.toursPreview/);
   assert.match(packageJson, /test:tours-discovery-local/);
   assert.match(packageJson, /tours-public-catalogue-smoke-local\.mjs/);

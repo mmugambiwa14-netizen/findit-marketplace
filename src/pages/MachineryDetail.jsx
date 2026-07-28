@@ -56,7 +56,7 @@ export default function MachineryDetail() {
     <div className="min-h-screen bg-background pb-32">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Watch tour" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} />
+        <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Watch Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5">
             <div className="flex flex-wrap items-center gap-2">

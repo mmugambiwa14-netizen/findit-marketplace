@@ -12,7 +12,7 @@ import { getFavouriteIds } from '@/services/favouritesService';
 import { getPublicTourFeedPage } from '@/services/listingToursService';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
 
-const RESTORE_KEY = 'findit:tours:catalogue-state';
+const RESTORE_KEY = 'findit:peek:catalogue-state';
 const VALID_CATEGORIES = new Set(['all', 'property', 'car', 'machinery', 'service']);
 
 function readRestoration() {
@@ -143,22 +143,22 @@ export default function Tours() {
         <TourCategoryChips value={category} onChange={changeCategory} />
 
         {feed.isLoading ? (
-          <div className="flex min-h-[55vh] items-center justify-center" role="status"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading Tours</span></div>
+          <div className="flex min-h-[55vh] items-center justify-center" role="status"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading Peeks</span></div>
         ) : feed.isError ? (
           <section className="mx-4 mt-8 rounded-3xl border border-border bg-card px-6 py-14 text-center">
             <RotateCcw className="mx-auto h-8 w-8 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-bold">Tours could not be loaded</h2>
+            <h2 className="mt-4 text-lg font-bold">Peeks could not be loaded</h2>
             <p className="mt-2 text-sm text-muted-foreground">Your search and filters have been preserved.</p>
             <Button variant="outline" className="mt-5" onClick={() => feed.refetch()}>Try again</Button>
           </section>
         ) : items.length === 0 ? (
           <section className="mx-4 mt-8 rounded-3xl border border-border bg-card px-6 py-14 text-center">
             <Film className="mx-auto h-9 w-9 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-bold">No matching Tours</h2>
+            <h2 className="mt-4 text-lg font-bold">No matching Peeks</h2>
             <p className="mt-2 text-sm text-muted-foreground">Try another category, search or location.</p>
           </section>
         ) : (
-          <section aria-label="Tour catalogue" className="space-y-5 px-4 pb-8">
+          <section aria-label="Peek catalogue" className="space-y-5 px-4 pb-8">
             {items.map((item) => (
               <TourCard
                 key={item.tourId}
@@ -173,11 +173,11 @@ export default function Tours() {
             {feed.hasNextPage && (
               <div className="flex justify-center py-3">
                 <Button variant="outline" className="min-w-48" disabled={feed.isFetchingNextPage} onClick={() => feed.fetchNextPage()}>
-                  {feed.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more Tours'}
+                  {feed.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more Peeks'}
                 </Button>
               </div>
             )}
-            {!feed.hasNextPage && items.length > 0 && <p className="py-3 text-center text-xs text-muted-foreground">You have reached the end of these Tours.</p>}
+            {!feed.hasNextPage && items.length > 0 && <p className="py-3 text-center text-xs text-muted-foreground">You have reached the end of these Peeks.</p>}
           </section>
         )}
       </main>

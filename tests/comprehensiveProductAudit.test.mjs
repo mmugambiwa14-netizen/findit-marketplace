@@ -73,10 +73,10 @@ const sourceEntries = await Promise.all(sourceFiles.map(async (path) => ({ path,
 
 test('the complete routed product surface is declared and has a fallback', () => {
   const routePatterns = [...app.matchAll(/<Route\b[\s\S]*?\bpath=["']([^"']+)["']/g)].map((match) => match[1]);
-  assert.equal(routePatterns.length, 42);
+  assert.equal(routePatterns.length, 43);
   for (const path of [
     '/', '/search', '/property/:id', '/car/:id', '/machinery/:id', '/services', '/service/:id',
-    '/tours', '/post', '/saved', '/chats', '/chats/:conversationId', '/profile', '/my-listings',
+    '/peek', '/tours', '/post', '/saved', '/chats', '/chats/:conversationId', '/profile', '/my-listings',
     '/my-services', '/settings', '/notifications', '/admin', '/admin/listings', '/admin/users',
     '/admin/reports', '/admin/categories', '/admin/audit-log', '*',
   ]) assert.ok(routePatterns.includes(path), `Missing route ${path}`);
@@ -98,12 +98,12 @@ test('registration and OAuth preserve protected return destinations through conf
 });
 
 test('registration and password reset reject weak passwords and expose errors accessibly', () => {
-  assert.match(register, /password\.length < 8/);
-  assert.ok((register.match(/minLength=\{8\}/g) || []).length >= 2);
+  assert.match(register, /passwordPolicyError\(password\)/);
+  assert.ok((register.match(/minLength=\{PASSWORD_MIN_LENGTH\}/g) || []).length >= 2);
   assert.match(register, /role="alert"/);
   assert.match(register, /aria-describedby="register-password-requirements"/);
-  assert.match(resetPassword, /newPassword\.length < 8/);
-  assert.match(resetPassword, /minLength=\{8\}/);
+  assert.match(resetPassword, /passwordPolicyError\(newPassword\)/);
+  assert.match(resetPassword, /minLength=\{PASSWORD_MIN_LENGTH\}/);
   assert.match(resetPassword, /role="alert"/);
   assert.match(resetPassword, /aria-describedby="password-requirements"/);
   assert.match(resetPassword, /await authService\.signOut\(\)/);

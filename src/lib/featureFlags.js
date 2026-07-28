@@ -34,6 +34,7 @@ export const featureFlags = {
   // only the controlled placeholder while the public flag remains closed.
   tours: flag('VITE_FEATURE_TOURS'),
   toursPreview: flag('VITE_FEATURE_TOURS_PREVIEW', Boolean(viteEnv.DEV)),
+  previewFixtures: flag('VITE_FEATURE_PREVIEW_FIXTURES'),
   maps: flag('VITE_FEATURE_MAPS'),
   googleOAuth: flag('VITE_FEATURE_GOOGLE_OAUTH', flag('VITE_AUTH_GOOGLE_ENABLED')),
   phoneVerification: flag('VITE_FEATURE_PHONE_VERIFICATION'),

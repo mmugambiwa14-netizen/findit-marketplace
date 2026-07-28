@@ -75,7 +75,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
       });
     } catch {
       setPlaybackError(true);
-      toast.error('This Tour is temporarily unavailable');
+      toast.error('This Peek is temporarily unavailable');
     } finally {
       setLoadingPlayback(false);
     }
@@ -137,7 +137,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
   const openReport = () => {
     if (!user) {
-      setGuestAction('report this Tour');
+      setGuestAction('report this Peek');
       setGuestOpen(true);
       return;
     }
@@ -172,7 +172,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             onError={() => { setPlayback(null); setPlaybackError(true); }}
           />
         ) : (
-          <button type="button" onClick={loadPlayback} className="group relative block h-full w-full text-left" aria-label={`Play Tour for ${item.title}`} disabled={loadingPlayback}>
+          <button type="button" onClick={loadPlayback} className="group relative block h-full w-full text-left" aria-label={`Play Peek for ${item.title}`} disabled={loadingPlayback}>
             {item.thumbnailUrl || item.coverImageUrl ? (
               <img src={item.thumbnailUrl || item.coverImageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
             ) : (
@@ -187,7 +187,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
         )}
         {playbackError && (
           <div className="absolute inset-x-3 bottom-3 rounded-xl border border-white/15 bg-black/75 p-3 text-white backdrop-blur-md">
-            <p className="text-sm font-semibold">Tour playback failed</p>
+            <p className="text-sm font-semibold">Peek playback failed</p>
             <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-blue-300">Try again</button>
           </div>
         )}
@@ -210,7 +210,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
         )}
         <div className="mt-3 flex items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">Listed by {item.sellerDisplayName}</p>
-          {!isOwner && <button type="button" onClick={openReport} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground hover:bg-surface-secondary hover:text-destructive"><Flag className="h-3.5 w-3.5" />Report Tour</button>}
+          {!isOwner && <button type="button" onClick={openReport} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground hover:bg-surface-secondary hover:text-destructive"><Flag className="h-3.5 w-3.5" />Report Peek</button>}
         </div>
 
         <div className="mt-3 grid grid-cols-4 gap-2 border-t border-border pt-4">

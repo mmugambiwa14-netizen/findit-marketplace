@@ -117,11 +117,11 @@ export default function CreateService() {
         };
         setTourDraft(failedDraft);
         setPublishedService(service);
-        toast.warning('Service published. Resume the Tour upload from this screen.');
+        toast.warning('Service published. Resume the Peek upload from this screen.');
         return;
       }
       if (tourDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
-      toast.success(tourQueued ? "Service published and Tour queued" : "Service published");
+      toast.success(tourQueued ? "Service published and Peek queued" : "Service published");
       navigate(`/service/${service.id}`);
     },
     onError: (error) => toast.error(customerErrorMessage(error, 'LISTING_PUBLISH_FAILED')),
@@ -182,7 +182,7 @@ export default function CreateService() {
         onProgress: setTourProgress,
       });
       if (tourDraft.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
-      toast.success('Tour uploaded and queued for processing');
+      toast.success('Peek uploaded and queued for processing');
       navigate(`/service/${publishedService.id}`);
     } catch (failure) {
       const failedDraft = {
@@ -209,7 +209,7 @@ export default function CreateService() {
       if (tourDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
       navigate(`/service/${publishedService.id}`);
     } catch (failure) {
-      toast.error(failure.message || 'The unfinished Tour could not be discarded');
+      toast.error(failure.message || 'The unfinished Peek could not be discarded');
     } finally {
       setDiscardingTour(false);
     }
@@ -223,7 +223,7 @@ export default function CreateService() {
             <CheckCircle2 className="mt-0.5 h-7 w-7 shrink-0 text-success" />
             <div>
               <h1 className="text-xl font-bold">Service published</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Your service is saved and remains usable even though its optional Tour upload was interrupted.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Your service is saved and remains usable even though its optional Peek upload was interrupted.</p>
             </div>
           </div>
 
@@ -231,7 +231,7 @@ export default function CreateService() {
             <div className="flex items-start gap-3">
               <Film className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold">Tour upload needs attention</p>
+                <p className="text-sm font-semibold">Peek upload needs attention</p>
                 <p className="mt-1 break-words text-xs text-muted-foreground">{tourDraft?.error || 'The upload was interrupted.'}</p>
               </div>
             </div>
@@ -240,10 +240,10 @@ export default function CreateService() {
           {tourProgress && <TourUploadProgress progress={tourProgress} />}
 
           <Button type="button" className="h-12 w-full rounded-xl" onClick={resumePublishedTour} disabled={retryingTour || discardingTour}>
-            {retryingTour ? <><Loader2 className="animate-spin" />Resuming Tour upload...</> : <><RotateCcw />Resume Tour upload</>}
+            {retryingTour ? <><Loader2 className="animate-spin" />Resuming Peek upload...</> : <><RotateCcw />Resume Peek upload</>}
           </Button>
           <Button type="button" variant="outline" className="h-11 w-full rounded-xl" onClick={continueWithoutPublishedTour} disabled={retryingTour || discardingTour}>
-            {discardingTour ? <><Loader2 className="animate-spin" />Discarding unfinished Tour...</> : 'Continue without Tour'}
+            {discardingTour ? <><Loader2 className="animate-spin" />Discarding unfinished Peek...</> : 'Continue without Peek'}
           </Button>
         </main>
       </div>

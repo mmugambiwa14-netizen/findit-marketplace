@@ -12,6 +12,7 @@ import AppleIcon from "@/components/AppleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { hasEnabledOAuthProvider, oauthProviders } from "@/lib/oauthProviders";
 import { createLoginPath, sanitizeReturnTo } from "@/lib/authNavigation";
+import { PASSWORD_MIN_LENGTH, passwordPolicyError } from "@/lib/passwordPolicy";
 
 // Phase 2B. Replaces the Base44 register -> custom 6-digit OTP screen flow
 // with Supabase's standard signUp -> email confirmation link flow, per the
@@ -35,8 +36,9 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+    const policyError = passwordPolicyError(password);
+    if (policyError) {
+      setError(policyError);
       return;
     }
     if (password !== confirmPassword) {
@@ -210,12 +212,12 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="pl-10 h-12"
-              minLength={8}
+              minLength={PASSWORD_MIN_LENGTH}
               aria-describedby="register-password-requirements"
               required
             />
           </div>
-          <p id="register-password-requirements" className="text-xs text-muted-foreground">Use at least 8 characters.</p>
+          <p id="register-password-requirements" className="text-xs text-muted-foreground">Use at least 10 characters with lowercase, uppercase and a number.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm Password</Label>
@@ -229,7 +231,7 @@ export default function Register() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="pl-10 h-12"
-              minLength={8}
+              minLength={PASSWORD_MIN_LENGTH}
               required
             />
           </div>

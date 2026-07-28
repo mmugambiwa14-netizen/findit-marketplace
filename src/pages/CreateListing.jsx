@@ -191,7 +191,7 @@ export default function CreateListing() {
       const completed = { ...tourDraft, status: 'uploaded', tourId: uploaded.tourId, error: '', resumeUpload: null };
       setTourDraft(completed);
       setSubmittedListing((current) => ({ ...current, tourDraft: completed }));
-      toast.success('Tour uploaded and queued for processing');
+      toast.success('Peek uploaded and queued for processing');
     } catch (failure) {
       const failed = {
         ...tourDraft,
@@ -219,9 +219,9 @@ export default function CreateListing() {
       setTourDraft(null);
       setSubmissionProgress(null);
       setSubmittedListing((current) => current ? { ...current, tourDraft: null } : current);
-      toast.success('Unfinished Tour discarded');
+      toast.success('Unfinished Peek discarded');
     } catch (failure) {
-      toast.error(failure.message || 'The unfinished Tour could not be discarded');
+      toast.error(failure.message || 'The unfinished Peek could not be discarded');
     } finally {
       setDiscardingTour(false);
     }
@@ -272,17 +272,17 @@ function CreateListingConfirmation({ mode, busy, onCancel, onConfirm }) {
     <AlertDialog open={Boolean(mode)} onOpenChange={(open) => { if (!open && !busy) onCancel(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{discardTour ? 'Discard the unfinished Tour?' : 'Leave this draft?'}</AlertDialogTitle>
+          <AlertDialogTitle>{discardTour ? 'Discard the unfinished Peek?' : 'Leave this draft?'}</AlertDialogTitle>
           <AlertDialogDescription>
             {discardTour
-              ? 'The unfinished Tour upload will be removed. The published listing and its photos will remain.'
+              ? 'The unfinished Peek upload will be removed. The published listing and its photos will remain.'
               : 'Your listing draft is saved on this device and can be continued later.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Stay here</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} disabled={busy}>
-            {discardTour ? 'Discard Tour' : 'Leave draft'}
+            {discardTour ? 'Discard Peek' : 'Leave draft'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

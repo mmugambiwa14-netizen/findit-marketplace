@@ -34,7 +34,7 @@ export default function ListingMediaViewer({
   title = "Listing",
   fallbackImage = null,
   tour = null,
-  tourActionLabel = "Watch tour",
+  tourActionLabel = "Watch Peek",
   tourOwnerId = null,
   parentType = "listing",
   parentId = null,
@@ -89,13 +89,13 @@ export default function ListingMediaViewer({
     setPlaybackError("");
     try {
       const nextPlayback = normalizePlayback(await getPublicTourPlayback(parentType, parentId));
-      if (!nextPlayback) throw new Error("Tour playback is unavailable.");
+      if (!nextPlayback) throw new Error("Peek playback is unavailable.");
       setPlayback(nextPlayback);
       setPlaybackState("ready");
     } catch (error) {
       setPlayback(null);
       setPlaybackState("error");
-      setPlaybackError(error.message || "Tour playback is unavailable.");
+      setPlaybackError(error.message || "Peek playback is unavailable.");
     }
   };
 
@@ -279,7 +279,7 @@ function TourPanel({ title, playback, posterUrl, state, error, onRetry, onPlayba
         playsInline
         preload="metadata"
         poster={posterUrl || undefined}
-        aria-label={`${title} tour video`}
+        aria-label={`${title} Peek video`}
         onError={onPlaybackError}
       >
         <source src={playback.playbackUrl} type={playback.mimeType || "video/mp4"} />
@@ -298,7 +298,7 @@ function TourPanel({ title, playback, posterUrl, state, error, onRetry, onPlayba
         ) : (
           <VideoOff className="mx-auto h-8 w-8" aria-hidden="true" />
         )}
-        <p className="mt-3 font-semibold">{loading ? "Loading Tour" : "Tour playback unavailable"}</p>
+        <p className="mt-3 font-semibold">{loading ? "Loading Peek" : "Peek playback unavailable"}</p>
         <p className="mt-1 text-sm text-white/70">
           {loading ? "A secure playback link is being prepared." : error || "The secure playback link could not be prepared."}
         </p>

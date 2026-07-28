@@ -8,7 +8,7 @@ export default function TourUploadProgress({ progress }) {
         <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="truncate font-semibold">{progress?.message || 'Uploading Tour'}</span>
+            <span className="truncate font-semibold">{progress?.message?.replaceAll('Tour', 'Peek') || 'Uploading Peek'}</span>
             <span className="tabular-nums text-muted-foreground">{percent}%</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
