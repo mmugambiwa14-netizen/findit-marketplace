@@ -13,8 +13,10 @@
 // Flags read from Vite env vars so they can differ per environment
 // (e.g. turn payments on in staging before production) without a code change.
 
+const viteEnv = import.meta.env || {};
+
 const flag = (envVar, fallback = false) => {
-  const raw = import.meta?.env?.[envVar];
+  const raw = viteEnv[envVar];
   if (raw === undefined) return fallback;
   return raw === 'true' || raw === true;
 };
@@ -31,7 +33,7 @@ export const featureFlags = {
   // listing integration and public-catalogue acceptance. toursPreview exposes
   // only the controlled placeholder while the public flag remains closed.
   tours: flag('VITE_FEATURE_TOURS'),
-  toursPreview: flag('VITE_FEATURE_TOURS_PREVIEW', Boolean(import.meta?.env?.DEV)),
+  toursPreview: flag('VITE_FEATURE_TOURS_PREVIEW', Boolean(viteEnv.DEV)),
   maps: flag('VITE_FEATURE_MAPS'),
   googleOAuth: flag('VITE_FEATURE_GOOGLE_OAUTH', flag('VITE_AUTH_GOOGLE_ENABLED')),
   phoneVerification: flag('VITE_FEATURE_PHONE_VERIFICATION'),
