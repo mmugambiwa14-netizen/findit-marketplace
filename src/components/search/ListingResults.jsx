@@ -1,6 +1,8 @@
-import { Loader2 } from 'lucide-react';
+import { List, Loader2, Map } from 'lucide-react';
 import ListingGrid from '@/components/listings/ListingGrid';
+import SearchResultsMap from '@/components/search/SearchResultsMap';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function ListingResults({
   listings,
@@ -14,8 +16,12 @@ export default function ListingResults({
   onLoadMore,
   hasFilters,
   onClearFilters,
+  mapsEnabled = false,
+  viewMode = 'list',
+  onViewModeChange = null,
 }) {
   const loaded = listings.length;
+  const showMap = mapsEnabled && viewMode === 'map';
 
   return (
     <section aria-labelledby="listing-results-title">
@@ -26,7 +32,31 @@ export default function ListingResults({
             {isLoading ? 'Loading listings...' : loaded === 0 ? 'No listings found' : `${loaded.toLocaleString()} listing${loaded === 1 ? '' : 's'} loaded`}
           </p>
         </div>
-        {isFetching && !isLoading && !isFetchingNextPage && <span className="text-xs text-muted-foreground">Updating</span>}
+        <div className="flex items-center gap-2">
+          {mapsEnabled && (
+            <div className="grid h-10 grid-cols-2 rounded-lg border border-border bg-card p-1" role="group" aria-label="Results view">
+              {[
+                { value: 'list', label: 'List', icon: List },
+                { value: 'map', label: 'Map', icon: Map },
+              ].map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onViewModeChange?.(value)}
+                  aria-pressed={viewMode === value}
+                  className={cn(
+                    'inline-flex min-w-16 items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors',
+                    viewMode === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+          {isFetching && !isLoading && !isFetchingNextPage && <span className="text-xs text-muted-foreground">Updating</span>}
+        </div>
       </div>
 
       {isError ? (
@@ -37,7 +67,11 @@ export default function ListingResults({
         </div>
       ) : (
         <>
-          <ListingGrid listings={listings} type={type} isLoading={isLoading} />
+          {showMap && !isLoading ? (
+            <SearchResultsMap listings={listings} type={type} />
+          ) : (
+            <ListingGrid listings={listings} type={type} isLoading={isLoading} />
+          )}
 
           {!isLoading && loaded === 0 && hasFilters && (
             <div className="pb-10 pt-4 text-center">

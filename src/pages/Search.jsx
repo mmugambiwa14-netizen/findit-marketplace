@@ -8,6 +8,7 @@ import FilterSheet from '@/components/search/FilterSheet';
 import ListingResults from '@/components/search/ListingResults';
 import SearchToolbar from '@/components/search/SearchToolbar';
 import SortSheet, { getSortLabel } from '@/components/search/SortSheet';
+import { featureFlags } from '@/lib/featureFlags';
 import {
   CAR_CATEGORIES,
   CONDITIONS,
@@ -21,6 +22,7 @@ import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 const VALID_TYPES = new Set(['property', 'car', 'machinery']);
 const VALID_SORTS = new Set(['newest', 'price_asc', 'price_desc', 'most_viewed']);
+const VALID_VIEWS = new Set(['list', 'map']);
 const RECENT_SEARCHES_KEY = 'findit.recent-searches';
 const CATEGORIES_BY_TYPE = {
   property: PROPERTY_CATEGORIES,
@@ -60,6 +62,8 @@ export default function Search() {
   const [queryInput, setQueryInput] = useState(query);
   const requestedSort = searchParams.get('sort');
   const sort = VALID_SORTS.has(requestedSort) ? requestedSort : 'newest';
+  const requestedView = searchParams.get('view');
+  const viewMode = featureFlags.maps && VALID_VIEWS.has(requestedView) ? requestedView : 'list';
   const category = searchParams.get('category') || '';
   const maxAllowedPrice = type === 'machinery' ? 2_000_000 : 500_000;
   const minPrice = Math.min(readNumber(searchParams.get('minPrice'), 0), maxAllowedPrice);
@@ -211,6 +215,7 @@ export default function Search() {
   };
 
   const updateFilter = (key, value) => updateParams({ [key]: value });
+  const updateViewMode = (value) => updateParams({ view: value === 'map' ? 'map' : null }, { replace: false });
 
   const activeFilters = useMemo(() => {
     const filters = [];
@@ -301,6 +306,9 @@ export default function Search() {
           onLoadMore={() => resultsQuery.fetchNextPage()}
           hasFilters={hasFilters}
           onClearFilters={clearFilters}
+          mapsEnabled={featureFlags.maps}
+          viewMode={viewMode}
+          onViewModeChange={updateViewMode}
         />
       </main>
 
