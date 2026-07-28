@@ -1,3 +1,5 @@
+import { getCurrencyConfig } from "@/lib/marketConfig";
+
 export const ZIMBABWE_LOCATIONS = {
   "Harare": {
     suburbs: ["Avondale", "Borrowdale", "Mount Pleasant", "Highlands", "Greendale", "Mabelreign", "Waterfalls", "Glen Norah", "Budiriro", "Hatfield", "Eastlea", "Belvedere", "Arcadia", "Marlborough", "Emerald Hill", "Chisipite", "Greystone Park", "Vainona", "Bluff Hill", "Tynwald", "Glen View", "Mbare", "Epworth", "Ruwa"]
@@ -515,9 +517,10 @@ export const matchesListingCode = (query, type, listing) => {
   );
 };
 
-export const formatPrice = (price) => {
+export const formatPrice = (price, currencyCode = "USD") => {
   if (!price) return "Price on request";
-  return `$${Number(price).toLocaleString()}`;
+  const currency = getCurrencyConfig(currencyCode);
+  return `${currency.symbol} ${Number(price).toLocaleString()}`;
 };
 
 export const getCategoryLabel = (value) => {

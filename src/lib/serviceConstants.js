@@ -99,7 +99,9 @@ export const PRICING_TYPES = [
   { value: "fixed", label: "Fixed price" },
   { value: "starting_from", label: "Starting from" },
   { value: "hourly", label: "Per hour" },
-  { value: "quote", label: "Contact for quote" },
+  { value: "daily", label: "Per day" },
+  { value: "quote_required", label: "Quote required" },
+  { value: "contact_for_price", label: "Contact for price" },
 ];
 
 export function getServiceCategory(value) {

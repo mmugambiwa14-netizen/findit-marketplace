@@ -28,14 +28,14 @@ import {
 const PAGE_SIZE = 50;
 const DEFAULT_STYLE = { label: 'Account update', icon: Bell, className: 'text-primary' };
 const EVENT_STYLE = {
-  listing_approved: { label: 'Listing approved', icon: CheckCircle2, className: 'text-green-600 dark:text-green-400' },
-  listing_rejected: { label: 'Listing rejected', icon: XCircle, className: 'text-destructive' },
+  listing_approved: { label: 'Listing published', icon: CheckCircle2, className: 'text-green-600 dark:text-green-400' },
+  listing_rejected: { label: 'Listing unavailable', icon: XCircle, className: 'text-destructive' },
   listing_expires_soon: { label: 'Expiry reminder', icon: Clock3, className: 'text-amber-600 dark:text-amber-400' },
   report_resolved: { label: 'Report resolved', icon: ShieldCheck, className: 'text-blue-600 dark:text-blue-400' },
   account_status: { label: 'Account update', icon: UserRoundCog, className: 'text-primary' },
   tour_ready: { label: 'Tour ready', icon: Film, className: 'text-green-600 dark:text-green-400' },
   tour_failed: { label: 'Tour failed', icon: AlertCircle, className: 'text-destructive' },
-  tour_rejected: { label: 'Tour rejected', icon: XCircle, className: 'text-destructive' },
+  tour_rejected: { label: 'Tour unavailable', icon: XCircle, className: 'text-destructive' },
   listing_status_changed: { label: 'Listing update', icon: Clock3, className: 'text-primary' },
   saved_listing_unavailable: { label: 'Saved listing update', icon: AlertCircle, className: 'text-amber-600 dark:text-amber-400' },
 };

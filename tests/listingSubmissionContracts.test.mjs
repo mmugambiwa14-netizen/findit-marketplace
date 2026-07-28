@@ -23,9 +23,9 @@ const base = {
   media: [{ intentId: imageId, path: `${ownerId}/staging/${imageId}.jpg` }],
 };
 
-test('normalizes a strict V1 product submission and forces USD', () => {
+test('normalizes a strict V1 product submission with native currency', () => {
   const result = normalizeListingSubmission(ownerId, { ...base, currency: 'ZAR', negotiable: true });
-  assert.equal(result.listing.currency, 'USD');
+  assert.equal(result.listing.currency, 'ZAR');
   assert.equal(result.listing.price, 18000);
   assert.equal(result.listing.negotiable, true);
   assert.equal(result.detail.brand, 'Toyota');

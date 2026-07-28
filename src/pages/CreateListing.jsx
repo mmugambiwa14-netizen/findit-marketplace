@@ -15,6 +15,7 @@ import { resolveListingImages, submitListing } from '@/services/listingCreationS
 import { removeListingTour, uploadListingTour } from '@/services/listingToursService';
 import { getActiveLocations } from '@/services/locationsService';
 import { readStoredJson, removeStoredValue, writeStoredJson } from '@/lib/browserStorage';
+import { customerErrorMessage } from '@/lib/customerErrors';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 function freshForm(user) {
@@ -111,6 +112,7 @@ export default function CreateListing() {
         title: formData.title,
         description: formData.description,
         price: formData.price,
+        currency: formData.currency,
         negotiable: formData.negotiable,
         locationId: formData.location_id,
         contactPhone: formData.contact_phone,
@@ -138,7 +140,7 @@ export default function CreateListing() {
           completedTour = {
             ...tourDraft,
             status: 'error',
-            error: tourError.message || 'The Tour upload was interrupted.',
+            error: customerErrorMessage(tourError, 'TOUR_UPLOAD_FAILED'),
             resumeUpload: tourError.resumeUpload || tourDraft.resumeUpload || null,
           };
         }
@@ -148,12 +150,13 @@ export default function CreateListing() {
         ...result,
         title: formData.title,
         price: Number(formData.price),
+        currency: formData.currency,
         photos: media.map((item) => item.previewUrl),
         location_id: locationName,
         tourDraft: completedTour,
       });
     } catch (failure) {
-      toast.error(failure.message || 'The listing could not be submitted');
+      toast.error(customerErrorMessage(failure, 'LISTING_PUBLISH_FAILED'));
     } finally {
       setSubmitting(false);
     }
@@ -193,7 +196,7 @@ export default function CreateListing() {
       const failed = {
         ...tourDraft,
         status: 'error',
-        error: failure.message || 'The Tour upload was interrupted.',
+        error: customerErrorMessage(failure, 'TOUR_UPLOAD_FAILED'),
         resumeUpload: failure.resumeUpload || tourDraft.resumeUpload || null,
       };
       setTourDraft(failed);

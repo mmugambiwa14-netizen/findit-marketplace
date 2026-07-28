@@ -3,8 +3,9 @@ import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const V1_CATEGORIES = new Set(['property_developer', 'mechanic', 'construction', 'geological']);
-const PRICING_TYPES = new Set(['fixed', 'starting_from', 'hourly', 'quote']);
+const PRICING_TYPES = new Set(['fixed', 'starting_from', 'hourly', 'daily', 'quote', 'quote_required', 'contact_for_price']);
 const SERVICE_STATUSES = new Set(['active', 'paused', 'unavailable']);
+const SUPPORTED_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
 
 function requireUuid(value, label) {
   if (typeof value !== 'string' || !UUID_PATTERN.test(value)) {
@@ -27,12 +28,18 @@ function contactEmail(value) {
 }
 
 function price(value, pricingType) {
-  if (pricingType === 'quote') return null;
+  if (['quote', 'quote_required', 'contact_for_price'].includes(pricingType)) return null;
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1_000_000_000_000) {
     throw new TypeError('Price is invalid');
   }
   return parsed;
+}
+
+function currency(value) {
+  const normalized = String(value || 'USD').toUpperCase();
+  if (!SUPPORTED_CURRENCIES.has(normalized)) throw new TypeError('Currency is invalid');
+  return normalized;
 }
 
 function pricingType(value) {
@@ -107,7 +114,7 @@ export function normalizeServiceCreate(input, provider) {
     subcategory: subcategories[0],
     subcategories,
     price: price(input.price, selectedPricingType),
-    currency: 'USD',
+    currency: currency(input.currency),
     pricing_type: selectedPricingType,
     photos: [],
     location_name: text(input.location_name, 'Location', 120) || null,
@@ -118,7 +125,7 @@ export function normalizeServiceCreate(input, provider) {
 
 export function normalizeServiceEdit(input) {
   const allowed = new Set([
-    'title', 'description', 'pricing_type', 'price',
+    'title', 'description', 'pricing_type', 'price', 'currency',
     'contact_phone', 'contact_whatsapp', 'contact_email',
   ]);
   for (const key of Object.keys(input ?? {})) {
@@ -131,6 +138,7 @@ export function normalizeServiceEdit(input) {
     description: text(input.description, 'Description', 5000) || null,
     pricing_type: selectedPricingType,
     price: price(input.price, selectedPricingType),
+    currency: currency(input.currency),
   };
 }
 

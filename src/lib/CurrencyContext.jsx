@@ -1,47 +1,68 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { getCurrencyConfig, LISTING_CURRENCIES } from "@/lib/marketConfig";
 
 const CurrencyContext = createContext(null);
 
-const MVP_RATES = { USD: 1 };
+const STATIC_FALLBACK_RATES = Object.freeze({
+  USD: { USD: 1 },
+  ZWL: { ZWL: 1 },
+  ZAR: { ZAR: 1 },
+});
 
-export const CURRENCIES = [
-  { code: "USD", name: "US Dollar", symbol: "$" },
-];
+export const CURRENCIES = LISTING_CURRENCIES;
+
+function formatNativeAmount(amount, currencyCode, opts = {}) {
+  if (amount == null || amount === "") return "Price on request";
+  const currency = getCurrencyConfig(currencyCode);
+  const decimals = opts.decimals ?? 0;
+  const formatted = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(Number(amount));
+  return `${currency.symbol} ${formatted}`;
+}
 
 export function CurrencyProvider({ children }) {
   const [currency, setCurrencyState] = useState("USD");
-  const rates = MVP_RATES;
+  const rates = STATIC_FALLBACK_RATES;
   const loadingRates = false;
-  const fetchRates = useCallback(async () => MVP_RATES, []);
+  const fetchRates = useCallback(async () => STATIC_FALLBACK_RATES, []);
 
   const setCurrency = useCallback((code) => {
-    // V1 prices are USD-only. Keep the context setter for component
-    // compatibility, but reject unsupported legacy conversion choices.
-    setCurrencyState(code === "USD" ? code : "USD");
+    const normalized = String(code || "USD").toUpperCase();
+    setCurrencyState(CURRENCIES.some((candidate) => candidate.code === normalized) ? normalized : "USD");
   }, []);
 
-  // Convert a USD price to the selected currency
-  const convert = useCallback((usdAmount) => {
-    if (!usdAmount && usdAmount !== 0) return null;
-    const rate = rates[currency] || 1;
-    return usdAmount * rate;
+  const convert = useCallback((amount, fromCurrency = "USD", toCurrency = currency) => {
+    if (amount == null || amount === "") return null;
+    const source = String(fromCurrency || "USD").toUpperCase();
+    const target = String(toCurrency || currency).toUpperCase();
+    if (source === target) return Number(amount);
+    const rate = rates[source]?.[target];
+    return Number.isFinite(rate) ? Number(amount) * rate : null;
   }, [currency, rates]);
 
-  // Format a converted price with symbol
-  const format = useCallback((usdAmount, opts = {}) => {
-    if (!usdAmount && usdAmount !== 0) return "—";
-    const converted = convert(usdAmount);
-    const curr = CURRENCIES.find(c => c.code === currency);
-    const symbol = curr?.symbol || currency;
-    const formatted = new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: opts.decimals ?? (currency === "USD" ? 0 : 0),
-      maximumFractionDigits: opts.decimals ?? 0,
-    }).format(converted);
-    return `${symbol}${formatted}`;
+  const format = useCallback((amount, opts = {}) => {
+    const source = opts.currency || opts.nativeCurrency || "USD";
+    const converted = convert(amount, source, currency);
+    if (converted == null) return formatNativeAmount(amount, source, opts);
+    const label = formatNativeAmount(converted, currency, opts);
+    return source === currency ? label : `Approximately ${label}`;
   }, [currency, convert]);
 
+  const value = useMemo(() => ({
+    currency,
+    setCurrency,
+    rates,
+    convert,
+    format,
+    formatNative: formatNativeAmount,
+    loadingRates,
+    fetchRates,
+  }), [convert, currency, fetchRates, format, loadingRates, rates, setCurrency]);
+
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, rates, convert, format, loadingRates, fetchRates }}>
+    <CurrencyContext.Provider value={value}>
       {children}
     </CurrencyContext.Provider>
   );

@@ -12,6 +12,8 @@ import { ArrowLeft, Camera, CheckCircle2, Film, Loader2, RotateCcw, Trash2 } fro
 import { toast } from "sonner";
 import { V1_SERVICE_CATEGORIES, PRICING_TYPES, getServiceCategory } from "@/lib/serviceConstants";
 import { ZIMBABWE_LOCATIONS } from "@/lib/constants";
+import { getSupportedListingCurrencies } from "@/lib/marketConfig";
+import { customerErrorMessage } from "@/lib/customerErrors";
 import { createService } from "@/services/servicesService";
 import { removeStagedMarketplaceImage, uploadMarketplaceImage } from "@/services/marketplaceImagesService";
 import TourUploader from "@/components/tours/TourUploader";
@@ -39,6 +41,7 @@ export default function CreateService() {
     subcategory: "",
     subcategories: [],
     price: "",
+    currency: "USD",
     pricing_type: "starting_from",
     location_name: "",
     can_travel: false,
@@ -55,6 +58,8 @@ export default function CreateService() {
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const selectedCategory = getServiceCategory(form.category);
   const cities = Object.keys(ZIMBABWE_LOCATIONS);
+  const currencies = getSupportedListingCurrencies("ZW");
+  const priceDisabled = ["quote", "quote_required", "contact_for_price"].includes(form.pricing_type);
 
   const handlePhoneChange = (value) => {
     setForm((current) => ({
@@ -107,7 +112,7 @@ export default function CreateService() {
         const failedDraft = {
           ...tourDraft,
           status: 'error',
-          error: tourError.message || 'The Tour upload was interrupted.',
+          error: customerErrorMessage(tourError, 'TOUR_UPLOAD_FAILED'),
           resumeUpload: tourError.resumeUpload || tourDraft?.resumeUpload || null,
         };
         setTourDraft(failedDraft);
@@ -119,7 +124,7 @@ export default function CreateService() {
       toast.success(tourQueued ? "Service published and Tour queued" : "Service published");
       navigate(`/service/${service.id}`);
     },
-    onError: (error) => toast.error(error.message || "Failed to publish service"),
+    onError: (error) => toast.error(customerErrorMessage(error, 'LISTING_PUBLISH_FAILED')),
   });
 
   const uploadImages = async (event) => {
@@ -137,7 +142,7 @@ export default function CreateService() {
         const uploaded = await uploadMarketplaceImage(file, 'service_photo');
         setMedia((current) => [...current, uploaded]);
       } catch (error) {
-        setMediaError(error.message || `Could not upload ${file.name}`);
+        setMediaError(customerErrorMessage(error, 'IMAGE_UPLOAD_FAILED'));
       }
     }
     setUploading(false);
@@ -148,7 +153,7 @@ export default function CreateService() {
       await removeStagedMarketplaceImage(item.path, 'service_photo');
       setMedia((current) => current.filter((candidate) => candidate.path !== item.path));
     } catch (error) {
-      setMediaError(error.message || 'Could not remove the image.');
+      setMediaError(customerErrorMessage(error, 'IMAGE_UPLOAD_FAILED'));
     }
   };
 
@@ -183,7 +188,7 @@ export default function CreateService() {
       const failedDraft = {
         ...tourDraft,
         status: 'error',
-        error: failure.message || 'The Tour upload was interrupted.',
+        error: customerErrorMessage(failure, 'TOUR_UPLOAD_FAILED'),
         resumeUpload: failure.resumeUpload || tourDraft.resumeUpload || null,
       };
       setTourDraft(failedDraft);
@@ -351,8 +356,14 @@ export default function CreateService() {
               </Select>
             </div>
             <div>
-              <Label htmlFor="service-price">Price (USD)</Label>
-              <Input id="service-price" type="number" min="0" value={form.price} onChange={(event) => update("price", event.target.value)} placeholder="0" disabled={form.pricing_type === "quote"} className="mt-1.5 h-11 rounded-xl" />
+              <Label htmlFor="service-price">Price</Label>
+              <Input id="service-price" type="number" min="0" value={form.price} onChange={(event) => update("price", event.target.value)} placeholder="0" disabled={priceDisabled} className="mt-1.5 h-11 rounded-xl" />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="service-currency">Currency</Label>
+              <select id="service-currency" value={form.currency} onChange={(event) => update("currency", event.target.value)} className="mt-1.5 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm">
+                {currencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} - {currency.name}</option>)}
+              </select>
             </div>
           </div>
 

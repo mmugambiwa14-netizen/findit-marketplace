@@ -171,7 +171,7 @@ export default function MyListings() {
                   onPublish={() => changeListingStatus.mutate({
                     id: listing.id,
                     action: "submit",
-                    successMessage: "Listing submitted for review",
+                    successMessage: "Listing published",
                   })}
                 />
               ))}
@@ -180,7 +180,7 @@ export default function MyListings() {
 
           {pendingListings.length > 0 && (
             <>
-              <div className="flex items-center gap-2"><div className="h-px flex-1 bg-border" /><span className="px-2 text-xs font-medium text-muted-foreground">Pending review ({pendingListings.length})</span><div className="h-px flex-1 bg-border" /></div>
+              <div className="flex items-center gap-2"><div className="h-px flex-1 bg-border" /><span className="px-2 text-xs font-medium text-muted-foreground">Finishing publication ({pendingListings.length})</span><div className="h-px flex-1 bg-border" /></div>
               {pendingListings.map((listing) => (
                 <ListingRow
                   key={listing.id}
@@ -220,7 +220,7 @@ export default function MyListings() {
                   onRenew={() => changeListingStatus.mutate({
                     id: listing.id,
                     action: "submit",
-                    successMessage: "Listing submitted for review",
+                    successMessage: "Listing published",
                   })}
                 />
               ))}
@@ -250,7 +250,7 @@ export default function MyListings() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this listing?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteCandidate ? `“${deleteCandidate.title}” will be permanently deleted. This cannot be undone.` : 'This listing will be permanently deleted.'}
+              {deleteCandidate ? `"${deleteCandidate.title}" will be permanently deleted. This cannot be undone.` : 'This listing will be permanently deleted.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -325,9 +325,9 @@ function ListingRow({ listing, onDelete, onRenew, onEdit, onPublish, onPause, on
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <p className="text-primary font-bold text-sm">{formatPrice(listing.price)}</p>
+        <p className="text-primary font-bold text-sm">{formatPrice(listing.price, listing.currency)}</p>
         {listing.status === "rejected" && listing.moderation_reason && (
-          <p className="mt-1 text-xs text-destructive">Review note: {listing.moderation_reason}</p>
+          <p className="mt-1 text-xs text-destructive">Unavailable note: {listing.moderation_reason}</p>
         )}
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 border", STATUS_CLASSES[listing.status])}>
@@ -369,7 +369,7 @@ function ListingRow({ listing, onDelete, onRenew, onEdit, onPublish, onPause, on
                 onClick={onPublish}
                 className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-lg transition-colors"
               >
-                <Send className="w-3 h-3" /> Submit for review
+                <Send className="w-3 h-3" /> Publish
               </button>
             )}
           </div>

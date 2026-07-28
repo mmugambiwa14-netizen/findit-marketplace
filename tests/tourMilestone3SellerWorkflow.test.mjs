@@ -64,7 +64,7 @@ test('listing creation stages an optional Tour and uploads only after canonical 
   assert.match(creation, /status: 'error'/);
   assert.match(creation, /setSubmittedListing\(/);
   assert.match(reviewStep, /A Tour failure will not remove or block the listing/);
-  assert.match(successStep, /The listing succeeded, but the Tour upload did not finish/);
+  assert.match(successStep, /The listing is live, but the Tour upload did not finish/);
   assert.match(successStep, /Resume Tour upload/);
   assert.match(successStep, /Discard unfinished Tour/);
 });
@@ -76,7 +76,7 @@ test('seller can add, replace, remove and retry Tours from listing and service e
   assert.match(editService, /parentType="service"/);
   assert.match(management, /removeListingTour/);
   assert.match(management, /retryListingTour/);
-  assert.match(management, /Current public Tour remains visible until the replacement is approved/i);
+  assert.match(management, /current public Tour remains visible until the replacement is active/i);
   assert.match(management, /Cancel this version/);
   assert.match(management, /const newestAfterCurrent/);
   assert.match(management, /const latestIssue/);

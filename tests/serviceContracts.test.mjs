@@ -26,12 +26,14 @@ test('normalizes a bounded V1 service create contract', () => {
     contact_phone: '+263771234567',
     contact_whatsapp: '',
     contact_email: 'TARIRO@EXAMPLE.TEST',
+    currency: 'ZWL',
     location_name: 'Harare',
     can_travel: true,
   }, provider);
 
   assert.equal(result.title, 'Mobile vehicle inspection');
   assert.equal(result.price, 40);
+  assert.equal(result.currency, 'ZWL');
   assert.equal(result.contact_email, 'tariro@example.test');
   assert.deepEqual(result.subcategories, ['pre_purchase_inspection']);
   assert.deepEqual(result.photos, []);

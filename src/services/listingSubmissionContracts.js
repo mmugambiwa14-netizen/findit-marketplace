@@ -9,6 +9,7 @@ const TRANSMISSIONS = new Set(['manual', 'automatic']);
 const MACHINERY_TYPES = new Set(['construction', 'agricultural', 'industrial', 'transport', 'other']);
 const MACHINERY_CONDITIONS = new Set(['new', 'excellent', 'good', 'fair', 'needs_repair']);
 const OWNER_ACTIONS = new Set(['submit', 'pause', 'resume', 'unavailable']);
+const SUPPORTED_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
 
 function text(value, label, min, max, { optional = false } = {}) {
   const normalized = typeof value === 'string' ? value.trim() : '';
@@ -97,6 +98,7 @@ export function normalizeListingSubmission(ownerId, input) {
   const category = text(input?.category, 'Category', 2, 80);
   if (!SLUG_PATTERN.test(category)) throw new TypeError('Category is invalid');
   const price = optionalNumber(input?.price, 'Price', 0.01, 999_999_999_999.99);
+  const currency = oneOf(String(input?.currency || 'USD').toUpperCase(), SUPPORTED_CURRENCIES, 'Currency');
   const contactPhone = text(input?.contactPhone, 'Contact phone', 0, 40, { optional: true });
   const contactWhatsapp = text(input?.contactWhatsapp, 'WhatsApp number', 0, 40, { optional: true });
   const contactEmail = normalizeEmail(input?.contactEmail);
@@ -111,7 +113,7 @@ export function normalizeListingSubmission(ownerId, input) {
       title: text(input?.title, 'Title', 10, 160),
       description: text(input?.description, 'Description', 50, 5000),
       price,
-      currency: 'USD',
+      currency,
       negotiable: Boolean(input?.negotiable),
       locationId: uuid(input?.locationId, 'Location'),
       contactPhone,

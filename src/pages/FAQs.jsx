@@ -14,7 +14,7 @@ const FAQS = [
   },
   {
     question: "How long do listings stay active?",
-    answer: "The expiry date is shown when you publish and in My Listings. FindIt will provide an essential notice before expiry so you can renew an offer that is still available."
+    answer: "Listings remain active until you pause, remove, mark unavailable, sell, or rent them. Routine expiry is not enabled for the V1 launch."
   },
   {
     question: "Can I edit my listing after publishing?",
@@ -38,7 +38,7 @@ const FAQS = [
   },
   {
     question: "What notifications will I receive?",
-    answer: "FindIt V1 limits notifications to important operational events such as listing approval, rejection or upcoming expiry, report resolution, and account suspension or restoration. It does not send price-drop or marketing alerts."
+    answer: "FindIt V1 limits notifications to important operational events such as publication, listing availability changes, report resolution, and account suspension or restoration. It does not send price-drop or marketing alerts."
   },
   {
     question: "How do I delete my listing?",
@@ -62,7 +62,7 @@ const FAQS = [
   },
   {
     question: "What happens when my listing expires?",
-    answer: "Expired listings are hidden from public search. If the item or service is still available, open My Listings to review and renew it without purchasing a package."
+    answer: "Routine listing expiry is disabled for the V1 launch. If expiry is enabled later, expired listings will be hidden from public search until renewed."
   }
 ];
 

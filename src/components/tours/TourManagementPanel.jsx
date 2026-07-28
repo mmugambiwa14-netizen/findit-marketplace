@@ -127,7 +127,7 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 id={`tour-management-${parentId}`} className="flex items-center gap-2 font-semibold"><Film className="h-5 w-5 text-primary" />Tour video</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">One Tour stays attached to this {parentType}. Replacements become public only after processing and approval.</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">One Tour stays attached to this {parentType}. Replacements become public after processing and activation.</p>
         </div>
         {query.isFetching && <Loader2 className="mt-1 h-4 w-4 animate-spin text-muted-foreground" aria-label="Refreshing Tour status" />}
       </div>
@@ -153,7 +153,7 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
               <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" />
               <div>
                 <p className="text-sm font-semibold">Current public Tour</p>
-                <p className="mt-1 text-xs text-muted-foreground">Approved and visible while this {parentType} remains publicly available.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Visible while this {parentType} remains publicly available.</p>
               </div>
             </div>
             <Button type="button" size="sm" variant="ghost" onClick={() => remove(current)} disabled={busy}><Trash2 />Remove</Button>
@@ -184,7 +184,7 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
         </div>
       )}
 
-      {current && (pending || latestIssue) && <p className="rounded-xl bg-primary/5 p-3 text-xs text-muted-foreground">Your current public Tour remains visible until the replacement is approved. A failed replacement does not remove it.</p>}
+      {current && (pending || latestIssue) && <p className="rounded-xl bg-primary/5 p-3 text-xs text-muted-foreground">Your current public Tour remains visible until the replacement is active. A failed replacement does not remove it.</p>}
 
       {!query.isLoading && !query.isError && (!blockingPending || resumablePending) && (
         <TourUploader

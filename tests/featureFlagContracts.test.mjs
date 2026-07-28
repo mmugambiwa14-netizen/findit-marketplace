@@ -23,6 +23,8 @@ const deferredFlags = [
   'aiSupportChat',
   'scheduledReminders',
   'marketingEmails',
+  'listingExpiry',
+  'listingFreshnessReminders',
 ];
 
 const releaseEnvironment = {
@@ -34,6 +36,12 @@ const releaseEnvironment = {
   VITE_FEATURE_BUSINESS_PROFILES: 'true',
   VITE_FEATURE_MESSAGING: 'true',
   VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: 'true',
+  VITE_FEATURE_GOOGLE_OAUTH: 'true',
+  VITE_AUTH_GOOGLE_ENABLED: 'true',
+  VITE_FEATURE_INTERNATIONAL_LISTING: 'true',
+  VITE_FEATURE_MANUAL_LOCATION: 'true',
+  VITE_FEATURE_CURRENT_LOCATION: 'true',
+  VITE_FEATURE_REPORTING: 'true',
   VITE_FEATURE_PAYMENTS: 'false',
   VITE_FEATURE_SUBSCRIPTIONS: 'false',
   VITE_FEATURE_ESCROW: 'false',
@@ -44,6 +52,8 @@ const releaseEnvironment = {
   VITE_FEATURE_AI_SUPPORT_CHAT: 'false',
   VITE_FEATURE_SCHEDULED_REMINDERS: 'false',
   VITE_FEATURE_MARKETING_EMAILS: 'false',
+  VITE_FEATURE_LISTING_EXPIRY: 'false',
+  VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: 'false',
   VITE_FEATURE_TOURS: 'false',
   VITE_FEATURE_TOURS_PREVIEW: 'false',
   TOURS_BACKEND_ENABLED: 'false',
@@ -86,4 +96,8 @@ test('the production release gate requires MVP flags on and deferred flags off',
   const aiEnabled = validateRelease({ VITE_FEATURE_AI_MODERATION: 'true' });
   assert.notEqual(aiEnabled.status, 0);
   assert.match(aiEnabled.stderr, /VITE_FEATURE_AI_MODERATION must be false/);
+
+  const mapsMissingProvider = validateRelease({ VITE_FEATURE_MAPS: 'true' });
+  assert.notEqual(mapsMissingProvider.status, 0);
+  assert.match(mapsMissingProvider.stderr, /VITE_MAPTILER_PUBLIC_KEY is required/);
 });

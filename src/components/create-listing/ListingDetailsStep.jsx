@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import StepNav from './StepNav';
+import { getSupportedListingCurrencies } from '@/lib/marketConfig';
 
 const fieldClass = 'h-11 rounded-xl';
 
@@ -11,6 +12,7 @@ export default function ListingDetailsStep({ formData, update, onBack, onContinu
   const [error, setError] = useState('');
   const kind = formData.listing_category;
   const detail = formData.detail ?? {};
+  const currencies = getSupportedListingCurrencies(formData.country_code);
   const setDetail = (key, value) => update('detail', { ...detail, [key]: value });
 
   const continueIfValid = () => {
@@ -30,7 +32,10 @@ export default function ListingDetailsStep({ formData, update, onBack, onContinu
     <fieldset className="space-y-2"><legend className="text-sm font-semibold">Offer type *</legend><div className="grid grid-cols-2 gap-2">{[['sale', 'For sale'], ['rent', 'For rent']].map(([value, label]) => <button type="button" key={value} onClick={() => update('listing_type', value)} className={`h-11 rounded-xl border-2 text-sm font-semibold ${formData.listing_type === value ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card'}`}>{label}</button>)}</div></fieldset>
     <div><Label htmlFor="listing-title">Title *</Label><Input id="listing-title" maxLength={160} className={`${fieldClass} mt-1`} value={formData.title || ''} onChange={(event) => update('title', event.target.value)} placeholder="A clear, specific title" /><p className="mt-1 text-right text-xs text-muted-foreground">{(formData.title || '').length}/160</p></div>
     <div><Label htmlFor="listing-description">Description *</Label><Textarea id="listing-description" maxLength={5000} className="mt-1 min-h-36 rounded-xl" value={formData.description || ''} onChange={(event) => update('description', event.target.value)} placeholder="Condition, history, important features, and anything a buyer should know" /><p className="mt-1 text-right text-xs text-muted-foreground">{(formData.description || '').length}/5000</p></div>
-    <div><Label htmlFor="listing-price">Price (USD) *</Label><Input id="listing-price" type="number" min="0.01" step="0.01" inputMode="decimal" className={`${fieldClass} mt-1`} value={formData.price || ''} onChange={(event) => update('price', event.target.value)} placeholder="0.00" /></div>
+    <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+      <div><Label htmlFor="listing-price">Price *</Label><Input id="listing-price" type="number" min="0.01" step="0.01" inputMode="decimal" className={`${fieldClass} mt-1`} value={formData.price || ''} onChange={(event) => update('price', event.target.value)} placeholder="0.00" /></div>
+      <div><Label htmlFor="listing-currency">Currency *</Label><select id="listing-currency" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={formData.currency || 'USD'} onChange={(event) => update('currency', event.target.value)}>{currencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}</select></div>
+    </div>
     <div className="flex items-center justify-between rounded-xl border bg-card p-3"><div><p className="text-sm font-semibold">Price is negotiable</p><p className="text-xs text-muted-foreground">Buyers will see a clear negotiable label.</p></div><Switch id="listing-negotiable" aria-label="Price is negotiable" checked={Boolean(formData.negotiable)} onCheckedChange={(value) => update('negotiable', value)} /></div>
 
     {kind === 'property' && <div className="grid gap-4 sm:grid-cols-2">

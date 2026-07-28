@@ -32,6 +32,17 @@ export const featureFlags = {
   // only the controlled placeholder while the public flag remains closed.
   tours: flag('VITE_FEATURE_TOURS'),
   toursPreview: flag('VITE_FEATURE_TOURS_PREVIEW', Boolean(import.meta?.env?.DEV)),
+  maps: flag('VITE_FEATURE_MAPS'),
+  googleOAuth: flag('VITE_FEATURE_GOOGLE_OAUTH', flag('VITE_AUTH_GOOGLE_ENABLED')),
+  phoneVerification: flag('VITE_FEATURE_PHONE_VERIFICATION'),
+  currencyConversion: flag('VITE_FEATURE_CURRENCY_CONVERSION'),
+  internationalListing: flag('VITE_FEATURE_INTERNATIONAL_LISTING', true),
+  manualLocation: flag('VITE_FEATURE_MANUAL_LOCATION', true),
+  currentLocation: flag('VITE_FEATURE_CURRENT_LOCATION', true),
+  serviceRadius: flag('VITE_FEATURE_SERVICE_RADIUS'),
+  listingExpiry: flag('VITE_FEATURE_LISTING_EXPIRY'),
+  listingFreshnessReminders: flag('VITE_FEATURE_LISTING_FRESHNESS_REMINDERS'),
+  reporting: flag('VITE_FEATURE_REPORTING', true),
 
   // Payment-related — OFF for MVP. Re-enabling requires wiring a real
   // gateway (Stripe + Ecocash/InnBucks reconciliation) in addition to

@@ -112,6 +112,11 @@ const requiredMvpLaunchFlags = [
   'VITE_FEATURE_BUSINESS_PROFILES',
   'VITE_FEATURE_MESSAGING',
   'VITE_FEATURE_ESSENTIAL_NOTIFICATIONS',
+  'VITE_FEATURE_GOOGLE_OAUTH',
+  'VITE_FEATURE_INTERNATIONAL_LISTING',
+  'VITE_FEATURE_MANUAL_LOCATION',
+  'VITE_FEATURE_CURRENT_LOCATION',
+  'VITE_FEATURE_REPORTING',
 ];
 const deferredV1Flags = [
   'VITE_FEATURE_PAYMENTS',
@@ -124,7 +129,24 @@ const deferredV1Flags = [
   'VITE_FEATURE_AI_SUPPORT_CHAT',
   'VITE_FEATURE_SCHEDULED_REMINDERS',
   'VITE_FEATURE_MARKETING_EMAILS',
+  'VITE_FEATURE_LISTING_EXPIRY',
+  'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
 ];
+
+if (env.VITE_FEATURE_MAPS === 'true' && !env.VITE_MAPTILER_PUBLIC_KEY?.trim()) {
+  problems.push('VITE_MAPTILER_PUBLIC_KEY is required when VITE_FEATURE_MAPS=true');
+}
+if (env.VITE_FEATURE_CURRENCY_CONVERSION === 'true' && !env.EXCHANGE_RATE_PROVIDER?.trim()) {
+  problems.push('EXCHANGE_RATE_PROVIDER is required when currency conversion is enabled');
+}
+if (env.VITE_FEATURE_PHONE_VERIFICATION === 'true') {
+  for (const name of ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_VERIFY_SERVICE_SID']) {
+    if (!env[name]?.trim()) problems.push(`${name} is required when phone verification is enabled`);
+  }
+}
+if (env.VITE_FEATURE_GOOGLE_OAUTH === 'true' && env.VITE_AUTH_GOOGLE_ENABLED !== 'true') {
+  problems.push('VITE_AUTH_GOOGLE_ENABLED must be true when VITE_FEATURE_GOOGLE_OAUTH=true');
+}
 
 if (mode === 'production') {
   for (const name of requiredMvpLaunchFlags) {
