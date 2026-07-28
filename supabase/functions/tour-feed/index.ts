@@ -42,6 +42,13 @@ type FeedRow = {
 
 const CATEGORIES = new Set(["all", "property", "car", "machinery", "service"]);
 const LEGACY_URL = /^https?:\/\//i;
+const LOCAL_INTERNAL_ORIGIN = "http://kong:8000";
+
+function browserReachableUrl(req: Request, value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (!value.startsWith(LOCAL_INTERNAL_ORIGIN)) return value;
+  return `${new URL(req.url).origin}${value.slice(LOCAL_INTERNAL_ORIGIN.length)}`;
+}
 
 function text(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -147,8 +154,8 @@ Deno.serve(async (req: Request) => {
         currency: row.currency,
         pricingType: row.pricing_type,
         publicLocation: row.public_location,
-        coverImageUrl,
-        thumbnailUrl: tourThumbnails.get(row.thumbnail_storage_path) ?? coverImageUrl,
+        coverImageUrl: browserReachableUrl(req, coverImageUrl),
+        thumbnailUrl: browserReachableUrl(req, tourThumbnails.get(row.thumbnail_storage_path) ?? coverImageUrl),
         durationSeconds: Number(row.duration_seconds),
         availability: row.availability,
         summaryAttributes: Array.isArray(row.summary_attributes)

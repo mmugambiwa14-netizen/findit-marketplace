@@ -11,6 +11,13 @@ import {
   toursBackendEnabled,
 } from "../_shared/tour-runtime.ts";
 
+const LOCAL_INTERNAL_ORIGIN = "http://kong:8000";
+
+function browserReachableUrl(req: Request, value: string): string {
+  if (!value.startsWith(LOCAL_INTERNAL_ORIGIN)) return value;
+  return `${new URL(req.url).origin}${value.slice(LOCAL_INTERNAL_ORIGIN.length)}`;
+}
+
 Deno.serve(async (req: Request) => {
   const early = requireJsonRequest(req);
   if (early) return early;
@@ -68,8 +75,8 @@ Deno.serve(async (req: Request) => {
       durationSeconds: Number(metadata.duration_seconds),
       width: metadata.width,
       height: metadata.height,
-      playbackUrl: playback.data.signedUrl,
-      thumbnailUrl: thumbnail.data.signedUrl,
+      playbackUrl: browserReachableUrl(req, playback.data.signedUrl),
+      thumbnailUrl: browserReachableUrl(req, thumbnail.data.signedUrl),
       expiresInSeconds: TOUR_LIMITS.signedPlaybackLifetimeSeconds,
       publishedAt: metadata.published_at,
     };

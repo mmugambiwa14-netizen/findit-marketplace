@@ -41,6 +41,17 @@ function progress(callback, stage, percent, message, details = {}) {
   callback?.({ stage, percent, message, ...details });
 }
 
+function browserReachableLocalUrl(value) {
+  if (typeof value !== 'string') return value ?? null;
+  const localSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (!localSupabaseUrl?.startsWith('http://127.0.0.1:') && !localSupabaseUrl?.startsWith('http://localhost:')) {
+    return value;
+  }
+  return value
+    .replace(/^http:\/\/kong:8000/i, localSupabaseUrl)
+    .replace(/^http:\/\/127\.0\.0\.1:8081/i, localSupabaseUrl);
+}
+
 /**
  * @typedef {Error & { resumeUpload?: { intentId: string, tourId?: string, path: string, uploadToken: string, expiresAt: string | null, idempotencyKey: string } }} ResumableTourError
  */
@@ -280,8 +291,8 @@ export async function tryGetPublicTourPlayback(parentType, parentId) {
       durationSeconds: Number(playback.durationSeconds) || null,
       width: playback.width ?? null,
       height: playback.height ?? null,
-      playbackUrl: playback.playbackUrl,
-      thumbnailUrl: playback.thumbnailUrl,
+      playbackUrl: browserReachableLocalUrl(playback.playbackUrl),
+      thumbnailUrl: browserReachableLocalUrl(playback.thumbnailUrl),
       expiresInSeconds: playback.expiresInSeconds ?? null,
       publishedAt: playback.publishedAt ?? null,
       isReady: true,
@@ -297,7 +308,15 @@ export async function tryGetPublicTourPlayback(parentType, parentId) {
 export async function getPublicTourFeedPage(input) {
   requireTours();
   const request = normalizeTourFeedRequest(input);
-  return normalizeTourFeedResponse(await invokePublicTourFeed(request));
+  const page = normalizeTourFeedResponse(await invokePublicTourFeed(request));
+  return {
+    ...page,
+    items: page.items.map((item) => ({
+      ...item,
+      coverImageUrl: browserReachableLocalUrl(item.coverImageUrl),
+      thumbnailUrl: browserReachableLocalUrl(item.thumbnailUrl),
+    })),
+  };
 }
 
 export function publicTourDetailPath(item, { openTour = true } = {}) {

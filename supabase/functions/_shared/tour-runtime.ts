@@ -18,7 +18,9 @@ export const TOUR_MIME_EXTENSIONS = Object.freeze<Record<string, string>>({
 });
 
 export function toursBackendEnabled(): boolean {
-  return Deno.env.get("TOURS_BACKEND_ENABLED") === "true";
+  if (Deno.env.get("TOURS_BACKEND_ENABLED") === "true") return true;
+  return Deno.env.get("SUPABASE_URL") === "http://kong:8000"
+    && Deno.env.get("TOURS_BACKEND_ENABLED") !== "false";
 }
 
 export function configuredKey(name: string, legacyName: string): string {
