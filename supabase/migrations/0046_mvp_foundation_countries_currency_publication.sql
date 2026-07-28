@@ -114,7 +114,7 @@ alter table public.listings
   add column if not exists public_longitude numeric(9,6),
   add column if not exists public_location_label text,
   add column if not exists location_visibility public.location_visibility_mode not null default 'approximate',
-  add column if not exists public_location geography(Point, 4326),
+  add column if not exists public_location extensions.geography(Point, 4326),
   add column if not exists content_suspended_at timestamptz,
   add column if not exists content_suspension_reason text;
 
@@ -129,10 +129,10 @@ set
   public_location = case
     when coalesce(l.public_longitude, l.longitude, loc.longitude) is not null
      and coalesce(l.public_latitude, l.latitude, loc.latitude) is not null
-    then st_setsrid(st_makepoint(
+    then extensions.st_setsrid(extensions.st_makepoint(
       coalesce(l.public_longitude, l.longitude, loc.longitude)::double precision,
       coalesce(l.public_latitude, l.latitude, loc.latitude)::double precision
-    ), 4326)::geography
+    ), 4326)::extensions.geography
     else l.public_location
   end
 from public.locations loc
@@ -438,7 +438,7 @@ begin
     normalized_location, normalized_country, location_row.latitude, location_row.longitude,
     location_row.latitude, location_row.longitude, location_row.name,
     case when location_row.longitude is not null and location_row.latitude is not null
-      then st_setsrid(st_makepoint(location_row.longitude::double precision, location_row.latitude::double precision), 4326)::geography
+      then extensions.st_setsrid(extensions.st_makepoint(location_row.longitude::double precision, location_row.latitude::double precision), 4326)::extensions.geography
       else null
     end,
     normalized_category, normalized_offer,
