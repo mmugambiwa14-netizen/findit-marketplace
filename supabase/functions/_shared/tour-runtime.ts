@@ -80,11 +80,29 @@ export function allowedOrigins(): Set<string> {
   );
 }
 
+function isLocalPreviewOrigin(origin: string): boolean {
+  if (supabaseUrl() !== "http://kong:8000") return false;
+  try {
+    const parsed = new URL(origin);
+    if (parsed.protocol !== "http:") return false;
+    const host = parsed.hostname;
+    if (host === "localhost" || host === "127.0.0.1") return true;
+    if (/^10\./.test(host) || /^192\.168\./.test(host)) return true;
+    const private172 = /^172\.(\d{1,2})\./.exec(host);
+    return private172 !== null && Number(private172[1]) >= 16 && Number(private172[1]) <= 31;
+  } catch {
+    return false;
+  }
+}
+
+function originAllowed(origin: string): boolean {
+  return allowedOrigins().has(origin) || isLocalPreviewOrigin(origin);
+}
+
 export function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("origin") ?? "";
-  const allowed = allowedOrigins();
   return {
-    ...(allowed.has(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
+    ...(originAllowed(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
     "Access-Control-Allow-Headers":
       "authorization, apikey, content-type, x-client-info, x-findit-signature, x-findit-timestamp",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -105,7 +123,7 @@ export function json(
 
 export function requestOriginAllowed(req: Request): boolean {
   const origin = req.headers.get("origin");
-  return !origin || allowedOrigins().has(origin);
+  return !origin || originAllowed(origin);
 }
 
 export function requireJsonRequest(req: Request): Response | null {

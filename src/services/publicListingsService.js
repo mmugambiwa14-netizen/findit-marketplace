@@ -9,6 +9,12 @@ import { mapPublicListing } from '@/services/listingMappers';
 import { hydrateListingImages } from '@/services/listingCreationService';
 import { normalizePublicSearchPageRequest, normalizePublicSearchRequest } from '@/services/searchContracts';
 import { attachPublicTourSummaries } from '@/services/listingToursService';
+import {
+  filterLocalPreviewListings,
+  findLocalPreviewListing,
+  findLocalPreviewSuggestions,
+  localPreviewListingsEnabled,
+} from '@/services/localPreviewListings';
 
 const MAX_HOME_RESULTS = 24;
 
@@ -20,6 +26,23 @@ function normalizeLimit(limit) {
 }
 
 export async function getLatestPublicListings(kind, limit) {
+  if (localPreviewListingsEnabled()) {
+    const rows = filterLocalPreviewListings({
+      kind,
+      query: '',
+      category: '',
+      locationId: '',
+      minPrice: 0,
+      maxPrice: Number.MAX_SAFE_INTEGER,
+      minBedrooms: null,
+      brand: '',
+      condition: '',
+      fuelType: '',
+      transmission: '',
+      sort: 'newest',
+    }).slice(0, normalizeLimit(limit));
+    return attachPublicTourSummaries(rows.map(mapPublicListing), 'listing');
+  }
   const rows = await findLatestAvailableListings(kind, normalizeLimit(limit));
   const listings = (await hydrateListingImages(rows)).map(mapPublicListing);
   return await attachPublicTourSummaries(listings, 'listing');
@@ -27,6 +50,12 @@ export async function getLatestPublicListings(kind, limit) {
 
 export async function getPublicListing(kind, id) {
   if (typeof id !== 'string' || !id.trim()) return null;
+  if (localPreviewListingsEnabled()) {
+    const row = findLocalPreviewListing(kind, id);
+    if (!row) return null;
+    const [listing] = await attachPublicTourSummaries([mapPublicListing(row)], 'listing');
+    return listing;
+  }
   const row = await findPublicListingById(kind, id);
   if (!row) return null;
   const [hydrated] = await hydrateListingImages([row]);
@@ -37,6 +66,16 @@ export async function getPublicListing(kind, id) {
 
 export async function searchPublicListingsPage(input) {
   const request = normalizePublicSearchPageRequest(input);
+  if (localPreviewListingsEnabled()) {
+    if (request.cursor) return { items: [], nextCursor: null };
+    return {
+      items: await attachPublicTourSummaries(
+        filterLocalPreviewListings(request).slice(0, request.pageSize).map(mapPublicListing),
+        'listing',
+      ),
+      nextCursor: null,
+    };
+  }
   const rows = await findPublicListingsPage(request);
   const values = Array.isArray(rows) ? rows : [];
   const hasMore = values.length > request.pageSize;
@@ -53,6 +92,9 @@ export async function searchPublicListingsPage(input) {
 export async function getPublicSearchSuggestions(kind, query) {
   const normalized = normalizePublicSearchRequest({ kind, query });
   if (normalized.query.length < 2) return { listings: [], locations: [] };
+  if (localPreviewListingsEnabled()) {
+    return findLocalPreviewSuggestions(normalized.kind, normalized.query);
+  }
 
   const [listings, locations] = await Promise.all([
     findPublicListingTitleSuggestions(normalized.kind, normalized.query),

@@ -1,4 +1,5 @@
 import { featureFlags } from '@/lib/featureFlags';
+import { isPrivatePreviewHost, localPreviewModeEnabled } from '@/lib/localPreview';
 import {
   approveAdminTour,
   invokePublicTourFeed,
@@ -27,6 +28,69 @@ import {
   normalizeTourUploadIntent,
 } from '@/services/listingTourContracts';
 
+const LOCAL_PREVIEW_TOUR_ID = '40000000-0000-4000-8000-000000000001';
+const LOCAL_PREVIEW_LISTING_ID = '20000000-0000-4000-8000-000000000001';
+const LOCAL_PREVIEW_SELLER_ID = '10000000-0000-4000-8000-000000000001';
+
+function isLocalTourPreview() {
+  return featureFlags.toursPreview && localPreviewModeEnabled();
+}
+
+function localPreviewAsset(filename) {
+  const origin = globalThis.location?.origin || 'http://127.0.0.1:5173';
+  const basePath = String(import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
+  return new URL(`${basePath.replace(/^\//, '')}mock/${filename}`, `${origin}/`).toString();
+}
+
+function localPreviewPlayback(parent) {
+  return {
+    tourId: LOCAL_PREVIEW_TOUR_ID,
+    parentType: parent.parentType,
+    parentId: parent.parentId,
+    durationSeconds: 8,
+    width: 1280,
+    height: 720,
+    playbackUrl: localPreviewAsset('findit-tour-preview.mp4'),
+    thumbnailUrl: localPreviewAsset('findit-tour-thumbnail.webp'),
+    expiresInSeconds: 3600,
+    publishedAt: '2026-07-28T00:00:00.000Z',
+  };
+}
+
+function localPreviewFeedPage(request) {
+  const item = {
+    tourId: LOCAL_PREVIEW_TOUR_ID,
+    parentType: 'listing',
+    parentId: LOCAL_PREVIEW_LISTING_ID,
+    listingType: 'car',
+    title: 'Toyota Hilux 2.8 GD-6 double cab',
+    price: 28500,
+    currency: 'USD',
+    pricingType: null,
+    publicLocation: 'Harare',
+    coverImageUrl: localPreviewAsset('findit-tour-thumbnail.webp'),
+    thumbnailUrl: localPreviewAsset('findit-tour-thumbnail.webp'),
+    durationSeconds: 8,
+    availability: 'available',
+    summaryAttributes: ['2021', '64,000 km', 'automatic'],
+    sellerId: LOCAL_PREVIEW_SELLER_ID,
+    sellerDisplayName: 'FindIt Preview Seller',
+    sellerType: 'seller',
+    publishedAt: '2026-07-28T00:00:00.000Z',
+  };
+  const query = request.query.toLowerCase();
+  const location = request.location.toLowerCase();
+  const matches = !request.cursor
+    && (request.category === 'all' || request.category === item.listingType)
+    && (!query || `${item.title} ${item.sellerDisplayName} ${item.publicLocation}`.toLowerCase().includes(query))
+    && (!location || item.publicLocation.toLowerCase().includes(location));
+  return {
+    items: matches ? [item] : [],
+    nextCursor: null,
+    signedAssetLifetimeSeconds: 3600,
+  };
+}
+
 function requireTours() {
   if (!featureFlags.tours) throw new Error('Tours are not enabled in this build');
 }
@@ -44,12 +108,24 @@ function progress(callback, stage, percent, message, details = {}) {
 function browserReachableLocalUrl(value) {
   if (typeof value !== 'string') return value ?? null;
   const localSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  if (!localSupabaseUrl?.startsWith('http://127.0.0.1:') && !localSupabaseUrl?.startsWith('http://localhost:')) {
+  if (!localSupabaseUrl) return value;
+
+  try {
+    const publicUrl = new URL(localSupabaseUrl);
+    if (!isPrivatePreviewHost(publicUrl.hostname)) return value;
+
+    const signedUrl = new URL(value);
+    const internalGateway = signedUrl.hostname === 'kong' && signedUrl.port === '8000';
+    const localStoragePort = isPrivatePreviewHost(signedUrl.hostname) && signedUrl.port === '8081';
+    if (!internalGateway && !localStoragePort) return value;
+
+    signedUrl.protocol = publicUrl.protocol;
+    signedUrl.hostname = publicUrl.hostname;
+    signedUrl.port = publicUrl.port;
+    return signedUrl.toString();
+  } catch {
     return value;
   }
-  return value
-    .replace(/^http:\/\/kong:8000/i, localSupabaseUrl)
-    .replace(/^http:\/\/127\.0\.0\.1:8081/i, localSupabaseUrl);
 }
 
 /**
@@ -183,7 +259,9 @@ export function getOwnerTours(parentType, parentId) {
 
 export function getPublicTourPlayback(parentType, parentId) {
   requireTours();
-  return invokePublicTourPlayback(normalizeTourPlaybackRequest(parentType, parentId));
+  const parent = normalizeTourPlaybackRequest(parentType, parentId);
+  if (isLocalTourPreview()) return Promise.resolve(localPreviewPlayback(parent));
+  return invokePublicTourPlayback(parent);
 }
 
 export function removeListingTour(tourId) {
@@ -263,6 +341,21 @@ function mapTourSummary(row) {
 
 export async function attachPublicTourSummaries(items, parentType) {
   if (!featureFlags.tours || !Array.isArray(items) || items.length === 0) return items ?? [];
+  if (isLocalTourPreview()) {
+    return items.map((item) => ({
+      ...item,
+      tour: parentType === 'listing' && item.id === LOCAL_PREVIEW_LISTING_ID
+        ? {
+            id: LOCAL_PREVIEW_TOUR_ID,
+            status: 'ready',
+            moderationStatus: 'approved',
+            durationSeconds: 8,
+            publishedAt: '2026-07-28T00:00:00.000Z',
+            isReady: true,
+          }
+        : null,
+    }));
+  }
   const ids = uniqueParentIds(items);
   if (!ids.length) return items;
 
@@ -308,6 +401,7 @@ export async function tryGetPublicTourPlayback(parentType, parentId) {
 export async function getPublicTourFeedPage(input) {
   requireTours();
   const request = normalizeTourFeedRequest(input);
+  if (isLocalTourPreview()) return localPreviewFeedPage(request);
   const page = normalizeTourFeedResponse(await invokePublicTourFeed(request));
   return {
     ...page,
