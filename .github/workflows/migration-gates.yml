@@ -87,6 +87,9 @@ jobs:
       - name: Run recommendation RLS and lifecycle matrix
         run: supabase test db supabase/tests/v1_recommendation_foundation.sql --local
 
+      - name: Run fail-open projection queue matrix
+        run: supabase test db supabase/tests/v1_recommendation_projection_queue.sql --local
+
       - name: Run recommendation query-plan and cursor scale suite
         run: supabase test db supabase/tests/v1_recommendation_scale.sql --local
 
