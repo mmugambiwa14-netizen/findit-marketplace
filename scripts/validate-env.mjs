@@ -54,7 +54,8 @@ if (env.VITE_SUPABASE_URL?.trim()) {
 
 const featureFlags = Object.keys(env).filter((name) => name.startsWith('VITE_FEATURE_'));
 const authProviderFlags = ['VITE_AUTH_GOOGLE_ENABLED', 'VITE_AUTH_APPLE_ENABLED'];
-for (const name of [...featureFlags, ...authProviderFlags]) {
+const previewFlags = ['VITE_PREVIEW_AUTH_BYPASS'];
+for (const name of [...featureFlags, ...authProviderFlags, ...previewFlags]) {
   if (env[name] === undefined || env[name] === '') continue;
   if (!['true', 'false'].includes(env[name])) problems.push(`${name} must be exactly true or false`);
 }
@@ -99,7 +100,6 @@ if (toursBackendEnabled) {
     problems.push('TOUR_CACHE_PURGE_SECRET is required when TOUR_CACHE_PURGE_URL is configured');
   }
 }
-
 
 if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== undefined && env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== '' && !['true', 'false'].includes(env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED)) {
   problems.push('FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED must be exactly true or false');
@@ -157,6 +157,12 @@ if (mode === 'production') {
   }
   if (env.VITE_FEATURE_TOURS_PREVIEW !== 'false') {
     problems.push('VITE_FEATURE_TOURS_PREVIEW must be false in production');
+  }
+  if (env.VITE_FEATURE_PREVIEW_FIXTURES !== 'false') {
+    problems.push('VITE_FEATURE_PREVIEW_FIXTURES must be false in production');
+  }
+  if (env.VITE_PREVIEW_AUTH_BYPASS !== 'false') {
+    problems.push('VITE_PREVIEW_AUTH_BYPASS must be false in production');
   }
 
   if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== 'true') {
