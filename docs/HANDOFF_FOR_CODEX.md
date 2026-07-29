@@ -12,7 +12,7 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Head at handoff | `5e24accc4e53397a932c20b4fcf76514a510f958` before this handoff refresh |
 | Previous heads | `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
 | SQL boundary | migration `0068`, 68 migrations and 39 rollback capsules |
-| CI on head | inspect PR #1; do not rely on this document for current check state |
+| CI on head | all four checks pass on `350b0d2`; inspect PR #1 for current state |
 
 Confirm the real head before doing anything:
 
@@ -205,9 +205,7 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 `npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
-**CI on `5e24acc`: inspect PR #1 before relying on this line.** Earlier checks
-were green on `9fa6711` and the branch has since added the public Edge boundary
-fix. Treat the PR check output, not this document, as the source of truth.
+**CI on `350b0d2`: all four checks pass** on PR #1. The PR remains draft.
 
 The previous Windows-only contract failure in
 `tests/tourMilestone6ModerationAdmin.test.mjs` is fixed by normalizing line
@@ -218,6 +216,32 @@ endings before the literal branch extraction.
 could not run because the Docker daemon was unreachable in that environment.
 Those run in CI only; read the current PR check output before trusting any pgTAP
 or migration claim.
+
+## 3.1 Hosted staging evidence
+
+Confirmed staging target: `FindIt Staging` (`bwgklpxoetrrkutottdb`). Evidence:
+repository staging scripts and setup docs name this ref; the project is active
+healthy in organization `pyktbmobvwktiuiqbobd`; it has the recommendation and
+contextual Edge Functions deployed. `FindIt Marketplace`
+(`jvbpxnfxkptuexgssplj`) is active healthy but lacks the recommendation service
+function set, so it is not the Phase 3 staging target.
+
+Executed against `https://bwgklpxoetrrkutottdb.supabase.co/functions/v1`:
+
+| Hosted check | Result |
+|---|---|
+| `OPTIONS contextual-ecosystem` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
+| `OPTIONS recently-listed` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
+| `POST` to six public recommendation functions with browser-style origin and `x-client-info` | 200, contract v1, empty items, `degraded: true`, `reason: service_disabled` |
+| `POST contextual-ecosystem` with a syntactically valid UUID | 200, contract v2, sections array, bounded non-blocking response |
+| `POST personalized-recommendations` without auth | 401 from the Supabase gateway |
+
+This is still **not hosted certification**. The process does not have the actual
+hosted smoke credentials (`FINDIT_SUPABASE_ANON_KEY`,
+`FINDIT_RECOMMENDATION_HEALTH_SECRET`,
+`FINDIT_CONTEXTUAL_HEALTH_SECRET`) or an eligible staging listing id, so health
+endpoints, authenticated calls, enabled-service real results, timeout behaviour
+and circuit persistence across separate requests remain unproven.
 
 ## 4. Immediate next actions
 
@@ -251,9 +275,10 @@ gateway JWT verification, because the browser key is expected to be an opaque
 ### O-2 (Medium) - hosted Phase 3 is not certified
 
 `contextual-ecosystem` is present in `supabase/config.toml` with
-`verify_jwt = false`, but no hosted end-to-end recommendation/contextual call has
-passed on the visible Supabase projects. Plan a deliberate deploy-and-certify
-step, with hosted evidence, before claiming Phase 3 complete.
+`verify_jwt = false`, and partial hosted staging calls now pass. Phase 3 is still
+not certified because the health credentials, authenticated smoke credentials,
+eligible listing id, one-service enablement, real-result evidence, timeout
+evidence and durable circuit evidence have not been executed.
 
 ### O-3 to O-6 — closed in `06617e3`
 
@@ -352,10 +377,10 @@ From the project instructions and from defects already paid for once:
 
 | Phase | Source | Local | CI | Hosted | Certified |
 |---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on `06617e3` | no | no |
-| 1 — data foundation | complete | pass | green on `06617e3` | no | no |
-| 2 — independent services | complete | pass | green on `06617e3` | no | **no** |
-| 3 — contextual intelligence | complete | pass | green on `06617e3` | function disabled | **no** |
+| 0 — release safety | complete | pass | green on `350b0d2` | no | no |
+| 1 — data foundation | complete | pass | green on `350b0d2` | no | no |
+| 2 — independent services | complete | pass | green on `350b0d2` | disabled-service public calls pass on staging | **no** |
+| 3 — contextual intelligence | complete | pass | green on `350b0d2` | bounded contextual call passes on staging | **no** |
 | 4 — listing detail UX | not started | — | — | — | — |
 | 5 — personalization | not started | — | — | — | — |
 | 6 — analytics | not started | — | — | — | — |
