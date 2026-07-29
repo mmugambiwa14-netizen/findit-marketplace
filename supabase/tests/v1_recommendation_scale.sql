@@ -77,6 +77,20 @@ select
   'used'
 from generate_series(1, 2000) series;
 
+-- Projection is asynchronous (queue-based, not a synchronous write-time
+-- side effect); drain the queue with the same bounded worker the production
+-- scheduler uses before asserting on listing_recommendation_features.
+do $$
+declare
+  drained integer;
+begin
+  loop
+    select processed_count into drained
+    from public.process_listing_recommendation_projection_jobs(500, 8);
+    exit when drained = 0;
+  end loop;
+end $$;
+
 analyze public.listing_recommendation_features;
 set local enable_seqscan = off;
 
@@ -211,6 +225,8 @@ values (
   'automatic',
   'used'
 );
+
+select processed_count from public.process_listing_recommendation_projection_jobs(10, 8);
 
 create temporary table recommendation_second_page on commit drop as
 with cursor_value as (
