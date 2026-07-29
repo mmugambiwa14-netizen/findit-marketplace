@@ -49,7 +49,7 @@ function validUuid(value: unknown): value is string {
 
 function degraded(correlationId: string, reason: string, subjectListingId: string | null = null): Record<string, unknown> {
   return {
-    contractVersion: 1,
+    contractVersion: 2,
     correlationId,
     subjectListingId,
     sections: [],

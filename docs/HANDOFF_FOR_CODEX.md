@@ -9,10 +9,10 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Head at handoff | `5e24accc4e53397a932c20b4fcf76514a510f958` before this handoff refresh |
-| Previous heads | `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
-| SQL boundary | migration `0068`, 68 migrations and 39 rollback capsules |
-| CI on head | all four checks pass on `350b0d2`; inspect PR #1 for current state |
+| Base before this continuation | `1bdd5439f1f065f1d6991b609d889c8a77f6443d` |
+| Previous heads | `1bdd543` (latest base), `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
+| SQL boundary | migration `0070`, 70 migrations and 41 rollback capsules |
+| CI before this continuation | all four checks passed on `1bdd543`; inspect PR #1 for the current head |
 
 Confirm the real head before doing anything:
 
@@ -62,6 +62,18 @@ gate gaps:
   protected personalized boundary.
 - The Windows CRLF-only Tour moderation contract now normalizes line endings
   before its branch extraction assertion.
+- Migration `0069` adds the UUID audit-log overload required by the hosted
+  recommendation policy operations without widening browser or service-role
+  privileges.
+- Migration `0070` makes contextual listing-status comparison enum-safe after
+  the real PostgREST path exposed `listing_status = text`.
+- The shared recommendation runtime now recognizes Supabase's resolved
+  abort-error result as a timeout by checking its owned abort signal.
+- `certify:recommendation-phase3-staging` now creates disposable fixtures,
+  performs audited one-service activation, exercises browser CORS and auth
+  boundaries, forces real Edge timeouts with a bounded staging-only lock,
+  verifies durable circuit state and recovery, proves listing independence, and
+  removes fixtures and cache rows.
 
 Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`.
 
@@ -192,11 +204,11 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 |---|---|
 | `npm run lint` | pass |
 | `npm run typecheck` | pass |
-| `npm run test:contracts` | pass, 312/312 |
-| `npm run test:recommendation-contracts` | pass, 49/49 |
-| `npm run verify:sql-boundary` | pass, 68 migrations, 39 rollback capsules |
-| `npm run verify:hygiene` | pass, 646 files |
-| `npm run verify:source-graph` | pass, 359 modules, 0 unresolved |
+| `npm run test:contracts` | pass, 315/315 |
+| `npm run test:recommendation-contracts` | pass, 52/52 |
+| `npm run verify:sql-boundary` | pass, 70 migrations, 41 rollback capsules |
+| `npm run verify:hygiene` | pass, 650 files |
+| `npm run verify:source-graph` | pass, 360 modules, 0 unresolved |
 | `npm run audit:product-surface` | pass, 0 failures, 1 warning |
 | `npm run typecheck:edge-functions` | pass, Deno checked every file under `supabase/functions` |
 | `npm run audit:production` | pass, no reachable Moderate/High/Critical advisories |
@@ -205,7 +217,8 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 `npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
-**CI on `350b0d2`: all four checks pass** on PR #1. The PR remains draft.
+**CI on base `1bdd543`: all four checks passed** on PR #1. Inspect the current
+head after pushing this continuation. The PR must remain draft.
 
 The previous Windows-only contract failure in
 `tests/tourMilestone6ModerationAdmin.test.mjs` is fixed by normalizing line
@@ -230,34 +243,34 @@ Executed against `https://bwgklpxoetrrkutottdb.supabase.co/functions/v1`:
 
 | Hosted check | Result |
 |---|---|
+| Migrations `0069` and `0070` | applied to staging and recorded in `supabase_migrations.schema_migrations` |
+| Recommendation function deployment | all seven active on version 7; six public functions have `verify_jwt=false`, personalized has `verify_jwt=true` |
 | `OPTIONS contextual-ecosystem` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
 | `OPTIONS recently-listed` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
-| `POST` to six public recommendation functions with browser-style origin and `x-client-info` | 200, contract v1, empty items, `degraded: true`, `reason: service_disabled` |
-| `POST contextual-ecosystem` with a syntactically valid UUID | 200, contract v2, sections array, bounded non-blocking response |
+| `POST recently-listed` through the browser-to-Edge-to-PostgREST path | 200, contract v1, real results include all three disposable eligible fixtures |
+| Five other public listing recommendation services | 200 fail-soft responses with `reason: service_disabled` |
+| Direct contextual planner and `POST contextual-ecosystem` | both select only `recently_listed_service`; Edge response is contract v2 |
 | `POST personalized-recommendations` without auth | 401 from the Supabase gateway |
+| Authenticated `POST personalized-recommendations` | 200 fail-soft response with `reason: service_disabled` |
+| Recommendation and contextual health endpoints | missing credentials return 401; credentialed calls return contract v1 and expected aggregate counts |
+| Real timeout and circuit test | three separate Edge calls return `reason: timeout`; persisted failures reach 3; another request returns `circuit_open`; recovery returns non-degraded results |
+| Listing independence | the disposable available listing remains readable while the recommendation circuit is open |
+| Cleanup and final state | no disposable users or projections, zero recently-listed cache rows, circuit closed with zero failures |
 
-This is still **not hosted certification**. The process does not have the actual
-hosted smoke credentials (`FINDIT_SUPABASE_ANON_KEY`,
-`FINDIT_RECOMMENDATION_HEALTH_SECRET`,
-`FINDIT_CONTEXTUAL_HEALTH_SECRET`) or an eligible staging listing id, so health
-endpoints, authenticated calls, enabled-service real results, timeout behaviour
-and circuit persistence across separate requests remain unproven.
+Phase 3 is **hosted-certified on staging**, not on production. Exactly
+`recently_listed_service` is enabled on staging; the other six policies remain
+disabled. No recommendation adapter is imported by the UI, so this activation
+does not change the current user-visible application.
 
 ## 4. Immediate next actions
 
-1. **Configure required secrets before any hosted deployment.**
-   `FINDIT_REQUEST_BUDGET_SALT`, `FINDIT_RECOMMENDATION_HEALTH_SECRET`, and
-   `FINDIT_CONTEXTUAL_HEALTH_SECRET`. The budget salt fails open when unset, so
-   an unconfigured deployment looks identical to a working one.
-
-2. **Enable and certify what is currently disabled.** All seven service policies
-   ship `enabled = false`. With `0068` in place, a disabled service is correctly
-   never proposed, which means **the contextual plan is empty until services are
-   explicitly enabled**. That is intended behaviour, not a fault, but it also
-   means Phase 3 cannot be hosted-certified until at least one service is enabled
-   deliberately.
-
-3. **Then Phase 4**, and Phases 5 to 7 in the locked order.
+1. Push this continuation, wait for every PR check, and keep PR #1 draft.
+2. Begin Phase 4 listing-detail integration with recommendation failure kept
+   outside the listing-delivery dependency path.
+3. Before broader service activation, exhaust and verify a real request-budget
+   window; the budget deliberately fails open and has not yet been hosted
+   exhaustion-tested.
+4. Continue Phases 5 to 7 in the locked order. Production remains unchanged.
 
 ## 5. Open findings not fixed, in priority order
 
@@ -272,13 +285,13 @@ gateway JWT verification, because the browser key is expected to be an opaque
 `sb_publishable_*` credential. `personalized-recommendations` remains
 `verify_jwt = true`.
 
-### O-2 (Medium) - hosted Phase 3 is not certified
+### O-2 closed - hosted Phase 3 staging certification
 
-`contextual-ecosystem` is present in `supabase/config.toml` with
-`verify_jwt = false`, and partial hosted staging calls now pass. Phase 3 is still
-not certified because the health credentials, authenticated smoke credentials,
-eligible listing id, one-service enablement, real-result evidence, timeout
-evidence and durable circuit evidence have not been executed.
+The guarded staging runner now covers health credentials, authenticated and
+anonymous calls, disposable eligible listings, audited one-service enablement,
+real results, contextual selection, real timeout classification, durable circuit
+state across requests, recovery, listing independence, and cleanup. This is
+staging evidence only and must not be restated as production certification.
 
 ### O-3 to O-6 — closed in `06617e3`
 
@@ -286,9 +299,9 @@ All four are fixed by migration `0067` and the shared request guards. See
 section 2.3 for what each resolution does. Two things to carry forward rather
 than assume settled:
 
-- The durable breaker is only meaningful if `record_recommendation_service_outcome_v1`
-  is actually reached. Phase 7 should certify the breaker by driving real failures and reading
-  `recommendation_service_circuit_state`, not by reading the code.
+- The durable breaker has now been certified by driving real Edge timeouts and
+  reading the persisted state across separate requests. Retain that executable
+  check in later scale certification.
 - The request budget **fails open in three separate ways**: no salt configured,
   a malformed client hash, or any internal error. That is deliberate — an abuse
   control must never remove sections from a listing page — but it means an
@@ -305,14 +318,13 @@ not imported into listing UI during Phase 2"). **Those assertions must be
 deliberately updated when Phase 4 begins** — they will fail as soon as listing
 detail imports an adapter, and that failure is expected, not a regression.
 
-### O-8 (informational) — pgTAP proves SQL, not integration
+### O-8 narrowed (informational) — remaining service integration scope
 
-Both High defects were invisible to a fully green pgTAP suite because pgTAP
-calls SQL functions directly. Before certifying any later phase, add at least
-one test that exercises the real transport: adapter body shape to Edge
-validation to PostgREST argument resolution. The two regression tests added in
-`8e2cd94` are static source contracts, which is better than nothing but is not
-an integration test.
+The staging runner now exercises the real browser-shaped Edge-to-PostgREST path
+for `recently_listed_service` and contextual orchestration. The other five public
+listing services remain disabled and have fail-soft transport evidence, not
+real-result evidence. Each must receive equivalent fixture-backed integration
+coverage before its policy is enabled.
 
 ## 6. Rules that must not be broken
 
@@ -377,10 +389,10 @@ From the project instructions and from defects already paid for once:
 
 | Phase | Source | Local | CI | Hosted | Certified |
 |---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on `350b0d2` | no | no |
-| 1 — data foundation | complete | pass | green on `350b0d2` | no | no |
-| 2 — independent services | complete | pass | green on `350b0d2` | disabled-service public calls pass on staging | **no** |
-| 3 — contextual intelligence | complete | pass | green on `350b0d2` | bounded contextual call passes on staging | **no** |
+| 0 — release safety | complete | pass | green on base `1bdd543` | staging guards pass | local/staging |
+| 1 — data foundation | complete | pass | green on base `1bdd543` | migrations through `0070` applied | staging |
+| 2 — independent services | complete | pass | green on base `1bdd543` | one service returns real results; six remain disabled | staging for enabled service |
+| 3 — contextual intelligence | complete | pass | green on base `1bdd543` | full guarded certification passes | **staging certified** |
 | 4 — listing detail UX | not started | — | — | — | — |
 | 5 — personalization | not started | — | — | — | — |
 | 6 — analytics | not started | — | — | — | — |
@@ -400,9 +412,9 @@ safety, privacy boundaries, timeout handling, fail-soft fallback, failure
 isolation, operational health, pgTAP coverage, source contracts, rollback
 support and deployment registration.
 
-It is **not certified**, and it cannot be until the function is enabled and
-exercised against the hosted project. Do not restate the source list above as
-evidence of certification; that is precisely the error made for Phase 2.
+It is **staging certified** with one non-personalized service enabled and real
+hosted evidence. It is not production certified, no production project was
+changed, and Phase 4 UI work has not started.
 
 ## 9. Update PR #1 after material progress
 

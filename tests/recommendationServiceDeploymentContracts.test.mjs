@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const health = await readFile('supabase/functions/recommendation-service-health/index.ts', 'utf8');
 const smoke = await readFile('scripts/recommendation-services-smoke.mjs', 'utf8');
+const phase3Certification = await readFile('scripts/recommendation-phase3-staging-certification.mjs', 'utf8');
 const config = await readFile('supabase/config.toml', 'utf8');
 
 const publicFunctions = [
@@ -82,4 +83,36 @@ test('smoke harness requires an explicit hosted target and dedicated health cred
   assert.match(smoke, /FINDIT_SUPABASE_ANON_KEY/);
   assert.match(smoke, /FINDIT_RECOMMENDATION_HEALTH_SECRET/);
   assert.match(smoke, /process\.exit\(2\)/);
+});
+
+test('Phase 3 hosted certification is exact-target guarded and uses disposable fixtures', () => {
+  assert.match(phase3Certification, /assertSmokeTarget/);
+  assert.match(phase3Certification, /hosted staging/);
+  assert.match(phase3Certification, /FINDIT_SUPABASE_SECRET_KEY/);
+  assert.match(phase3Certification, /auth\.admin\.createUser/);
+  assert.match(phase3Certification, /auth\.admin\.deleteUser/);
+  assert.match(phase3Certification, /eligible_listing_recommendation_features/);
+  assert.match(phase3Certification, /Phase 3 certification cleanup failed/);
+  assert.match(phase3Certification, /cacheCleanup/);
+  assert.doesNotMatch(phase3Certification, /super_admin: true/);
+  assert.match(phase3Certification, /FINDIT_ALLOW_STAGING_FOUNDER_SESSION/);
+  assert.match(phase3Certification, /FINDIT_ALLOW_STAGING_TIMEOUT_LOCK/);
+  assert.match(phase3Certification, /FINDIT_SUPABASE_ACCESS_TOKEN/);
+  assert.match(phase3Certification, /auth\.admin\.generateLink/);
+  assert.match(phase3Certification, /auth\.verifyOtp/);
+});
+
+test('Phase 3 hosted certification enables one service and proves transport isolation', () => {
+  assert.match(phase3Certification, /recently_listed_service/);
+  assert.match(phase3Certification, /admin_update_recommendation_service_policy_v1/);
+  assert.match(phase3Certification, /admin_purge_recommendation_service_cache_v1/);
+  assert.match(phase3Certification, /enabledThisRun && !certificationPassed/);
+  assert.match(phase3Certification, /contextual-ecosystem/);
+  assert.match(phase3Certification, /personalized-recommendations/);
+  assert.match(phase3Certification, /lock table public\.listing_recommendation_features in access exclusive mode/);
+  assert.match(phase3Certification, /pg_sleep\(15\)/);
+  assert.match(phase3Certification, /payload\.reason, 'timeout'/);
+  assert.match(phase3Certification, /record_recommendation_service_outcome_v1/);
+  assert.match(phase3Certification, /circuit_open/);
+  assert.match(phase3Certification, /read listing while recommendation circuit is open/);
 });

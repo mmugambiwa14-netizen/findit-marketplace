@@ -10,6 +10,10 @@ const rollback = await readFile(
   'supabase/rollback/0062_recommendation_service_operations_and_audit.rollback.sql',
   'utf8',
 );
+const auditCompatibility = await readFile(
+  'supabase/migrations/0069_recommendation_audit_target_compatibility.sql',
+  'utf8',
+);
 const workflow = await readFile('.github/workflows/migration-gates.yml', 'utf8');
 
 const adminFunctions = [
@@ -68,4 +72,20 @@ test('migration and rollback keep recommendation services disabled by default', 
 
 test('CI executes the service operations database suite', () => {
   assert.match(workflow, /v1_recommendation_service_operations\.sql/);
+});
+
+test('recommendation admin audit calls accept UUID entity identifiers', () => {
+  assert.match(
+    auditCompatibility,
+    /function public\.write_audit_log\(\s*action_name text,\s*target_id uuid/,
+  );
+  assert.match(auditCompatibility, /target_id::text/);
+  assert.match(
+    auditCompatibility,
+    /revoke all on function public\.write_audit_log\(text, uuid, text, jsonb, jsonb\)[\s\S]*from public, anon, service_role/,
+  );
+  assert.match(
+    auditCompatibility,
+    /grant execute on function public\.write_audit_log\(text, uuid, text, jsonb, jsonb\)[\s\S]*to authenticated/,
+  );
 });

@@ -68,7 +68,10 @@ Recommendation maintenance is intentionally independent from listing delivery. T
 | `FINDIT_SUPABASE_URL` | Explicit smoke/backup target |
 | `FINDIT_SUPABASE_ANON_KEY` | Public smoke key |
 | `FINDIT_SUPABASE_SECRET_KEY` | Admin fixture key; process-only |
+| `FINDIT_SUPABASE_ACCESS_TOKEN` | Management API token used only by the guarded staging timeout certification; process-only |
 | `FINDIT_ALLOW_HOSTED_SMOKE=staging` | Required destructive-safety opt-in |
+| `FINDIT_ALLOW_STAGING_FOUNDER_SESSION=staging` | Allows guarded Phase 3 certification to create and immediately sign out a one-time staging founder session for audited policy operations |
+| `FINDIT_ALLOW_STAGING_TIMEOUT_LOCK=staging` | Allows the Phase 3 certification to hold a bounded 15-second projection-table lock on the exact staging target |
 | `FINDIT_ALLOW_HOSTED_BACKUP=staging` | Required hosted-backup opt-in |
 | `FINDIT_EXPECTED_PROJECT_REF` | Exact target guard |
 | `FINDIT_SMOKE_ORIGIN` | Exact hosted upload origin |

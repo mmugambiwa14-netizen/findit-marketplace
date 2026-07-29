@@ -210,7 +210,12 @@ async function executeWithTimeout(
 
   try {
     const { data, error } = await client.rpc(rpc, args).abortSignal(controller.signal);
-    return { data, error, timedOut: false };
+    // PostgREST resolves an aborted request with an error object by default instead
+    // of throwing AbortError. The controller is authoritative because this signal
+    // is owned exclusively by the runtime timeout.
+    return controller.signal.aborted
+      ? { data: null, error: null, timedOut: true }
+      : { data, error, timedOut: false };
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
       return { data: null, error: null, timedOut: true };

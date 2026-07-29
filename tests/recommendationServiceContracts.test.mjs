@@ -36,6 +36,7 @@ test('service contracts are cursor-only, versioned and reason-code based', () =>
 
 test('runtime degrades safely and isolates repeated service failures', () => {
   assert.match(runtime, /\.abortSignal\(controller\.signal\)/);
+  assert.match(runtime, /controller\.signal\.aborted[\s\S]*timedOut: true/);
   assert.match(runtime, /"timeout"/);
   assert.match(runtime, /"service_unavailable"/);
   assert.match(runtime, /FAILURE_THRESHOLD = 3/);

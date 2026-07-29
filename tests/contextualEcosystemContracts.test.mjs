@@ -33,6 +33,7 @@ test('edge service validates bounded public input and fails softly', () => {
   assert.match(edge, /maxSections < 1 \|\| maxSections > 12/);
   assert.match(edge, /invalid_journey_stage/);
   assert.match(edge, /return json\(request, 200, degraded/);
+  assert.match(edge, /contractVersion: 2/);
   assert.match(edge, /subjectListingId/);
   assert.match(edge, /\.abortSignal\(controller\.signal\)/);
   assert.doesNotMatch(edge, /\}, \{ signal: controller\.signal \}/);
@@ -56,6 +57,7 @@ test('frontend adapter never throws into listing delivery', () => {
 
 test('Phase 3 selects on listing state, service availability and taxonomy precedence', async () => {
   const completion = await readFile('supabase/migrations/0068_contextual_ecosystem_completion.sql', 'utf8');
+  const statusTypeSafety = await readFile('supabase/migrations/0070_contextual_listing_status_type_safety.sql', 'utf8');
 
   // A disabled service can only answer empty, so it is never contextually relevant.
   assert.match(completion, /join public\.recommendation_service_policies policy/);
@@ -76,6 +78,8 @@ test('Phase 3 selects on listing state, service availability and taxonomy preced
 
   assert.match(completion, /'contractVersion', 2/);
   assert.doesNotMatch(completion, /personalized_recommendation_service/);
+  assert.match(statusTypeSafety, /subject_row\.listing_status::text in/);
+  assert.doesNotMatch(statusTypeSafety, /subject_row\.listing_status in/);
 });
 
 test('contextual rule conditions are validated against a closed vocabulary', async () => {
