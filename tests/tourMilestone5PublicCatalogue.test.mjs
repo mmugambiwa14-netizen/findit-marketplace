@@ -160,6 +160,12 @@ test('hosted catalogue fixtures respect the production upload rate limit', () =>
   assert.match(smoke, /publish\(\{ owner: serviceOwner, serviceId \}\)/);
 });
 
+test('hosted catalogue gives the named newest fixture a unique timestamp before exercising UUID ties', () => {
+  assert.match(smoke, /const minuteOffset = index === 0 \? 0 : Math\.floor\(\(index - 1\) \/ 3\) \+ 1/);
+  assert.match(smoke, /assert\.equal\(allItems\[0\]\.title, 'Newest cursor car'\)/);
+  assert.match(smoke, /previousKey > currentKey/);
+});
+
 
 test('feed contracts reject unsafe asset URLs and invalid prices', () => {
   assert.match(contracts, /function boundedHttpUrl/);

@@ -67,7 +67,8 @@ try {
   // UUID tie-breaker is exercised across multiple cursor pages.
   const baseTime = Date.parse('2026-07-27T10:30:00Z');
   for (let index = 0; index < tourIds.length; index += 1) {
-    const publishedAt = new Date(baseTime - Math.floor(index / 3) * 60_000).toISOString();
+    const minuteOffset = index === 0 ? 0 : Math.floor((index - 1) / 3) + 1;
+    const publishedAt = new Date(baseTime - minuteOffset * 60_000).toISOString();
     success(await root.from('listing_tours').update({ published_at: publishedAt }).eq('id', tourIds[index]), 'set deterministic publication time');
   }
   success(await root.from('listing_tours').update({ published_at: '2026-07-27T09:00:00Z' }).eq('id', serviceTourId), 'set service publication time');
