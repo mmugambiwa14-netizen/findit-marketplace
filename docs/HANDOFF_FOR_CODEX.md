@@ -1,0 +1,351 @@
+# FindIt listing intelligence — handoff
+
+Written 2026-07-29. Supersedes any earlier handoff for the same branch.
+
+## 1. Where the work lives
+
+| Item | Value |
+|---|---|
+| Repository | `mmugambiwa14-netizen/findit-marketplace` |
+| Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
+| Pull request | #1, draft, must stay draft |
+| Head at handoff | `8e2cd9400eb0278d17394d1f810432c58730bd0b` |
+| Previous head | `aaeeef4b1c13e8ae03c5850b7343129d04b2f7e5` |
+| SQL boundary | migration `0066`, 66 migrations and 37 rollback capsules |
+
+Confirm the real head before doing anything:
+
+```
+git fetch origin feature/listing-intelligence-foundation
+git rev-parse origin/feature/listing-intelligence-foundation
+gh pr view 1 --json state,isDraft,headRefOid
+gh pr checks 1
+```
+
+Do not create a replacement branch, a replacement PR, a new repository, or a
+parallel implementation. Do not merge PR #1.
+
+There is an unrelated folder on this machine at
+`Downloads/FindIt-Extensive-Product-Audit-Remediated-v2-2026-07-27/`. It is a
+stale extracted archive with no git history and migrations only to `0045`. It is
+not this project's working tree. The working clone is
+`Downloads/findit-marketplace-work/`.
+
+## 2. What changed in this session
+
+One commit: `8e2cd94`. It fixes two defects that made the **entire Phase 2
+recommendation surface return empty results at runtime** even though every
+offline gate and all four CI workflows were green on `aaeeef4`.
+
+Both defects live on the browser-adapter to Edge-Function to PostgREST path.
+No gate in the repository exercises that path end to end, which is why CI was
+green and the feature was nonetheless dead.
+
+### Defect 1 (High) — five service functions were unreachable over PostgREST
+
+`0059` created these with **anonymous** parameters:
+
+- `similar_listings_service_v1(uuid, text, integer)`
+- `seller_recommendations_service_v1(uuid, text, integer)`
+- `related_services_service_v1(uuid, text, integer)`
+- `related_products_service_v1(uuid, text, integer)`
+- `nearby_service_v1(uuid, text, integer, integer)`
+
+`supabase/functions/_shared/recommendation-service.ts` calls them through
+PostgREST with **named** arguments (`p_subject_listing_id`, `p_cursor`,
+`p_limit`, `p_max_distance_meters`). PostgREST resolves RPC arguments by name,
+so a function whose parameters have no names can never be matched. Every call
+returned `PGRST202`, the runtime counted it as a failure and answered with the
+fail-soft empty payload.
+
+`0060` had already corrected `recently_listed_service_v1` and
+`personalized_recommendation_service_v1` the same way. `0066` finishes the set.
+
+Why no test caught it: `supabase/tests/v1_recommendation_services.sql` calls the
+functions **positionally** (`similar_listings_service_v1(gen_random_uuid(), null, 12)`),
+which works fine against anonymous parameters. Only the named-argument path
+breaks, and nothing exercised it.
+
+Fix: `supabase/migrations/0066_recommendation_service_named_arguments.sql`, with
+matching rollback capsule. Parameter names cannot be introduced by
+`create or replace`, so the functions are dropped and recreated — which makes
+them **new** functions, so Supabase's default privileges re-grant `EXECUTE` to
+`anon` and `authenticated`. The migration restates the `0027` revoke boundary.
+This is a recurring drift class in this repository; restate the revoke on every
+migration that creates or recreates a function.
+
+### Defect 2 (High) — a null cursor was rejected as a bad cursor
+
+`recommendation-service.ts` guarded the cursor with
+`body.cursor !== undefined && (typeof body.cursor !== "string" || ...)`.
+
+`src/services/recommendationServices.js` always sends an explicit `cursor` key,
+`null` on a first page. `null !== undefined` is true and `typeof null !== "string"`
+is true, so **every uncached first-page request** was answered `400 invalid_cursor`.
+
+`src/services/notificationContracts.js:57` already uses the correct repository
+convention (`!== null && !== undefined`); the recommendation runtime was the
+outlier.
+
+### Also fixed on the same surface
+
+| Area | Problem | Resolution |
+|---|---|---|
+| `recommendation-service.ts` | A fresh cache hit returned `public` Cache-Control even for a signed-in viewer, while the equivalent cache miss returned `private` | Both paths now share `viewerCacheControl(viewerId)` |
+| `contextual-ecosystem/index.ts` | `public, max-age=30` was sent on rejected requests **and** on fail-soft empty plans, so a transient outage stayed cached for the full window after recovery | Default is now `no-store`; only a complete plan gets `CACHEABLE_PLAN` |
+| `contextual-ecosystem/index.ts` | The abort timer was only cleared on the success path | `clearTimeout` moved into `finally` |
+| `contextualEcosystemService.js` | `sections.every(validSection)` discarded the whole plan if any single section failed the contract | Invalid sections are now dropped individually; the result is marked degraded |
+| `recommendationServices.js` | No deduplication and no cap on returned items | Deduplicated by `listingId`, truncated to the requested page size |
+| `recommendationServices.js` | Timeout stopped waiting but left the request in flight; no caller cancellation | Real `AbortController`; accepts a caller `signal`; reason `cancelled` |
+| `recommendationEventsService.js` | A UUID was generated on every call even when a session id already existed | Reordered to read first |
+
+Regression coverage added in `tests/recommendationServiceContracts.test.mjs` and
+`tests/recommendationClientContracts.test.mjs` for the argument-name contract,
+the null-cursor first-page signal, cancellation, and bounding.
+
+## 3. Verified state
+
+Executed locally against `8e2cd94` on Node 24 (CI runs Node 22):
+
+| Gate | Result |
+|---|---|
+| `npm run lint` | pass |
+| `npm run typecheck` | pass |
+| `npm run test:contracts` | 300 of 301 pass |
+| `npm run verify:sql-boundary` | pass, 66 migrations, 37 rollback capsules |
+| `npm run verify:hygiene` | pass, 635 files |
+| `npm run verify:source-graph` | pass, 356 modules, 0 unresolved |
+| `npm run audit:product-surface` | pass, 0 failures, 1 warning |
+| `npm run build` (NODE_ENV=production) | pass, 535,080 B raw / 157,898 B gzip |
+
+The one failing contract test is
+`tests/tourMilestone6ModerationAdmin.test.mjs:67`. It is a **Windows-only local
+artifact**: `core.autocrlf=true` rewrites the file to CRLF on checkout, breaking
+a literal `\n` match. The committed blob is LF-only (`git show HEAD:<path>`
+confirms), and the test passes on Linux CI. Do not "fix" it by changing the
+committed file.
+
+**Not verified locally:** anything needing Docker. `supabase start`, the full
+migration chain, `db lint`, and all pgTAP suites could not run — the Docker
+daemon is unreachable in this environment. Those run in CI only. **CI results
+for `8e2cd94` were still in flight when this document was written — read them
+before trusting any pgTAP or migration claim.**
+
+## 4. Immediate next actions
+
+1. **Read CI for `8e2cd94`.** Four workflows must be green:
+   `Release candidate gates`, `Migration gates` (two jobs), and
+   `Recommendation database gates`.
+   ```
+   gh run list --branch feature/listing-intelligence-foundation --limit 5
+   gh run view <id> --log-failed
+   ```
+   The highest-risk step is the `0066` drop-and-recreate inside the full
+   migration chain. If Postgres objects to dropping a function another object
+   depends on, add the dependency handling to `0066` — do **not** rewrite
+   `0059`, and do **not** use `cascade`.
+
+2. **Resolve the `verify_jwt` question before Phase 4** (see section 5). This
+   is the last known blocker to recommendations actually rendering for
+   anonymous visitors, and it cannot be settled by reading the repository.
+
+3. Only then continue Phase 3 to its full boundary, then Phases 4 to 7 in the
+   locked order.
+
+## 5. Open findings not fixed, in priority order
+
+### O-1 (High, needs a live check) — `verify_jwt = true` on the public services
+
+`supabase/config.toml` sets `verify_jwt = true` for `similar-listings`,
+`seller-recommendations`, `related-services`, `related-products`,
+`nearby-listings`, `recently-listed` and `contextual-ecosystem`. The code in
+`recommendation-service.ts` declares all of these `authenticationRequired: false`,
+and they are meant to render on **public listing detail pages that anonymous
+visitors browse**.
+
+The config comment reasons that the browser client "always attaches a valid anon
+or session JWT even for anonymous browsing". That is true **only for legacy
+JWT-format anon keys**. This project's CI uses the new publishable format
+(`sb_publishable_...`), which is not a JWT. If the live project issues
+publishable keys to the browser, the gateway rejects every anonymous request
+before the function runs, and no anonymous visitor ever sees a recommendation.
+
+I did not change this blind, because if the project genuinely uses legacy JWT
+anon keys the current setting is correct and strictly more secure.
+
+**Resolve it empirically, not by reading code:**
+
+```
+curl -i -X POST "https://<ref>.supabase.co/functions/v1/similar-listings" \
+  -H "apikey: <the exact key the browser build ships>" \
+  -H "Authorization: Bearer <the same key>" \
+  -H "Content-Type: application/json" \
+  -H "Origin: <an allowed origin>" \
+  -d '{"subjectListingId":"<a real published listing id>","cursor":null,"limit":12}'
+```
+
+- HTTP 200 with a payload: the current config is fine, record the evidence.
+- HTTP 401 from the gateway: set `verify_jwt = false` for the six public
+  services **and** `contextual-ecosystem`, and update
+  `tests/recommendationServiceDeploymentContracts.test.mjs:23`, which currently
+  asserts `verify_jwt = true` for exactly that list. Leave
+  `personalized-recommendations` at `verify_jwt = true`; it is genuinely
+  authenticated-only and already returns its own 401 when `viewerId` is null.
+
+Also note this request is the fastest end-to-end confirmation that Defect 1 and
+Defect 2 are actually fixed against the hosted project.
+
+### O-2 (Medium) — `contextual-ecosystem` is `enabled = false`
+
+`supabase/config.toml` disables the function, so it is never deployed. That is
+consistent with the rule that service policies stay disabled until explicitly
+certified, but **Phase 3 cannot be certified while it is off**. Plan a
+deliberate enable-and-certify step, with hosted evidence, before claiming Phase
+3 complete.
+
+### O-3 (Medium) — the circuit breaker is per-isolate, so it barely engages
+
+`circuitStates` in `recommendation-service.ts` is a module-level `Map` inside a
+Deno isolate. Edge Functions run many isolates and recycle them, so each cold
+isolate starts with a clean breaker. Under real traffic the
+`FAILURE_THRESHOLD = 3` rule will rarely trip, and Phase 7 requires
+"circuit-breaker behaviour" to be certified.
+
+Either move the breaker state into the database next to the existing service
+health tables, or write down explicitly that it is a per-isolate best-effort
+control and certify it as such. Do not certify it as a global breaker.
+
+### O-4 (Medium) — no rate limiting on any recommendation endpoint
+
+Phase 7 requires "rate limiting or bounded abuse controls". There are none
+today. The endpoints accept unauthenticated POSTs and each one triggers a
+database RPC. Note that `cacheKey` includes `limit` and `cursor`, so an attacker
+can trivially generate unbounded distinct cache keys and grow
+`recommendation_cache`. The bounded purge from `0061` limits total damage but
+does not stop the write amplification.
+
+### O-5 (Low) — the request body size guard is bypassable
+
+Both runtimes check `content-length` only. A chunked request omits that header,
+`Number(null ?? 0)` is `0`, the check passes, and `request.json()` then reads an
+unbounded body. Bound the actual read rather than trusting the header.
+
+### O-6 (Low) — `authenticatedUserId` is unbounded
+
+It performs a network `auth.getUser()` on every request, outside any timeout,
+before `policy.timeoutMs` applies. A slow auth response holds the isolate open
+past the client's own timeout. Wrap it in the same bounded-timeout helper the
+RPC call uses.
+
+### O-7 (informational) — the adapters are not yet imported by any UI
+
+`recommendationServices.js`, `contextualEcosystemService.js` and
+`recommendationEventsService.js` have **no consumers** in `src/`. This is
+correct for Phase 2 and is actively asserted by
+`tests/recommendationFoundationContracts.test.mjs` ("recommendation adapters are
+not imported into listing UI during Phase 2"). **Those assertions must be
+deliberately updated when Phase 4 begins** — they will fail as soon as listing
+detail imports an adapter, and that failure is expected, not a regression.
+
+### O-8 (informational) — pgTAP proves SQL, not integration
+
+Both High defects were invisible to a fully green pgTAP suite because pgTAP
+calls SQL functions directly. Before certifying any later phase, add at least
+one test that exercises the real transport: adapter body shape to Edge
+validation to PostgREST argument resolution. The two regression tests added in
+`8e2cd94` are static source contracts, which is better than nothing but is not
+an integration test.
+
+## 6. Rules that must not be broken
+
+From the project instructions and from defects already paid for once:
+
+- Phase order is locked: 0, 1, 2, 3, 4, 5, 6, 7. Do not skip ahead. Do not
+  begin Phase 4 until Phase 3 is certified with executable evidence.
+- A phase is complete only at its maximum practical implementation, testing,
+  failure-isolation, operational, security and certification boundary.
+- Never write "passed" without execution evidence. A queued, skipped, cancelled
+  or partially passing workflow is not certification.
+- No recommendation or contextual failure may block listing pages, listing
+  APIs, search, Tours, chat, authentication, seller tools or moderation.
+- Never expose database, Supabase, provider, stack-trace, status-code or
+  internal exception text to users. Log privately, surface plain language.
+- No emojis anywhere: code, UI copy, docs, tests, comments, commit messages.
+- Do not identify any AI system as a contributor, author, owner or cofounder.
+- Adding a migration needs **four** coordinated edits or the repo's own gates
+  fail:
+  1. `supabase/migrations/NNNN_name.sql`
+  2. `supabase/rollback/NNNN_name.rollback.sql` — non-destructive, no
+     `drop table` / `truncate` / `delete from`
+  3. the release-tip anchor at the bottom of `scripts/verify-sql-boundary.mjs`
+  4. **two** test anchors, not one:
+     `tests/repositoryReleaseHygiene.test.mjs` and
+     `tests/recommendationFoundationContracts.test.mjs`
+- Every migration that creates or recreates a public-schema function must
+  restate the `0027` revoke against `public, anon, authenticated`. Supabase
+  re-grants `EXECUTE` to browser roles on every new function.
+- Never disable RLS to make a test pass. Fix the test only when the expectation
+  is genuinely wrong; otherwise fix the implementation.
+- Never rewrite applied migration history to hide a defect. Add a corrective
+  migration.
+- Do not re-attempt vendor-chunk splitting for bundle size. It was measured in
+  an earlier cycle and made the true initial payload roughly 27 percent worse.
+  It is recorded as F-14.
+
+## 7. Environment notes
+
+- The live dev/staging Supabase project is `mfapduvnlcmmevrqjbis` (eu-west-2,
+  Postgres 17.6). The project ref is not in the repository; there is no `.env`
+  on disk, only `.env.example`.
+- The founder-admin lock in `0030` binds admin to a SHA-256 of a normalized
+  email, and the hash matches the repository owner's address. Signing up with
+  that address auto-grants admin and super_admin.
+- Two older migrations need mechanical adjustment to apply through MCP
+  `apply_migration`: `0029` ships an explicit `begin`/`commit` (strip it, the
+  tool already wraps in a transaction), and `0020`'s `alter type ... add value`
+  must stay in its own migration.
+- CI pins Node 22. Local Node here is 24, which strips TypeScript natively; do
+  not rely on that. Any test that imports a `.ts` file at runtime must work on
+  the pinned CI version.
+- `core.autocrlf=true` on this machine causes literal `\n` assertions to fail
+  locally against LF-committed files. Verify with `git show HEAD:<path>` before
+  concluding a test is genuinely broken.
+- The production build must run with `NODE_ENV=production`. A previous cycle
+  lost hours to `NODE_ENV=test` leaking in from the job environment, which
+  bundles React's dev build and blows the byte budget.
+
+## 8. Phase status, stated honestly
+
+| Phase | Source | Local | CI | Hosted | Certified |
+|---|---|---|---|---|---|
+| 0 — release safety | complete | pass | green on `aaeeef4` | no | no |
+| 1 — data foundation | complete | pass | green on `aaeeef4` | no | no |
+| 2 — independent services | complete | pass | green on `aaeeef4`, **pending on `8e2cd94`** | no | **no** |
+| 3 — contextual intelligence | partial | pass | pgTAP green | function disabled | no |
+| 4 — listing detail UX | not started | — | — | — | — |
+| 5 — personalization | not started | — | — | — | — |
+| 6 — analytics | not started | — | — | — | — |
+| 7 — scale and certification | not started | — | — | — | — |
+
+Phase 2 was reported executable-certified on `aaeeef4`. That claim was true for
+the gates as written and false in substance: the services could not answer a
+single real request. Treat "all gates green" as necessary, never sufficient, and
+prefer one real end-to-end call over another static assertion.
+
+Phase 3 still needs, at minimum: listing-state awareness, location-aware
+orchestration where safe, service-availability awareness, conflict resolution
+across global, category and subcategory precedence, an operational health
+surface, and hosted deployment evidence with the function enabled.
+
+## 9. Update PR #1 after material progress
+
+The body must keep these separated and must never blur them:
+
+- source implemented
+- locally executed
+- CI passed
+- hosted deployed
+- production certified
+- still pending
+
+Keep the PR in draft until the entire locked sequence is complete.
