@@ -1,38 +1,33 @@
 # Deployment
 
-## Current deployment status — 2026-07-26
+## Current deployment status — 2026-07-29
 
-Supabase staging is deployed and accepted. GitHub repository variables and
-three secrets are configured, scheduler credentials are rotated, and workflows
-exist for migration gates, staging Pages deployment, hourly media cleanup and
-daily listing expiry.
+Supabase staging and the GitHub Pages staging frontend are deployed. GitHub
+Actions executes the migration, recommendation database, release and Pages
+workflows. All four PR checks and the Pages deployment passed on listing
+intelligence head `cdba0ce`.
 
-GitHub Actions is enabled and allows all actions, but push, pull-request and
-manual-dispatch runs currently end as `startup_failure` before GitHub creates a
-job. The workflow files pass `actionlint`; the complete gate passes from a clean
-checkout. Resolve the account/billing/policy restriction before treating CI or
-worker schedules as operational.
+Staging frontend:
+`https://mmugambiwa14-netizen.github.io/findit-marketplace/`
 
-GitHub rejected Pages enablement because the repository is private and the
-current plan does not support private-repository Pages. Select public Pages,
-upgrade GitHub, or connect another static host. The Vite build and Router are
-subpath-safe through `VITE_BASE_PATH`; Auth redirects include the intended Pages
-subpath. Do not claim a live frontend until the chosen host deploys the exact
-commit and deep-link/browser acceptance passes.
+Staging Supabase: `FindIt Staging` (`bwgklpxoetrrkutottdb`). The production
+project `FindIt Marketplace` (`jvbpxnfxkptuexgssplj`) was inspected only and
+was not changed.
 
-Status: backend deployable; frontend host externally blocked. The canonical operational procedure is
+The Pages workflow builds with the repository subpath, uses a generated
+same-origin SPA fallback, and restores direct routes through a 200 shell before
+React mounts. Fresh desktop and mobile browser profiles passed canonical
+listing, contextual recommendation, recently-listed, hydration, navigation and
+overflow checks on the exact deployed commit.
+
+Status: backend and Phase 4 frontend are staging-certified, not production
+certified. The canonical operational procedure is
 [`DEPLOYMENT_RUNBOOK.md`](DEPLOYMENT_RUNBOOK.md).
-
-FindIt now has a private GitHub repository and an empty hosted Supabase staging
-project with all migrations and four Edge Functions deployed. It still has no
-approved frontend host, production domain/project, verified deployment
-pipeline, or release owner. Do not treat a passing Vite build or staging
-database deployment as authorisation to launch.
 
 Before deployment, every pre-deployment, data/rollback, security, storage and
 workflow gate in the runbook must pass. Current clean-checkout and hosted
 staging evidence proves full typecheck, Base44 elimination, Auth/RLS,
-marketplace domains, private V1 media and worker behavior. Remaining blockers
-are GitHub Actions/hosting, deployed-browser acceptance, production SMTP,
-monitoring, provider-native recovery, a separate production project/domain and
-the fresh-launch versus legacy-data decision.
+marketplace domains, private V1 media, recommendation delivery and worker
+behavior. Remaining release work includes hosted Auth redirect certification,
+production SMTP and monitoring, provider-native recovery, a production domain,
+Phases 5 through 7, and an explicit production launch decision.

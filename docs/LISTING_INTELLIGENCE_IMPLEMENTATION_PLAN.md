@@ -6,9 +6,12 @@ Turn every listing into the start of a complete buying journey while preserving 
 
 ## Current implementation boundary
 
-Phase 0 release safety and Phase 1 recommendation data foundation are source-implemented. Phase 1 executable certification remains pending because GitHub Actions is disabled by the account billing state; this is not recorded as a test pass.
+Phases 0 through 3 are source-complete and staging-certified. Phase 4 listing
+detail UX is source-complete, passes all current CI gates, and is certified on
+the GitHub Pages staging frontend against the staging Supabase project.
 
-Phase 2 independent recommendation services currently extends through migration `0062` with matching rollback capsules.
+The SQL boundary currently extends through migration `0070` with 70 migrations
+and 41 matching rollback capsules.
 
 Implemented Phase 2 boundaries:
 
@@ -20,7 +23,8 @@ Implemented Phase 2 boundaries:
 - Public fresh/stale cache support; personalized output is excluded from shared cache.
 - Strict request, origin, UUID, cursor, distance and response-shape validation.
 - Hard timeouts, per-service circuit breakers and fail-soft empty or stale responses.
-- Seven frontend adapters that return safe empty results and remain disconnected from listing detail.
+- Seven frontend adapters that return safe empty results. The shared Phase 4
+  listing-detail child consumes them only after canonical listing delivery.
 - Admin-only audited service enablement and runtime configuration.
 - Bounded, audited cache purge using `FOR UPDATE SKIP LOCKED`.
 - Privacy-safe service health reporting with no identity or behavioural fields.
@@ -28,7 +32,10 @@ Implemented Phase 2 boundaries:
 - Service policies remain disabled by default.
 - CI and local gates include recommendation foundation, projection queue, eligibility/geospatial, publication boundary, independent services, service operations and scale suites.
 
-Phase 2 is not production-certified until clean reset, database lint, every pgTAP suite, source contracts, typecheck and production build pass against the current branch head.
+Phase 2 has clean-reset, pgTAP, source-contract, typecheck, production-build and
+real staging transport evidence for the enabled recently-listed service. The
+other six policies remain disabled. None of the listing-intelligence phases is
+production-certified.
 
 ## Locked phase order
 

@@ -9,10 +9,10 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Base before Phase 4 | `00d8da596979cbade26a2f85fa493d5d1548c994` |
-| Previous heads | `00d8da5` (Phase 3 staging certification), `1bdd543` (release hardening), `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
+| Hosted Phase 4 implementation head | `cdba0ce8ebeab6e746da6b764bb983b9a04f46e5` |
+| Previous heads | `65c1818` (Pages toolchain), `62c0dc9` (staging frontend workflow), `d659e22` (Phase 4 UI), `00d8da5` (Phase 3 staging certification), `1bdd543` (release hardening), `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
 | SQL boundary | migration `0070`, 70 migrations and 41 rollback capsules |
-| CI before Phase 4 | all four checks passed on `00d8da5`; inspect PR #1 for the current head |
+| CI | all four checks passed on `cdba0ce`; inspect PR #1 after any later commit |
 
 Confirm the real head before doing anything:
 
@@ -85,6 +85,14 @@ gate gaps:
 - Query cancellation now reaches contextual planning, recommendation Edge
   calls and the public listing PostgREST query. Recommendation failures never
   enter the listing query or route-loading path.
+- `d659e22` integrates the fail-soft Phase 4 surface; `62c0dc9` and `65c1818`
+  make the private-repository GitHub Pages staging build executable on Node 24.
+- `cdba0ce` fixes a hosted `supabase-js` deadlock by deferring profile refresh
+  outside `onAuthStateChange`, and replaces the copied-index Pages fallback
+  with a same-origin route handoff through a 200 application shell.
+- The staging publishable-key repository secret was refreshed after browser
+  evidence found a leading `U+FEFF` BOM that made the browser reject the
+  `apikey` header before transport. No secret value is stored in the repository.
 
 Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`;
 section 2.4 describes the Phase 4 continuation.
@@ -218,12 +226,16 @@ queries do not import recommendation services and complete before the child is
 mounted, so recommendation latency or failure cannot suppress canonical listing
 content.
 
-The local browser verification used disposable preview fixtures and a mock
-transport only. It covered desktop and mobile layouts, loading and real-result
-rendering, and a stopped-transport failure. The authoritative listing remained
-visible with a retryable recommendation error and no horizontal overflow.
-This is local UI evidence, not a hosted frontend deployment or production
-certification.
+Local browser verification covered desktop and mobile layouts, loading,
+real-result rendering and stopped-transport failure isolation. A second pass
+used the real staging backend with disposable listings and proved that the
+authoritative listing remained visible when recommendation transport failed.
+
+The exact feature head is also deployed to GitHub Pages staging. Fresh browser
+profiles exercise the direct deep-link fallback, the 200 application shell,
+canonical PostgREST listing hydration, contextual and recently-listed Edge
+Functions, recommendation hydration, responsive cards and explicit-open click
+analytics. This is hosted staging evidence, not production certification.
 
 ## 3. Verified state
 
@@ -233,21 +245,24 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 |---|---|
 | `npm run lint` | pass |
 | `npm run typecheck` | pass |
-| `npm run test:contracts` | pass, 319/319 |
+| `npm run typecheck:migration` | pass |
+| `npm run typecheck:active` | pass, 224 active modules |
+| `npm run test:contracts` | pass, 323/323 |
 | `npm run test:recommendation-contracts` | pass, 56/56 |
 | `npm run verify:sql-boundary` | pass, 70 migrations, 41 rollback capsules |
-| `npm run verify:hygiene` | pass, 652 files |
-| `npm run verify:source-graph` | pass, 362 modules, 0 unresolved |
+| `npm run verify:hygiene` | pass, 655 files |
+| `npm run verify:source-graph` | pass, 365 modules, 0 unresolved |
 | `npm run audit:product-surface` | pass, 0 failures, 1 warning |
 | `npm run typecheck:edge-functions` | pass, Deno checked every file under `supabase/functions` |
 | `npm run audit:production` | pass, no reachable Moderate/High/Critical advisories |
-| `npm run build` (NODE_ENV=production) | pass, 534,528 B raw / 157,745 B gzip |
+| `npm run build` (NODE_ENV=production, Pages base) | pass, 536,074 B raw / 158,031 B gzip |
 
 `npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
-**CI on Phase 3 head `00d8da5`: all four checks passed** on PR #1. Inspect the current
-head after pushing this continuation. The PR must remain draft.
+**CI on hosted Phase 4 head `cdba0ce`: all four checks passed** on PR #1:
+frontend/source contracts, database reset/RLS/recommendation certification,
+recommendation pgTAP, and release verification. The PR remains draft.
 
 The previous Windows-only contract failure in
 `tests/tourMilestone6ModerationAdmin.test.mjs` is fixed by normalizing line
@@ -288,17 +303,36 @@ Executed against `https://bwgklpxoetrrkutottdb.supabase.co/functions/v1`:
 
 Phase 3 is **hosted-certified on staging**, not on production. Exactly
 `recently_listed_service` is enabled on staging; the other six policies remain
-disabled. The Phase 4 frontend source consumes this hosted service, but that UI
-has not been deployed to a hosted frontend target in this continuation.
+disabled.
+
+Phase 4 staging frontend: `https://mmugambiwa14-netizen.github.io/findit-marketplace/`.
+Deployment run `30474768987` built and deployed `cdba0ce`. Fresh Chrome profiles
+at 1440x900 and 390x844 verified:
+
+- a direct listing URL first receives the expected Pages fallback and then a
+  200 root shell, with the original route restored before React mounts;
+- the canonical listing request, `contextual-ecosystem`,
+  `recently-listed`, and recommendation hydration all return 200;
+- two unique recommendation cards render, exclude the subject, preserve the
+  `/findit-marketplace/` base and have no horizontal overflow;
+- an explicit recommendation open navigates to the selected listing and writes
+  a `recommendation_click` event;
+- final cleanup leaves zero disposable listings, users, projections, events,
+  recently-listed cache entries, projection jobs and dead letters.
+
+The production Supabase project was inspected non-destructively and unchanged.
 
 ## 4. Immediate next actions
 
-1. Push the Phase 4 continuation, wait for every PR check, and keep PR #1 draft.
-2. Identify the repository's staging frontend deployment target and certify the
-   Phase 4 UI there without changing production.
-3. Before broader service activation, exhaust and verify a real request-budget
+1. Verify the hosted Supabase Auth `site_url` and redirect allowlist before
+   certifying registration, OAuth, confirmation and password recovery from the
+   Pages origin. Repository config is correct, but hosted redirect state has not
+   been changed or certified.
+2. Before broader service activation, exhaust and verify a real request-budget
    window; the budget deliberately fails open and has not yet been hosted
    exhaustion-tested.
+3. Give the five disabled public listing services equivalent fixture-backed
+   real-result certification before enabling any of them.
 4. Continue Phases 5 to 7 in the locked order. Production remains unchanged.
 
 ## 5. Open findings not fixed, in priority order
@@ -343,7 +377,8 @@ The shared Phase 4 component now consumes the contextual, recommendation and
 event adapters. Detail pages import only that child after their canonical
 loading, error and missing-listing guards. The application shell and public
 listing service remain independent, and executable contracts lock that
-boundary. Hosted frontend verification is still pending.
+boundary. Hosted desktop/mobile verification passed on the exact deployed
+feature head.
 
 ### O-8 narrowed (informational) — remaining service integration scope
 
@@ -416,11 +451,11 @@ From the project instructions and from defects already paid for once:
 
 | Phase | Source | Local | CI | Hosted | Certified |
 |---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on `00d8da5` | staging guards pass | local/staging |
-| 1 — data foundation | complete | pass | green on `00d8da5` | migrations through `0070` applied | staging |
-| 2 — independent services | complete | pass | green on `00d8da5` | one service returns real results; six remain disabled | staging for enabled service |
-| 3 — contextual intelligence | complete | pass | green on `00d8da5` | full guarded certification passes | **staging certified** |
-| 4 — listing detail UX | source complete | pass | pending current head | frontend not deployed | local browser verified |
+| 0 — release safety | complete | pass | green on `cdba0ce` | staging guards pass | local/staging |
+| 1 — data foundation | complete | pass | green on `cdba0ce` | migrations through `0070` applied | staging |
+| 2 — independent services | complete | pass | green on `cdba0ce` | one service returns real results; six remain disabled | staging for enabled service |
+| 3 — contextual intelligence | complete | pass | green on `cdba0ce` | full guarded certification passes | **staging certified** |
+| 4 — listing detail UX | source complete | pass | green on `cdba0ce` | Pages desktop/mobile pass | **staging certified** |
 | 5 — personalization | not started | — | — | — | — |
 | 6 — analytics | not started | — | — | — | — |
 | 7 — scale and certification | not started | — | — | — | — |
@@ -440,9 +475,9 @@ isolation, operational health, pgTAP coverage, source contracts, rollback
 support and deployment registration.
 
 Phase 3 is **staging certified** with one non-personalized service enabled and
-real hosted evidence. Phase 4 is source-complete and locally browser-verified.
-It is not hosted-frontend or production certified, and no production project
-was changed.
+real hosted evidence. Phase 4 is **hosted-frontend staging certified** on the
+exact feature head. Neither phase is production certified, and no production
+project was changed.
 
 ## 9. Update PR #1 after material progress
 
