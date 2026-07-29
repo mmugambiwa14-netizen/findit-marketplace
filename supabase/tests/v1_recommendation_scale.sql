@@ -73,7 +73,7 @@ select
   2018 + (series % 7),
   series * 100,
   'diesel',
-  case when series % 2 = 0 then 'automatic' else 'manual' end,
+  (case when series % 2 = 0 then 'automatic' else 'manual' end)::car_transmission,
   'used'
 from generate_series(1, 2000) series;
 
