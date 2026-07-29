@@ -151,7 +151,7 @@ select extensions.throws_ok(
     p_context => '{"surface":"listing_detail"}'::jsonb
   )$$,
   '22023',
-  'event subject is not publicly eligible',
+  'listing is not publicly available',
   'event collection rejects a suspended listing even if a stale feature row exists'
 );
 reset role;
