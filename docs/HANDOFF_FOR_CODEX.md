@@ -9,9 +9,10 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Head at handoff | `8e2cd9400eb0278d17394d1f810432c58730bd0b` |
-| Previous head | `aaeeef4b1c13e8ae03c5850b7343129d04b2f7e5` |
-| SQL boundary | migration `0066`, 66 migrations and 37 rollback capsules |
+| Head at handoff | `06617e35bc69bb4e2d119e432b8e2b352860e4c3` |
+| Previous heads | `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
+| SQL boundary | migration `0068`, 68 migrations and 39 rollback capsules |
+| CI on head | all four required checks pass |
 
 Confirm the real head before doing anything:
 
@@ -33,9 +34,17 @@ not this project's working tree. The working clone is
 
 ## 2. What changed in this session
 
-One commit: `8e2cd94`. It fixes two defects that made the **entire Phase 2
-recommendation surface return empty results at runtime** even though every
-offline gate and all four CI workflows were green on `aaeeef4`.
+Three commits. `8e2cd94` fixed the runtime-reachability defects, `7737924` added
+this document, and `06617e3` completed Phase 3 and closed four hardening
+findings. All four CI checks pass on `06617e3`.
+
+Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`.
+
+### 2.1 and 2.2 — the runtime-reachability defects
+
+`8e2cd94` fixes two defects that made the **entire Phase 2 recommendation
+surface return empty results at runtime** even though every offline gate and all
+four CI workflows were green on `aaeeef4`.
 
 Both defects live on the browser-adapter to Edge-Function to PostgREST path.
 No gate in the repository exercises that path end to end, which is why CI was
@@ -103,20 +112,72 @@ Regression coverage added in `tests/recommendationServiceContracts.test.mjs` and
 `tests/recommendationClientContracts.test.mjs` for the argument-name contract,
 the null-cursor first-page signal, cancellation, and bounding.
 
+### 2.3 — Phase 3 completion and runtime hardening (`06617e3`)
+
+**Migration `0068` completes Phase 3.** The `0063` plan resolved sections from
+taxonomy scope alone. Four gaps are closed:
+
+- **Service availability.** A rule whose service is disabled is no longer
+  proposed, because the section it would produce can only come back empty. All
+  seven policies ship disabled, so with default configuration the plan is now
+  correctly empty until a service is explicitly enabled and certified.
+- **Listing state and location.** Rules may require location, price or sibling
+  seller inventory, or a minimum quality score or a listing status. Only
+  *presence* is tested; no coordinate, price or seller value leaves the
+  orchestrator.
+- **Precedence and conflict resolution.** Subcategory beats category beats
+  global, ties broken deterministically by rule priority, then context priority,
+  then rule id. The winning tier is returned as a stable `precedence` value so a
+  plan can be explained.
+- **Rule validation.** `contextual_conditions_valid_v1` enforces a closed
+  vocabulary through a table constraint, so an unknown key makes a rule inert
+  rather than silently universal.
+
+The plan payload is now `contractVersion` 2. Section fields are additive, so the
+existing frontend adapter is unaffected.
+
+**Contextual operational health.** `contextual_ecosystem_health_v1` plus a
+`contextual-ecosystem-health` Edge Function, behind the same trusted
+monitoring-credential boundary as `recommendation-service-health`
+(`FINDIT_CONTEXTUAL_HEALTH_SECRET`, constant-time compared, `verify_jwt = false`
+so the function's own check is authoritative). Counts and timestamps only.
+
+**Migration `0067` closes findings O-3 to O-6:**
+
+| Finding | Resolution |
+|---|---|
+| O-3 per-isolate breaker | Durable `recommendation_service_circuit_state`, read on the same call that already fetches the policy so the hot path gains no round trip. The in-isolate map is kept as a fast local short-circuit. Outcomes are persisted without being awaited. |
+| O-4 no abuse control | Windowed request budget keyed by an opaque salted digest (`FINDIT_REQUEST_BUDGET_SALT`). No address, header value or account identifier is stored. Consumed only when a request is about to reach the database, and **fails open**. |
+| O-4 cache-key amplification | Page sizes are a closed bucket set (6, 12, 24, 48, 100). The adapter requests a bucket value directly, so requested page, returned page and next cursor stay aligned. |
+| O-5 bypassable body guard | `readBoundedJson` in `_shared/request-guards.ts` bounds bytes actually buffered. Used by both runtimes. |
+| O-6 unbounded identity call | `withBoundedTimeout` caps `auth.getUser()` at 1000 ms. A slow response is treated as anonymous, which is safe because the one authentication-required service rejects a null viewer outright. |
+
+**A required new secret.** `FINDIT_REQUEST_BUDGET_SALT` must be set before
+deployment or the request budget silently does nothing (`clientHash` returns
+null when the salt is absent, and the budget is then skipped). This is
+deliberate fail-open behaviour, but it means an unset salt looks identical to a
+working deployment. `FINDIT_CONTEXTUAL_HEALTH_SECRET` is likewise required for
+the new health endpoint, which refuses every request without it.
+
 ## 3. Verified state
 
-Executed locally against `8e2cd94` on Node 24 (CI runs Node 22):
+Executed locally against `06617e3` on Node 24 (CI runs Node 22):
 
 | Gate | Result |
 |---|---|
 | `npm run lint` | pass |
 | `npm run typecheck` | pass |
-| `npm run test:contracts` | 300 of 301 pass |
-| `npm run verify:sql-boundary` | pass, 66 migrations, 37 rollback capsules |
-| `npm run verify:hygiene` | pass, 635 files |
-| `npm run verify:source-graph` | pass, 356 modules, 0 unresolved |
+| `npm run test:contracts` | 307 of 308 pass |
+| `npm run verify:sql-boundary` | pass, 68 migrations, 39 rollback capsules |
+| `npm run verify:hygiene` | pass, 642 files |
+| `npm run verify:source-graph` | pass, 358 modules, 0 unresolved |
 | `npm run audit:product-surface` | pass, 0 failures, 1 warning |
 | `npm run build` (NODE_ENV=production) | pass, 535,080 B raw / 157,898 B gzip |
+
+**CI on `06617e3`: all four required checks pass** — `verify`, `Frontend and
+source contracts`, `Database reset, RLS and recommendation certification`, and
+`Reset, lint and recommendation pgTAP`. This is what validates migrations `0067`
+and `0068` and the new pgTAP assertions, none of which could be run locally.
 
 The one failing contract test is
 `tests/tourMilestone6ModerationAdmin.test.mjs:67`. It is a **Windows-only local
@@ -133,24 +194,26 @@ before trusting any pgTAP or migration claim.**
 
 ## 4. Immediate next actions
 
-1. **Read CI for `8e2cd94`.** Four workflows must be green:
-   `Release candidate gates`, `Migration gates` (two jobs), and
-   `Recommendation database gates`.
-   ```
-   gh run list --branch feature/listing-intelligence-foundation --limit 5
-   gh run view <id> --log-failed
-   ```
-   The highest-risk step is the `0066` drop-and-recreate inside the full
-   migration chain. If Postgres objects to dropping a function another object
-   depends on, add the dependency handling to `0066` — do **not** rewrite
-   `0059`, and do **not** use `cascade`.
+1. **Settle the `verify_jwt` question (O-1).** This is now the single blocker
+   with the widest downstream effect: it decides whether anonymous visitors can
+   reach the services at all, which in turn decides how Phase 4 designs the
+   public listing page. It cannot be answered by reading the repository. The
+   exact request is in section 5.
 
-2. **Resolve the `verify_jwt` question before Phase 4** (see section 5). This
-   is the last known blocker to recommendations actually rendering for
-   anonymous visitors, and it cannot be settled by reading the repository.
+2. **Configure the two new secrets before any hosted deployment.**
+   `FINDIT_REQUEST_BUDGET_SALT` and `FINDIT_CONTEXTUAL_HEALTH_SECRET`. The
+   budget salt fails open when unset, so an unconfigured deployment looks
+   identical to a working one.
 
-3. Only then continue Phase 3 to its full boundary, then Phases 4 to 7 in the
-   locked order.
+3. **Enable and certify what is currently disabled.** All seven service policies
+   ship `enabled = false`, and `contextual-ecosystem` is registered
+   `enabled = false` in `supabase/config.toml`. With `0068` in place, a disabled
+   service is correctly never proposed, which means **the contextual plan is
+   empty until services are explicitly enabled**. That is intended behaviour, not
+   a fault, but it also means Phase 3 cannot be hosted-certified until at least
+   one service is enabled deliberately.
+
+4. **Then Phase 4**, and Phases 5 to 7 in the locked order.
 
 ## 5. Open findings not fixed, in priority order
 
@@ -203,39 +266,22 @@ certified, but **Phase 3 cannot be certified while it is off**. Plan a
 deliberate enable-and-certify step, with hosted evidence, before claiming Phase
 3 complete.
 
-### O-3 (Medium) — the circuit breaker is per-isolate, so it barely engages
+### O-3 to O-6 — closed in `06617e3`
 
-`circuitStates` in `recommendation-service.ts` is a module-level `Map` inside a
-Deno isolate. Edge Functions run many isolates and recycle them, so each cold
-isolate starts with a clean breaker. Under real traffic the
-`FAILURE_THRESHOLD = 3` rule will rarely trip, and Phase 7 requires
-"circuit-breaker behaviour" to be certified.
+All four are fixed by migration `0067` and the shared request guards. See
+section 2.3 for what each resolution does. Two things to carry forward rather
+than assume settled:
 
-Either move the breaker state into the database next to the existing service
-health tables, or write down explicitly that it is a per-isolate best-effort
-control and certify it as such. Do not certify it as a global breaker.
-
-### O-4 (Medium) — no rate limiting on any recommendation endpoint
-
-Phase 7 requires "rate limiting or bounded abuse controls". There are none
-today. The endpoints accept unauthenticated POSTs and each one triggers a
-database RPC. Note that `cacheKey` includes `limit` and `cursor`, so an attacker
-can trivially generate unbounded distinct cache keys and grow
-`recommendation_cache`. The bounded purge from `0061` limits total damage but
-does not stop the write amplification.
-
-### O-5 (Low) — the request body size guard is bypassable
-
-Both runtimes check `content-length` only. A chunked request omits that header,
-`Number(null ?? 0)` is `0`, the check passes, and `request.json()` then reads an
-unbounded body. Bound the actual read rather than trusting the header.
-
-### O-6 (Low) — `authenticatedUserId` is unbounded
-
-It performs a network `auth.getUser()` on every request, outside any timeout,
-before `policy.timeoutMs` applies. A slow auth response holds the isolate open
-past the client's own timeout. Wrap it in the same bounded-timeout helper the
-RPC call uses.
+- The durable breaker is only meaningful if `record_recommendation_service_outcome_v1`
+  is actually reached. It is called without `await` so it cannot add latency,
+  which also means a failure to persist is silent by design. Phase 7 should
+  certify the breaker by driving real failures and reading
+  `recommendation_service_circuit_state`, not by reading the code.
+- The request budget **fails open in three separate ways**: no salt configured,
+  a malformed client hash, or any internal error. That is deliberate — an abuse
+  control must never remove sections from a listing page — but it means an
+  ineffective budget is indistinguishable from a working one without an explicit
+  test. Certify it by exhausting a window against a real deployment.
 
 ### O-7 (informational) — the adapters are not yet imported by any UI
 
@@ -318,10 +364,10 @@ From the project instructions and from defects already paid for once:
 
 | Phase | Source | Local | CI | Hosted | Certified |
 |---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on `aaeeef4` | no | no |
-| 1 — data foundation | complete | pass | green on `aaeeef4` | no | no |
-| 2 — independent services | complete | pass | green on `aaeeef4`, **pending on `8e2cd94`** | no | **no** |
-| 3 — contextual intelligence | partial | pass | pgTAP green | function disabled | no |
+| 0 — release safety | complete | pass | green on `06617e3` | no | no |
+| 1 — data foundation | complete | pass | green on `06617e3` | no | no |
+| 2 — independent services | complete | pass | green on `06617e3` | no | **no** |
+| 3 — contextual intelligence | complete | pass | green on `06617e3` | function disabled | **no** |
 | 4 — listing detail UX | not started | — | — | — | — |
 | 5 — personalization | not started | — | — | — | — |
 | 6 — analytics | not started | — | — | — | — |
@@ -332,10 +378,18 @@ the gates as written and false in substance: the services could not answer a
 single real request. Treat "all gates green" as necessary, never sufficient, and
 prefer one real end-to-end call over another static assertion.
 
-Phase 3 still needs, at minimum: listing-state awareness, location-aware
-orchestration where safe, service-availability awareness, conflict resolution
-across global, category and subcategory precedence, an operational health
-surface, and hosted deployment evidence with the function enabled.
+**Phase 3 source is now complete**: journey-context resolution, category and
+subcategory rules, listing-state awareness, location-aware orchestration,
+service-availability awareness, stable context keys and reason codes, a
+versioned contract, deterministic ordering, admin lifecycle controls, audit
+history, rule validation, conflict resolution with explicit precedence, cache
+safety, privacy boundaries, timeout handling, fail-soft fallback, failure
+isolation, operational health, pgTAP coverage, source contracts, rollback
+support and deployment registration.
+
+It is **not certified**, and it cannot be until the function is enabled and
+exercised against the hosted project. Do not restate the source list above as
+evidence of certification; that is precisely the error made for Phase 2.
 
 ## 9. Update PR #1 after material progress
 
