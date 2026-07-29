@@ -38,12 +38,13 @@ Completion gate:
 
 Implementation state:
 
-- Source implementation is complete through migration `0056` with matching non-destructive rollback capsules.
+- Source implementation is complete through migration `0058` with matching non-destructive rollback capsules.
 - Listing projection is asynchronous and fail-open. Listing and detail writes only enqueue work inside a protected exception boundary; projection failures cannot abort listing transactions.
 - Projection workers use bounded `FOR UPDATE SKIP LOCKED` batches, capped retries, stable-code dead letters and no raw database-error persistence.
 - Privacy-limited event ingestion, partition preparation, retention, popularity aggregation, audited taxonomy/weight controls, health reporting and cursor/index scale fixtures are implemented.
-- Source contracts and pgTAP suites cover isolation, RLS, spoofing, privacy, retention, partition migration, queue failure, recovery and query plans.
-- The execution gate remains open: GitHub Actions currently reports `startup_failure` before allocating any job, and this environment cannot run a Docker-backed Supabase reset. Phase 2 remains blocked until reset, lint and the three Phase 1 database suites execute successfully.
+- Active-seller, publication, public-geography and deletion-compatible event boundaries are implemented.
+- Source contracts and five Phase 1 pgTAP suites cover isolation, RLS, spoofing, privacy, retention, partition migration, queue failure, recovery, publication and query plans.
+- The executable gate remains open because GitHub Actions is disabled by the account billing state. Phase 1 is implemented but not certified.
 
 ## Phase 2 — Independent Recommendation Services
 
@@ -70,6 +71,23 @@ Completion gate:
 - Each service can fail independently.
 - Listing detail remains available when every recommendation service is unavailable.
 - Scale fixtures demonstrate index-backed query plans and stable cursor behaviour under concurrent inserts.
+
+Implementation state:
+
+- Source implementation currently extends through migration `0061`, with matching rollback capsules.
+- Seven database contracts and seven separately deployable Supabase Edge Functions are implemented.
+- The shared dispatcher is not executable by the runtime service role; global services have dedicated query paths.
+- Service policy controls provide independent enablement, contract version, timeout, page-size and cache windows.
+- All service policies remain disabled by default.
+- Public recommendation responses can use fresh and stale disposable cache entries; personalized responses never enter shared cache.
+- Projection and taxonomy changes trigger best-effort cache invalidation without blocking authoritative writes.
+- The Edge runtime validates origin, payload size, UUIDs, cursors, page limits, policy values and response identity.
+- Hard timeouts, stale fallback and a per-service circuit breaker prevent repeated failures from cascading.
+- Personalized recommendations require a verified authenticated user.
+- Frontend adapters exist for all seven services and always degrade to an empty result rather than throwing into listing delivery.
+- Listing detail does not import or invoke these adapters during Phase 2.
+- Static contracts and a dedicated Phase 2 pgTAP suite are committed, and CI includes all Phase 1 and Phase 2 database suites.
+- Executable reset, lint, pgTAP, typecheck and build certification remain pending until GitHub Actions billing is restored.
 
 ## Phase 3 — Contextual Ecosystem Mapping
 
