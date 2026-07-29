@@ -72,15 +72,27 @@ export const AuthProvider = ({ children }) => {
       return undefined;
     }
 
-    checkUserAuth();
+    void checkUserAuth();
+    let authRefreshTimer = null;
     // Supabase pushes session changes (sign-in, sign-out, token refresh)
     // instead of Base44's single check-on-mount -- this is an improvement
     // over polling, not just a like-for-like swap, and it's what makes
     // logging out in one tab reflect in another without a reload.
     const unsubscribe = authService.onAuthStateChange(() => {
-      checkUserAuth();
+      // supabase-js currently deadlocks the next client request when an auth
+      // listener starts another async client call before the listener returns.
+      // Defer the profile refresh to the next task so public and authenticated
+      // PostgREST calls cannot be left pending indefinitely.
+      if (authRefreshTimer !== null) window.clearTimeout(authRefreshTimer);
+      authRefreshTimer = window.setTimeout(() => {
+        authRefreshTimer = null;
+        void checkUserAuth();
+      }, 0);
     });
-    return unsubscribe;
+    return () => {
+      if (authRefreshTimer !== null) window.clearTimeout(authRefreshTimer);
+      unsubscribe();
+    };
   }, [checkUserAuth]);
 
   const logout = async (shouldRedirect = true) => {

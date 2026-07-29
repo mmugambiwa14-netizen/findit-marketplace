@@ -86,8 +86,7 @@ jobs:
         run: npm run build
 
       - name: Add single-page application fallback
-        shell: bash
-        run: cp dist/index.html dist/404.html
+        run: node ./scripts/create-pages-spa-fallback.mjs dist "$VITE_BASE_PATH"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

@@ -10,6 +10,31 @@
   <body>
     <script>
       (function() {
+        const routeKey = '__findit_route';
+        const currentUrl = new URL(window.location.href);
+        const restoredRoute = currentUrl.searchParams.get(routeKey);
+        if (restoredRoute) {
+          currentUrl.searchParams.delete(routeKey);
+          const baseUrl = new URL('%BASE_URL%', window.location.origin);
+          const targetUrl = new URL(restoredRoute.replace(/^\/+/, ''), baseUrl);
+          if (
+            targetUrl.origin === window.location.origin
+            && targetUrl.pathname.startsWith(baseUrl.pathname)
+          ) {
+            window.history.replaceState(
+              null,
+              '',
+              `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`,
+            );
+          } else {
+            window.history.replaceState(
+              null,
+              '',
+              `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`,
+            );
+          }
+        }
+
         const stored = localStorage.getItem('theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (stored === 'dark' || (!stored && prefersDark)) {

@@ -10,6 +10,15 @@ const authSource = readFileSync(
   'utf8',
 );
 const registerSource = readFileSync(resolve(projectRoot, 'src/pages/Register.jsx'), 'utf8');
+const indexSource = readFileSync(resolve(projectRoot, 'index.html'), 'utf8');
+const pagesWorkflow = readFileSync(
+  resolve(projectRoot, '.github/workflows/deploy-staging-pages.yml'),
+  'utf8',
+);
+const pagesFallback = readFileSync(
+  resolve(projectRoot, 'scripts/create-pages-spa-fallback.mjs'),
+  'utf8',
+);
 
 test('browser routing consumes the Vite deployment base path', () => {
   assert.match(appSource, /import\.meta\.env\.BASE_URL/);
@@ -23,4 +32,14 @@ test('all provider-driven auth callbacks use the deployment-aware URL helper', (
   assert.match(registerSource, /redirectPath: returnTo/);
   assert.match(registerSource, /resendSignupConfirmation\(email, returnTo\)/);
   assert.match(authSource, /redirectTo: appUrl\('\/reset-password'\)/);
+});
+
+test('Pages deep links redirect through a 200 shell and restore the route safely', () => {
+  assert.match(pagesWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
+  assert.doesNotMatch(pagesWorkflow, /cp dist\/index\.html dist\/404\.html/);
+  assert.match(pagesFallback, /window\.location\.replace\(destination\.toString\(\)\)/);
+  assert.match(pagesFallback, /currentPath\.startsWith\(basePath\)/);
+  assert.match(indexSource, /currentUrl\.searchParams\.get\(routeKey\)/);
+  assert.match(indexSource, /targetUrl\.origin === window\.location\.origin/);
+  assert.match(indexSource, /targetUrl\.pathname\.startsWith\(baseUrl\.pathname\)/);
 });
