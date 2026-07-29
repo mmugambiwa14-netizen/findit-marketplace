@@ -22,8 +22,8 @@ function configuredAdminKey(): string {
 }
 
 function configuredWorkerSecret(): string {
-  const value = Deno.env.get("FINDIT_RECOMMENDATION_MAINTENANCE_WORKER_SECRET");
-  if (!value || value.length < 24) throw new Error("Missing recommendation maintenance secret");
+  const value = Deno.env.get("FINDIT_RECOMMENDATION_WORKER_SECRET");
+  if (!value || value.length < 24) throw new Error("Missing recommendation worker secret");
   return value;
 }
 
@@ -43,7 +43,10 @@ function boundedInteger(value: unknown, fallback: number, min: number, max: numb
 
 function normalizeCursor(value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
-  if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value)) {
+  if (
+    typeof value !== "string"
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  ) {
     throw new Error("Invalid projection cursor");
   }
   return value;
@@ -70,6 +73,11 @@ Deno.serve(async (request: Request) => {
     const contentType = request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase();
     if (contentType !== "application/json") {
       return json(415, { code: "unsupported_media_type", message: "A JSON request is required." });
+    }
+
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    if (Number.isFinite(contentLength) && contentLength > 4096) {
+      return json(413, { code: "payload_too_large", message: "The maintenance request is too large." });
     }
 
     const suppliedAuthorization = request.headers.get("authorization") ?? "";
@@ -105,9 +113,7 @@ Deno.serve(async (request: Request) => {
     }
 
     const today = now.toISOString().slice(0, 10);
-    const yesterdayDate = new Date(now.getTime() - 86_400_000);
-    const yesterday = yesterdayDate.toISOString().slice(0, 10);
-
+    const yesterday = new Date(now.getTime() - 86_400_000).toISOString().slice(0, 10);
     for (const metricDate of [yesterday, today]) {
       const { error } = await adminClient.rpc("refresh_recommendation_popularity_daily", {
         p_metric_date: metricDate,
