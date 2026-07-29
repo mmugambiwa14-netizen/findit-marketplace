@@ -11,6 +11,7 @@ const [
   certification,
   projectionQueue,
   integrity,
+  closure,
   eventService,
   maintenanceWorker,
   sqlBoundary,
@@ -22,6 +23,7 @@ const [
   read('../supabase/migrations/0054_recommendation_foundation_certification_corrections.sql'),
   read('../supabase/migrations/0055_recommendation_projection_queue.sql'),
   read('../supabase/migrations/0056_recommendation_partition_and_configuration_integrity.sql'),
+  read('../supabase/migrations/0057_recommendation_eligibility_geospatial_and_deletion_closure.sql'),
   read('../src/services/recommendationEventsService.js'),
   read('../supabase/functions/recommendation-maintenance/index.ts'),
   read('../scripts/verify-sql-boundary.mjs'),
@@ -105,6 +107,19 @@ test('partition and configuration integrity handles populated partitions and aud
   assert.match(integrity, /"schema_version":56/);
 });
 
+test('closure enforces active-seller eligibility, privacy-safe geography and deletion compatibility', () => {
+  assert.match(closure, /public_location extensions\.geography\(point, 4326\)/);
+  assert.match(closure, /using gist \(public_location\)/);
+  assert.match(closure, /seller\.status = 'active'/);
+  assert.match(closure, /trg_users_recommendation_eligibility/);
+  assert.match(closure, /event subject is not publicly eligible/);
+  assert.match(closure, /recommendation_events_actor_id_fkey[\s\S]{0,100}on delete cascade/);
+  assert.match(closure, /recommendation_events_listing_id_fkey[\s\S]{0,100}on delete cascade/);
+  assert.match(closure, /recommendation_events_seller_id_fkey[\s\S]{0,100}on delete cascade/);
+  assert.match(closure, /Exact owner-supplied coordinates are never projected/);
+  assert.match(closure, /'schema_version', 57/);
+});
+
 test('browser event delivery is session scoped and non-blocking', () => {
   assert.match(eventService, /window\.sessionStorage/);
   assert.doesNotMatch(eventService, /localStorage/);
@@ -138,6 +153,7 @@ test('every Phase 1 migration has a non-destructive rollback and the boundary is
     '0054': 'recommendation_foundation_certification_corrections',
     '0055': 'recommendation_projection_queue',
     '0056': 'recommendation_partition_and_configuration_integrity',
+    '0057': 'recommendation_eligibility_geospatial_and_deletion_closure',
   };
 
   for (const [number, name] of Object.entries(rollbackNames)) {
@@ -145,5 +161,5 @@ test('every Phase 1 migration has a non-destructive rollback and the boundary is
     assert.doesNotMatch(rollback, /\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i);
     assert.match(rollback, /revoke|force row level security/i);
   }
-  assert.match(sqlBoundary, /0056_recommendation_partition_and_configuration_integrity\.sql/);
+  assert.match(sqlBoundary, /0057_recommendation_eligibility_geospatial_and_deletion_closure\.sql/);
 });
