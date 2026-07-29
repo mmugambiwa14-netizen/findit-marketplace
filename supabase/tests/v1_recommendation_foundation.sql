@@ -331,10 +331,11 @@ select extensions.ok(
     ?& array['projection_version', 'counts_are_estimates', 'projected_public_listings', 'active_taxonomy_nodes', 'active_relationships', 'active_weight_profiles', 'generated_at'],
   'service worker reads a payload-free bounded health snapshot'
 );
+reset role;
 select extensions.throws_ok(
   $$update public.recommendation_configuration_audit set action = 'update'$$,
   '42501', 'recommendation configuration audit history is immutable',
-  'trusted roles cannot rewrite audit history'
+  'table owner cannot rewrite audit history'
 );
 
 insert into public.recommendation_events (
@@ -349,11 +350,13 @@ insert into public.recommendation_events (
   '{"surface":"partition_test"}'::jsonb,
   date_trunc('month', current_date + interval '13 months') + interval '1 day'
 );
+set local role service_role;
 select extensions.isnt(
   public.ensure_recommendation_event_partition((current_date + interval '12 months')::date),
   null::text,
   'service worker creates a partition even when matching rows already exist in the default partition'
 );
+reset role;
 select extensions.is(
   (select count(*)::bigint
    from public.recommendation_events
@@ -361,7 +364,6 @@ select extensions.is(
   1::bigint,
   'late default-partition rows survive monthly partition creation'
 );
-reset role;
 
 select extensions.ok(
   has_function_privilege('anon', 'public.record_recommendation_event(text,uuid,uuid,uuid,uuid,text,text,jsonb)', 'EXECUTE'),

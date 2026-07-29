@@ -57,6 +57,7 @@ jobs:
           npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
           npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
           npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
+          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_analytics.sql --local
 
       - name: Stop local database
         if: always()

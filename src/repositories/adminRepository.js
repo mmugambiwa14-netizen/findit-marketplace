@@ -144,3 +144,10 @@ export function fetchAdminOperationalHealth(hours) {
 export function fetchAdminNotificationFanoutHealth() {
   return rpc('admin_notification_fanout_health', {}, 'Unable to load notification fan-out health');
 }
+
+export function fetchAdminRecommendationAnalytics(startDate, endDate) {
+  return rpc('admin_recommendation_analytics_v1', {
+    p_start_date: startDate,
+    p_end_date: endDate,
+  }, 'Unable to load recommendation analytics');
+}

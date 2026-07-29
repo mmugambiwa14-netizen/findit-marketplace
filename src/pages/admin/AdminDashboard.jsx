@@ -2,8 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, FolderTree, Store, Users } from 'lucide-react';
 import AdminOperationalHealth from '@/components/admin/AdminOperationalHealth';
+import AdminRecommendationAnalytics from '@/components/admin/AdminRecommendationAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAdminDashboardStats, getAdminOperationalHealth } from '@/services/adminService';
+import {
+  getAdminDashboardStats,
+  getAdminOperationalHealth,
+  getAdminRecommendationAnalytics,
+} from '@/services/adminService';
 
 const overviewCards = [
   { key: 'active_listings', label: 'Active listings', icon: Store, path: '/admin/listings' },
@@ -23,6 +28,12 @@ export default function AdminDashboard() {
     queryFn: () => getAdminOperationalHealth(24),
     refetchInterval: 60_000,
     staleTime: 30_000,
+  });
+  const recommendationAnalytics = useQuery({
+    queryKey: ['admin-recommendation-analytics', 30],
+    queryFn: () => getAdminRecommendationAnalytics(30),
+    refetchInterval: 5 * 60_000,
+    staleTime: 60_000,
   });
 
   return (
@@ -55,6 +66,12 @@ export default function AdminDashboard() {
           data={operationalHealth.data}
           isLoading={operationalHealth.isLoading}
           error={operationalHealth.error}
+        />
+
+        <AdminRecommendationAnalytics
+          data={recommendationAnalytics.data}
+          isLoading={recommendationAnalytics.isLoading}
+          error={recommendationAnalytics.error}
         />
 
         <div className="grid gap-4 md:grid-cols-2">

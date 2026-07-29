@@ -124,6 +124,9 @@ jobs:
       - name: Run recommendation personalization privacy matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
 
+      - name: Run aggregate recommendation analytics matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_analytics.sql --local
+
       - name: Stop local Supabase stack
         if: always()
         run: npx --yes supabase@2.84.2 stop --no-backup

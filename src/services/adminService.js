@@ -6,6 +6,7 @@ import {
   fetchAdminNotificationFanoutHealth,
   fetchAdminOperationalHealth,
   fetchAdminReports,
+  fetchAdminRecommendationAnalytics,
   fetchAdminSupportRequests,
   fetchAdminUsers,
   insertAdminCategory,
@@ -170,5 +171,34 @@ export async function getAdminOperationalHealth(hours = 24) {
     },
     notificationFanoutSnapshotAt: notificationFanout?.snapshot_at ?? null,
     storage: numericRecord(data?.storage),
+  };
+}
+
+function normalizeAnalyticsMetric(value) {
+  return {
+    ...value,
+    impressions: Number(value?.impressions ?? 0),
+    clicks: Number(value?.clicks ?? 0),
+    requests: Number(value?.requests ?? 0),
+    clickThroughRate: Number(value?.clickThroughRate ?? 0),
+  };
+}
+
+export async function getAdminRecommendationAnalytics(days = 30) {
+  const boundedDays = Number.isInteger(days) ? Math.min(Math.max(days, 1), 90) : 30;
+  const end = new Date();
+  const start = new Date(end.getTime() - ((boundedDays - 1) * 86_400_000));
+  const data = await fetchAdminRecommendationAnalytics(
+    start.toISOString().slice(0, 10),
+    end.toISOString().slice(0, 10),
+  );
+  return {
+    contractVersion: Number(data?.contractVersion ?? 1),
+    startDate: data?.startDate ?? null,
+    endDate: data?.endDate ?? null,
+    generatedAt: data?.generatedAt ?? null,
+    summary: normalizeAnalyticsMetric(data?.summary),
+    services: Array.isArray(data?.services) ? data.services.map(normalizeAnalyticsMetric) : [],
+    days: Array.isArray(data?.days) ? data.days.map(normalizeAnalyticsMetric) : [],
   };
 }

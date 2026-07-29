@@ -119,6 +119,8 @@ Deno.serve(async (request: Request) => {
     let projection: unknown = null;
     let partitionsEnsured = 0;
     let popularityDatesRefreshed = 0;
+    let analyticsDatesRefreshed = 0;
+    let analyticsMetricsDeleted = 0;
     let retention: Record<string, unknown> = {};
 
     if (mode === "projection" || mode === "all") {
@@ -150,8 +152,15 @@ Deno.serve(async (request: Request) => {
           p_metric_date: metricDate,
         });
         if (error) throw new Error("recommendation popularity operation failed");
+
+        const { error: analyticsError } = await adminClient.rpc(
+          "refresh_recommendation_service_metrics_daily_v1",
+          { p_metric_date: metricDate },
+        );
+        if (analyticsError) throw new Error("recommendation analytics refresh failed");
       }
       popularityDatesRefreshed = 2;
+      analyticsDatesRefreshed = 2;
 
       const { data: retentionData, error: retentionError } = await adminClient.rpc(
         "purge_expired_recommendation_data",
@@ -159,6 +168,19 @@ Deno.serve(async (request: Request) => {
       );
       if (retentionError) throw new Error("recommendation retention operation failed");
       retention = Array.isArray(retentionData) ? retentionData[0] ?? {} : retentionData ?? {};
+
+      const analyticsBeforeDate = new Date(now.getTime() - (400 * 86_400_000))
+        .toISOString()
+        .slice(0, 10);
+      const { data: analyticsRetentionData, error: analyticsRetentionError } = await adminClient.rpc(
+        "purge_recommendation_service_metrics_v1",
+        {
+          p_before_date: analyticsBeforeDate,
+          p_limit: retentionLimit,
+        },
+      );
+      if (analyticsRetentionError) throw new Error("recommendation analytics retention failed");
+      analyticsMetricsDeleted = Number(analyticsRetentionData ?? 0);
     }
 
     const { data: healthData, error: healthError } = await adminClient.rpc("recommendation_foundation_health");
@@ -170,9 +192,11 @@ Deno.serve(async (request: Request) => {
       projection,
       partitionsEnsured,
       popularityDatesRefreshed,
+      analyticsDatesRefreshed,
       retention: {
         eventsDeleted: Number(retention.events_deleted ?? 0),
         cacheEntriesDeleted: Number(retention.cache_entries_deleted ?? 0),
+        analyticsMetricsDeleted,
       },
       health: healthData,
     });
