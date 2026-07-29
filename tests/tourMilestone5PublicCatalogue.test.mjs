@@ -152,6 +152,14 @@ test('rollback and smoke cover cursor integrity, category filtering and unavaila
   assert.match(smoke, /feed does not expose playback URLs/);
 });
 
+test('hosted catalogue fixtures respect the production upload rate limit', () => {
+  assert.match(smoke, /const ownerCount = Math\.ceil\(\(fixtureCount \+ 1\) \/ 9\)/);
+  assert.match(smoke, /owners\[index % owners\.length\]/);
+  assert.match(smoke, /const serviceOwner = owners\.at\(-1\)/);
+  assert.match(smoke, /publish\(\{ owner: listingOwners\.get\(listingId\), listingId \}\)/);
+  assert.match(smoke, /publish\(\{ owner: serviceOwner, serviceId \}\)/);
+});
+
 
 test('feed contracts reject unsafe asset URLs and invalid prices', () => {
   assert.match(contracts, /function boundedHttpUrl/);

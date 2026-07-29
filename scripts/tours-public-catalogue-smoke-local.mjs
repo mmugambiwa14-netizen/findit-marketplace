@@ -14,13 +14,14 @@ import {
   success,
 } from './lib/tour-smoke-fixtures.mjs';
 
-let owner;
+const owners = [];
 let admin;
 const listingIds = [];
+const listingOwners = new Map();
 let serviceId;
 
 async function publish(parent) {
-  const upload = await createTourUpload({ owner, ...parent, bytes: Buffer.from(`findit-feed-${parent.listingId ?? parent.serviceId}`), durationSeconds: 37 });
+  const upload = await createTourUpload({ ...parent, bytes: Buffer.from(`findit-feed-${parent.listingId ?? parent.serviceId}`), durationSeconds: 37 });
   const claim = await claimTourProcessing(upload.tourId);
   await finalizeTourProcessing(claim, { durationSeconds: 37 });
   success(await admin.browser.rpc('admin_approve_tour', {
@@ -31,25 +32,36 @@ async function publish(parent) {
 }
 
 try {
-  owner = await createSmokeUser('tour-feed-owner');
   admin = await createSmokeUser('tour-feed-admin', 'admin');
   await setToursDatabaseEnabled(true);
 
   const fixtureCount = Math.min(48, Math.max(12, Number(process.env.FINDIT_TOUR_FEED_FIXTURE_COUNT) || 18));
+  const ownerCount = Math.ceil((fixtureCount + 1) / 9);
+  for (let index = 0; index < ownerCount; index += 1) {
+    owners.push(await createSmokeUser(`tour-feed-owner-${index + 1}`));
+  }
   const titles = Array.from({ length: fixtureCount }, (_, index) => {
     if (index === 0) return 'Newest cursor car';
     if (index === 1) return 'Middle cursor car';
     if (index === 2) return 'Literal %_ cursor car';
     return `Cursor volume car ${String(index + 1).padStart(2, '0')}`;
   });
-  for (const title of titles) listingIds.push(await createAvailableListing(owner.userId, title));
+  for (let index = 0; index < titles.length; index += 1) {
+    const owner = owners[index % owners.length];
+    const listingId = await createAvailableListing(owner.userId, titles[index]);
+    listingIds.push(listingId);
+    listingOwners.set(listingId, owner);
+  }
 
-  serviceId = await createServiceWithStatus(owner.userId, 'Mobile mechanic Tour', 'active', 'mechanic');
+  const serviceOwner = owners.at(-1);
+  serviceId = await createServiceWithStatus(serviceOwner.userId, 'Mobile mechanic Tour', 'active', 'mechanic');
   success(await root.from('services').update({ location_name: 'Harare' }).eq('id', serviceId), 'set service location');
 
   const tourIds = [];
-  for (const listingId of listingIds) tourIds.push(await publish({ listingId }));
-  const serviceTourId = await publish({ serviceId });
+  for (const listingId of listingIds) {
+    tourIds.push(await publish({ owner: listingOwners.get(listingId), listingId }));
+  }
+  const serviceTourId = await publish({ owner: serviceOwner, serviceId });
 
   // Use deterministic descending timestamps and repeated timestamps so the
   // UUID tie-breaker is exercised across multiple cursor pages.
@@ -113,5 +125,5 @@ try {
   try { await setToursDatabaseEnabled(false); } catch { /* best effort */ }
   for (const listingId of listingIds) await cleanupTourFixtures({ listingId });
   if (serviceId) await cleanupTourFixtures({ serviceId });
-  await cleanupTourFixtures({ users: [owner, admin].filter(Boolean) });
+  await cleanupTourFixtures({ users: [...owners, admin].filter(Boolean) });
 }
