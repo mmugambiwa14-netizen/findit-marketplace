@@ -20,17 +20,44 @@ interface ServiceConfig {
   rpc: string;
   subjectRequired: boolean;
   authenticationRequired: boolean;
+  sharedCacheAllowed: boolean;
+}
+
+interface RuntimePolicy {
+  serviceName: RecommendationServiceName;
+  contractVersion: number;
+  enabled: boolean;
+  timeoutMs: number;
+  cacheFreshSeconds: number;
+  cacheStaleSeconds: number;
+  maximumPageSize: number;
+}
+
+interface CachedRecommendation {
+  payload: Record<string, unknown>;
+  generatedAt: number;
+  staleAt: number;
+  expiresAt: number;
+}
+
+interface CircuitState {
+  consecutiveFailures: number;
+  openUntil: number;
 }
 
 const SERVICE_CONFIG: Record<RecommendationServiceName, ServiceConfig> = {
-  similar_listings_service: { rpc: "similar_listings_service_v1", subjectRequired: true, authenticationRequired: false },
-  seller_recommendations_service: { rpc: "seller_recommendations_service_v1", subjectRequired: true, authenticationRequired: false },
-  related_services_service: { rpc: "related_services_service_v1", subjectRequired: true, authenticationRequired: false },
-  related_products_service: { rpc: "related_products_service_v1", subjectRequired: true, authenticationRequired: false },
-  nearby_service: { rpc: "nearby_service_v1", subjectRequired: true, authenticationRequired: false },
-  recently_listed_service: { rpc: "recently_listed_service_v1", subjectRequired: false, authenticationRequired: false },
-  personalized_recommendation_service: { rpc: "personalized_recommendation_service_v1", subjectRequired: false, authenticationRequired: true },
+  similar_listings_service: { rpc: "similar_listings_service_v1", subjectRequired: true, authenticationRequired: false, sharedCacheAllowed: true },
+  seller_recommendations_service: { rpc: "seller_recommendations_service_v1", subjectRequired: true, authenticationRequired: false, sharedCacheAllowed: true },
+  related_services_service: { rpc: "related_services_service_v1", subjectRequired: true, authenticationRequired: false, sharedCacheAllowed: true },
+  related_products_service: { rpc: "related_products_service_v1", subjectRequired: true, authenticationRequired: false, sharedCacheAllowed: true },
+  nearby_service: { rpc: "nearby_service_v1", subjectRequired: true, authenticationRequired: false, sharedCacheAllowed: true },
+  recently_listed_service: { rpc: "recently_listed_service_v1", subjectRequired: false, authenticationRequired: false, sharedCacheAllowed: true },
+  personalized_recommendation_service: { rpc: "personalized_recommendation_service_v1", subjectRequired: false, authenticationRequired: true, sharedCacheAllowed: false },
 };
+
+const circuitStates = new Map<RecommendationServiceName, CircuitState>();
+const FAILURE_THRESHOLD = 3;
+const CIRCUIT_OPEN_MS = 30_000;
 
 function configuredAdminKey(): string {
   const direct = Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -156,6 +183,150 @@ async function executeWithTimeout(
   return result;
 }
 
+async function runtimePolicy(client: SupabaseClient, service: RecommendationServiceName): Promise<RuntimePolicy> {
+  const { data, error } = await client.rpc("get_recommendation_service_policy_v1", { p_service_name: service });
+  if (error || !data || typeof data !== "object") throw new Error("recommendation policy unavailable");
+
+  const value = data as Record<string, unknown>;
+  const policy: RuntimePolicy = {
+    serviceName: value.serviceName as RecommendationServiceName,
+    contractVersion: Number(value.contractVersion),
+    enabled: value.enabled === true,
+    timeoutMs: Number(value.timeoutMs),
+    cacheFreshSeconds: Number(value.cacheFreshSeconds),
+    cacheStaleSeconds: Number(value.cacheStaleSeconds),
+    maximumPageSize: Number(value.maximumPageSize),
+  };
+
+  if (
+    policy.serviceName !== service ||
+    !Number.isInteger(policy.contractVersion) || policy.contractVersion < 1 ||
+    !Number.isInteger(policy.timeoutMs) || policy.timeoutMs < 50 || policy.timeoutMs > 5000 ||
+    !Number.isInteger(policy.cacheFreshSeconds) || policy.cacheFreshSeconds < 0 ||
+    !Number.isInteger(policy.cacheStaleSeconds) || policy.cacheStaleSeconds < 1 ||
+    !Number.isInteger(policy.maximumPageSize) || policy.maximumPageSize < 1 || policy.maximumPageSize > 100
+  ) {
+    throw new Error("invalid recommendation policy");
+  }
+
+  return policy;
+}
+
+async function sha256(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function cacheKey(service: RecommendationServiceName, body: RecommendationRequest): Promise<string> {
+  return sha256(JSON.stringify({
+    version: 1,
+    service,
+    subjectListingId: body.subjectListingId ?? null,
+    cursor: body.cursor ?? null,
+    limit: body.limit ?? 12,
+    maxDistanceMeters: service === "nearby_service" ? body.maxDistanceMeters ?? 50_000 : null,
+  }));
+}
+
+async function readCache(
+  client: SupabaseClient,
+  service: RecommendationServiceName,
+  key: string,
+): Promise<CachedRecommendation | null> {
+  const { data, error } = await client
+    .from("recommendation_cache")
+    .select("payload,generated_at,stale_at,expires_at")
+    .eq("cache_key", key)
+    .eq("service_name", service)
+    .maybeSingle();
+
+  if (error || !data || typeof data.payload !== "object" || data.payload === null) return null;
+  const generatedAt = Date.parse(data.generated_at);
+  const staleAt = Date.parse(data.stale_at);
+  const expiresAt = Date.parse(data.expires_at);
+  if (![generatedAt, staleAt, expiresAt].every(Number.isFinite)) return null;
+  return { payload: data.payload as Record<string, unknown>, generatedAt, staleAt, expiresAt };
+}
+
+async function writeCache(
+  client: SupabaseClient,
+  service: RecommendationServiceName,
+  key: string,
+  subjectListingId: string | undefined,
+  payload: Record<string, unknown>,
+  policy: RuntimePolicy,
+): Promise<void> {
+  const generatedAt = new Date();
+  const staleAt = new Date(generatedAt.getTime() + policy.cacheFreshSeconds * 1000);
+  const expiresAt = new Date(generatedAt.getTime() + policy.cacheStaleSeconds * 1000);
+  await client.from("recommendation_cache").upsert({
+    cache_key: key,
+    service_name: service,
+    contract_version: policy.contractVersion,
+    subject_listing_id: subjectListingId ?? null,
+    viewer_scope_hash: null,
+    payload,
+    generated_at: generatedAt.toISOString(),
+    stale_at: staleAt.toISOString(),
+    expires_at: expiresAt.toISOString(),
+  }, { onConflict: "cache_key" });
+}
+
+function validPayload(payload: unknown, service: RecommendationServiceName, contractVersion: number): payload is Record<string, unknown> {
+  if (!payload || typeof payload !== "object") return false;
+  const value = payload as Record<string, unknown>;
+  return value.service === service &&
+    Number(value.contractVersion) === contractVersion &&
+    Array.isArray(value.items) &&
+    (value.nextCursor === null || typeof value.nextCursor === "string") &&
+    typeof value.degraded === "boolean";
+}
+
+function circuitOpen(service: RecommendationServiceName): boolean {
+  const state = circuitStates.get(service);
+  return Boolean(state && state.openUntil > Date.now());
+}
+
+function recordSuccess(service: RecommendationServiceName): void {
+  circuitStates.set(service, { consecutiveFailures: 0, openUntil: 0 });
+}
+
+function recordFailure(service: RecommendationServiceName): void {
+  const current = circuitStates.get(service) ?? { consecutiveFailures: 0, openUntil: 0 };
+  const failures = current.consecutiveFailures + 1;
+  circuitStates.set(service, {
+    consecutiveFailures: failures,
+    openUntil: failures >= FAILURE_THRESHOLD ? Date.now() + CIRCUIT_OPEN_MS : 0,
+  });
+}
+
+function degradedPayload(
+  service: RecommendationServiceName,
+  contractVersion: number,
+  correlationId: string,
+  reason: string,
+  cached?: CachedRecommendation | null,
+): Record<string, unknown> {
+  if (cached && cached.expiresAt > Date.now()) {
+    return {
+      ...cached.payload,
+      correlationId,
+      degraded: true,
+      stale: true,
+      reason,
+    };
+  }
+  return {
+    contractVersion,
+    service,
+    correlationId,
+    items: [],
+    nextCursor: null,
+    degraded: true,
+    reason,
+  };
+}
+
 export function serveRecommendationService(service: RecommendationServiceName): void {
   const config = SERVICE_CONFIG[service];
 
@@ -195,13 +366,15 @@ export function serveRecommendationService(service: RecommendationServiceName): 
     if (body.cursor !== undefined && (typeof body.cursor !== "string" || body.cursor.length > 1024)) {
       return json(request, 400, { correlationId, code: "invalid_cursor", message: "The cursor is invalid." });
     }
-    const limit = boundedInteger(body.limit, 12, 1, 100);
+    const requestedLimit = boundedInteger(body.limit, 12, 1, 100);
     const distance = boundedInteger(body.maxDistanceMeters, 50_000, 100, 500_000);
-    if (limit === null || (service === "nearby_service" && distance === null)) {
+    if (requestedLimit === null || (service === "nearby_service" && distance === null)) {
       return json(request, 400, { correlationId, code: "invalid_limit", message: "A request limit is outside the allowed range." });
     }
-    body.limit = limit;
     if (service === "nearby_service") body.maxDistanceMeters = distance ?? 50_000;
+
+    let cached: CachedRecommendation | null = null;
+    let policy: RuntimePolicy | null = null;
 
     try {
       const viewerId = await authenticatedUserId(request);
@@ -212,37 +385,55 @@ export function serveRecommendationService(service: RecommendationServiceName): 
       const adminClient = createClient(supabaseUrl(), configuredAdminKey(), {
         auth: { persistSession: false, autoRefreshToken: false },
       });
-      const result = await executeWithTimeout(adminClient, config.rpc, rpcArguments(service, body, viewerId), 1200);
+      policy = await runtimePolicy(adminClient, service);
+      body.limit = Math.min(requestedLimit, policy.maximumPageSize);
 
-      if (result.timedOut) {
-        return json(request, 200, {
-          contractVersion: 1,
-          service,
-          correlationId,
-          items: [],
-          nextCursor: null,
-          degraded: true,
-          reason: "timeout",
-        }, "private, max-age=0");
+      if (!policy.enabled) {
+        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "service_disabled"));
       }
-      if (result.error) throw new Error("recommendation database operation failed");
 
-      const payload = (result.data && typeof result.data === "object")
-        ? result.data as Record<string, unknown>
-        : { contractVersion: 1, service, items: [], nextCursor: null, degraded: true, reason: "invalid_response" };
+      const key = config.sharedCacheAllowed ? await cacheKey(service, body) : null;
+      if (key) {
+        cached = await readCache(adminClient, service, key);
+        if (cached && cached.staleAt > Date.now()) {
+          return json(request, 200, { ...cached.payload, correlationId, cache: "fresh" }, "public, max-age=15, stale-while-revalidate=60");
+        }
+      }
 
-      return json(request, 200, { ...payload, correlationId }, viewerId ? "private, max-age=15" : "public, max-age=15, stale-while-revalidate=60");
+      if (circuitOpen(service)) {
+        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "circuit_open", cached));
+      }
+
+      const result = await executeWithTimeout(adminClient, config.rpc, rpcArguments(service, body, viewerId), policy.timeoutMs);
+      if (result.timedOut) {
+        recordFailure(service);
+        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "timeout", cached), "private, max-age=0");
+      }
+      if (result.error || !validPayload(result.data, service, policy.contractVersion)) {
+        recordFailure(service);
+        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "invalid_or_unavailable_response", cached));
+      }
+
+      recordSuccess(service);
+      const payload = result.data;
+      if (key && payload.degraded === false) {
+        try {
+          await writeCache(adminClient, service, key, body.subjectListingId, payload, policy);
+        } catch (error) {
+          console.error("recommendation cache write failed", { correlationId, service, error });
+        }
+      }
+
+      return json(
+        request,
+        200,
+        { ...payload, correlationId, cache: "miss" },
+        viewerId ? "private, max-age=0" : "public, max-age=15, stale-while-revalidate=60",
+      );
     } catch (error) {
+      recordFailure(service);
       console.error("recommendation service unavailable", { correlationId, service, error });
-      return json(request, 200, {
-        contractVersion: 1,
-        service,
-        correlationId,
-        items: [],
-        nextCursor: null,
-        degraded: true,
-        reason: "service_unavailable",
-      });
+      return json(request, 200, degradedPayload(service, policy?.contractVersion ?? 1, correlationId, "service_unavailable", cached));
     }
   });
 }
