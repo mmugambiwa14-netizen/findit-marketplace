@@ -338,8 +338,11 @@ staging, not on production. Exactly `recently_listed_service` is enabled on
 staging; the other six policies remain disabled.
 
 Phase 4 staging frontend: `https://mmugambiwa14-netizen.github.io/findit-marketplace/`.
-Deployment run `30474768987` built and deployed `cdba0ce`. Fresh Chrome profiles
-at 1440x900 and 390x844 verified:
+Deployment run `30484437635` built and deployed `885abbf`. Live HTTP checks
+confirmed the 200 application shell, current hashed assets, settings and admin
+chunks, and the deep-link route handoff. The connected visual browser was
+unavailable for this final deployment, so the latest screenshot evidence
+remains the earlier fresh Chrome pass at 1440x900 and 390x844, which verified:
 
 - a direct listing URL first receives the expected Pages fallback and then a
   200 root shell, with the original route restored before React mounts;
@@ -490,7 +493,7 @@ From the project instructions and from defects already paid for once:
 | 1 — data foundation | complete | partial local, full CI | green on `a85d5b4` | migrations through `0074` applied | staging |
 | 2 — independent services | complete | pass | green on `a85d5b4` | all seven real-result paths certified; six restored disabled | staging |
 | 3 — contextual intelligence | complete | pass | green on `a85d5b4` | guarded timeout/circuit suite passes | **staging certified** |
-| 4 — listing detail UX | complete | pass | green on `a85d5b4` | previous Pages desktop/mobile pass; final redeploy pending | staging |
+| 4 — listing detail UX | complete | pass | green on `a85d5b4` | Pages run `30484437635` passed; prior desktop/mobile visual pass | staging |
 | 5 — personalization | complete | pass | green on `a85d5b4` | consent, results and clear pass | **staging certified** |
 | 6 — analytics | complete | pass | green on `a85d5b4` | aggregate refresh and admin report pass | **staging certified** |
 | 7 — scale and certification | source/staging complete | pass | green on `a85d5b4` | budgets, timeouts, circuits and cleanup pass | production pending |
