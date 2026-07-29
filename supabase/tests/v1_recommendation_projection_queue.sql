@@ -124,28 +124,20 @@ reset role;
 alter table public.recommendation_projection_jobs
   drop constraint recommendation_projection_jobs_test_failure;
 
+-- The title edit above is owner-managed and correctly re-queues the listing
+-- for moderation (public.protect_listing_managed_fields), which is the
+-- behaviour under test there. That side effect makes the listing ineligible
+-- for projection, so it must be restored to a public status here as a
+-- trusted role (bypassing the re-review guard) before exercising the
+-- dead-letter path below, which is specifically about a public, eligible
+-- listing whose projection write fails -- not about eligibility gating.
+update public.listings
+set status = 'available', submitted_at = null
+where id = '20000000-0000-4000-8000-000000000003';
+
 alter table public.listing_recommendation_features
   add constraint listing_recommendation_features_test_failure
   check (false) not valid;
-
-do $$
-declare
-  v_status text;
-  v_suspended timestamptz;
-  v_seller_status text;
-  v_job_count integer;
-  v_attempt_count integer;
-  v_next_attempt_at timestamptz;
-begin
-  select status, content_suspended_at into v_status, v_suspended
-  from public.listings where id = '20000000-0000-4000-8000-000000000003';
-  select status into v_seller_status
-  from public.users where id = '20000000-0000-4000-8000-000000000001';
-  select count(*), max(attempt_count), max(next_attempt_at) into v_job_count, v_attempt_count, v_next_attempt_at
-  from public.recommendation_projection_jobs where listing_id = '20000000-0000-4000-8000-000000000003';
-  raise notice 'DIAG listing_status=% suspended=% seller_status=% job_count=% attempt_count=% next_attempt_at=% now=%',
-    v_status, v_suspended, v_seller_status, v_job_count, v_attempt_count, v_next_attempt_at, now();
-end $$;
 
 set local role service_role;
 select extensions.is(
