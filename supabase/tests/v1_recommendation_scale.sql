@@ -100,7 +100,7 @@ select extensions.is(
   'scale fixture projects every public listing without offset materialization'
 );
 
-select extensions.like(
+select extensions.matches(
   pg_temp.recommendation_explain($query$
     select listing_id
     from public.listing_recommendation_features
@@ -111,11 +111,11 @@ select extensions.like(
     order by price_amount, published_at desc, listing_id
     limit 25
   $query$),
-  '%idx_listing_recommendation_similarity%',
+  'idx_listing_recommendation_similarity',
   'similarity query uses the composite similarity index'
 );
 
-select extensions.like(
+select extensions.matches(
   pg_temp.recommendation_explain($query$
     select listing_id
     from public.listing_recommendation_features
@@ -123,11 +123,11 @@ select extensions.like(
     order by published_at desc, listing_id
     limit 25
   $query$),
-  '%idx_listing_recommendation_seller%',
+  'idx_listing_recommendation_seller',
   'seller query uses the seller cursor index'
 );
 
-select extensions.like(
+select extensions.matches(
   pg_temp.recommendation_explain($query$
     select listing_id
     from public.listing_recommendation_features
@@ -136,11 +136,11 @@ select extensions.like(
     order by published_at desc, listing_id
     limit 25
   $query$),
-  '%idx_listing_recommendation_location%',
+  'idx_listing_recommendation_location',
   'location query uses the location cursor index'
 );
 
-select extensions.like(
+select extensions.matches(
   pg_temp.recommendation_explain($query$
     select listing_id
     from public.listing_recommendation_features
@@ -148,7 +148,7 @@ select extensions.like(
     order by published_at desc, listing_id desc
     limit 25
   $query$),
-  '%idx_listing_recommendation_recent%',
+  'idx_listing_recommendation_recent',
   'recent listing query uses the country and publication cursor index'
 );
 

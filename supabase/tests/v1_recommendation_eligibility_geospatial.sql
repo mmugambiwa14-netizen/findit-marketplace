@@ -110,7 +110,7 @@ begin
 end;
 $$;
 
-select extensions.like(
+select extensions.matches(
   pg_temp.recommendation_geo_explain($query$
     select listing_id
     from public.listing_recommendation_features
@@ -121,7 +121,7 @@ select extensions.like(
     )
     limit 20
   $query$),
-  '%idx_listing_recommendation_public_location%',
+  'idx_listing_recommendation_public_location',
   'nearby query uses the public geography GiST index'
 );
 reset enable_seqscan;
