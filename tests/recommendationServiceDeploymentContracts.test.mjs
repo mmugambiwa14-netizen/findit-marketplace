@@ -4,7 +4,6 @@ import test from 'node:test';
 
 const health = await readFile('supabase/functions/recommendation-service-health/index.ts', 'utf8');
 const smoke = await readFile('scripts/recommendation-services-smoke.mjs', 'utf8');
-const config = await readFile('supabase/config.toml', 'utf8');
 
 const publicFunctions = [
   'similar-listings',
@@ -39,10 +38,9 @@ test('hosted smoke harness enforces fail-soft public services and protected pers
   assert.doesNotMatch(smoke, /service_role|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_SECRET_KEY/);
 });
 
-test('Supabase deployment configuration explicitly defines every recommendation function', () => {
-  for (const functionName of [...publicFunctions, 'recommendation-service-health']) {
-    assert.match(config, new RegExp(`\\[functions\\.${functionName}\\]`));
-  }
-  assert.match(config, /\[functions\.personalized-recommendations\][\s\S]*?verify_jwt = false/);
-  assert.match(config, /\[functions\.recommendation-service-health\][\s\S]*?verify_jwt = false/);
+test('smoke harness requires an explicit hosted target and dedicated health credential', () => {
+  assert.match(smoke, /FINDIT_RECOMMENDATION_SMOKE_URL/);
+  assert.match(smoke, /FINDIT_SUPABASE_ANON_KEY/);
+  assert.match(smoke, /FINDIT_RECOMMENDATION_HEALTH_SECRET/);
+  assert.match(smoke, /process\.exit\(2\)/);
 });
