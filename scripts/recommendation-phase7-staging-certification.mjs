@@ -261,10 +261,11 @@ try {
     'read initial policies',
   );
   assert.equal(initialPolicies.length, 7);
-  assert.deepEqual(
-    initialPolicies.filter((policy) => policy.enabled).map((policy) => policy.service_name),
-    ['recently_listed_service'],
-    'Phase 7 requires the previously certified one-policy staging baseline',
+  const initiallyEnabled = initialPolicies.filter((policy) => policy.enabled).map((policy) => policy.service_name);
+  assert.ok(
+    (initiallyEnabled.length === 1 && initiallyEnabled[0] === 'recently_listed_service')
+      || initiallyEnabled.length === 7,
+    'Phase 7 requires either the certified one-policy baseline or the fully active staging release state',
   );
 
   const stagingFounders = success(

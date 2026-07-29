@@ -6,8 +6,10 @@ Use this checklist for staging and production promotion. Do not infer acceptance
 
 - Migrations `0031`–`0042` applied in order.
 - Separate private Tour source, playback and thumbnail buckets confirmed.
-- Processing, cleanup, cache, observability and notification fan-out worker secrets configured.
-- Processor callback HMAC and allowed origins configured.
+- The private `staging-tours` GitHub environment contains the scoped staging
+  Supabase secret used by the first-party FFmpeg processor.
+- Processing, cleanup, cache, observability and notification fan-out workers configured.
+- Allowed browser origins configured.
 - `VITE_FEATURE_TOURS=true`, `TOURS_BACKEND_ENABLED=true` in staging only.
 - Public production flags remain closed.
 
@@ -17,7 +19,8 @@ Run the manual `Tours staging acceptance` workflow. It must pass:
 
 - locked install, environment validation, source graph and complete contracts;
 - lint, all typechecks, build and production dependency audit;
-- upload, processing, seller workflow, listing integration, discovery and moderation smokes;
+- upload, real FFmpeg transcoding, derived-media probing, seller workflow,
+  listing integration, discovery and moderation smokes;
 - substantial Tour and public-listing cursor traversal with no duplicates or skips;
 - 75-conversation inbox and 126-message thread traversal;
 - notification cursor traversal and bounded saved-listing fan-out;
@@ -49,6 +52,7 @@ Verify on real Safari and Chrome devices:
 - No stale notification claims or unexplained fan-out backlog.
 - Feed and message maximum latency below the configured two-second warning threshold during acceptance.
 - Source retention and cleanup verified with real storage objects.
+- The scheduled first-party processor has no failed run or retry backlog.
 - Alert destination and named human owner configured outside the application.
 - Backup and restore evidence attached to the release record.
 
@@ -70,6 +74,8 @@ Set all of the following together:
 VITE_FEATURE_TOURS=true
 VITE_FEATURE_TOURS_PREVIEW=false
 TOURS_BACKEND_ENABLED=true
+FINDIT_TOURS_WORKERS_ENABLED=true
+FINDIT_TOUR_PROCESSOR_MODE=github-actions
 FINDIT_TOURS_RELEASE_ACCEPTED=true
 FINDIT_TOURS_ACCEPTANCE_ID=<exact accepted staging artifact ID>
 ```

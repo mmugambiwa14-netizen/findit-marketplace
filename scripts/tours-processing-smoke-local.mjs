@@ -1,36 +1,48 @@
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   claimTourProcessing,
   cleanupTourFixtures,
   createAvailableListing,
   createSmokeUser,
   createTourUpload,
-  finalizeTourProcessing,
   invokeFunction,
   root,
   setToursDatabaseEnabled,
   smokeTarget,
   success,
 } from './lib/tour-smoke-fixtures.mjs';
+import {
+  assertMediaToolchain,
+  createSyntheticTourSource,
+  processClaimedTour,
+} from './lib/tour-media-processor.mjs';
 
-const sourceBytes = Buffer.from('findit-processing-source-smoke');
 let owner;
 let admin;
 let listingId;
 let uploaded;
+let mediaDirectory;
 
 try {
+  await assertMediaToolchain();
+  mediaDirectory = await mkdtemp(join(tmpdir(), 'findit-tour-smoke-'));
+  const sourcePath = await createSyntheticTourSource(join(mediaDirectory, 'source.mp4'));
+  const sourceBytes = await readFile(sourcePath);
   owner = await createSmokeUser('tour-processing-owner');
   admin = await createSmokeUser('tour-processing-admin', 'admin');
   listingId = await createAvailableListing(owner.userId, 'Tour processing smoke');
   await setToursDatabaseEnabled(true);
 
-  uploaded = await createTourUpload({ owner, listingId, bytes: sourceBytes, durationSeconds: 12 });
+  uploaded = await createTourUpload({ owner, listingId, bytes: sourceBytes, durationSeconds: 2 });
   const claim = await claimTourProcessing(uploaded.tourId);
   assert.equal(claim.processing_attempt, 1);
   assert.equal(claim.source_storage_path, uploaded.path);
 
-  const output = await finalizeTourProcessing(claim, { durationSeconds: 12 });
+  const output = await processClaimedTour(root, claim);
 
   const ready = success(await root.from('listing_tours')
     .select('status,moderation_status,duration_seconds,processing_lease_token,playback_storage_path,thumbnail_storage_path')
@@ -38,7 +50,7 @@ try {
     .single(), 'read ready Tour');
   assert.equal(ready.status, 'ready');
   assert.equal(ready.moderation_status, 'pending');
-  assert.equal(Number(ready.duration_seconds), 12);
+  assert.ok(Number(ready.duration_seconds) > 1.5 && Number(ready.duration_seconds) <= 2.1);
   assert.equal(ready.processing_lease_token, null);
 
   const beforeApproval = await invokeFunction('tour-playback-access', {
@@ -64,9 +76,12 @@ try {
   });
   assert.equal(playback.response.status, 200, `public playback failed: ${JSON.stringify(playback.body)}`);
   assert.equal(playback.body.tourId, uploaded.tourId);
-  assert.equal(playback.body.durationSeconds, 12);
-  assert.deepEqual(Buffer.from(await (await fetch(playback.body.playbackUrl)).arrayBuffer()), output.playbackBytes);
-  assert.deepEqual(Buffer.from(await (await fetch(playback.body.thumbnailUrl)).arrayBuffer()), output.thumbnailBytes);
+  assert.ok(Number(playback.body.durationSeconds) > 1.5 && Number(playback.body.durationSeconds) <= 2.1);
+  const playbackBytes = Buffer.from(await (await fetch(playback.body.playbackUrl)).arrayBuffer());
+  const thumbnailBytes = Buffer.from(await (await fetch(playback.body.thumbnailUrl)).arrayBuffer());
+  assert.equal(crypto.createHash('sha256').update(playbackBytes).digest('hex'), output.checksum);
+  assert.equal(playbackBytes.length, output.processedByteSize);
+  assert.equal(thumbnailBytes.length, output.thumbnailByteSize);
 
   await setToursDatabaseEnabled(false);
   const databaseDisabled = await invokeFunction('tour-playback-access', {
@@ -78,4 +93,5 @@ try {
 } finally {
   try { await setToursDatabaseEnabled(false); } catch { /* best effort */ }
   await cleanupTourFixtures({ listingId, users: [owner, admin].filter(Boolean) });
+  if (mediaDirectory) await rm(mediaDirectory, { recursive: true, force: true });
 }

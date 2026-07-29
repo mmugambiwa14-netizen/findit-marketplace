@@ -17,18 +17,30 @@ test('browser and backend Tour switches are separate and default closed', () => 
   assert.match(validator, /Tour browser or preview access cannot be enabled unless TOURS_BACKEND_ENABLED is true/);
 });
 
-test('enabling the backend requires processor and worker configuration', () => {
+test('enabling the backend requires an explicit processor mode and operational workers', () => {
   for (const name of [
-    'TOUR_PROCESSOR_URL',
-    'TOUR_PROCESSOR_SECRET',
-    'TOUR_PROCESSING_CALLBACK_URL',
-    'FINDIT_TOUR_PROCESSING_WORKER_SECRET',
+    'FINDIT_TOUR_PROCESSOR_MODE',
     'FINDIT_TOUR_CLEANUP_WORKER_SECRET',
     'FINDIT_TOUR_CACHE_WORKER_SECRET',
   ]) {
     assert.match(validator, new RegExp(name));
     assert.match(envExample, new RegExp(name));
   }
+  assert.match(validator, /\['github-actions', 'external'\]\.includes\(tourProcessorMode\)/);
+  assert.match(validator, /FINDIT_TOURS_WORKERS_ENABLED must be true when TOURS_BACKEND_ENABLED=true/);
+});
+
+test('external processing configuration is required only for external mode', () => {
+  for (const name of [
+    'TOUR_PROCESSOR_URL',
+    'TOUR_PROCESSOR_SECRET',
+    'TOUR_PROCESSING_CALLBACK_URL',
+    'FINDIT_TOUR_PROCESSING_WORKER_SECRET',
+  ]) {
+    assert.match(validator, new RegExp(name));
+    assert.match(envExample, new RegExp(name));
+  }
+  assert.match(validator, /tourProcessorMode === 'external'/);
 });
 
 test('all Tour Edge functions have an explicit JWT policy', () => {

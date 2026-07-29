@@ -1,6 +1,6 @@
 # Feature Flags
 
-Reviewed: 2026-07-26
+Reviewed: 2026-07-29
 
 ## V1 enabled
 
@@ -14,13 +14,14 @@ These flags passed contract, SQL and hosted API/Storage/worker acceptance. The
 staging deployment workflow enables them. They must all be `true` in a V1
 production build.
 
-## Dormant Tours boundary
+## Peek release boundary
 
-`VITE_FEATURE_TOURS=false` keeps all buyer and seller Tour UI hidden.
-`TOURS_BACKEND_ENABLED=false` independently closes upload, processing and
-playback Edge Functions, while the database feature control defaults to false.
-All three layers must be deliberately enabled in staging before any public
-acceptance. A browser flag alone cannot activate Tours.
+The accepted release sets `VITE_FEATURE_TOURS=true`,
+`TOURS_BACKEND_ENABLED=true`, and `FINDIT_TOURS_WORKERS_ENABLED=true`.
+Source defaults remain closed so an incomplete ad hoc deployment cannot expose
+uploads without processing, cleanup, cache, and observability workers. Release
+CI builds the complete Peek variant, and hosted activation leaves all runtime
+layers enabled only after the acceptance workflow passes.
 
 ## V1 disabled
 

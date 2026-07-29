@@ -151,12 +151,19 @@ Deleted or unavailable listings/media degrade to `tour: null` through the
   admin-only `SECURITY DEFINER` metadata check before signing any private
   derived asset — reviewers cannot mint URLs for arbitrary tours.
 
-## Provider abstraction
+## Processing boundary
 
-`_shared/tour-provider.ts` isolates the external transcoding provider behind
-`TOUR_PROCESSOR_URL` / `TOUR_PROCESSOR_SECRET`, with the callback authenticated
-by timestamped HMAC. Swapping providers does not touch schema or UI. Failure and
-retry are handled by `tour-processing-worker` claiming jobs with a lease.
+The default processor is the repository-owned `tour-processing-runner.mjs`.
+It claims bounded leases, downloads private sources, transcodes H.264/AAC MP4
+playback to the 720p boundary with FFmpeg, produces WebP thumbnails, probes the
+derived media, uploads through the service boundary, and finalizes only when the
+database validation succeeds. The hosted processing smoke exercises that path
+with a real generated video.
+
+`_shared/tour-provider.ts` remains an optional external-provider adapter behind
+`FINDIT_TOUR_PROCESSOR_MODE=external`. Its callback is authenticated by a
+timestamped HMAC, so changing processor capacity does not require schema or UI
+changes.
 
 ## Findings
 
@@ -167,11 +174,10 @@ the mutation variables are typed as `void` because no JSDoc generic is supplied.
 *Correction:* annotate the `mutationFn` parameter.
 *Blocks: nothing.*
 
-**T-02 (Informational)** — Tours ships **disabled by default** in code
-(`VITE_FEATURE_TOURS=false`, backend `TOURS_BACKEND_ENABLED=false`) and requires
-a recorded acceptance id to enable in production. Enabling it is a deliberate,
-gated act — correct, and worth restating so it is not mistaken for an
-incomplete feature. *Blocks: nothing.*
+**T-02 (Informational)** - Source defaults remain closed to prevent an
+unconfigured deployment from exposing uploads. Release CI builds the full Peek
+variant, and staging/production activation requires the worker schedule plus a
+retrievable hosted acceptance record. *Blocks: nothing.*
 
 **T-03 (Informational)** — Tour scale characteristics (concurrent transcodes,
 feed latency under load, CDN behaviour) cannot be evaluated locally. The

@@ -43,13 +43,18 @@ jobs:
       VITE_FEATURE_MARKETING_EMAILS: "false"
       VITE_FEATURE_LISTING_EXPIRY: "false"
       VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
-      VITE_FEATURE_TOURS: "false"
+      VITE_FEATURE_TOURS: "true"
       VITE_FEATURE_TOURS_PREVIEW: "false"
       VITE_FEATURE_PREVIEW_FIXTURES: "false"
       VITE_PREVIEW_AUTH_BYPASS: "false"
-      TOURS_BACKEND_ENABLED: "false"
-      FINDIT_TOURS_RELEASE_ACCEPTED: "false"
-      FINDIT_TOURS_ACCEPTANCE_ID: ""
+      TOURS_BACKEND_ENABLED: "true"
+      FINDIT_TOURS_WORKERS_ENABLED: "true"
+      FINDIT_TOUR_PROCESSOR_MODE: "github-actions"
+      FINDIT_TOUR_CLEANUP_WORKER_SECRET: release-validation-cleanup-secret
+      FINDIT_TOUR_CACHE_WORKER_SECRET: release-validation-cache-secret
+      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: release-validation-observability-secret
+      FINDIT_TOURS_RELEASE_ACCEPTED: "true"
+      FINDIT_TOURS_ACCEPTANCE_ID: "tour-acceptance-ci-build-validation-0001"
       FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
       FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: release-validation-fanout-secret
 

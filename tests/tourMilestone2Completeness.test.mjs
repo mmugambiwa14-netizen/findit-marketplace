@@ -79,7 +79,9 @@ test('package commands point to executable upload, processing and lifecycle smok
 test('Tour scheduler jobs are dormant behind an explicit repository variable', async () => {
   const workflow = await read('.github/workflows/maintenance-workers.yml');
   assert.match(workflow, /FINDIT_TOURS_WORKERS_ENABLED == 'true'/);
-  assert.match(workflow, /tour-processing-worker/);
+  assert.match(workflow, /run:tours-processor/);
+  assert.match(workflow, /FINDIT_SUPABASE_SECRET_KEY/);
+  assert.match(workflow, /FINDIT_EXPECTED_PROJECT_REF/);
   assert.match(workflow, /tour-lifecycle-cleanup/);
   assert.match(workflow, /tour-cache-invalidation/);
 });

@@ -86,8 +86,8 @@ Not provisioned, and explicitly out of scope for this audit:
 - Production SMTP (`config.toml` has the block commented out; the 13 email
   templates exist and are wired but cannot deliver)
 - CDN for tour media (`TOUR_CACHE_PURGE_URL` unset — P-05)
-- External tour transcoding provider (`TOUR_PROCESSOR_URL`,
-  `TOUR_PROCESSOR_SECRET` unset)
+- Dedicated always-on media processing infrastructure beyond the repository-owned
+  FFmpeg GitHub Actions worker, if Peek volume exceeds the bounded MVP worker capacity
 - Monitoring/alerting sink for `operational_alerts`
 - Backup schedule and a **rehearsed** restore (P-06)
 

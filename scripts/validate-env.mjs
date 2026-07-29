@@ -63,6 +63,7 @@ for (const name of [...featureFlags, ...authProviderFlags, ...previewFlags]) {
 for (const name of [
   'TOURS_BACKEND_ENABLED',
   'FINDIT_TOURS_RELEASE_ACCEPTED',
+  'FINDIT_TOURS_WORKERS_ENABLED',
   'FINDIT_RECOMMENDATION_WORKERS_ENABLED',
 ]) {
   if (env[name] !== undefined && env[name] !== '' && !['true', 'false'].includes(env[name])) {
@@ -74,30 +75,44 @@ const toursBrowserEnabled = env.VITE_FEATURE_TOURS === 'true';
 const toursPreviewEnabled = env.VITE_FEATURE_TOURS_PREVIEW === 'true';
 const toursBackendEnabled = env.TOURS_BACKEND_ENABLED === 'true';
 const toursReleaseAccepted = env.FINDIT_TOURS_RELEASE_ACCEPTED === 'true';
+const toursWorkersEnabled = env.FINDIT_TOURS_WORKERS_ENABLED === 'true';
+const tourProcessorMode = env.FINDIT_TOUR_PROCESSOR_MODE?.trim();
 if ((toursBrowserEnabled || toursPreviewEnabled) && !toursBackendEnabled) {
   problems.push('Tour browser or preview access cannot be enabled unless TOURS_BACKEND_ENABLED is true');
 }
 if (toursBackendEnabled) {
+  if (!toursWorkersEnabled) {
+    problems.push('FINDIT_TOURS_WORKERS_ENABLED must be true when TOURS_BACKEND_ENABLED=true');
+  }
+  if (!['github-actions', 'external'].includes(tourProcessorMode)) {
+    problems.push('FINDIT_TOUR_PROCESSOR_MODE must be github-actions or external when TOURS_BACKEND_ENABLED=true');
+  }
   for (const name of [
-    'TOUR_PROCESSOR_URL',
-    'TOUR_PROCESSOR_SECRET',
-    'TOUR_PROCESSING_CALLBACK_URL',
-    'FINDIT_TOUR_PROCESSING_WORKER_SECRET',
     'FINDIT_TOUR_CLEANUP_WORKER_SECRET',
     'FINDIT_TOUR_CACHE_WORKER_SECRET',
     'FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET',
   ]) {
     if (!env[name]?.trim()) problems.push(`${name} is required when TOURS_BACKEND_ENABLED=true`);
   }
-  for (const name of ['TOUR_PROCESSOR_URL', 'TOUR_PROCESSING_CALLBACK_URL']) {
-    if (!env[name]?.trim()) continue;
-    try {
-      const url = new URL(env[name]);
-      if (mode === 'production' && url.protocol !== 'https:') {
-        problems.push(`${name} must use HTTPS in production`);
+  if (tourProcessorMode === 'external') {
+    for (const name of [
+      'TOUR_PROCESSOR_URL',
+      'TOUR_PROCESSOR_SECRET',
+      'TOUR_PROCESSING_CALLBACK_URL',
+      'FINDIT_TOUR_PROCESSING_WORKER_SECRET',
+    ]) {
+      if (!env[name]?.trim()) problems.push(`${name} is required when FINDIT_TOUR_PROCESSOR_MODE=external`);
+    }
+    for (const name of ['TOUR_PROCESSOR_URL', 'TOUR_PROCESSING_CALLBACK_URL']) {
+      if (!env[name]?.trim()) continue;
+      try {
+        const url = new URL(env[name]);
+        if (mode === 'production' && url.protocol !== 'https:') {
+          problems.push(`${name} must use HTTPS in production`);
+        }
+      } catch {
+        problems.push(`${name} must be a valid absolute URL`);
       }
-    } catch {
-      problems.push(`${name} must be a valid absolute URL`);
     }
   }
   if (env.TOUR_CACHE_PURGE_URL?.trim() && !env.TOUR_CACHE_PURGE_SECRET?.trim()) {

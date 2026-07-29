@@ -3,10 +3,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [worker, callback, provider, processingSql, config] = await Promise.all([
+const [worker, callback, provider, runner, mediaProcessor, processingSmoke, maintenance, processingSql, config] = await Promise.all([
   read('supabase/functions/tour-processing-worker/index.ts'),
   read('supabase/functions/tour-processing-callback/index.ts'),
   read('supabase/functions/_shared/tour-provider.ts'),
+  read('scripts/tour-processing-runner.mjs'),
+  read('scripts/lib/tour-media-processor.mjs'),
+  read('scripts/tours-processing-smoke-local.mjs'),
+  read('.github/workflows/maintenance-workers.yml'),
   read('supabase/migrations/0033_v1_tour_processing_and_publication.sql'),
   read('supabase/config.toml'),
 ]);
@@ -18,6 +22,30 @@ test('processing is an external provider dispatch, not an Edge transcode', () =>
   assert.doesNotMatch(worker, /ffmpeg|spawn|Deno\.Command/i);
   assert.match(provider, /TOUR_PROCESSOR_URL/);
   assert.match(provider, /AbortSignal\.timeout\(15_000\)/);
+});
+
+test('first-party processor performs bounded FFmpeg transcoding and validated uploads', () => {
+  assert.match(runner, /FINDIT_EXPECTED_PROJECT_REF/);
+  assert.match(runner, /p_batch_size: batchSize\(\)/);
+  assert.match(runner, /processClaimedTour/);
+  assert.match(runner, /fail_tour_processing/);
+  assert.match(mediaProcessor, /MAX_SOURCE_BYTES = 262_144_000/);
+  assert.match(mediaProcessor, /AbortSignal\.timeout\(60_000\)/);
+  assert.match(mediaProcessor, /'-c:v', 'libx264'/);
+  assert.match(mediaProcessor, /'-c:a', 'aac'/);
+  assert.match(mediaProcessor, /'-c:v', 'libwebp'/);
+  assert.match(mediaProcessor, /probeMedia\(playbackPath\)/);
+  assert.match(mediaProcessor, /finalize_tour_processing/);
+  assert.match(mediaProcessor, /openAsBlob/);
+  assert.doesNotMatch(mediaProcessor, /readFile\(playbackPath\)/);
+  assert.match(maintenance, /npm run run:tours-processor -- --batch-size 5/);
+});
+
+test('hosted processing acceptance transcodes a real generated video', () => {
+  assert.match(processingSmoke, /createSyntheticTourSource/);
+  assert.match(processingSmoke, /processClaimedTour/);
+  assert.match(processingSmoke, /sha256/);
+  assert.doesNotMatch(processingSmoke, /finalizeTourProcessing/);
 });
 
 test('processing uses bounded database leases and idempotent finalization', () => {

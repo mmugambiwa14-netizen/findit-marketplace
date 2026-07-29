@@ -28,6 +28,7 @@ jobs:
       FINDIT_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
       FINDIT_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
       FINDIT_SUPABASE_SECRET_KEY: ${{ secrets.FINDIT_SUPABASE_SECRET_KEY }}
+      FINDIT_ALLOW_STAGING_ACTIVATION: staging
       FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
       VITE_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
@@ -47,11 +48,9 @@ jobs:
       VITE_FEATURE_TOURS: "true"
       VITE_FEATURE_TOURS_PREVIEW: "false"
       TOURS_BACKEND_ENABLED: "true"
+      FINDIT_TOURS_WORKERS_ENABLED: "true"
       FINDIT_TOURS_RELEASE_ACCEPTED: "true"
-      TOUR_PROCESSOR_URL: ${{ vars.FINDIT_TOUR_PROCESSOR_URL }}
-      TOUR_PROCESSOR_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSOR_SECRET }}
-      TOUR_PROCESSING_CALLBACK_URL: ${{ vars.FINDIT_TOUR_PROCESSING_CALLBACK_URL }}
-      FINDIT_TOUR_PROCESSING_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSING_WORKER_SECRET }}
+      FINDIT_TOUR_PROCESSOR_MODE: "github-actions"
       FINDIT_TOUR_CLEANUP_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
       FINDIT_TOUR_CACHE_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
       FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
@@ -69,6 +68,11 @@ jobs:
 
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
+
+      - name: Verify media processor
+        run: |
+          ffmpeg -hide_banner -version
+          ffprobe -hide_banner -version
 
       - name: Create acceptance identity
         shell: bash
@@ -108,6 +112,9 @@ jobs:
           npm run test:notification-scale-hosted
           npm run test:tours-observability-hosted
 
+      - name: Activate certified staging capabilities
+        run: npm run activate:staging-capabilities
+
       - name: Write acceptance record
         shell: bash
         env:
@@ -130,7 +137,8 @@ jobs:
               'locked install', 'environment validation', 'source graph', 'repository hygiene', 'SQL boundary', 'product surface audit', 'contracts', 'lint',
               'typechecks', 'production build', 'dependency audit',
               'Tours upload', 'processing', 'seller workflow', 'listing integration',
-              'public catalogue', 'moderation', 'Tours scale', 'public search scale', 'messaging scale', 'notification scale', 'observability'
+              'public catalogue', 'moderation', 'Tours scale', 'public search scale', 'messaging scale', 'notification scale', 'observability',
+              'Peek activation', 'all recommendation policy activation'
             ]
           };
           fs.writeFileSync('artifacts/tours-staging-acceptance.json', JSON.stringify(record, null, 2) + '\n');

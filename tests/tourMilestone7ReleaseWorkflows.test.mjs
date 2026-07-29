@@ -19,8 +19,10 @@ test('release candidate CI runs the complete locked static and build boundary', 
     'npm run typecheck:migration', 'npm run typecheck:active', 'npm run build',
     'npm run audit:production',
   ]) assert.match(releaseWorkflow, new RegExp(gate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  assert.match(releaseWorkflow, /VITE_FEATURE_TOURS: "false"/);
-  assert.match(releaseWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: "false"/);
+  assert.match(releaseWorkflow, /VITE_FEATURE_TOURS: "true"/);
+  assert.match(releaseWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: "true"/);
+  assert.match(releaseWorkflow, /FINDIT_TOURS_WORKERS_ENABLED: "true"/);
+  assert.match(releaseWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
   assert.match(releaseWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"/);
   assert.match(releaseWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
 });
@@ -32,6 +34,8 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /FINDIT_EXPECTED_PROJECT_REF/);
   assert.match(acceptanceWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"/);
   assert.match(acceptanceWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
+  assert.match(acceptanceWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
+  assert.match(acceptanceWorkflow, /ffmpeg -hide_banner -version/);
   for (const gate of [
     'test:tours-upload-hosted', 'test:tours-processing-hosted', 'test:tours-seller-hosted',
     'test:tours-integration-hosted', 'test:tours-discovery-hosted', 'test:tours-moderation-hosted',
@@ -52,6 +56,7 @@ test('staging deployment can expose preview or public Tours without weakening pr
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_ENABLED/);
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_PREVIEW/);
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_BACKEND_ENABLED/);
+  assert.match(stagingWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
   assert.match(stagingWorkflow, /FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET/);
   assert.match(stagingWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
   assert.match(stagingWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED/);

@@ -45,13 +45,12 @@ local CLIs and never print secret values.
 
 - React 18, Vite and React Router.
 - Supabase Auth and PostgreSQL with RLS.
-- Two private Storage buckets.
-- Four Supabase Edge Functions for trusted uploads and maintenance.
+- Private listing, marketplace, Peek source, playback, and thumbnail storage.
+- Edge Functions cover trusted media, Peek, recommendations, notifications,
+  expiry, cleanup, health, and maintenance boundaries.
 - Domain services/repositories isolate UI from provider calls.
-- GitHub Actions definitions cover migration gates, staging deployment and
-  worker schedules. The current GitHub account returns `startup_failure` before
-  creating jobs, so the same gates were executed from a clean local checkout
-  and the account-level Actions block remains a launch item.
+- GitHub Actions cover clean database gates, the full Peek production build,
+  staging deployment, hosted acceptance, and bounded worker schedules.
 
 ## Status and handover
 

@@ -97,26 +97,38 @@ jobs:
   tour-processing:
     if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    environment: staging-tours
     steps:
-      - name: Dispatch due Tour processing jobs
-        env:
-          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
-          WORKER_SECRET: ${{ secrets.FINDIT_TOUR_PROCESSING_WORKER_SECRET }}
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Verify media processor
         run: |
-          curl --fail-with-body --silent --show-error --retry 2 \
-            --request POST \
-            --header "apikey: ${SUPABASE_ANON_KEY}" \
-            --header "Authorization: Bearer ${WORKER_SECRET}" \
-            --header "Content-Type: application/json" \
-            --data '{"batchSize":5}' \
-            "${SUPABASE_URL}/functions/v1/tour-processing-worker"
+          ffmpeg -hide_banner -version
+          ffprobe -hide_banner -version
+
+      - name: Process due Peek videos
+        env:
+          FINDIT_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          FINDIT_SUPABASE_SECRET_KEY: ${{ secrets.FINDIT_SUPABASE_SECRET_KEY }}
+          FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
+        run: npm run run:tours-processor -- --batch-size 5
 
   tour-cleanup:
     if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '37 * * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: staging-tours
     steps:
       - name: Process due Tour media cleanup jobs
         env:
@@ -136,6 +148,7 @@ jobs:
     if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: staging-tours
     steps:
       - name: Process Tour cache invalidations
         env:
@@ -155,6 +168,7 @@ jobs:
     if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/10 * * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: staging-tours
     steps:
       - name: Evaluate Tour operational health
         env:

@@ -23,7 +23,7 @@ default in `src/lib/featureFlags.js`; several differ from `.env.example` (F-11).
 | Business profiles | `/business-profiles`, `/business/:id`, `/dealer/:id` | `businessProfilesService` | `businessProfiles` **on** | Complete |
 | Chat / messaging | `/chats`, `/chats/:conversationId` | `messagingService`, `messagingContracts` | `messaging` **off** | Complete but flag-off by default |
 | Notifications | `/notifications` | `notificationsService` | `essentialNotifications` **off** | Complete but flag-off by default |
-| Tours | `/tours` | `listingToursService` | `tours` **off**, `toursPreview` DEV | Complete; isolated — see TOURS_AUDIT.md |
+| Peek | `/peek` (`/tours` compatibility redirect) | `listingToursService` | enabled in accepted release; rollback-gated | Complete; see TOURS_AUDIT.md |
 | Reporting | dialog on listings | `reportsService` | always on | Complete — 6 reason codes |
 | Help / FAQs | `/help` | static | always on | Complete |
 | Contact support | `/help/contact` | `contactSupportService` | always on | Complete |
