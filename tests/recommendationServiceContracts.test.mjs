@@ -168,5 +168,5 @@ test('identity resolution cannot outlive its own budget', () => {
 test('runtime accepts Supabase publishable key formats through the shared resolver', () => {
   assert.match(runtime, /configuredPublishableKey/);
   assert.doesNotMatch(runtime, /Missing SUPABASE_ANON_KEY/);
-  assert.match(runtime, /authorization, apikey, content-type/);
+  assert.match(runtime, /authorization, apikey, content-type, x-client-info/);
 });
