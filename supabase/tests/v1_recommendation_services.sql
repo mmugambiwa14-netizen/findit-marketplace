@@ -1,5 +1,5 @@
 begin;
-select plan(24);
+select plan(25);
 
 select has_table('public', 'recommendation_service_policies', 'service policies table exists');
 select has_function('public', 'get_recommendation_service_policy_v1', array['text'], 'runtime policy function exists');
