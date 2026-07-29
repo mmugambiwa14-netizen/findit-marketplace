@@ -51,6 +51,11 @@ const initialPolicies = success(
   'read initial recommendation policies',
 );
 assert.equal(initialPolicies.length, 7, 'all seven recommendation policies must exist');
+const fixtureProfiles = await root.from('users')
+  .select('id', { count: 'exact', head: true })
+  .like('email', '%@example.test');
+assert.equal(fixtureProfiles.error, null, `verify staging fixture hygiene: ${fixtureProfiles.error?.message ?? 'unknown error'}`);
+assert.equal(fixtureProfiles.count, 0, 'staging activation requires zero disposable example.test profiles');
 
 let founderReady = false;
 try {
@@ -122,4 +127,3 @@ try {
 } finally {
   await founder.auth.signOut();
 }
-

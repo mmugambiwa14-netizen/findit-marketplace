@@ -139,6 +139,9 @@ test('scale smoke and hosted acceptance include notification pagination and fano
   assert.match(smoke, /the bounded claim must select the fixture job/);
   assert.match(smoke, /three recipients with a limit of two require exactly two pages/);
   assert.match(smoke, /fixture cleanup must restore the shared \$\{field\} fan-out health count/);
+  assert.match(smoke, /from\('app_alerts'\)\.delete\(\)\.eq\('listing_id', listingId\)/);
+  assert.match(smoke, /success\(await root\.auth\.admin\.deleteUser\(user\.userId\)/);
+  assert.doesNotMatch(smoke, /root\.auth\.admin\.deleteUser\(user\.userId\); \} catch/);
   assert.match(acceptanceWorkflow, /test:notification-scale-hosted/);
   assert.doesNotMatch(acceptanceWorkflow, /run: \|\s*run: \|/);
 });

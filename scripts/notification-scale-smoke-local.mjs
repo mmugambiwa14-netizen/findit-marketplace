@@ -135,15 +135,18 @@ try {
   console.log('Verified 121-row keyset traversal, owner isolation, private queue access, and bounded three-recipient fan-out.');
 } finally {
   if (listingId) {
-    await root.from('essential_notification_fanout_jobs').delete().eq('listing_id', listingId);
-    await root.from('saved_listings').delete().eq('listing_id', listingId);
-    await root.from('listings').delete().eq('id', listingId);
+    success(await root.from('essential_notification_fanout_jobs').delete().eq('listing_id', listingId), 'delete fan-out job fixture');
+    success(await root.from('saved_listings').delete().eq('listing_id', listingId), 'delete saved-listing fixtures');
+    success(await root.from('app_alerts').delete().eq('listing_id', listingId), 'delete listing-linked alert fixtures');
+    success(await root.from('listings').delete().eq('id', listingId), 'delete notification listing fixture');
   }
   for (const user of users) {
-    if (user.userId) await root.from('app_alerts').delete().eq('user_id', user.userId);
+    if (user.userId) {
+      success(await root.from('app_alerts').delete().eq('user_id', user.userId), 'delete notification user fixtures');
+    }
     try { await user.browser.auth.signOut(); } catch { /* best effort */ }
     if (user.userId) {
-      try { await root.auth.admin.deleteUser(user.userId); } catch { /* best effort */ }
+      success(await root.auth.admin.deleteUser(user.userId), 'delete notification auth fixture');
     }
   }
 }

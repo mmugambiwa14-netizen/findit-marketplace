@@ -32,6 +32,8 @@ test('activation leaves Peek and all seven recommendation policies active', () =
   assert.match(activation, /p_enabled: true/);
   assert.match(activation, /initialPolicies\.length, 7/);
   assert.match(activation, /activePolicies\.every\(\(policy\) => policy\.enabled\)/);
+  assert.match(activation, /like\('email', '%@example\.test'\)/);
+  assert.match(activation, /staging activation requires zero disposable example\.test profiles/);
 });
 
 test('hosted acceptance activates capabilities only after lifecycle and scale gates', () => {
