@@ -271,9 +271,9 @@ export async function removeTourObjects(tourRows = []) {
   const source = tourRows.map((row) => row.source_storage_path).filter(Boolean);
   const playback = tourRows.map((row) => row.playback_storage_path).filter(Boolean);
   const thumbnails = tourRows.map((row) => row.thumbnail_storage_path).filter(Boolean);
-  if (source.length) await root.storage.from('tour-sources').remove(source);
-  if (playback.length) await root.storage.from('tour-playback').remove(playback);
-  if (thumbnails.length) await root.storage.from('tour-thumbnails').remove(thumbnails);
+  if (source.length) success(await root.storage.from('tour-sources').remove(source), 'remove Tour source fixtures');
+  if (playback.length) success(await root.storage.from('tour-playback').remove(playback), 'remove Tour playback fixtures');
+  if (thumbnails.length) success(await root.storage.from('tour-thumbnails').remove(thumbnails), 'remove Tour thumbnail fixtures');
 }
 
 /**
@@ -290,21 +290,26 @@ export async function cleanupTourFixtures({ listingId, serviceId, users = [] } =
     await removeTourObjects(rows);
     const tourIds = rows.map((row) => row.id);
     if (tourIds.length) {
-      await root.from('reports').delete().in('tour_id', tourIds);
-      await root.from('listing_tour_events').delete().in('tour_id', tourIds);
-      await root.from('listing_tour_upload_intents').delete().in('tour_id', tourIds);
+      success(await root.from('reports').delete().in('tour_id', tourIds), 'delete Tour report fixtures');
+      success(await root.from('listing_tour_events').delete().in('tour_id', tourIds), 'delete Tour event fixtures');
+      success(await root.from('listing_tour_upload_intents').delete().in('tour_id', tourIds), 'delete Tour intent fixtures');
     }
-    await root.from('listing_tour_slots').delete().eq(parentColumn, parentId);
-    await root.from('listing_tours').delete().eq(parentColumn, parentId);
-    if (tourIds.length) await root.from('tour_asset_cleanup_queue').delete().in('tour_id', tourIds);
-    await root.from('tour_cache_invalidations').delete().eq('parent_id', parentId);
-    if (listingId) await root.from('listings').delete().eq('id', listingId);
-    if (serviceId) await root.from('services').delete().eq('id', serviceId);
+    success(await root.from('listing_tour_slots').delete().eq(parentColumn, parentId), 'delete Tour slot fixtures');
+    success(await root.from('listing_tours').delete().eq(parentColumn, parentId), 'delete Tour fixtures');
+    if (tourIds.length) {
+      success(await root.from('tour_asset_cleanup_queue').delete().in('tour_id', tourIds), 'delete Tour cleanup fixtures');
+    }
+    success(await root.from('tour_cache_invalidations').delete().eq('parent_id', parentId), 'delete Tour cache fixtures');
+    if (listingId) {
+      success(await root.from('app_alerts').delete().eq('listing_id', listingId), 'delete listing alert fixtures');
+      success(await root.from('listings').delete().eq('id', listingId), 'delete listing fixtures');
+    }
+    if (serviceId) success(await root.from('services').delete().eq('id', serviceId), 'delete service fixtures');
   }
   for (const user of users) {
     try { await user.browser?.auth.signOut(); } catch { /* best effort */ }
     if (user.userId && !user.preserveUser) {
-      try { await root.auth.admin.deleteUser(user.userId); } catch { /* best effort */ }
+      success(await root.auth.admin.deleteUser(user.userId), 'delete fixture auth user');
     }
   }
 }

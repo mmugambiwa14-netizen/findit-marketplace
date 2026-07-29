@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [cleanupWorker, cacheWorker, playback, cleanupSql, cleanupFix, cleanupRollback, moderationSql, config] = await Promise.all([
+const [cleanupWorker, cacheWorker, playback, cleanupSql, cleanupFix, cleanupRollback, smokeFixtures, moderationSql, config] = await Promise.all([
   read('supabase/functions/tour-lifecycle-cleanup/index.ts'),
   read('supabase/functions/tour-cache-invalidation/index.ts'),
   read('supabase/functions/tour-playback-access/index.ts'),
   read('supabase/migrations/0035_v1_tour_cleanup_and_indexes.sql'),
   read('supabase/migrations/0076_tour_cleanup_claim_output_disambiguation.sql'),
   read('supabase/rollback/0076_tour_cleanup_claim_output_disambiguation.rollback.sql'),
+  read('scripts/lib/tour-smoke-fixtures.mjs'),
   read('supabase/migrations/0034_v1_tour_moderation_and_reports.sql'),
   read('supabase/config.toml'),
 ]);
@@ -32,6 +33,13 @@ test('cleanup claims disambiguate hosted output variables and retain a fail-clos
   assert.doesNotMatch(cleanupFix, /grant execute[\s\S]*to anon|grant execute[\s\S]*to authenticated/);
   assert.match(cleanupRollback, /set enabled = false/);
   assert.doesNotMatch(cleanupRollback, /\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('hosted Tour fixture cleanup removes listing alerts and fails loudly on residue', () => {
+  assert.match(smokeFixtures, /from\('app_alerts'\)\.delete\(\)\.eq\('listing_id', listingId\)/);
+  assert.match(smokeFixtures, /success\(await root\.from\('listings'\)\.delete/);
+  assert.match(smokeFixtures, /success\(await root\.auth\.admin\.deleteUser\(user\.userId\)/);
+  assert.doesNotMatch(smokeFixtures, /root\.auth\.admin\.deleteUser\(user\.userId\); \} catch/);
 });
 
 test('parent availability and Tour replacement emit cache invalidations', () => {
