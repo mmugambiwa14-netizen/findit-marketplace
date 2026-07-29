@@ -70,6 +70,10 @@ Read these before deployment:
 - [QA](QA_STATUS.md) and [security review](docs/SECURITY_REVIEW.md)
 - [Solo founder guide](SOLO_FOUNDER_GUIDE.md)
 
-The staging backend is accepted. Production launch still requires a frontend
-host/domain, SMTP, browser/device acceptance, monitoring, native recovery
-evidence, and a fresh-launch versus Base44-data decision.
+The accepted staging release is deployed at
+`https://mmugambiwa14-netizen.github.io/findit-marketplace/`. Peek is enabled in
+the bottom navigation and backend, its workers are active, and all seven
+recommendation policies are enabled on staging. Production remains a separate,
+explicit rollout: its Supabase project is intentionally unchanged and still
+requires a named migration/function window, production secrets and domain,
+SMTP, monitoring, recovery ownership, and final browser/device acceptance.

@@ -1,8 +1,8 @@
 # Recommendation Certification
 
-Status: source-complete through migration `0074`; Phase 3 and Phase 7 hosted
-staging certification passed on 2026-07-29. Production is unchanged and not
-certified.
+Status: source-complete through migration `0076`; Phase 3 and Phase 7 hosted
+staging certification passed on 2026-07-29. All seven policies are enabled on
+the accepted staging release. Production is unchanged and not certified.
 
 ## Required configuration
 
@@ -73,6 +73,7 @@ Staging certification does not authorize production deployment. Until an
 explicit production release is approved:
 
 - PR #1 remains draft and unmerged.
-- Exactly `recently_listed_service` remains enabled on staging.
-- The six other policies remain disabled.
+- All seven recommendation policies remain enabled on the accepted staging
+  release and are covered by guarded real-result, timeout, circuit, cleanup,
+  consent, and failure-isolation evidence.
 - Production migrations, functions, and policies remain unchanged.

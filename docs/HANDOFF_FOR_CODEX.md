@@ -1,273 +1,74 @@
-# FindIt listing intelligence — handoff
+# FindIt release handoff
 
-Written 2026-07-29. Supersedes any earlier handoff for the same branch.
+Written 2026-07-29. This supersedes every earlier handoff for this branch.
 
-## 1. Where the work lives
+## Work location and safety
 
 | Item | Value |
 |---|---|
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
-| Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
-| Pull request | #1, draft, must stay draft |
-| Current implementation evidence head | `d5d92ef103ec7757ba51ca9df9d30437318f21c7` |
-| Previous hosted UI head | `cdba0ce8ebeab6e746da6b764bb983b9a04f46e5` |
-| SQL boundary | migration `0074`, 74 migrations and 45 rollback capsules |
-| CI | all four checks passed on `d5d92ef`; inspect PR #1 after any later commit |
+| Feature branch | `feature/listing-intelligence-foundation` |
+| Implementation evidence head | `dd035aebacad6fab7f726b3f7c497dc3fa59866d` |
+| Pull request | #1, draft, open, must not be merged without an explicit production release decision |
+| Feature worktree | `C:\tmp\findit-listing-intel-work` |
+| SQL boundary | migration `0076`, 76 migrations, 47 rollback capsules |
 
-Confirm the real head before doing anything:
-
-```
-git fetch origin feature/listing-intelligence-foundation
-git rev-parse origin/feature/listing-intelligence-foundation
-gh pr view 1 --json state,isDraft,headRefOid
-gh pr checks 1
-```
-
-Do not create a replacement branch, a replacement PR, a new repository, or a
-parallel implementation. Do not merge PR #1.
-
-The main checkout at
+The main worktree at
 `C:\Users\mmuga\OneDrive\Desktop\FindIt-Extensive-Product-Audit-Remediated-v2-2026-07-27`
-contains intentional uncommitted branding changes. Do not reset, clean, stash or
-switch that worktree. Feature edits in this continuation were made in the
-separate worktree `C:\tmp\findit-listing-intel-work`.
+contains intentional uncommitted branding work. Never reset, clean, stash,
+overwrite, or switch branches in that worktree.
 
-## 2. What changed in this session
+Do not create another repository, replacement branch, or replacement PR. Keep
+PR #1 draft. Do not deploy to the inaccessible legacy project
+`mfapduvnlcmmevrqjbis`.
 
-Earlier commits: `8e2cd94` fixed the runtime-reachability defects, `7737924`
-added this document, `06617e3` completed Phase 3 and closed four hardening
-findings, and `9fa6711` refreshed the handoff. All four checks passed on
-`9fa6711`.
+## Release state
 
-This continuation resolves the publishable-key gateway blocker and local release
-gate gaps:
+The complete implemented V1 staging surface is active:
 
-- Public recommendation functions and `contextual-ecosystem` now use
-  `verify_jwt = false` so browsers using opaque `sb_publishable_*` keys can
-  reach the function-level public boundary.
-- `personalized-recommendations` remains `verify_jwt = true`.
-- Recommendation identity and service RPC timeouts now abort underlying
-  fetch/PostgREST work instead of only racing the caller.
-- Contextual orchestration uses PostgREST `.abortSignal(...)` and CORS now
-  allows `authorization`, `apikey`, `content-type`, and `x-client-info`.
-- Recommendation runtime publishable-key lookup reuses
-  `configuredPublishableKey()`, including `SUPABASE_PUBLISHABLE_KEY`,
-  `SUPABASE_PUBLISHABLE_KEYS`, and legacy `SUPABASE_ANON_KEY`.
-- Circuit-breaker persistence is registered with `EdgeRuntime.waitUntil` when
-  available and awaited in non-Edge runtimes.
-- CI now typechecks every Supabase Edge Function with Deno through
-  `npm run typecheck:edge-functions`.
-- First-party GitHub actions use their Node 24 majors; the Pages workflow no
-  longer emits the deprecated Node 20 runtime warning.
-- The hosted recommendation smoke harness now checks browser-style preflight,
-  Supabase client transport, public services, contextual orchestration, and the
-  protected personalized boundary.
-- The Windows CRLF-only Tour moderation contract now normalizes line endings
-  before its branch extraction assertion.
-- Migration `0069` adds the UUID audit-log overload required by the hosted
-  recommendation policy operations without widening browser or service-role
-  privileges.
-- Migration `0070` makes contextual listing-status comparison enum-safe after
-  the real PostgREST path exposed `listing_status = text`.
-- The shared recommendation runtime now recognizes Supabase's resolved
-  abort-error result as a timeout by checking its owned abort signal.
-- `certify:recommendation-phase3-staging` now creates disposable fixtures,
-  performs audited one-service activation, exercises browser CORS and auth
-  boundaries, forces real Edge timeouts with a bounded staging-only lock,
-  verifies durable circuit state and recovery, proves listing independence, and
-  removes fixtures and cache rows.
-- Phase 4 adds one fail-soft recommendation surface to property, car and
-  machinery details only after the authoritative listing has loaded.
-- The UI bounds planner output to six sections, six cards per section and 24
-  unique listings, hydrates those IDs through one public-status query, preserves
-  recommendation order and filters out the current listing.
-- Loading, empty, degraded, error and retry states are accessible and responsive.
-  Recommendation impressions require visibility, clicks require an explicit
-  card open, and analytics delivery remains non-blocking.
-- Query cancellation now reaches contextual planning, recommendation Edge
-  calls and the public listing PostgREST query. Recommendation failures never
-  enter the listing query or route-loading path.
-- `d659e22` integrates the fail-soft Phase 4 surface; `62c0dc9` and `65c1818`
-  make the private-repository GitHub Pages staging build executable on Node 24.
-- `cdba0ce` fixes a hosted `supabase-js` deadlock by deferring profile refresh
-  outside `onAuthStateChange`, and replaces the copied-index Pages fallback
-  with a same-origin route handoff through a 200 application shell.
-- The staging publishable-key repository secret was refreshed after browser
-  evidence found a leading `U+FEFF` BOM that made the browser reject the
-  `apikey` header before transport. No secret value is stored in the repository.
+- Peek is enabled in the frontend, bottom navigation, router, backend feature
+  control, first-party processor, cleanup, cache, and observability workers.
+- The canonical public route is `/peek`; `/tours` is a compatibility redirect.
+- All seven recommendation policies are enabled on staging.
+- Recommendation sections remain independent from canonical listing delivery.
+- Business profiles, messaging, essential notifications, international
+  listings, manual/current location, reporting, and Google OAuth are enabled in
+  the staging build.
+- Deferred commerce, subscription, escrow, premium, AI, marketing, and reminder
+  concepts are excluded from the V1 release surface. Their closed values are a
+  production-validator requirement, not disabled shipped functionality.
 
-Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`;
-section 2.4 describes Phase 4; section 2.5 describes Phases 5 through 7.
+Migrations install runtime policies closed for safe bootstrap. The guarded
+staging activation enables Peek and all seven recommendation policies only
+after lifecycle, transport, scale, cleanup, and zero-residue checks pass.
 
-### 2.1 and 2.2 — the runtime-reachability defects
+## Implemented boundaries
 
-`8e2cd94` fixes two defects that made the **entire Phase 2 recommendation
-surface return empty results at runtime** even though every offline gate and all
-four CI workflows were green on `aaeeef4`.
+- Public recommendation functions and contextual orchestration support opaque
+  Supabase publishable keys at the function-level public boundary.
+- Personalized recommendations retain authenticated gateway enforcement and
+  explicit user consent.
+- Browser CORS permits the maintained Supabase client header set.
+- Identity, recommendation, contextual, analytics, and event requests use real
+  abort signals and bounded timeouts.
+- Circuit state is durable across Edge isolates and persistence is registered
+  with `EdgeRuntime.waitUntil` or awaited outside Edge.
+- Request budgets store only salted digests and fail open so recommendation
+  controls cannot take down listing delivery.
+- All Supabase Edge Functions are Deno-typechecked by local and CI release
+  gates.
+- Listing details render bounded independent recommendation sections with
+  loading, empty, degraded, error, retry, accessibility, analytics, and
+  cancellation states.
+- Peek uses private source, playback, and thumbnail storage with signed access,
+  bounded upload intents, leased processing, FFmpeg transcoding, moderation,
+  cleanup, cache invalidation, and operational health.
+- The application has one canonical `/peek` route. It resolves to the real
+  catalogue when Peek is enabled and to the placeholder only in preview mode.
 
-Both defects live on the browser-adapter to Edge-Function to PostgREST path.
-No gate in the repository exercises that path end to end, which is why CI was
-green and the feature was nonetheless dead.
+## Local verification
 
-### Defect 1 (High) — five service functions were unreachable over PostgREST
-
-`0059` created these with **anonymous** parameters:
-
-- `similar_listings_service_v1(uuid, text, integer)`
-- `seller_recommendations_service_v1(uuid, text, integer)`
-- `related_services_service_v1(uuid, text, integer)`
-- `related_products_service_v1(uuid, text, integer)`
-- `nearby_service_v1(uuid, text, integer, integer)`
-
-`supabase/functions/_shared/recommendation-service.ts` calls them through
-PostgREST with **named** arguments (`p_subject_listing_id`, `p_cursor`,
-`p_limit`, `p_max_distance_meters`). PostgREST resolves RPC arguments by name,
-so a function whose parameters have no names can never be matched. Every call
-returned `PGRST202`, the runtime counted it as a failure and answered with the
-fail-soft empty payload.
-
-`0060` had already corrected `recently_listed_service_v1` and
-`personalized_recommendation_service_v1` the same way. `0066` finishes the set.
-
-Why no test caught it: `supabase/tests/v1_recommendation_services.sql` calls the
-functions **positionally** (`similar_listings_service_v1(gen_random_uuid(), null, 12)`),
-which works fine against anonymous parameters. Only the named-argument path
-breaks, and nothing exercised it.
-
-Fix: `supabase/migrations/0066_recommendation_service_named_arguments.sql`, with
-matching rollback capsule. Parameter names cannot be introduced by
-`create or replace`, so the functions are dropped and recreated — which makes
-them **new** functions, so Supabase's default privileges re-grant `EXECUTE` to
-`anon` and `authenticated`. The migration restates the `0027` revoke boundary.
-This is a recurring drift class in this repository; restate the revoke on every
-migration that creates or recreates a function.
-
-### Defect 2 (High) — a null cursor was rejected as a bad cursor
-
-`recommendation-service.ts` guarded the cursor with
-`body.cursor !== undefined && (typeof body.cursor !== "string" || ...)`.
-
-`src/services/recommendationServices.js` always sends an explicit `cursor` key,
-`null` on a first page. `null !== undefined` is true and `typeof null !== "string"`
-is true, so **every uncached first-page request** was answered `400 invalid_cursor`.
-
-`src/services/notificationContracts.js:57` already uses the correct repository
-convention (`!== null && !== undefined`); the recommendation runtime was the
-outlier.
-
-### Also fixed on the same surface
-
-| Area | Problem | Resolution |
-|---|---|---|
-| `recommendation-service.ts` | A fresh cache hit returned `public` Cache-Control even for a signed-in viewer, while the equivalent cache miss returned `private` | Both paths now share `viewerCacheControl(viewerId)` |
-| `contextual-ecosystem/index.ts` | `public, max-age=30` was sent on rejected requests **and** on fail-soft empty plans, so a transient outage stayed cached for the full window after recovery | Default is now `no-store`; only a complete plan gets `CACHEABLE_PLAN` |
-| `contextual-ecosystem/index.ts` | The abort timer was only cleared on the success path | `clearTimeout` moved into `finally` |
-| `contextualEcosystemService.js` | `sections.every(validSection)` discarded the whole plan if any single section failed the contract | Invalid sections are now dropped individually; the result is marked degraded |
-| `recommendationServices.js` | No deduplication and no cap on returned items | Deduplicated by `listingId`, truncated to the requested page size |
-| `recommendationServices.js` | Timeout stopped waiting but left the request in flight; no caller cancellation | Real `AbortController`; accepts a caller `signal`; reason `cancelled` |
-| `recommendationEventsService.js` | A UUID was generated on every call even when a session id already existed | Reordered to read first |
-
-Regression coverage added in `tests/recommendationServiceContracts.test.mjs` and
-`tests/recommendationClientContracts.test.mjs` for the argument-name contract,
-the null-cursor first-page signal, cancellation, and bounding.
-
-### 2.3 — Phase 3 completion and runtime hardening (`06617e3`)
-
-**Migration `0068` completes Phase 3.** The `0063` plan resolved sections from
-taxonomy scope alone. Four gaps are closed:
-
-- **Service availability.** A rule whose service is disabled is no longer
-  proposed, because the section it would produce can only come back empty. All
-  seven policies ship disabled, so with default configuration the plan is now
-  correctly empty until a service is explicitly enabled and certified.
-- **Listing state and location.** Rules may require location, price or sibling
-  seller inventory, or a minimum quality score or a listing status. Only
-  *presence* is tested; no coordinate, price or seller value leaves the
-  orchestrator.
-- **Precedence and conflict resolution.** Subcategory beats category beats
-  global, ties broken deterministically by rule priority, then context priority,
-  then rule id. The winning tier is returned as a stable `precedence` value so a
-  plan can be explained.
-- **Rule validation.** `contextual_conditions_valid_v1` enforces a closed
-  vocabulary through a table constraint, so an unknown key makes a rule inert
-  rather than silently universal.
-
-The plan payload is now `contractVersion` 2. Section fields are additive, so the
-existing frontend adapter is unaffected.
-
-**Contextual operational health.** `contextual_ecosystem_health_v1` plus a
-`contextual-ecosystem-health` Edge Function, behind the same trusted
-monitoring-credential boundary as `recommendation-service-health`
-(`FINDIT_CONTEXTUAL_HEALTH_SECRET`, constant-time compared, `verify_jwt = false`
-so the function's own check is authoritative). Counts and timestamps only.
-
-**Migration `0067` closes findings O-3 to O-6:**
-
-| Finding | Resolution |
-|---|---|
-| O-3 per-isolate breaker | Durable `recommendation_service_circuit_state`, read on the same call that already fetches the policy so the hot path gains no additional round trip. The in-isolate map is kept as a fast local short-circuit. Outcomes are persisted through `EdgeRuntime.waitUntil` when available and awaited outside Edge. |
-| O-4 no abuse control | Windowed request budget keyed by an opaque salted digest (`FINDIT_REQUEST_BUDGET_SALT`). No address, header value or account identifier is stored. Consumed only when a request is about to reach the database, and **fails open**. |
-| O-4 cache-key amplification | Page sizes are a closed bucket set (6, 12, 24, 48, 100). The adapter requests a bucket value directly, so requested page, returned page and next cursor stay aligned. |
-| O-5 bypassable body guard | `readBoundedJson` in `_shared/request-guards.ts` bounds bytes actually buffered. Used by both runtimes. |
-| O-6 unbounded identity call | `auth.getUser()` is made through an abortable fetch and capped at 1000 ms. A slow response is treated as anonymous, which is safe because the one authentication-required service rejects a null viewer outright. |
-
-**A required new secret.** `FINDIT_REQUEST_BUDGET_SALT` must be set before
-deployment or the request budget silently does nothing (`clientHash` returns
-null when the salt is absent, and the budget is then skipped). This is
-deliberate fail-open behaviour, but it means an unset salt looks identical to a
-working deployment. `FINDIT_CONTEXTUAL_HEALTH_SECRET` is likewise required for
-the new health endpoint, which refuses every request without it.
-
-### 2.4 - Phase 4 listing-detail integration
-
-`ListingRecommendations.jsx` is a shared child of all three public listing
-detail pages. It obtains the contextual plan, calls each selected service
-independently, hydrates only public listing IDs through the existing listing
-mapper, and renders standard `ListingCard` components. The parent detail
-queries do not import recommendation services and complete before the child is
-mounted, so recommendation latency or failure cannot suppress canonical listing
-content.
-
-Local browser verification covered desktop and mobile layouts, loading,
-real-result rendering and stopped-transport failure isolation. A second pass
-used the real staging backend with disposable listings and proved that the
-authoritative listing remained visible when recommendation transport failed.
-
-The exact feature head is also deployed to GitHub Pages staging. Fresh browser
-profiles exercise the direct deep-link fallback, the 200 application shell,
-canonical PostgREST listing hydration, contextual and recently-listed Edge
-Functions, recommendation hydration, responsive cards and explicit-open click
-analytics. This is hosted staging evidence, not production certification.
-
-### 2.5 - Privacy, analytics and executable service completion
-
-- Migration `0071` adds explicit default-off personalization consent, a
-  post-consent 90-day first-party signal boundary, and owner-controlled disable
-  and clear operations.
-- Settings exposes an accessible personalization switch and destructive clear
-  confirmation. Personalized listing sections mount only after consent and
-  remain independent of canonical listing delivery.
-- Migration `0072` adds identity-free daily service metrics, bounded refresh
-  and retention, aggregate admin reporting, health state, and maintenance
-  worker integration.
-- The admin dashboard renders aggregate impressions, clicks, click-through
-  rates and service health without actor, session, listing, seller or request
-  identities.
-- Migration `0073` replaces the impossible listing-projection implementation of
-  related services with taxonomy-ranked active marketplace services. Responses
-  are typed, service hydration is independent, and service attribution is
-  bounded and aggregate-safe.
-- Migration `0074` records hosted evidence that the indexed nearby query needs
-  a 1,000 ms Edge-to-PostgREST budget. Only that service is raised; the existing
-  5-second hard ceiling remains.
-- `certify:recommendation-phase7-staging` activates each remaining service one
-  at a time, uses disposable fixtures, tests real browser transport and
-  hydration, exhausts a request budget, verifies consent and analytics, and
-  restores the exact initial policy state in cleanup.
-
-## 3. Verified state
-
-Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
+Executed on Node 24 in the isolated feature worktree:
 
 | Gate | Result |
 |---|---|
@@ -275,259 +76,141 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 | `npm run typecheck` | pass |
 | `npm run typecheck:migration` | pass |
 | `npm run typecheck:active` | pass, 227 active modules |
-| `npm run test:contracts` | pass, 345/345 |
-| `npm run verify:sql-boundary` | pass, 74 migrations, 45 rollback capsules |
-| `npm run verify:hygiene` | pass, 675 text files |
-| `npm run verify:source-graph` | pass, 373 modules, 0 unresolved |
-| `npm run audit:product-surface` | pass, 0 failures, 1 warning |
-| `npm run typecheck:edge-functions` | pass, Deno checked every file under `supabase/functions` |
-| `npm run audit:production` | pass, no reachable Moderate/High/Critical advisories |
-| `npm run build` (NODE_ENV=production, Pages base) | pass, 535,053 B raw / 157,920 B gzip |
+| `npm run typecheck:edge-functions` | pass, all Edge Function entry points and shared runtimes |
+| `npm run test:contracts` | pass, 357/357 |
+| `npm run verify:sql-boundary` | pass, 76 contiguous migrations and 47 rollback capsules |
+| `npm run verify:hygiene` | pass, 690 text files |
+| `npm run verify:source-graph` | pass, 377 modules and zero unresolved imports |
+| `npm run audit:product-surface` | pass, zero failures and zero warnings |
+| `npm run audit:production` | pass, no reachable Moderate, High, or Critical advisories |
+| `npm run validate:env` | pass with Peek and every implemented worker enabled |
+| Production Pages build | pass, JS 536,072 B raw / 158,212 B gzip; CSS 69,529 B raw / 12,410 B gzip |
 
-`npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
-`VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
+Local Docker is unavailable because Docker Desktop cannot bootstrap its WSL
+data disk. Both clean GitHub database jobs are the authoritative full reset,
+schema lint, RLS, and pgTAP evidence.
 
-**CI on implementation evidence head `d5d92ef`: all four checks passed** on PR #1:
-frontend/source contracts, database reset/RLS/recommendation certification,
-recommendation pgTAP, and release verification. The PR remains draft.
+## GitHub evidence
 
-The previous Windows-only contract failure in
-`tests/tourMilestone6ModerationAdmin.test.mjs` is fixed by normalizing line
-endings before the literal branch extraction.
+All four PR checks passed on implementation head `dd035ae`:
 
-Local Docker later became unavailable because Docker Desktop's WSL data disk
-failed during bootstrap. Before that failure, the Phase 5 and Phase 6 pgTAP
-suites passed locally. Both clean GitHub database jobs subsequently applied all
-74 migrations, linted the schema, and passed all eleven recommendation pgTAP
-suites on `d5d92ef`.
+- Frontend and source contracts
+- Database reset, RLS and recommendation certification
+- Reset, lint and recommendation pgTAP
+- Release verification
 
-## 3.1 Hosted staging evidence
+Final hosted acceptance:
 
-Confirmed staging target: `FindIt Staging` (`bwgklpxoetrrkutottdb`). Evidence:
-repository staging scripts and setup docs name this ref; the project is active
-healthy in organization `pyktbmobvwktiuiqbobd`; it has the recommendation and
-contextual Edge Functions deployed. `FindIt Marketplace`
-(`jvbpxnfxkptuexgssplj`) is active healthy but lacks the recommendation service
-function set, so it is not the Phase 3 staging target.
-
-Executed against `https://bwgklpxoetrrkutottdb.supabase.co/functions/v1`:
-
-| Hosted check | Result |
+| Item | Value |
 |---|---|
-| Migrations through `0074` | applied to staging and recorded in `supabase_migrations.schema_migrations` |
-| Recommendation function deployment | all seven active on version 7; six public functions have `verify_jwt=false`, personalized has `verify_jwt=true` |
-| `OPTIONS contextual-ecosystem` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
-| `OPTIONS recently-listed` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
-| `POST recently-listed` through the browser-to-Edge-to-PostgREST path | 200, contract v1, real results include all three disposable eligible fixtures |
-| Five other public listing recommendation services | 200 fail-soft responses with `reason: service_disabled` |
-| Direct contextual planner and `POST contextual-ecosystem` | both select only `recently_listed_service`; Edge response is contract v2 |
-| `POST personalized-recommendations` without auth | 401 from the Supabase gateway |
-| Authenticated `POST personalized-recommendations` | 200 fail-soft response with `reason: service_disabled` |
-| Recommendation and contextual health endpoints | missing credentials return 401; credentialed calls return contract v1 and expected aggregate counts |
-| Real timeout and circuit test | three separate Edge calls return `reason: timeout`; persisted failures reach 3; another request returns `circuit_open`; recovery returns non-degraded results |
-| Listing independence | the disposable available listing remains readable while the recommendation circuit is open |
-| Cleanup and final state | no disposable users or projections, zero recently-listed cache rows, circuit closed with zero failures |
-| Five remaining public services | each enabled alone, returns fixture-backed results through browser Edge transport, and hydrates through public PostgREST |
-| Related services | returns a typed active marketplace service; browser impression and click attribution both succeed |
-| Request budget | two similar-listing requests execute; the third returns `request_budget_exhausted`; the opaque budget row is verified and removed |
-| Personalization | default disabled, authenticated request requires consent, post-consent activity produces results, clear removes linked data and disables consent |
-| Aggregate analytics | refresh and admin report return impressions and clicks without behavioural identity fields |
-| Nearby hosted budget | initial 250 ms call timed out; `0074` raises only nearby to 1,000 ms and the complete rerun passes |
-| Phase 7 cleanup | zero disposable users, listings, services and locations; zero open circuits; initial policy state restored |
+| Workflow run | `30496750148` |
+| Accepted head | `dd035aebacad6fab7f726b3f7c497dc3fa59866d` |
+| Artifact | `tour-acceptance-30496750148-1` |
+| Result | success |
+| Scope | static release gates, generated-video lifecycle, FFmpeg processing, playback, thumbnail, catalogue, moderation, scale, observability, cleanup, activation, evidence upload |
 
-Phases 3, 5, 6, and the staging portion of Phase 7 are hosted-certified on
-staging, not on production. Exactly `recently_listed_service` is enabled on
-staging; the other six policies remain disabled.
+The repository variable `FINDIT_TOURS_ACCEPTANCE_ID` is pinned to that artifact.
 
-Phase 4 staging frontend: `https://mmugambiwa14-netizen.github.io/findit-marketplace/`.
-Deployment run `30485179425` built and deployed `d5d92ef`. Live HTTP checks
-confirmed the 200 application shell, current hashed assets, settings and admin
-chunks, and the deep-link route handoff. The connected visual browser was
-unavailable for this final deployment, so the latest screenshot evidence
-remains the earlier fresh Chrome pass at 1440x900 and 390x844, which verified:
+Maintenance workflow run `30493820035` passed all nine jobs:
 
-- a direct listing URL first receives the expected Pages fallback and then a
-  200 root shell, with the original route restored before React mounts;
-- the canonical listing request, `contextual-ecosystem`,
-  `recently-listed`, and recommendation hydration all return 200;
-- two unique recommendation cards render, exclude the subject, preserve the
-  `/findit-marketplace/` base and have no horizontal overflow;
-- an explicit recommendation open navigates to the selected listing and writes
-  a `recommendation_click` event;
-- final cleanup leaves zero disposable listings, users, projections, events,
-  recently-listed cache entries, projection jobs and dead letters.
+- media cleanup
+- listing expiry
+- recommendation projection
+- recommendation maintenance
+- Peek processing
+- Peek cleanup
+- Peek cache invalidation
+- Peek observability
+- essential notification fanout
 
-The production Supabase project was inspected non-destructively and remains at
-migration `0049`. It was not deployed to or modified.
+## Supabase evidence
 
-## 4. Immediate next actions
+Confirmed staging target:
 
-1. Deploy the final feature head to GitHub Pages and repeat desktop/mobile
-   listing, settings and admin visual checks.
-2. Keep PR #1 draft until final review and an explicit production release
-   decision.
-3. Plan a named production migration and function release window with rollback
-   ownership. Production remains unchanged at `0049`.
-4. After an approved production deploy, repeat the guarded transport, timeout,
-   circuit, personalization, analytics and listing-independence suites before
-   enabling services incrementally.
+`FindIt Staging` (`bwgklpxoetrrkutottdb`, eu-west-2)
 
-## 5. Open findings not fixed, in priority order
+Production project:
 
-### O-1 closed - publishable-key gateway boundary
+`FindIt Marketplace` (`jvbpxnfxkptuexgssplj`, eu-west-2)
 
-`supabase/config.toml` now sets `verify_jwt = false` for `similar-listings`,
-`seller-recommendations`, `related-services`, `related-products`,
-`nearby-listings`, `recently-listed`, and `contextual-ecosystem`. These public
-browser endpoints are protected by function-level origin, method, body, policy,
-budget, and service-specific authentication checks rather than by Supabase
-gateway JWT verification, because the browser key is expected to be an opaque
-`sb_publishable_*` credential. `personalized-recommendations` remains
-`verify_jwt = true`.
+Production was inspected non-destructively and remains at migration `0049`. It
+was not deployed to or modified.
 
-### O-2 closed - hosted Phase 3 staging certification
+Staging is migrated through `0076`. Migrations `0075` and `0076` correct
+hosted PostgreSQL claim-output ambiguity for Peek processing and cleanup.
 
-The guarded staging runner now covers health credentials, authenticated and
-anonymous calls, disposable eligible listings, audited one-service enablement,
-real results, contextual selection, real timeout classification, durable circuit
-state across requests, recovery, listing independence, and cleanup. This is
-staging evidence only and must not be restated as production certification.
+Hosted evidence includes:
 
-### O-3 to O-6 — closed in `06617e3`
+- browser-style CORS preflights with authorization, apikey, content-type, and
+  x-client-info;
+- anonymous public recommendation transport and authenticated personalized
+  transport;
+- real Edge-to-PostgREST results for all seven services;
+- contextual planning, public listing hydration, consent and clear behavior,
+  aggregate-only analytics, timeout classification, durable circuit opening
+  and recovery, request-budget exhaustion, and listing independence;
+- generated video upload, first-party FFmpeg transcode, signed playback,
+  thumbnail delivery, catalogue ordering, moderation, retries, cleanup,
+  cache invalidation, scale, and observability;
+- exact-target activation only after zero disposable `example.test` profiles.
 
-All four are fixed by migration `0067` and the shared request guards. See
-section 2.3 for what each resolution does. Two things to carry forward rather
-than assume settled:
+The final post-acceptance audit reports:
 
-- The durable breaker has now been certified by driving real Edge timeouts and
-  reading the persisted state across separate requests. Retain that executable
-  check in later scale certification.
-- The request budget **fails open in three separate ways**: no salt configured,
-  a malformed client hash, or any internal error. That is deliberate — an abuse
-  control must never remove sections from a listing page — but it means an
-  ineffective budget is indistinguishable from a working one without an explicit
-  test. Certify it by exhausting a window against a real deployment.
+| Check | Value |
+|---|---:|
+| Peek backend enabled | true |
+| Enabled recommendation policies | 7 |
+| Disabled recommendation policies | 0 |
+| Open circuits | 0 |
+| Circuit states with failures | 0 |
+| Open operational alerts | 0 |
+| Peek cleanup dead letters | 0 |
+| Peek cache dead letters | 0 |
+| Recommendation dead letters | 0 |
+| Recommendation projection jobs | 0 |
+| Notification fanout dead letters | 0 |
+| Due notification fanout | 0 |
+| Disposable test users | 0 |
 
-### O-7 closed locally — adapters integrated without listing dependency
+No hosted or production claim is based on static tests alone.
 
-The shared Phase 4 component now consumes the contextual, recommendation and
-event adapters. Detail pages import only that child after their canonical
-loading, error and missing-listing guards. The application shell and public
-listing service remain independent, and executable contracts lock that
-boundary. Hosted desktop/mobile verification passed on the exact deployed
-feature head.
+## Deployment
 
-### O-8 closed — remaining service integration scope
+Staging frontend:
 
-The Phase 7 staging runner now exercises all five remaining public services with
-fixture-backed real results through browser-shaped Edge-to-PostgREST transport.
-It also covers typed service hydration, event attribution, request-budget
-exhaustion, consent-gated personalization, aggregate analytics, policy
-restoration and cleanup. The services remain disabled after certification; this
-is staging evidence, not authorization for production activation.
+`https://mmugambiwa14-netizen.github.io/findit-marketplace/`
 
-## 6. Rules that must not be broken
+Pages deployment run `30497490722` succeeded from accepted implementation head
+`dd035ae`. The live root returns the 200 application shell, `/peek` returns the
+expected Pages route-handoff document, and the deployed main asset is
+`assets/index-gjDqwLZg.js`. The compiled bundle contains the Peek label,
+canonical route, and exact staging project reference.
 
-From the project instructions and from defects already paid for once:
+The Pages workflow must build from the feature branch with:
 
-- Phase order is locked: 0, 1, 2, 3, 4, 5, 6, 7. Do not skip ahead. Do not
-  begin Phase 4 until Phase 3 is certified with executable evidence.
-- A phase is complete only at its maximum practical implementation, testing,
-  failure-isolation, operational, security and certification boundary.
-- Never write "passed" without execution evidence. A queued, skipped, cancelled
-  or partially passing workflow is not certification.
-- No recommendation or contextual failure may block listing pages, listing
-  APIs, search, Tours, chat, authentication, seller tools or moderation.
-- Never expose database, Supabase, provider, stack-trace, status-code or
-  internal exception text to users. Log privately, surface plain language.
-- No emojis anywhere: code, UI copy, docs, tests, comments, commit messages.
-- Do not identify any AI system as a contributor, author, owner or cofounder.
-- Adding a migration needs **four** coordinated edits or the repo's own gates
-  fail:
-  1. `supabase/migrations/NNNN_name.sql`
-  2. `supabase/rollback/NNNN_name.rollback.sql` — non-destructive, no
-     `drop table` / `truncate` / `delete from`
-  3. the release-tip anchor at the bottom of `scripts/verify-sql-boundary.mjs`
-  4. **two** test anchors, not one:
-     `tests/repositoryReleaseHygiene.test.mjs` and
-     `tests/recommendationFoundationContracts.test.mjs`
-- Every migration that creates or recreates a public-schema function must
-  restate the `0027` revoke against `public, anon, authenticated`. Supabase
-  re-grants `EXECUTE` to browser roles on every new function.
-- Never disable RLS to make a test pass. Fix the test only when the expectation
-  is genuinely wrong; otherwise fix the implementation.
-- Never rewrite applied migration history to hide a defect. Add a corrective
-  migration.
-- Do not re-attempt vendor-chunk splitting for bundle size. It was measured in
-  an earlier cycle and made the true initial payload roughly 27 percent worse.
-  It is recorded as F-14.
+- `FINDIT_STAGING_TOURS_ENABLED=true`
+- `FINDIT_STAGING_TOURS_PREVIEW=false`
+- `FINDIT_STAGING_TOURS_BACKEND_ENABLED=true`
+- `FINDIT_TOURS_WORKERS_ENABLED=true`
+- `FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED=true`
+- `FINDIT_RECOMMENDATION_WORKERS_ENABLED=true`
+- `FINDIT_TOURS_RELEASE_ACCEPTED=true`
+- `FINDIT_TOURS_ACCEPTANCE_ID=tour-acceptance-30496750148-1`
 
-## 7. Environment notes
+## Remaining external release boundary
 
-- The visible Supabase projects in the authenticated organization
-  `pyktbmobvwktiuiqbobd` are `FindIt Staging`
-  (`bwgklpxoetrrkutottdb`, eu-west-2) and `FindIt Marketplace`
-  (`jvbpxnfxkptuexgssplj`, eu-west-2). The older project
-  `mfapduvnlcmmevrqjbis` is not visible in the current account and must not be
-  used as a deployment target.
-- The founder-admin lock in `0030` binds admin to a SHA-256 of a normalized
-  email, and the hash matches the repository owner's address. Signing up with
-  that address auto-grants admin and super_admin.
-- Two older migrations need mechanical adjustment to apply through MCP
-  `apply_migration`: `0029` ships an explicit `begin`/`commit` (strip it, the
-  tool already wraps in a transaction), and `0020`'s `alter type ... add value`
-  must stay in its own migration.
-- CI pins Node 24. Local Node here is 24, matching the current workflows.
-- `core.autocrlf=true` is enabled on this machine. The affected Tour moderation
-  contract now normalizes line endings without weakening its branch assertion.
-- Staging Auth now uses the Pages root as `site_url` and allows the Pages,
-  localhost and `127.0.0.1` root and nested callback routes. Production Auth
-  configuration was not changed.
-- The production build must run with `NODE_ENV=production`. A previous cycle
-  lost hours to `NODE_ENV=test` leaking in from the job environment, which
-  bundles React's dev build and blows the byte budget.
+The code and staging candidate are complete. A production release still needs
+an explicit owner decision and named rollout window because the production
+Supabase project is intentionally untouched. During that window:
 
-## 8. Phase status, stated honestly
+1. Apply migrations and deploy functions to the production project with
+   rollback ownership.
+2. Configure production secrets, SMTP, final domain, OAuth callbacks,
+   monitoring, and recovery ownership.
+3. Repeat the guarded transport, auth, timeout, circuit, worker, cleanup,
+   consent, analytics, listing-independence, Peek lifecycle, and device checks
+   against production.
+4. Enable production policies only after that production evidence passes.
 
-| Phase | Source | Local | CI | Hosted | Certified |
-|---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on `d5d92ef` | staging guards pass | local/staging |
-| 1 — data foundation | complete | partial local, full CI | green on `d5d92ef` | migrations through `0074` applied | staging |
-| 2 — independent services | complete | pass | green on `d5d92ef` | all seven real-result paths certified; six restored disabled | staging |
-| 3 — contextual intelligence | complete | pass | green on `d5d92ef` | guarded timeout/circuit suite passes | **staging certified** |
-| 4 — listing detail UX | complete | pass | green on `d5d92ef` | Pages run `30485179425` passed; prior desktop/mobile visual pass | staging |
-| 5 — personalization | complete | pass | green on `d5d92ef` | consent, results and clear pass | **staging certified** |
-| 6 — analytics | complete | pass | green on `d5d92ef` | aggregate refresh and admin report pass | **staging certified** |
-| 7 — scale and certification | source/staging complete | pass | green on `d5d92ef` | budgets, timeouts, circuits and cleanup pass | production pending |
-
-Phase 2 was reported executable-certified on `aaeeef4`. That claim was true for
-the gates as written and false in substance: the services could not answer a
-single real request. Treat "all gates green" as necessary, never sufficient, and
-prefer one real end-to-end call over another static assertion.
-
-**Phase 3 source is now complete**: journey-context resolution, category and
-subcategory rules, listing-state awareness, location-aware orchestration,
-service-availability awareness, stable context keys and reason codes, a
-versioned contract, deterministic ordering, admin lifecycle controls, audit
-history, rule validation, conflict resolution with explicit precedence, cache
-safety, privacy boundaries, timeout handling, fail-soft fallback, failure
-isolation, operational health, pgTAP coverage, source contracts, rollback
-support and deployment registration.
-
-The recommendation system is a production-ready candidate with complete source,
-CI and hosted staging evidence. Exactly one non-personalized service remains
-enabled on staging. No production project was changed, and no production
-certification is claimed.
-
-## 9. Update PR #1 after material progress
-
-The body must keep these separated and must never blur them:
-
-- source implemented
-- locally executed
-- CI passed
-- hosted deployed
-- production certified
-- still pending
-
-Keep the PR in draft until the entire locked sequence is complete.
+This boundary is not a source defect and must not be bypassed by pointing the
+staging frontend at production.
