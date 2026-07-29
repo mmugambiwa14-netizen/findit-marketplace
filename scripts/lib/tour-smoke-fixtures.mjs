@@ -27,6 +27,37 @@ export function success(result, label) {
 }
 
 export async function createSmokeUser(prefix, role = 'user') {
+  if (role === 'admin' && smokeTarget.label === 'hosted staging') {
+    if (process.env.FINDIT_ALLOW_STAGING_FOUNDER_SESSION !== 'staging') {
+      throw new Error('FINDIT_ALLOW_STAGING_FOUNDER_SESSION=staging is required for hosted admin smoke coverage.');
+    }
+    const founders = success(
+      await root.from('users').select('id,email').eq('role', 'admin').eq('super_admin', true),
+      'locate staging founder',
+    );
+    assert.equal(founders.length, 1, 'staging must have exactly one founder admin');
+    const browser = client();
+    const generated = success(
+      await root.auth.admin.generateLink({ type: 'magiclink', email: founders[0].email }),
+      'generate one-time founder session',
+    );
+    const verified = success(
+      await browser.auth.verifyOtp({
+        token_hash: generated.properties.hashed_token,
+        type: 'magiclink',
+      }),
+      'start one-time founder session',
+    );
+    assert.ok(verified.session?.access_token, 'founder session must include an access token');
+    return {
+      userId: founders[0].id,
+      email: founders[0].email,
+      browser,
+      session: verified.session,
+      preserveUser: true,
+    };
+  }
+
   const stamp = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
   const email = `${prefix}-${stamp}@example.test`;
   const password = `FindIt-${crypto.randomBytes(24).toString('base64url')}!9aA`;
@@ -272,7 +303,7 @@ export async function cleanupTourFixtures({ listingId, serviceId, users = [] } =
   }
   for (const user of users) {
     try { await user.browser?.auth.signOut(); } catch { /* best effort */ }
-    if (user.userId) {
+    if (user.userId && !user.preserveUser) {
       try { await root.auth.admin.deleteUser(user.userId); } catch { /* best effort */ }
     }
   }

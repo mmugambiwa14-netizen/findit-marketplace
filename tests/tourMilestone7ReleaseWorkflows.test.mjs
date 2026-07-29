@@ -34,6 +34,7 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /environment: staging-tours/);
   assert.match(acceptanceWorkflow, /npm ci --include=dev --ignore-scripts/);
   assert.match(acceptanceWorkflow, /FINDIT_ALLOW_HOSTED_SMOKE: staging/);
+  assert.match(acceptanceWorkflow, /FINDIT_ALLOW_STAGING_FOUNDER_SESSION: staging/);
   assert.match(acceptanceWorkflow, /FINDIT_EXPECTED_PROJECT_REF/);
   assert.match(acceptanceWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"/);
   assert.match(acceptanceWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
