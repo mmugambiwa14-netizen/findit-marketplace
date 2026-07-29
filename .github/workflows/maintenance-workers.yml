@@ -57,7 +57,7 @@ jobs:
             "${SUPABASE_URL}/functions/v1/listing-expiry-worker"
 
   recommendation-maintenance:
-    if: vars.FINDIT_RECOMMENDATION_MAINTENANCE_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '11 3 * * *')
+    if: vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '11 3 * * *')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -65,7 +65,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
-          WORKER_SECRET: ${{ secrets.FINDIT_RECOMMENDATION_MAINTENANCE_WORKER_SECRET }}
+          WORKER_SECRET: ${{ secrets.FINDIT_RECOMMENDATION_WORKER_SECRET }}
         run: |
           curl --fail-with-body --silent --show-error --retry 2 \
             --request POST \
