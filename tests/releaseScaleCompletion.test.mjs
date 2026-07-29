@@ -135,7 +135,10 @@ test('scale smoke and hosted acceptance include notification pagination and fano
   assert.equal(pkg.scripts['test:notification-scale-hosted'], 'node ./scripts/notification-scale-smoke-local.mjs');
   assert.match(smoke, /notification keyset traversal must contain no duplicates or skips/);
   assert.match(smoke, /ordinary users cannot read fan-out jobs/);
+  assert.match(smoke, /update\(\{ next_attempt_at: '-infinity' \}\)/);
+  assert.match(smoke, /the bounded claim must select the fixture job/);
   assert.match(smoke, /three recipients with a limit of two require exactly two pages/);
+  assert.match(smoke, /fixture cleanup must restore the shared \$\{field\} fan-out health count/);
   assert.match(acceptanceWorkflow, /test:notification-scale-hosted/);
   assert.doesNotMatch(acceptanceWorkflow, /run: \|\s*run: \|/);
 });

@@ -69,17 +69,39 @@ try {
   }), 'verify notification owner isolation');
   assert.equal(strangerRows.length, 0, 'strangers cannot read another user notification page');
 
+  const baselineHealth = success(
+    await root.rpc('evaluate_notification_fanout_alerts', {}),
+    'capture notification fan-out health baseline',
+  );
   success(await root.from('listings').update({ status: 'sold' }).eq('id', listingId), 'queue saved-listing unavailability');
   const hiddenJobs = await saverA.browser.from('essential_notification_fanout_jobs').select('id').limit(1);
   assert.ok(hiddenJobs.error, 'ordinary users cannot read fan-out jobs');
 
+  const fixtureJob = success(
+    await root
+      .from('essential_notification_fanout_jobs')
+      .select('id')
+      .eq('listing_id', listingId)
+      .eq('event_type', 'saved_listing_unavailable')
+      .single(),
+    'locate fixture notification fan-out job',
+  );
   let completed = false;
   let batches = 0;
   while (!completed && batches < 5) {
+    success(
+      await root
+        .from('essential_notification_fanout_jobs')
+        .update({ next_attempt_at: '-infinity' })
+        .eq('id', fixtureJob.id)
+        .eq('state', 'pending'),
+      'prioritize only the fixture fan-out job',
+    );
     const claims = success(await root.rpc('claim_notification_fanout_jobs', {
       p_limit: 1, p_lease_seconds: 120,
     }), 'claim notification fan-out job');
     assert.equal(claims.length, 1, 'one due fan-out job must be claimable');
+    assert.equal(claims[0].job_id, fixtureJob.id, 'the bounded claim must select the fixture job');
     const result = success(await root.rpc('process_notification_fanout_job', {
       p_job_id: claims[0].job_id,
       p_claim_token: claims[0].claim_token,
@@ -101,8 +123,13 @@ try {
   }
 
   const health = success(await root.rpc('evaluate_notification_fanout_alerts', {}), 'evaluate notification fan-out health');
-  assert.equal(Number(health.dead_lettered), 0);
-  assert.equal(Number(health.pending), 0);
+  for (const field of ['pending', 'claimed', 'dead_lettered', 'stale_claims']) {
+    assert.equal(
+      Number(health[field]),
+      Number(baselineHealth[field]),
+      `fixture cleanup must restore the shared ${field} fan-out health count`,
+    );
+  }
 
   console.log(`Notification scale smoke (${smokeTarget.label}): PASS`);
   console.log('Verified 121-row keyset traversal, owner isolation, private queue access, and bounded three-recipient fan-out.');
