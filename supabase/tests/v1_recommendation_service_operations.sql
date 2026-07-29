@@ -93,10 +93,10 @@ select ok(
   'configuration audit accepts service policy evidence'
 );
 select ok(
-  (select configuration->>'schema_version' = '62'
+  (select (configuration->>'schema_version')::integer >= 62
      from public.marketplace_operational_controls
     where control_key = 'recommendation_foundation'),
-  'operational control records migration 62'
+  'operational control records migration 62 or a later certification correction'
 );
 
 select * from finish();

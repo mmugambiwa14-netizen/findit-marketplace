@@ -112,7 +112,7 @@ $$;
 
 revoke all on function public.admin_update_recommendation_service_policy_v1(
   text, boolean, integer, integer, integer, integer, jsonb
-) from public, anon;
+) from public, anon, service_role;
 grant execute on function public.admin_update_recommendation_service_policy_v1(
   text, boolean, integer, integer, integer, integer, jsonb
 ) to authenticated;
@@ -185,7 +185,7 @@ end;
 $$;
 
 revoke all on function public.admin_purge_recommendation_service_cache_v1(text, uuid, integer)
-  from public, anon;
+  from public, anon, service_role;
 grant execute on function public.admin_purge_recommendation_service_cache_v1(text, uuid, integer)
   to authenticated;
 
