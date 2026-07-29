@@ -74,24 +74,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v2
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          version: 2.84.2
-          github-token: ${{ github.token }}
+          node-version: 20
 
       - name: Start clean local database and apply every migration
-        run: supabase db start
+        run: npx --yes supabase@2.84.2 db start
 
       - name: Lint database schema
-        run: supabase db lint --local
+        run: npx --yes supabase@2.84.2 db lint --local
 
       - name: Run recommendation RLS and lifecycle matrix
-        run: supabase test db supabase/tests/v1_recommendation_foundation.sql --local
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
 
       - name: Run recommendation query-plan and cursor scale suite
-        run: supabase test db supabase/tests/v1_recommendation_scale.sql --local
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
 
       - name: Stop local database
         if: always()
-        run: supabase stop --no-backup
+        run: npx --yes supabase@2.84.2 stop --no-backup
