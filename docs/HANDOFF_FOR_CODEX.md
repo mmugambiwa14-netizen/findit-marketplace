@@ -9,10 +9,10 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Hosted Phase 4 implementation head | `cdba0ce8ebeab6e746da6b764bb983b9a04f46e5` |
-| Previous heads | `65c1818` (Pages toolchain), `62c0dc9` (staging frontend workflow), `d659e22` (Phase 4 UI), `00d8da5` (Phase 3 staging certification), `1bdd543` (release hardening), `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
-| SQL boundary | migration `0070`, 70 migrations and 41 rollback capsules |
-| CI | all four checks passed on `cdba0ce`; inspect PR #1 after any later commit |
+| Current implementation evidence head | `a85d5b4e8293ff18f6424e00545a6bc58640b3f9` |
+| Previous hosted UI head | `cdba0ce8ebeab6e746da6b764bb983b9a04f46e5` |
+| SQL boundary | migration `0074`, 74 migrations and 45 rollback capsules |
+| CI | all four checks passed on `a85d5b4`; inspect PR #1 after any later commit |
 
 Confirm the real head before doing anything:
 
@@ -95,7 +95,7 @@ gate gaps:
   `apikey` header before transport. No secret value is stored in the repository.
 
 Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`;
-section 2.4 describes the Phase 4 continuation.
+section 2.4 describes Phase 4; section 2.5 describes Phases 5 through 7.
 
 ### 2.1 and 2.2 — the runtime-reachability defects
 
@@ -237,6 +237,32 @@ canonical PostgREST listing hydration, contextual and recently-listed Edge
 Functions, recommendation hydration, responsive cards and explicit-open click
 analytics. This is hosted staging evidence, not production certification.
 
+### 2.5 - Privacy, analytics and executable service completion
+
+- Migration `0071` adds explicit default-off personalization consent, a
+  post-consent 90-day first-party signal boundary, and owner-controlled disable
+  and clear operations.
+- Settings exposes an accessible personalization switch and destructive clear
+  confirmation. Personalized listing sections mount only after consent and
+  remain independent of canonical listing delivery.
+- Migration `0072` adds identity-free daily service metrics, bounded refresh
+  and retention, aggregate admin reporting, health state, and maintenance
+  worker integration.
+- The admin dashboard renders aggregate impressions, clicks, click-through
+  rates and service health without actor, session, listing, seller or request
+  identities.
+- Migration `0073` replaces the impossible listing-projection implementation of
+  related services with taxonomy-ranked active marketplace services. Responses
+  are typed, service hydration is independent, and service attribution is
+  bounded and aggregate-safe.
+- Migration `0074` records hosted evidence that the indexed nearby query needs
+  a 1,000 ms Edge-to-PostgREST budget. Only that service is raised; the existing
+  5-second hard ceiling remains.
+- `certify:recommendation-phase7-staging` activates each remaining service one
+  at a time, uses disposable fixtures, tests real browser transport and
+  hydration, exhausts a request budget, verifies consent and analytics, and
+  restores the exact initial policy state in cleanup.
+
 ## 3. Verified state
 
 Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
@@ -246,21 +272,20 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 | `npm run lint` | pass |
 | `npm run typecheck` | pass |
 | `npm run typecheck:migration` | pass |
-| `npm run typecheck:active` | pass, 224 active modules |
-| `npm run test:contracts` | pass, 323/323 |
-| `npm run test:recommendation-contracts` | pass, 56/56 |
-| `npm run verify:sql-boundary` | pass, 70 migrations, 41 rollback capsules |
-| `npm run verify:hygiene` | pass, 655 files |
-| `npm run verify:source-graph` | pass, 365 modules, 0 unresolved |
+| `npm run typecheck:active` | pass, 227 active modules |
+| `npm run test:contracts` | pass, 345/345 |
+| `npm run verify:sql-boundary` | pass, 74 migrations, 45 rollback capsules |
+| `npm run verify:hygiene` | pass, 675 text files |
+| `npm run verify:source-graph` | pass, 373 modules, 0 unresolved |
 | `npm run audit:product-surface` | pass, 0 failures, 1 warning |
 | `npm run typecheck:edge-functions` | pass, Deno checked every file under `supabase/functions` |
 | `npm run audit:production` | pass, no reachable Moderate/High/Critical advisories |
-| `npm run build` (NODE_ENV=production, Pages base) | pass, 536,074 B raw / 158,031 B gzip |
+| `npm run build` (NODE_ENV=production, Pages base) | pass, 535,053 B raw / 157,920 B gzip |
 
 `npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
-**CI on hosted Phase 4 head `cdba0ce`: all four checks passed** on PR #1:
+**CI on implementation evidence head `a85d5b4`: all four checks passed** on PR #1:
 frontend/source contracts, database reset/RLS/recommendation certification,
 recommendation pgTAP, and release verification. The PR remains draft.
 
@@ -268,11 +293,11 @@ The previous Windows-only contract failure in
 `tests/tourMilestone6ModerationAdmin.test.mjs` is fixed by normalizing line
 endings before the literal branch extraction.
 
-**Not verified locally in that earlier session:** anything needing Docker.
-`supabase start`, the full migration chain, `db lint`, and all pgTAP suites
-could not run because the Docker daemon was unreachable in that environment.
-Those run in CI only; read the current PR check output before trusting any pgTAP
-or migration claim.
+Local Docker later became unavailable because Docker Desktop's WSL data disk
+failed during bootstrap. Before that failure, the Phase 5 and Phase 6 pgTAP
+suites passed locally. Both clean GitHub database jobs subsequently applied all
+74 migrations, linted the schema, and passed all eleven recommendation pgTAP
+suites on `a85d5b4`.
 
 ## 3.1 Hosted staging evidence
 
@@ -287,7 +312,7 @@ Executed against `https://bwgklpxoetrrkutottdb.supabase.co/functions/v1`:
 
 | Hosted check | Result |
 |---|---|
-| Migrations `0069` and `0070` | applied to staging and recorded in `supabase_migrations.schema_migrations` |
+| Migrations through `0074` | applied to staging and recorded in `supabase_migrations.schema_migrations` |
 | Recommendation function deployment | all seven active on version 7; six public functions have `verify_jwt=false`, personalized has `verify_jwt=true` |
 | `OPTIONS contextual-ecosystem` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
 | `OPTIONS recently-listed` with `authorization, apikey, content-type, x-client-info` | 204, echoes `http://localhost:5173`, allows all four headers |
@@ -300,10 +325,17 @@ Executed against `https://bwgklpxoetrrkutottdb.supabase.co/functions/v1`:
 | Real timeout and circuit test | three separate Edge calls return `reason: timeout`; persisted failures reach 3; another request returns `circuit_open`; recovery returns non-degraded results |
 | Listing independence | the disposable available listing remains readable while the recommendation circuit is open |
 | Cleanup and final state | no disposable users or projections, zero recently-listed cache rows, circuit closed with zero failures |
+| Five remaining public services | each enabled alone, returns fixture-backed results through browser Edge transport, and hydrates through public PostgREST |
+| Related services | returns a typed active marketplace service; browser impression and click attribution both succeed |
+| Request budget | two similar-listing requests execute; the third returns `request_budget_exhausted`; the opaque budget row is verified and removed |
+| Personalization | default disabled, authenticated request requires consent, post-consent activity produces results, clear removes linked data and disables consent |
+| Aggregate analytics | refresh and admin report return impressions and clicks without behavioural identity fields |
+| Nearby hosted budget | initial 250 ms call timed out; `0074` raises only nearby to 1,000 ms and the complete rerun passes |
+| Phase 7 cleanup | zero disposable users, listings, services and locations; zero open circuits; initial policy state restored |
 
-Phase 3 is **hosted-certified on staging**, not on production. Exactly
-`recently_listed_service` is enabled on staging; the other six policies remain
-disabled.
+Phases 3, 5, 6, and the staging portion of Phase 7 are hosted-certified on
+staging, not on production. Exactly `recently_listed_service` is enabled on
+staging; the other six policies remain disabled.
 
 Phase 4 staging frontend: `https://mmugambiwa14-netizen.github.io/findit-marketplace/`.
 Deployment run `30474768987` built and deployed `cdba0ce`. Fresh Chrome profiles
@@ -320,20 +352,20 @@ at 1440x900 and 390x844 verified:
 - final cleanup leaves zero disposable listings, users, projections, events,
   recently-listed cache entries, projection jobs and dead letters.
 
-The production Supabase project was inspected non-destructively and unchanged.
+The production Supabase project was inspected non-destructively and remains at
+migration `0049`. It was not deployed to or modified.
 
 ## 4. Immediate next actions
 
-1. Verify the hosted Supabase Auth `site_url` and redirect allowlist before
-   certifying registration, OAuth, confirmation and password recovery from the
-   Pages origin. Repository config is correct, but hosted redirect state has not
-   been changed or certified.
-2. Before broader service activation, exhaust and verify a real request-budget
-   window; the budget deliberately fails open and has not yet been hosted
-   exhaustion-tested.
-3. Give the five disabled public listing services equivalent fixture-backed
-   real-result certification before enabling any of them.
-4. Continue Phases 5 to 7 in the locked order. Production remains unchanged.
+1. Deploy the final feature head to GitHub Pages and repeat desktop/mobile
+   listing, settings and admin visual checks.
+2. Keep PR #1 draft until final review and an explicit production release
+   decision.
+3. Plan a named production migration and function release window with rollback
+   ownership. Production remains unchanged at `0049`.
+4. After an approved production deploy, repeat the guarded transport, timeout,
+   circuit, personalization, analytics and listing-independence suites before
+   enabling services incrementally.
 
 ## 5. Open findings not fixed, in priority order
 
@@ -380,13 +412,14 @@ listing service remain independent, and executable contracts lock that
 boundary. Hosted desktop/mobile verification passed on the exact deployed
 feature head.
 
-### O-8 narrowed (informational) — remaining service integration scope
+### O-8 closed — remaining service integration scope
 
-The staging runner now exercises the real browser-shaped Edge-to-PostgREST path
-for `recently_listed_service` and contextual orchestration. The other five public
-listing services remain disabled and have fail-soft transport evidence, not
-real-result evidence. Each must receive equivalent fixture-backed integration
-coverage before its policy is enabled.
+The Phase 7 staging runner now exercises all five remaining public services with
+fixture-backed real results through browser-shaped Edge-to-PostgREST transport.
+It also covers typed service hydration, event attribution, request-budget
+exhaustion, consent-gated personalization, aggregate analytics, policy
+restoration and cleanup. The services remain disabled after certification; this
+is staging evidence, not authorization for production activation.
 
 ## 6. Rules that must not be broken
 
@@ -440,9 +473,11 @@ From the project instructions and from defects already paid for once:
   tool already wraps in a transaction), and `0020`'s `alter type ... add value`
   must stay in its own migration.
 - CI pins Node 24. Local Node here is 24, matching the current workflows.
-- `core.autocrlf=true` on this machine causes literal `\n` assertions to fail
-  locally against LF-committed files. Verify with `git show HEAD:<path>` before
-  concluding a test is genuinely broken.
+- `core.autocrlf=true` is enabled on this machine. The affected Tour moderation
+  contract now normalizes line endings without weakening its branch assertion.
+- Staging Auth now uses the Pages root as `site_url` and allows the Pages,
+  localhost and `127.0.0.1` root and nested callback routes. Production Auth
+  configuration was not changed.
 - The production build must run with `NODE_ENV=production`. A previous cycle
   lost hours to `NODE_ENV=test` leaking in from the job environment, which
   bundles React's dev build and blows the byte budget.
@@ -451,14 +486,14 @@ From the project instructions and from defects already paid for once:
 
 | Phase | Source | Local | CI | Hosted | Certified |
 |---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on `cdba0ce` | staging guards pass | local/staging |
-| 1 — data foundation | complete | pass | green on `cdba0ce` | migrations through `0070` applied | staging |
-| 2 — independent services | complete | pass | green on `cdba0ce` | one service returns real results; six remain disabled | staging for enabled service |
-| 3 — contextual intelligence | complete | pass | green on `cdba0ce` | full guarded certification passes | **staging certified** |
-| 4 — listing detail UX | source complete | pass | green on `cdba0ce` | Pages desktop/mobile pass | **staging certified** |
-| 5 — personalization | not started | — | — | — | — |
-| 6 — analytics | not started | — | — | — | — |
-| 7 — scale and certification | not started | — | — | — | — |
+| 0 — release safety | complete | pass | green on `a85d5b4` | staging guards pass | local/staging |
+| 1 — data foundation | complete | partial local, full CI | green on `a85d5b4` | migrations through `0074` applied | staging |
+| 2 — independent services | complete | pass | green on `a85d5b4` | all seven real-result paths certified; six restored disabled | staging |
+| 3 — contextual intelligence | complete | pass | green on `a85d5b4` | guarded timeout/circuit suite passes | **staging certified** |
+| 4 — listing detail UX | complete | pass | green on `a85d5b4` | previous Pages desktop/mobile pass; final redeploy pending | staging |
+| 5 — personalization | complete | pass | green on `a85d5b4` | consent, results and clear pass | **staging certified** |
+| 6 — analytics | complete | pass | green on `a85d5b4` | aggregate refresh and admin report pass | **staging certified** |
+| 7 — scale and certification | source/staging complete | pass | green on `a85d5b4` | budgets, timeouts, circuits and cleanup pass | production pending |
 
 Phase 2 was reported executable-certified on `aaeeef4`. That claim was true for
 the gates as written and false in substance: the services could not answer a
@@ -474,10 +509,10 @@ safety, privacy boundaries, timeout handling, fail-soft fallback, failure
 isolation, operational health, pgTAP coverage, source contracts, rollback
 support and deployment registration.
 
-Phase 3 is **staging certified** with one non-personalized service enabled and
-real hosted evidence. Phase 4 is **hosted-frontend staging certified** on the
-exact feature head. Neither phase is production certified, and no production
-project was changed.
+The recommendation system is a production-ready candidate with complete source,
+CI and hosted staging evidence. Exactly one non-personalized service remains
+enabled on staging. No production project was changed, and no production
+certification is claimed.
 
 ## 9. Update PR #1 after material progress
 

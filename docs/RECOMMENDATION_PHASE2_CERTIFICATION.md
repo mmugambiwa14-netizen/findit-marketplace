@@ -1,50 +1,78 @@
-# Recommendation Phase 2 Certification
+# Recommendation Certification
 
-Status: source implementation complete through migration `0062`; executable certification pending.
+Status: source-complete through migration `0074`; Phase 3 and Phase 7 hosted
+staging certification passed on 2026-07-29. Production is unchanged and not
+certified.
 
-## Required secrets and variables
+## Required configuration
 
-Hosted recommendation certification requires:
+Public transport smoke tests require:
 
-- `FINDIT_RECOMMENDATION_SMOKE_URL`: explicit Supabase project URL used only for the intended hosted target.
-- `FINDIT_SUPABASE_ANON_KEY`: publishable key for public recommendation function calls.
-- `FINDIT_RECOMMENDATION_HEALTH_SECRET`: dedicated random monitoring credential, at least 24 characters, stored in both the hosted Edge Function environment and the certification runner.
-- `FINDIT_RECOMMENDATION_SMOKE_LISTING_ID`: optional eligible listing used to exercise subject-based services.
+- `FINDIT_SUPABASE_URL`
+- `FINDIT_SUPABASE_ANON_KEY` containing the target's publishable browser key
+- `FINDIT_EXPECTED_PROJECT_REF`
+- `FINDIT_ALLOW_HOSTED_SMOKE=staging` for a hosted staging run
+- `FINDIT_RECOMMENDATION_SMOKE_ORIGIN` containing an allowed browser origin
 
-Never use a service-role or secret Supabase key in the hosted smoke harness.
+The guarded Phase 3 and Phase 7 fixture suites additionally require:
+
+- `FINDIT_SUPABASE_SECRET_KEY` for disposable staging fixtures only
+- `FINDIT_SUPABASE_ACCESS_TOKEN` for exact-project Management API checks
+- `FINDIT_ALLOW_STAGING_FOUNDER_SESSION=staging`
+- `FINDIT_ALLOW_STAGING_TIMEOUT_LOCK=staging` for the bounded Phase 3 lock test
+
+Never print, log, commit, or place privileged values in browser code. The
+fixture suites refuse non-staging hosted targets and restore policy state and
+delete fixtures in `finally` cleanup.
+
+Hosted health endpoints use dedicated values:
+
+- `FINDIT_RECOMMENDATION_HEALTH_SECRET`
+- `FINDIT_CONTEXTUAL_HEALTH_SECRET`
+- `FINDIT_REQUEST_BUDGET_SALT`
 
 ## Local certification
 
-Run against a disposable local Supabase stack:
+Run the repository release gates:
 
 ```bash
-npm run certify:recommendation-phase2-local
+npm run lint
+npm run typecheck
+npm run typecheck:edge-functions
+npm run test:contracts
+npm run verify:sql-boundary
+npm run verify:hygiene
+npm run verify:source-graph
+npm run audit:product-surface
+npm run audit:production
+npm run build
 ```
 
-This verifies the migration sequence through `0062`, rollback pairing, source contracts, database reset, lint, foundation, queue, eligibility, publication, independent service, operational control and scale suites.
+Run the pgTAP suites through the pinned Supabase CLI commands in `package.json`
+or rely on both clean-reset GitHub database jobs when local Docker is
+unavailable.
 
-## Hosted certification
+## Hosted staging certification
 
-Deploy the seven recommendation functions and `recommendation-service-health`, configure the dedicated health secret, keep all recommendation service policies disabled, and run:
+With the exact staging guards and credentials set:
 
 ```bash
-npm run certify:recommendation-phase2-hosted
+npm run certify:recommendation-phase3-staging
+npm run certify:recommendation-phase7-staging
 ```
 
-Expected evidence:
-
-- protected health endpoint returns exactly seven service records;
-- all enabled-service counts reflect the intended rollout state;
-- public recommendation endpoints return contract version `1` and fail soft;
-- personalized recommendations reject unauthenticated callers;
-- no hosted smoke request uses a privileged database key;
-- listing pages remain available independently of every recommendation endpoint.
+Required evidence includes browser CORS, anonymous and authenticated boundaries,
+real fixture-backed results, PostgREST hydration, request-budget exhaustion,
+consent and clear behavior, aggregate-only analytics, real abortable timeouts,
+durable circuit isolation and recovery, canonical listing independence, policy
+restoration, and complete fixture cleanup.
 
 ## Completion decision
 
-Phase 2 may be marked executable-complete only when local and hosted certification pass against the same current commit SHA. Until then:
+Staging certification does not authorize production deployment. Until an
+explicit production release is approved:
 
-- service policies remain disabled;
-- the pull request remains draft;
-- Phase 3 implementation may be prepared only if the pending certification status remains explicit;
-- no recommendation API is represented as production-certified.
+- PR #1 remains draft and unmerged.
+- Exactly `recently_listed_service` remains enabled on staging.
+- The six other policies remain disabled.
+- Production migrations, functions, and policies remain unchanged.
