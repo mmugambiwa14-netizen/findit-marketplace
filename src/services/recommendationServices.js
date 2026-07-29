@@ -54,9 +54,28 @@ function normalizeCursor(value) {
   return value;
 }
 
-function normalizeItem(value) {
-  if (!value || typeof value !== 'object' || !validUuid(value.listingId)) return null;
+function normalizeItem(value, service) {
+  if (!value || typeof value !== 'object') return null;
+  if (service === 'related_services_service') {
+    if (value.entityType !== 'service' || !validUuid(value.serviceId)) return null;
+    return {
+      entityType: 'service',
+      serviceId: value.serviceId,
+      providerId: validUuid(value.providerId) ? value.providerId : null,
+      categoryKey: typeof value.categoryKey === 'string' ? value.categoryKey : null,
+      subcategoryKey: typeof value.subcategoryKey === 'string' ? value.subcategoryKey : null,
+      locationKey: validUuid(value.locationKey) ? value.locationKey : null,
+      locationLabel: typeof value.locationLabel === 'string' ? value.locationLabel : null,
+      priceAmount: typeof value.priceAmount === 'number' && Number.isFinite(value.priceAmount) ? value.priceAmount : null,
+      currency: typeof value.currency === 'string' ? value.currency : null,
+      publishedAt: typeof value.publishedAt === 'string' ? value.publishedAt : null,
+      score: typeof value.score === 'number' && Number.isFinite(value.score) ? value.score : 0,
+      reasonCode: typeof value.reasonCode === 'string' ? value.reasonCode : 'unspecified',
+    };
+  }
+  if (!validUuid(value.listingId)) return null;
   return {
+    entityType: 'listing',
     listingId: value.listingId,
     sellerId: validUuid(value.sellerId) ? value.sellerId : null,
     categoryKey: typeof value.categoryKey === 'string' ? value.categoryKey : null,
@@ -76,14 +95,15 @@ function normalizeResponse(service, value, limit) {
     return emptyResult(service, 'invalid_response');
   }
 
-  // Deduplicate by listing and never render more than the page size that was asked
-  // for, so a repeated or over-long service response cannot reach the surface.
+  // Deduplicate by entity and never render more than the page size that was asked
+  // for, so a repeated or over-long response cannot reach the surface.
   const seen = new Set();
   const items = [];
   for (const candidate of value.items) {
-    const item = normalizeItem(candidate);
-    if (!item || seen.has(item.listingId)) continue;
-    seen.add(item.listingId);
+    const item = normalizeItem(candidate, service);
+    const entityId = item?.entityType === 'service' ? item.serviceId : item?.listingId;
+    if (!item || seen.has(entityId)) continue;
+    seen.add(entityId);
     items.push(item);
     if (items.length === limit) break;
   }

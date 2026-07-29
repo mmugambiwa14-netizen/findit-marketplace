@@ -81,6 +81,7 @@ async function withTimeout(requestFactory) {
  * @typedef {Object} RecommendationEventInput
  * @property {string} eventType
  * @property {string | null} [listingId]
+ * @property {string | null} [serviceItemId]
  * @property {string | null} [sellerId]
  * @property {string | null} [recommendationRequestId]
  * @property {string | null} [recommendationService]
@@ -94,6 +95,7 @@ async function withTimeout(requestFactory) {
 export async function recordRecommendationEvent({
   eventType,
   listingId = null,
+  serviceItemId = null,
   sellerId = null,
   recommendationRequestId = null,
   recommendationService = null,
@@ -103,18 +105,30 @@ export async function recordRecommendationEvent({
   if (!EVENT_TYPES.has(eventType)) return { accepted: false, eventId: null };
 
   try {
-    const { data, error } = await withTimeout((signal) => (
-      supabase.rpc('record_recommendation_event', {
-        p_event_type: eventType,
-        p_listing_id: normalizeOptionalString(listingId),
-        p_seller_id: normalizeOptionalString(sellerId),
-        p_anonymous_session_id: getAnonymousSessionId(),
-        p_recommendation_request_id: normalizeOptionalString(recommendationRequestId),
-        p_recommendation_service: normalizeOptionalString(recommendationService),
-        p_reason_code: normalizeOptionalString(reasonCode),
-        p_context: sanitizeContext(context),
-      }).abortSignal(signal)
-    ));
+    const normalizedServiceItemId = normalizeOptionalString(serviceItemId);
+    const { data, error } = await withTimeout((signal) => {
+      const request = normalizedServiceItemId
+        ? supabase.rpc('record_recommended_service_event_v1', {
+          p_event_type: eventType,
+          p_service_id: normalizedServiceItemId,
+          p_anonymous_session_id: getAnonymousSessionId(),
+          p_recommendation_request_id: normalizeOptionalString(recommendationRequestId),
+          p_recommendation_service: normalizeOptionalString(recommendationService),
+          p_reason_code: normalizeOptionalString(reasonCode),
+          p_context: sanitizeContext(context),
+        })
+        : supabase.rpc('record_recommendation_event', {
+          p_event_type: eventType,
+          p_listing_id: normalizeOptionalString(listingId),
+          p_seller_id: normalizeOptionalString(sellerId),
+          p_anonymous_session_id: getAnonymousSessionId(),
+          p_recommendation_request_id: normalizeOptionalString(recommendationRequestId),
+          p_recommendation_service: normalizeOptionalString(recommendationService),
+          p_reason_code: normalizeOptionalString(reasonCode),
+          p_context: sanitizeContext(context),
+        });
+      return request.abortSignal(signal);
+    });
 
     if (error || typeof data !== 'string' || !data) {
       return { accepted: false, eventId: null };

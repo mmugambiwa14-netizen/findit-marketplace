@@ -13,7 +13,7 @@ function serviceTour(service) {
   };
 }
 
-export default function ServiceCard({ service }) {
+export default function ServiceCard({ service, onOpen = null }) {
   const category = getServiceCategory(service.category);
   const { format } = useCurrency();
   const priceLabel = service.pricing_type === 'quote' || !service.price
@@ -37,6 +37,7 @@ export default function ServiceCard({ service }) {
       meta={category?.label || 'Service'}
       tour={serviceTour(service)}
       tourLabel="See their work"
+      onOpen={onOpen}
     />
   );
 }

@@ -7,6 +7,7 @@ const listingCard = await readFile('src/components/listings/ListingCard.jsx', 'u
 const marketplaceCard = await readFile('src/components/marketplace/MarketplaceCard.jsx', 'utf8');
 const listingService = await readFile('src/services/publicListingsService.js', 'utf8');
 const listingRepository = await readFile('src/repositories/publicListingsRepository.js', 'utf8');
+const serviceRepository = await readFile('src/repositories/servicesRepository.js', 'utf8');
 
 test('Phase 4 recommendation hydration is bounded, ordered and public-only', () => {
   assert.match(component, /MAX_SECTIONS = 6/);
@@ -16,13 +17,15 @@ test('Phase 4 recommendation hydration is bounded, ordered and public-only', () 
   assert.match(listingService, /return ids\.map\(\(id\) => byId\.get\(id\)\)\.filter\(Boolean\)/);
   assert.match(listingRepository, /\.in\('status', \['available', 'under_offer'\]\)/);
   assert.match(listingRepository, /\.abortSignal\(signal\)/);
+  assert.match(serviceRepository, /\.limit\(24\)/);
+  assert.match(serviceRepository, /\.abortSignal\(signal\)/);
 });
 
 test('Phase 4 sections fail independently and expose complete accessible states', () => {
   assert.match(component, /Promise\.allSettled\(plannedSections\.map/);
   assert.match(component, /response\.status === 'fulfilled'/);
   assert.match(component, /reason: 'transport_unavailable'/);
-  assert.match(component, /unavailable: result\.degraded && result\.items\.length === 0/);
+  assert.match(component, /result\.degraded && result\.items\.length === 0/);
   assert.match(component, /RecommendationLoading/);
   assert.match(component, /Suggestions could not be loaded/);
   assert.match(component, /No suggestions are available right now/);

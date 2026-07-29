@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ListingCard from '@/components/listings/ListingCard';
+import ServiceCard from '@/components/services/ServiceCard';
 import { fetchContextualEcosystemPlan } from '@/services/contextualEcosystemService';
 import { queueRecommendationEvent } from '@/services/recommendationEventsService';
 import {
@@ -16,6 +17,7 @@ import {
 } from '@/services/recommendationServices';
 import { getPublicListingsByIds } from '@/services/publicListingsService';
 import { getRecommendationPersonalizationPreference } from '@/services/recommendationPersonalizationService';
+import { getPublicServicesByIds } from '@/services/servicesService';
 import { useAuth } from '@/lib/AuthContext';
 
 const MAX_SECTIONS = 6;
@@ -91,19 +93,34 @@ async function loadListingRecommendations(subjectListingId, signal, includePerso
   ));
 
   const listingIds = [];
-  const seen = new Set([subjectListingId]);
+  const serviceIds = [];
+  const seenListings = new Set([subjectListingId]);
+  const seenServices = new Set();
   for (const { result } of visibleResponses) {
     for (const item of result.items) {
-      if (seen.has(item.listingId)) continue;
-      seen.add(item.listingId);
-      listingIds.push(item.listingId);
-      if (listingIds.length === MAX_TOTAL_ITEMS) break;
+      if (item.entityType === 'service') {
+        if (seenServices.has(item.serviceId)) continue;
+        seenServices.add(item.serviceId);
+        serviceIds.push(item.serviceId);
+      } else {
+        if (seenListings.has(item.listingId)) continue;
+        seenListings.add(item.listingId);
+        listingIds.push(item.listingId);
+      }
+      if (listingIds.length + serviceIds.length === MAX_TOTAL_ITEMS) break;
     }
-    if (listingIds.length === MAX_TOTAL_ITEMS) break;
+    if (listingIds.length + serviceIds.length === MAX_TOTAL_ITEMS) break;
   }
 
-  const listings = await getPublicListingsByIds(listingIds, { signal });
+  const [listingHydration, serviceHydration] = await Promise.allSettled([
+    getPublicListingsByIds(listingIds, { signal }),
+    getPublicServicesByIds(serviceIds, { signal }),
+  ]);
+  if (signal.aborted) throw new DOMException('Request cancelled', 'AbortError');
+  const listings = listingHydration.status === 'fulfilled' ? listingHydration.value : [];
+  const services = serviceHydration.status === 'fulfilled' ? serviceHydration.value : [];
   const listingById = new Map(listings.map((listing) => [listing.id, listing]));
+  const serviceById = new Map(services.map((service) => [service.id, service]));
 
   return {
     sections: visibleResponses.map(({ definition, result, section }) => ({
@@ -112,11 +129,26 @@ async function loadListingRecommendations(subjectListingId, signal, includePerso
       requestId: result.requestId,
       service: section.service,
       title: definition.title,
-      unavailable: result.degraded && result.items.length === 0,
+      unavailable: (result.degraded && result.items.length === 0)
+        || (section.service === 'related_services_service'
+          ? serviceHydration.status === 'rejected'
+          : listingHydration.status === 'rejected'),
       items: result.items
         .map((item) => {
+          if (item.entityType === 'service') {
+            const serviceItem = serviceById.get(item.serviceId);
+            return serviceItem ? {
+              entityType: 'service',
+              service: serviceItem,
+              reasonCode: item.reasonCode,
+            } : null;
+          }
           const listing = listingById.get(item.listingId);
-          return listing ? { listing, reasonCode: item.reasonCode } : null;
+          return listing ? {
+            entityType: 'listing',
+            listing,
+            reasonCode: item.reasonCode,
+          } : null;
         })
         .filter(Boolean),
     })),
@@ -124,14 +156,17 @@ async function loadListingRecommendations(subjectListingId, signal, includePerso
 }
 
 function queueImpressions(section) {
-  section.items.forEach(({ listing, reasonCode }, position) => {
+  section.items.forEach((item, position) => {
+    const listing = item.entityType === 'listing' ? item.listing : null;
+    const service = item.entityType === 'service' ? item.service : null;
     queueRecommendationEvent({
       eventType: 'recommendation_impression',
-      listingId: listing.id,
-      sellerId: listing.seller_id,
+      listingId: listing?.id,
+      serviceItemId: service?.id,
+      sellerId: listing?.seller_id ?? service?.provider_id,
       recommendationRequestId: section.requestId,
       recommendationService: section.service,
-      reasonCode,
+      reasonCode: item.reasonCode,
       context: {
         source: section.contextKey,
         surface: 'listing_detail',
@@ -170,14 +205,17 @@ function RecommendationSection({ section, onRetry }) {
     return () => observer.disconnect();
   }, [section]);
 
-  const trackClick = ({ listing, reasonCode }, position) => {
+  const trackClick = (item, position) => {
+    const listing = item.entityType === 'listing' ? item.listing : null;
+    const service = item.entityType === 'service' ? item.service : null;
     queueRecommendationEvent({
       eventType: 'recommendation_click',
-      listingId: listing.id,
-      sellerId: listing.seller_id,
+      listingId: listing?.id,
+      serviceItemId: service?.id,
+      sellerId: listing?.seller_id ?? service?.provider_id,
       recommendationRequestId: section.requestId,
       recommendationService: section.service,
-      reasonCode,
+      reasonCode: item.reasonCode,
       context: {
         source: section.contextKey,
         surface: 'listing_detail',
@@ -206,12 +244,20 @@ function RecommendationSection({ section, onRetry }) {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
           {section.items.map((item, position) => (
-            <ListingCard
-              key={item.listing.id}
-              listing={item.listing}
-              type={item.listing._type}
-              onOpen={() => trackClick(item, position)}
-            />
+            item.entityType === 'service' ? (
+              <ServiceCard
+                key={`service:${item.service.id}`}
+                service={item.service}
+                onOpen={() => trackClick(item, position)}
+              />
+            ) : (
+              <ListingCard
+                key={`listing:${item.listing.id}`}
+                listing={item.listing}
+                type={item.listing._type}
+                onOpen={() => trackClick(item, position)}
+              />
+            )
           ))}
         </div>
       )}

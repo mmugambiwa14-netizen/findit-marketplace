@@ -2,6 +2,7 @@ import {
   deleteOwnerServiceRow,
   findOwnerServices,
   findPublicServiceById,
+  findPublicServicesByIds,
   findPublicServices,
   insertOwnerService,
   updateOwnerServiceRow,
@@ -58,6 +59,19 @@ export async function getPublicService(id) {
   if (!service) return null;
   const [withTour] = await attachPublicTourSummaries([service], 'service');
   return withTour;
+}
+
+/**
+ * @param {string[]} ids
+ * @param {{ signal?: AbortSignal }} [options]
+ */
+export async function getPublicServicesByIds(ids, { signal } = {}) {
+  const uniqueIds = [...new Set(ids)].slice(0, 24);
+  const rows = await findPublicServicesByIds(uniqueIds, { signal });
+  const byId = new Map(
+    (await Promise.all(rows.map(mapService))).map((service) => [service.id, service]),
+  );
+  return uniqueIds.map((id) => byId.get(id)).filter(Boolean);
 }
 
 export async function getOwnerServicesPage(providerId, request = {}) {

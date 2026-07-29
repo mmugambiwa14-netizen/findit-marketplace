@@ -34,7 +34,7 @@ test('adapters cancel in-flight work and bound what reaches the surface', () => 
   assert.match(client, /signal: controller\.signal/);
   assert.match(client, /signal\?\.addEventListener\('abort', abort, \{ once: true \}\)/);
   assert.match(client, /signal\?\.removeEventListener\('abort', abort\)/);
-  assert.match(client, /seen\.has\(item\.listingId\)/);
+  assert.match(client, /seen\.has\(entityId\)/);
   assert.match(client, /if \(items\.length === limit\) break;/);
 });
 

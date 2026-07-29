@@ -72,6 +72,25 @@ export async function findPublicServiceById(id) {
   return data ?? null;
 }
 
+/**
+ * @param {string[]} ids
+ * @param {{ signal?: AbortSignal }} [options]
+ */
+export async function findPublicServicesByIds(ids, { signal } = {}) {
+  if (!Array.isArray(ids) || ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('services')
+    .select(PUBLIC_SERVICE_SELECT)
+    .in('id', ids)
+    .eq('status', 'active')
+    .neq('category', 'legal')
+    .limit(24)
+    .abortSignal(signal);
+
+  if (error) throw toRepositoryError('Unable to load recommended services', error);
+  return data ?? [];
+}
+
 export async function findOwnerServices(request) {
   let query = supabase
     .from('services')

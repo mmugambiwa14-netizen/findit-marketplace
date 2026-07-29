@@ -43,7 +43,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0072_recommendation_aggregate_analytics\.sql/);
+  assert.match(sqlBoundary, /0073_executable_related_services\.sql/);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
