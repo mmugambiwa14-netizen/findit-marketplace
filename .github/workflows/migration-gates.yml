@@ -68,9 +68,9 @@ jobs:
         run: npm run build
 
   database:
-    name: Database reset, RLS and scale certification
+    name: Database reset, RLS and recommendation certification
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
 
     steps:
       - name: Check out repository
@@ -95,6 +95,12 @@ jobs:
 
       - name: Run eligibility, geography and deletion matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_eligibility_geospatial.sql --local
+
+      - name: Run publication boundary matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_publication_boundary.sql --local
+
+      - name: Run independent recommendation service matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_services.sql --local
 
       - name: Run recommendation query-plan and cursor scale suite
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
