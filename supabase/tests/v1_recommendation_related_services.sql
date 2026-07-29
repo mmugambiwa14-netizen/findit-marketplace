@@ -254,7 +254,7 @@ select extensions.throws_matching(
     gen_random_uuid(),
     'similar-listings-service',
     'INVALID_SERVICE_SUBJECT',
-    '{}'::jsonb,
+    '{"surface":"listing_detail","source":"constraint-test","position":0,"page_size":1,"result_count":1}'::jsonb,
     now() + interval '30 days'
   )$$,
   '.*recommendation_events_subject_boundary.*',
