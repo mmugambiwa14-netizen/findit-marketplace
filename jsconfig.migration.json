@@ -31,6 +31,7 @@
     "src/services/ownerListingsService.js",
     "src/services/profileContracts.js",
     "src/services/profileService.js",
+    "src/services/recommendationEventsService.js",
     "src/services/sellerProfileContracts.js",
     "src/services/sellerProfilesService.js",
     "src/services/serviceContracts.js",
