@@ -3,13 +3,25 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
-const [foundation, projection, administration, hardening, certification, eventService, sqlBoundary] = await Promise.all([
+const [
+  foundation,
+  projection,
+  administration,
+  hardening,
+  certification,
+  projectionQueue,
+  eventService,
+  maintenanceWorker,
+  sqlBoundary,
+] = await Promise.all([
   read('../supabase/migrations/0050_recommendation_data_foundation.sql'),
   read('../supabase/migrations/0051_recommendation_projection_ingestion_and_retention.sql'),
   read('../supabase/migrations/0052_recommendation_taxonomy_weights_and_admin.sql'),
   read('../supabase/migrations/0053_recommendation_foundation_hardening.sql'),
   read('../supabase/migrations/0054_recommendation_foundation_certification_corrections.sql'),
+  read('../supabase/migrations/0055_recommendation_projection_queue.sql'),
   read('../src/services/recommendationEventsService.js'),
+  read('../supabase/functions/recommendation-maintenance/index.ts'),
   read('../scripts/verify-sql-boundary.mjs'),
 ]);
 
@@ -26,6 +38,7 @@ test('Phase 1 storage is normalized, partitioned and RLS protected', () => {
     assert.match(foundation, new RegExp(`alter table public\\.${table} enable row level security`));
   }
   assert.match(foundation, /partition by range \(occurred_at\)/);
+  assert.match(foundation, /No advertising identifier, fingerprint, message body or contact inference/i);
   assert.doesNotMatch(foundation, /grant\s+(?:insert|update|delete|all)[\s\S]{0,80}recommendation_events[\s\S]{0,40}to\s+(?:anon|authenticated)/i);
 });
 
@@ -66,25 +79,57 @@ test('certification corrections avoid full projection rewrites', () => {
   assert.doesNotMatch(certification, /update public\.listing_recommendation_features\s+set\s+popularity_score = 0\s*,\s*projected_at = now\(\)\s*;/);
 });
 
+test('listing writes enqueue asynchronously and fail open', () => {
+  assert.match(projectionQueue, /create table if not exists public\.recommendation_projection_jobs/);
+  assert.match(projectionQueue, /create table if not exists public\.recommendation_projection_dead_letters/);
+  assert.match(projectionQueue, /exception when others then[\s\S]{0,160}null;/i);
+  assert.match(projectionQueue, /for update skip locked/i);
+  assert.match(projectionQueue, /p_limit not between 1 and 500/);
+  assert.match(projectionQueue, /p_max_attempts not between 1 and 20/);
+  assert.match(projectionQueue, /projection_failed/);
+  assert.match(projectionQueue, /listing_write_dependency/);
+  assert.doesNotMatch(projectionQueue, /sqlerrm|sqlstate|last_error_message/i);
+  assert.doesNotMatch(projectionQueue, /grant execute on function public\.process_listing_recommendation_projection_jobs[\s\S]{0,80}to (?:anon|authenticated)/i);
+});
+
 test('browser event delivery is session scoped and non-blocking', () => {
   assert.match(eventService, /window\.sessionStorage/);
   assert.doesNotMatch(eventService, /localStorage/);
   assert.match(eventService, /Promise\.race/);
   assert.match(eventService, /REQUEST_TIMEOUT_MS = 1500/);
+  assert.match(eventService, /catch \{\s*return \{ accepted: false, eventId: null \};\s*\}/);
   assert.match(eventService, /queueMicrotask/);
   assert.doesNotMatch(eventService, /console\./);
 });
 
+test('maintenance endpoint drains only bounded service-role queues and returns safe errors', () => {
+  assert.match(maintenanceWorker, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
+  assert.match(maintenanceWorker, /constantTimeEqual/);
+  assert.match(maintenanceWorker, /boundedInteger\(body\.projectionLimit, 200, 1, 500\)/);
+  assert.match(maintenanceWorker, /boundedInteger\(body\.projectionMaxAttempts, 8, 1, 20\)/);
+  assert.match(maintenanceWorker, /boundedInteger\(body\.retentionLimit, 5000, 1, 50_000\)/);
+  assert.match(maintenanceWorker, /process_listing_recommendation_projection_jobs/);
+  assert.match(maintenanceWorker, /ensure_recommendation_event_partition/);
+  assert.match(maintenanceWorker, /refresh_recommendation_popularity_daily/);
+  assert.match(maintenanceWorker, /purge_expired_recommendation_data/);
+  assert.match(maintenanceWorker, /code: "recommendation_maintenance_unavailable"/);
+  assert.match(maintenanceWorker, /message: "Recommendation maintenance is temporarily unavailable\."/);
+});
+
 test('every Phase 1 migration has a non-destructive rollback and the boundary is locked', async () => {
-  for (const number of ['0050', '0051', '0052', '0053', '0054']) {
-    const rollback = await read(`../supabase/rollback/${number}_${{
-      '0050': 'recommendation_data_foundation',
-      '0051': 'recommendation_projection_ingestion_and_retention',
-      '0052': 'recommendation_taxonomy_weights_and_admin',
-      '0053': 'recommendation_foundation_hardening',
-      '0054': 'recommendation_foundation_certification_corrections',
-    }[number]}.rollback.sql`);
+  const rollbackNames = {
+    '0050': 'recommendation_data_foundation',
+    '0051': 'recommendation_projection_ingestion_and_retention',
+    '0052': 'recommendation_taxonomy_weights_and_admin',
+    '0053': 'recommendation_foundation_hardening',
+    '0054': 'recommendation_foundation_certification_corrections',
+    '0055': 'recommendation_projection_queue',
+  };
+
+  for (const [number, name] of Object.entries(rollbackNames)) {
+    const rollback = await read(`../supabase/rollback/${number}_${name}.rollback.sql`);
     assert.doesNotMatch(rollback, /\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i);
+    assert.match(rollback, /revoke|force row level security/i);
   }
-  assert.match(sqlBoundary, /0054_recommendation_foundation_certification_corrections\.sql/);
+  assert.match(sqlBoundary, /0055_recommendation_projection_queue\.sql/);
 });
