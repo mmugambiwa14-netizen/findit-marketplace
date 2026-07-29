@@ -19,6 +19,7 @@ Recommendation failures may delay projections, aggregates or personalization inp
 | `0054_recommendation_foundation_certification_corrections.sql` | Incremental popularity updates, cursor-aware backfill metadata and bounded operational health. |
 | `0055_recommendation_projection_queue.sql` | Coalescing asynchronous projection queue, bounded concurrent workers, capped retry backoff and preserved dead letters. |
 | `0056_recommendation_partition_and_configuration_integrity.sql` | Safe migration of late rows from the default event partition, taxonomy cycle protection, audited weight replacement and million-row health-query safeguards. |
+| `0057_recommendation_eligibility_geospatial_and_deletion_closure.sql` | Active-seller eligibility, privacy-safe public geography with a GiST index, deletion-compatible behavioural foreign keys and table-level event-subject validation. |
 
 Every migration has a non-destructive rollback capsule. Rollback disables access and workers while preserving records, projections, behavioural evidence, configuration history and dead letters.
 
@@ -34,16 +35,19 @@ Taxonomy attributes are size-limited and restricted to an explicit metadata allo
 
 ### Listing feature projections
 
-`listing_recommendation_features` stores deterministic, service-owned projections for public, unsuspended listings. Projections include:
+`listing_recommendation_features` stores deterministic, service-owned projections for public, unsuspended listings owned by active sellers. Projections include:
 
 - stable category and subcategory keys;
 - seller, country and public location keys;
 - seller-native price and currency;
 - normalized property, vehicle or machinery specification tokens;
 - deterministic quality, freshness and popularity signals;
+- privacy-safe canonical public geography;
 - projection version and timestamps.
 
-Draft, expired, unavailable, deleted or suspended content is removed from the projection surface.
+Draft, expired, unavailable, deleted or suspended content is removed from the projection surface. Seller suspension removes existing projections immediately and queues affected listings for reconciliation. Seller restoration queues fresh projections.
+
+The geospatial projection uses only `listings.public_location`, which is derived from the canonical public location record. Exact owner-supplied coordinates are never copied into recommendation storage. Nearby queries use a partial GiST index on the public geography column.
 
 ### Event collection
 
@@ -52,6 +56,8 @@ Draft, expired, unavailable, deleted or suspended content is removed from the pr
 The ingestion RPC accepts only approved event types and a small context allowlist. It rejects raw search text, messages, email addresses, phone numbers, contact inference, advertising identifiers, fingerprints and arbitrary metadata.
 
 Recommendation impressions and clicks require a request identifier, a recognized versioned service name and a stable reason code. Non-recommendation events cannot spoof recommendation attribution.
+
+A table-level trigger verifies that listing and seller events still reference public subjects owned by active accounts. Event foreign keys cascade on explicit listing or account deletion so recommendation history cannot block required deletion and privacy workflows.
 
 ### Cache and popularity
 
@@ -112,6 +118,9 @@ Phase 1 includes:
 - guest, owner, unrelated-user, suspended-user, moderator and admin adversarial RLS tests;
 - asynchronous queue, retry, concurrency and dead-letter tests;
 - late-row default-partition migration tests;
+- active-seller eligibility and restoration tests;
+- geospatial index-plan and exact-coordinate isolation tests;
+- account and listing deletion-cascade tests;
 - deterministic weight and immutable-audit tests;
 - 2,000-record index-plan and concurrent-insert cursor tests;
 - migration reset and database lint gates in GitHub Actions.
