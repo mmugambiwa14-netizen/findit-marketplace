@@ -60,7 +60,11 @@ for (const name of [...featureFlags, ...authProviderFlags, ...previewFlags]) {
   if (!['true', 'false'].includes(env[name])) problems.push(`${name} must be exactly true or false`);
 }
 
-for (const name of ['TOURS_BACKEND_ENABLED', 'FINDIT_TOURS_RELEASE_ACCEPTED']) {
+for (const name of [
+  'TOURS_BACKEND_ENABLED',
+  'FINDIT_TOURS_RELEASE_ACCEPTED',
+  'FINDIT_RECOMMENDATION_WORKERS_ENABLED',
+]) {
   if (env[name] !== undefined && env[name] !== '' && !['true', 'false'].includes(env[name])) {
     problems.push(`${name} must be exactly true or false`);
   }
@@ -106,6 +110,9 @@ if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== undefined && env.FIND
 }
 if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED === 'true' && !env.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET?.trim()) {
   problems.push('FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET is required when essential notification workers are enabled');
+}
+if (env.FINDIT_RECOMMENDATION_WORKERS_ENABLED === 'true' && !env.FINDIT_RECOMMENDATION_WORKER_SECRET?.trim()) {
+  problems.push('FINDIT_RECOMMENDATION_WORKER_SECRET is required when recommendation workers are enabled');
 }
 
 const requiredMvpLaunchFlags = [
