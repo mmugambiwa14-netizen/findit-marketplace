@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const health = await readFile('supabase/functions/recommendation-service-health/index.ts', 'utf8');
 const smoke = await readFile('scripts/recommendation-services-smoke.mjs', 'utf8');
+const config = await readFile('supabase/config.toml', 'utf8');
 
 const publicFunctions = [
   'similar-listings',
@@ -14,6 +15,26 @@ const publicFunctions = [
   'recently-listed',
   'personalized-recommendations',
 ];
+
+test('every browser-invoked recommendation function has a JWT-verifying deployment entry', () => {
+  for (const functionName of [...publicFunctions, 'contextual-ecosystem']) {
+    assert.match(
+      config,
+      new RegExp(`\\[functions\\.${functionName}\\][\\s\\S]*?verify_jwt = true`),
+      `${functionName} must require a valid Supabase JWT at the gateway`,
+    );
+  }
+});
+
+test('internal recommendation worker and health endpoints stay off gateway JWT verification', () => {
+  for (const functionName of ['recommendation-maintenance', 'recommendation-service-health']) {
+    assert.match(
+      config,
+      new RegExp(`\\[functions\\.${functionName}\\][\\s\\S]*?verify_jwt = false`),
+      `${functionName} authenticates with its own worker secret, not a Supabase JWT`,
+    );
+  }
+});
 
 test('health endpoint is protected by a dedicated constant-time compared secret', () => {
   assert.match(health, /FINDIT_RECOMMENDATION_HEALTH_SECRET/);

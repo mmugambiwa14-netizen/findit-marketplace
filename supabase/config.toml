@@ -457,6 +457,42 @@ verify_jwt = false
 # Internal scheduler endpoint; protected by a dedicated constant-time compared secret.
 verify_jwt = false
 
+[functions.recommendation-service-health]
+# Internal monitoring endpoint; protected by a dedicated constant-time compared
+# secret (FINDIT_RECOMMENDATION_HEALTH_SECRET), not a Supabase JWT, so gateway
+# verification must stay off or every request would be rejected before the
+# function's own credential check runs.
+verify_jwt = false
+
+[functions.similar-listings]
+# Public recommendation service invoked via supabase.functions.invoke(), which
+# always attaches a valid anon or session JWT even for anonymous browsing.
+verify_jwt = true
+
+[functions.seller-recommendations]
+verify_jwt = true
+
+[functions.related-services]
+verify_jwt = true
+
+[functions.related-products]
+verify_jwt = true
+
+[functions.nearby-listings]
+verify_jwt = true
+
+[functions.recently-listed]
+verify_jwt = true
+
+[functions.personalized-recommendations]
+# The function itself enforces authentication (401 without a signed-in user);
+# gateway verify_jwt only ensures the bearer credential is a valid Supabase JWT.
+verify_jwt = true
+
+[functions.contextual-ecosystem]
+# Public contextual orchestration service invoked via supabase.functions.invoke().
+verify_jwt = true
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
