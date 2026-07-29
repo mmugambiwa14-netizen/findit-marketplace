@@ -62,6 +62,7 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
     'test:tours-scale-hosted', 'test:messaging-scale-hosted', 'test:search-scale-hosted',
     'test:notification-scale-hosted', 'test:tours-observability-hosted',
   ]) assert.match(acceptanceWorkflow, new RegExp(gate));
+  assert.match(acceptanceWorkflow, /npm run typecheck:edge-functions/);
   assert.match(acceptanceWorkflow, /tour-acceptance-\$\{GITHUB_RUN_ID\}-\$\{GITHUB_RUN_ATTEMPT\}/);
   assert.match(acceptanceWorkflow, /tours-staging-acceptance\.json/);
   assert.match(acceptanceWorkflow, /retention-days: 90/);
@@ -80,7 +81,8 @@ test('staging deployment can expose preview or public Tours without weakening pr
   assert.match(stagingWorkflow, /FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET/);
   assert.match(stagingWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
   assert.match(stagingWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED/);
-  assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: "false"/);
+  assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: \$\{\{ vars\.FINDIT_TOURS_RELEASE_ACCEPTED \}\}/);
+  assert.match(stagingWorkflow, /FINDIT_TOURS_ACCEPTANCE_ID: \$\{\{ vars\.FINDIT_TOURS_ACCEPTANCE_ID \}\}/);
   for (const requiredFlag of [
     'VITE_FEATURE_GOOGLE_OAUTH',
     'VITE_FEATURE_INTERNATIONAL_LISTING',
