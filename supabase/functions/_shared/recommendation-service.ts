@@ -121,6 +121,12 @@ function json(request: Request, status: number, body: Record<string, unknown>, c
   return Response.json(body, { status, headers: responseHeaders(request, cacheControl) });
 }
 
+// A signed-in viewer's response must never be retained by a shared cache, whether it
+// was produced by a cache hit or a fresh execution.
+function viewerCacheControl(viewerId: string | null): string {
+  return viewerId ? "private, max-age=0" : "public, max-age=15, stale-while-revalidate=60";
+}
+
 function validUuid(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
@@ -363,7 +369,10 @@ export function serveRecommendationService(service: RecommendationServiceName): 
     if (config.subjectRequired && !validUuid(body.subjectListingId)) {
       return json(request, 400, { correlationId, code: "invalid_subject", message: "A valid listing is required." });
     }
-    if (body.cursor !== undefined && (typeof body.cursor !== "string" || body.cursor.length > 1024)) {
+    // A null cursor is the explicit "first page" signal the browser adapter sends;
+    // only a present, non-null cursor is subject to the string and length bounds.
+    if (body.cursor !== undefined && body.cursor !== null
+      && (typeof body.cursor !== "string" || body.cursor.length === 0 || body.cursor.length > 1024)) {
       return json(request, 400, { correlationId, code: "invalid_cursor", message: "The cursor is invalid." });
     }
     const requestedLimit = boundedInteger(body.limit, 12, 1, 100);
@@ -396,7 +405,7 @@ export function serveRecommendationService(service: RecommendationServiceName): 
       if (key) {
         cached = await readCache(adminClient, service, key);
         if (cached && cached.staleAt > Date.now()) {
-          return json(request, 200, { ...cached.payload, correlationId, cache: "fresh" }, "public, max-age=15, stale-while-revalidate=60");
+          return json(request, 200, { ...cached.payload, correlationId, cache: "fresh" }, viewerCacheControl(viewerId));
         }
       }
 
@@ -428,7 +437,7 @@ export function serveRecommendationService(service: RecommendationServiceName): 
         request,
         200,
         { ...payload, correlationId, cache: "miss" },
-        viewerId ? "private, max-age=0" : "public, max-age=15, stale-while-revalidate=60",
+        viewerCacheControl(viewerId),
       );
     } catch (error) {
       recordFailure(service);

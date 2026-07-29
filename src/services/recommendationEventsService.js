@@ -36,9 +36,9 @@ function createSessionId() {
 }
 
 function getAnonymousSessionId() {
-  const generated = createSessionId();
   const existing = readStoredString('session', ANONYMOUS_SESSION_KEY, null);
   if (existing) return existing;
+  const generated = createSessionId();
   if (generated) writeStoredString('session', ANONYMOUS_SESSION_KEY, generated);
   return generated;
 }

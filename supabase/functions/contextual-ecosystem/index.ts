@@ -27,11 +27,16 @@ function allowedOrigin(request: Request): string | null {
   return null;
 }
 
-function headers(request: Request): HeadersInit {
+// Only a complete, non-degraded plan may be retained by a shared cache. Caching a
+// rejected request or a fail-soft empty plan would amplify a transient outage for
+// the whole cache window after the database has already recovered.
+const CACHEABLE_PLAN = "public, max-age=30, stale-while-revalidate=120";
+
+function headers(request: Request, cacheControl: string = "no-store"): HeadersInit {
   const origin = allowedOrigin(request);
   return {
     "Content-Type": "application/json",
-    "Cache-Control": "public, max-age=30, stale-while-revalidate=120",
+    "Cache-Control": cacheControl,
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
     "Vary": "Origin",
@@ -43,8 +48,8 @@ function headers(request: Request): HeadersInit {
   };
 }
 
-function json(request: Request, status: number, body: Record<string, unknown>): Response {
-  return Response.json(body, { status, headers: headers(request) });
+function json(request: Request, status: number, body: Record<string, unknown>, cacheControl?: string): Response {
+  return Response.json(body, { status, headers: headers(request, cacheControl) });
 }
 
 function validUuid(value: unknown): value is string {
@@ -98,17 +103,21 @@ Deno.serve(async (request: Request) => {
     const client = createClient(url, configuredAdminKey(), { auth: { persistSession: false, autoRefreshToken: false } });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    const rpc = client.rpc("contextual_ecosystem_plan_v1", {
-      p_subject_listing_id: body.subjectListingId,
-      p_journey_stage: body.journeyStage ?? null,
-      p_max_sections: maxSections,
-    }, { signal: controller.signal });
-    const { data, error } = await rpc;
-    clearTimeout(timeout);
+    let data: unknown;
+    let error: unknown;
+    try {
+      ({ data, error } = await client.rpc("contextual_ecosystem_plan_v1", {
+        p_subject_listing_id: body.subjectListingId,
+        p_journey_stage: body.journeyStage ?? null,
+        p_max_sections: maxSections,
+      }, { signal: controller.signal }));
+    } finally {
+      clearTimeout(timeout);
+    }
     if (error || !data || typeof data !== "object" || !Array.isArray((data as Record<string, unknown>).sections)) {
       return json(request, 200, degraded(correlationId, "service_unavailable", body.subjectListingId));
     }
-    return json(request, 200, { ...(data as Record<string, unknown>), correlationId });
+    return json(request, 200, { ...(data as Record<string, unknown>), correlationId }, CACHEABLE_PLAN);
   } catch (error) {
     console.error("contextual ecosystem unavailable", { correlationId, error });
     return json(request, 200, degraded(correlationId, error instanceof DOMException && error.name === "AbortError" ? "timeout" : "service_unavailable", body.subjectListingId));

@@ -55,7 +55,13 @@ export async function fetchContextualEcosystemPlan({
     if (error || !data || typeof data !== 'object' || !Array.isArray(data.sections)) {
       return emptyResult(subjectListingId);
     }
-    if (!data.sections.every(validSection)) return emptyResult(subjectListingId, 'invalid_response');
+
+    // Drop only the sections that fail the contract. One malformed section must not
+    // cost the viewer every other section the orchestrator selected.
+    const sections = data.sections.filter(validSection);
+    if (sections.length === 0 && data.sections.length > 0) {
+      return emptyResult(subjectListingId, 'invalid_response');
+    }
 
     return {
       contractVersion: Number(data.contractVersion) || 1,
@@ -64,8 +70,8 @@ export async function fetchContextualEcosystemPlan({
       subjectListingId,
       categoryKey: typeof data.categoryKey === 'string' ? data.categoryKey : null,
       subcategoryKey: typeof data.subcategoryKey === 'string' ? data.subcategoryKey : null,
-      sections: data.sections.slice(0, maxSections),
-      degraded: Boolean(data.degraded),
+      sections: sections.slice(0, maxSections),
+      degraded: Boolean(data.degraded) || sections.length !== data.sections.length,
       reason: typeof data.reason === 'string' ? data.reason : null,
     };
   } catch {

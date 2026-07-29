@@ -82,3 +82,45 @@ test('runtime validates database payload identity before returning or caching it
   assert.match(runtime, /Array\.isArray\(value\.items\)/);
   assert.match(runtime, /invalid_or_unavailable_response/);
 });
+
+// The runtime reaches every service over PostgREST, which resolves RPC arguments by
+// name. A service declared with anonymous parameters is therefore unreachable and
+// silently degrades to an empty payload, which no positional pgTAP call can detect.
+test('every service RPC is declared with the argument names the runtime sends', async () => {
+  const namedArguments = await readFile('supabase/migrations/0066_recommendation_service_named_arguments.sql', 'utf8');
+  const subjectScoped = [
+    'similar_listings_service_v1',
+    'seller_recommendations_service_v1',
+    'related_services_service_v1',
+    'related_products_service_v1',
+    'nearby_service_v1',
+  ];
+
+  for (const routine of subjectScoped) {
+    assert.match(
+      namedArguments,
+      new RegExp(String.raw`create function public\.${routine}\(\s+p_subject_listing_id uuid`),
+      `${routine} must accept p_subject_listing_id by name`,
+    );
+    // Dropping to rename parameters creates new functions, so the 0027 execute
+    // boundary has to be restated or Supabase default privileges re-expose them.
+    assert.ok(
+      namedArguments.includes(`revoke all on function public.${routine}(`),
+      `${routine} must be revoked from browser roles after being recreated`,
+    );
+  }
+
+  assert.match(namedArguments, /p_max_distance_meters integer default 50000/);
+  assert.match(namedArguments, /p_cursor text default null/);
+  assert.match(isolation, /p_viewer_id uuid/);
+  assert.match(isolation, /create or replace function public\.recently_listed_service_v1\(\s+p_cursor text/);
+});
+
+test('a null cursor is accepted as the first-page signal', async () => {
+  // The browser adapter always sends an explicit cursor key, null on the first page.
+  assert.match(runtime, /body\.cursor !== undefined && body\.cursor !== null/);
+
+  const adapter = await readFile('src/services/recommendationServices.js', 'utf8');
+  assert.match(adapter, /cursor: normalizedCursor/);
+  assert.match(adapter, /if \(value == null\) return null;/);
+});

@@ -23,8 +23,19 @@ test('frontend exposes one adapter per independent recommendation service', () =
 test('client adapters never throw recommendation failures into listing delivery', () => {
   assert.match(client, /Promise\.race/);
   assert.match(client, /catch \{/);
-  assert.match(client, /return emptyResult\(service, 'service_unavailable'\)/);
+  assert.match(client, /return emptyResult\(service, signal\?\.aborted \? 'cancelled' : 'service_unavailable'\)/);
   assert.match(client, /items: \[\]/);
+});
+
+test('adapters cancel in-flight work and bound what reaches the surface', () => {
+  // A section that is still in flight after navigation must be aborted, not merely
+  // ignored, and a repeated or over-long service response must not reach the page.
+  assert.match(client, /new AbortController\(\)/);
+  assert.match(client, /signal: controller\.signal/);
+  assert.match(client, /signal\?\.addEventListener\('abort', abort, \{ once: true \}\)/);
+  assert.match(client, /signal\?\.removeEventListener\('abort', abort\)/);
+  assert.match(client, /seen\.has\(item\.listingId\)/);
+  assert.match(client, /if \(items\.length === limit\) break;/);
 });
 
 test('client validates cursors, UUIDs, page size and response identity', () => {

@@ -60,12 +60,23 @@ function normalizeItem(value) {
   };
 }
 
-function normalizeResponse(service, value) {
+function normalizeResponse(service, value, limit) {
   if (!value || typeof value !== 'object' || value.service !== service || !Array.isArray(value.items)) {
     return emptyResult(service, 'invalid_response');
   }
 
-  const items = value.items.map(normalizeItem).filter(Boolean);
+  // Deduplicate by listing and never render more than the page size that was asked
+  // for, so a repeated or over-long service response cannot reach the surface.
+  const seen = new Set();
+  const items = [];
+  for (const candidate of value.items) {
+    const item = normalizeItem(candidate);
+    if (!item || seen.has(item.listingId)) continue;
+    seen.add(item.listingId);
+    items.push(item);
+    if (items.length === limit) break;
+  }
+
   const nextCursor = value.nextCursor == null
     ? null
     : (typeof value.nextCursor === 'string' && value.nextCursor.length <= MAX_CURSOR_LENGTH ? value.nextCursor : null);
@@ -83,19 +94,30 @@ function normalizeResponse(service, value) {
   };
 }
 
-async function invokeWithTimeout(endpoint, body, timeoutMs) {
+async function invokeWithTimeout(endpoint, body, timeoutMs, signal) {
+  // Abort the underlying request rather than only stopping waiting on it, so a slow
+  // service is not still in flight after the viewer has navigated away.
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (signal?.aborted) abort();
+  else signal?.addEventListener('abort', abort, { once: true });
+
   let timeoutId;
   const timeout = new Promise((resolve) => {
-    timeoutId = setTimeout(() => resolve({ data: null, error: { code: 'client_timeout' } }), timeoutMs);
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      resolve({ data: null, error: { code: 'client_timeout' } });
+    }, timeoutMs);
   });
 
   try {
     return await Promise.race([
-      supabase.functions.invoke(endpoint, { body }),
+      supabase.functions.invoke(endpoint, { body, signal: controller.signal }),
       timeout,
     ]);
   } finally {
     clearTimeout(timeoutId);
+    signal?.removeEventListener('abort', abort);
   }
 }
 
@@ -105,6 +127,7 @@ async function fetchRecommendationService(service, {
   limit = 12,
   maxDistanceMeters,
   timeoutMs = DEFAULT_TIMEOUT_MS,
+  signal,
 } = {}) {
   const endpoint = SERVICE_ENDPOINTS[service];
   if (!endpoint) return emptyResult(service, 'unknown_service');
@@ -132,11 +155,11 @@ async function fetchRecommendationService(service, {
   }
 
   try {
-    const { data, error } = await invokeWithTimeout(endpoint, body, normalizedTimeout);
+    const { data, error } = await invokeWithTimeout(endpoint, body, normalizedTimeout, signal);
     if (error) return emptyResult(service, error.code === 'client_timeout' ? 'client_timeout' : 'service_unavailable');
-    return normalizeResponse(service, data);
+    return normalizeResponse(service, data, normalizedLimit);
   } catch {
-    return emptyResult(service, 'service_unavailable');
+    return emptyResult(service, signal?.aborted ? 'cancelled' : 'service_unavailable');
   }
 }
 
