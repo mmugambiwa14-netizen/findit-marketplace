@@ -45,6 +45,7 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
 
 test('staging deployment can expose preview or public Tours without weakening production gates', () => {
   assert.match(stagingWorkflow, /VITE_MODE: staging/);
+  assert.match(stagingWorkflow, /npm ci --include=dev --ignore-scripts/);
   assert.match(stagingWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
   assert.match(supabaseConfig, /site_url = "https:\/\/mmugambiwa14-netizen\.github\.io\/findit-marketplace\/"/);
   assert.doesNotMatch(`${stagingWorkflow}\n${supabaseConfig}`, /\/-findit-marketplace\//);
