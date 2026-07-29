@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$ProjectRef = 'bwgklpxoetrrkutottdb',
-  [string]$Repository = 'mmugambiwa14-netizen/-findit-marketplace',
+  [string]$Repository = 'mmugambiwa14-netizen/findit-marketplace',
   [string]$PagesOrigin = 'https://mmugambiwa14-netizen.github.io',
   [switch]$RunWorkerAcceptance
 )

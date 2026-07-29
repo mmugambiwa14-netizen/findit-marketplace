@@ -10,7 +10,7 @@ Never commit real values. Only `VITE_` variables may enter browser builds.
 |---|---|---:|---:|---|
 | `VITE_SUPABASE_URL` | Supabase API/Auth URL | Yes | No | `https://project-ref.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Public publishable/anon key protected by RLS | Yes | No | `sb_publishable_...` |
-| `VITE_BASE_PATH` | Optional Vite/Router deployment subpath | Host-specific | No | `/-findit-marketplace/` |
+| `VITE_BASE_PATH` | Optional Vite/Router deployment subpath | Host-specific | No | `/findit-marketplace/` |
 | `VITE_AUTH_GOOGLE_ENABLED` | Shows Google login only after provider acceptance | No; default `false` | No | `false` |
 | `VITE_AUTH_APPLE_ENABLED` | Shows Apple login only after provider acceptance | No; default `false` | No | `false` |
 | `VITE_FEATURE_BUSINESS_PROFILES` | V1 business/dealer profiles | Production `true` | No | `true` |

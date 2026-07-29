@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [releaseWorkflow, acceptanceWorkflow, stagingWorkflow, validator] = await Promise.all([
+const [releaseWorkflow, acceptanceWorkflow, stagingWorkflow, validator, supabaseConfig] = await Promise.all([
   read('.github/workflows/release-candidate-gates.yml'),
   read('.github/workflows/tours-staging-acceptance.yml'),
   read('.github/workflows/deploy-staging-pages.yml'),
   read('scripts/validate-env.mjs'),
+  read('supabase/config.toml'),
 ]);
 
 test('release candidate CI runs the complete locked static and build boundary', () => {
@@ -44,6 +45,9 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
 
 test('staging deployment can expose preview or public Tours without weakening production gates', () => {
   assert.match(stagingWorkflow, /VITE_MODE: staging/);
+  assert.match(stagingWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
+  assert.match(supabaseConfig, /site_url = "https:\/\/mmugambiwa14-netizen\.github\.io\/findit-marketplace\/"/);
+  assert.doesNotMatch(`${stagingWorkflow}\n${supabaseConfig}`, /\/-findit-marketplace\//);
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_ENABLED/);
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_PREVIEW/);
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_BACKEND_ENABLED/);
@@ -51,6 +55,20 @@ test('staging deployment can expose preview or public Tours without weakening pr
   assert.match(stagingWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
   assert.match(stagingWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED/);
   assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: "false"/);
+  for (const requiredFlag of [
+    'VITE_FEATURE_GOOGLE_OAUTH',
+    'VITE_FEATURE_INTERNATIONAL_LISTING',
+    'VITE_FEATURE_MANUAL_LOCATION',
+    'VITE_FEATURE_CURRENT_LOCATION',
+    'VITE_FEATURE_REPORTING',
+  ]) assert.match(stagingWorkflow, new RegExp(`${requiredFlag}: "true"`));
+  for (const closedFlag of [
+    'VITE_FEATURE_PREVIEW_FIXTURES',
+    'VITE_PREVIEW_AUTH_BYPASS',
+    'VITE_FEATURE_LISTING_EXPIRY',
+    'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
+    'FINDIT_RECOMMENDATION_WORKERS_ENABLED',
+  ]) assert.match(stagingWorkflow, new RegExp(`${closedFlag}: "false"`));
 });
 
 test('preview access cannot be enabled without the complete backend worker boundary', () => {

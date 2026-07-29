@@ -2,7 +2,7 @@
 
 Reviewed: 2026-07-26  
 Authoritative starting point: `findit-phase2b-registration-reset.zip`  
-Repository: `mmugambiwa14-netizen/-findit-marketplace`
+Repository: `mmugambiwa14-netizen/findit-marketplace`
 Release pull request: `#1` (merged into `main`)
 
 ## Executive summary
