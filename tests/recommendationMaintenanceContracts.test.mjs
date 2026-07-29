@@ -19,9 +19,12 @@ test('recommendation maintenance is an explicitly internal endpoint', () => {
   assert.doesNotMatch(worker, /error\.message|String\(error\)/);
 });
 
-test('maintenance operations are bounded and return payload-free health', () => {
-  assert.match(worker, /boundedInteger\(body\.projectionLimit, 500, 1, 2000\)/);
-  assert.match(worker, /boundedInteger\(body\.retentionLimit, 5000, 1, 50000\)/);
+test('projection and maintenance operations are separately bounded', () => {
+  assert.match(worker, /type MaintenanceMode = "projection" \| "maintenance" \| "all"/);
+  assert.match(worker, /boundedInteger\(body\.projectionLimit, 200, 1, 500\)/);
+  assert.match(worker, /boundedInteger\(body\.projectionMaxAttempts, 8, 1, 20\)/);
+  assert.match(worker, /boundedInteger\(body\.retentionLimit, 5000, 1, 50_000\)/);
+  assert.match(worker, /process_listing_recommendation_projection_jobs/);
   assert.match(worker, /ensure_recommendation_event_partition/);
   assert.match(worker, /refresh_recommendation_popularity_daily/);
   assert.match(worker, /purge_expired_recommendation_data/);
@@ -29,10 +32,13 @@ test('maintenance operations are bounded and return payload-free health', () => 
   assert.doesNotMatch(worker, /recommendation_events.*select|actor_id|anonymous_session_id|context:/);
 });
 
-test('scheduler remains opt-in and uses the validated secret inventory', () => {
+test('scheduler remains opt-in and separates fast projection from daily maintenance', () => {
   assert.match(workflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED == 'true'/);
   assert.match(workflow, /secrets\.FINDIT_RECOMMENDATION_WORKER_SECRET/);
+  assert.match(workflow, /"\*\/5 \* \* \* \*"/);
   assert.match(workflow, /"11 3 \* \* \*"/);
+  assert.match(workflow, /"mode":"projection"/);
+  assert.match(workflow, /"mode":"maintenance"/);
   assert.match(envExample, /FINDIT_RECOMMENDATION_WORKERS_ENABLED=false/);
   assert.match(envExample, /FINDIT_RECOMMENDATION_WORKER_SECRET=replace-with-random-secret/);
   assert.match(validator, /FINDIT_RECOMMENDATION_WORKER_SECRET is required when recommendation workers are enabled/);
