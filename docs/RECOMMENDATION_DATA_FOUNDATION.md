@@ -20,6 +20,7 @@ Recommendation failures may delay projections, aggregates or personalization inp
 | `0055_recommendation_projection_queue.sql` | Coalescing asynchronous projection queue, bounded concurrent workers, capped retry backoff and preserved dead letters. |
 | `0056_recommendation_partition_and_configuration_integrity.sql` | Safe migration of late rows from the default event partition, taxonomy cycle protection, audited weight replacement and million-row health-query safeguards. |
 | `0057_recommendation_eligibility_geospatial_and_deletion_closure.sql` | Active-seller eligibility, privacy-safe public geography with a GiST index, deletion-compatible behavioural foreign keys and table-level event-subject validation. |
+| `0058_recommendation_publication_fail_open_closure.sql` | Service-only current-eligibility view, immediate best-effort projection cleanup for non-public content and active-actor validation. |
 
 Every migration has a non-destructive rollback capsule. Rollback disables access and workers while preserving records, projections, behavioural evidence, configuration history and dead letters.
 
@@ -49,6 +50,8 @@ Draft, expired, unavailable, deleted or suspended content is removed from the pr
 
 The geospatial projection uses only `listings.public_location`, which is derived from the canonical public location record. Exact owner-supplied coordinates are never copied into recommendation storage. Nearby queries use a partial GiST index on the public geography column.
 
+Recommendation services must query `eligible_listing_recommendation_features`, not the raw projection table. The service-only view rechecks current listing status, content suspension and seller status so a stale projection row can never make ineligible content recommendable.
+
 ### Event collection
 
 `recommendation_events` is range-partitioned by `occurred_at`. An event belongs to exactly one authenticated account or one anonymous session. Anonymous sessions are held only in browser session storage and expire after 30 days; authenticated events expire after 180 days.
@@ -57,7 +60,7 @@ The ingestion RPC accepts only approved event types and a small context allowlis
 
 Recommendation impressions and clicks require a request identifier, a recognized versioned service name and a stable reason code. Non-recommendation events cannot spoof recommendation attribution.
 
-A table-level trigger verifies that listing and seller events still reference public subjects owned by active accounts. Event foreign keys cascade on explicit listing or account deletion so recommendation history cannot block required deletion and privacy workflows.
+A table-level trigger verifies that the actor is active and that listing and seller events still reference public subjects owned by active accounts. Event foreign keys cascade on explicit listing or account deletion so recommendation history cannot block required deletion and privacy workflows.
 
 ### Cache and popularity
 
@@ -67,7 +70,7 @@ A table-level trigger verifies that listing and seller events still reference pu
 
 ## Asynchronous projection
 
-Listing and category-detail writes enqueue one coalesced job per listing. Trigger functions catch queue failures and return the original listing write result.
+Listing and category-detail writes enqueue one coalesced job per listing. Trigger functions catch queue failures and return the original listing write result. When a listing becomes non-public or suspended, the trigger also performs immediate best-effort projection removal while preserving the listing or moderation transition if recommendation infrastructure is unavailable.
 
 `process_listing_recommendation_projection_jobs`:
 
@@ -91,11 +94,11 @@ Ranking profiles are versioned and organic. Paid placement is excluded from thes
 
 ## Privacy and access controls
 
-All Phase 1 tables and the default event partition have RLS enabled. Customer roles cannot directly read projections, caches, aggregates, weight profiles, configuration audit records, projection jobs or dead letters.
+All Phase 1 tables and the default event partition have RLS enabled. Customer roles cannot directly read projections, the eligible service view, caches, aggregates, weight profiles, configuration audit records, projection jobs or dead letters.
 
 Authenticated users may read only their own event history while their account remains active. Guests cannot read raw events. Suspended users cannot add or read behavioural events.
 
-Service-role workers alone can process projection jobs, create partitions, rebuild popularity, purge expired data, retry dead letters and read the payload-free health snapshot.
+Service-role workers alone can query currently eligible projections, process projection jobs, create partitions, rebuild popularity, purge expired data, retry dead letters and read the payload-free health snapshot.
 
 ## Operational controls
 
@@ -121,6 +124,7 @@ Phase 1 includes:
 - active-seller eligibility and restoration tests;
 - geospatial index-plan and exact-coordinate isolation tests;
 - account and listing deletion-cascade tests;
+- stale-projection publication and immediate cleanup tests;
 - deterministic weight and immutable-audit tests;
 - 2,000-record index-plan and concurrent-insert cursor tests;
 - migration reset and database lint gates in GitHub Actions.
