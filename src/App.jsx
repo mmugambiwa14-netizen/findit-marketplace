@@ -135,8 +135,9 @@ const AuthenticatedApp = () => {
           {featureFlags.businessProfiles && <Route path="/dealer/:id" element={<PublicBusinessProfile />} />}
           <Route path="/services" element={<Services />} />
           <Route path="/service/:id" element={<ServiceDetail />} />
-          {featureFlags.tours && <Route path="/peek" element={<Tours />} />}
-          {!featureFlags.tours && featureFlags.toursPreview && <Route path="/peek" element={<ToursPlaceholder />} />}
+          {(featureFlags.tours || featureFlags.toursPreview) && (
+            <Route path="/peek" element={featureFlags.tours ? <Tours /> : <ToursPlaceholder />} />
+          )}
           {(featureFlags.tours || featureFlags.toursPreview) && <Route path="/tours" element={<LegacyPathRedirect to="/peek" />} />}
           <Route path="/help" element={<FAQs />} />
           <Route path="/help/contact" element={<ContactSupport />} />

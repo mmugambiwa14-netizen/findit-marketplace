@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-29T19:21:51.055Z",
+  "generatedAt": "2026-07-29T22:32:19.752Z",
   "scope": {
     "sourceModules": 234,
-    "routedPatterns": 43,
+    "routedPatterns": 42,
     "pageModules": 34,
     "uniqueControlInstances": 547,
     "pageExpandedControlInstances": 752
@@ -129,15 +129,8 @@
     {
       "path": "/peek",
       "kind": "public",
-      "component": "Tours",
-      "source": "src/pages/Tours",
-      "line": 138
-    },
-    {
-      "path": "/peek",
-      "kind": "public",
-      "component": "ToursPlaceholder",
-      "source": "src/pages/ToursPlaceholder",
+      "component": "",
+      "source": "",
       "line": 139
     },
     {
@@ -145,208 +138,197 @@
       "kind": "public",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 140
+      "line": 141
     },
     {
       "path": "/help",
       "kind": "public",
       "component": "FAQs",
       "source": "src/pages/FAQs",
-      "line": 141
+      "line": 142
     },
     {
       "path": "/help/contact",
       "kind": "public",
       "component": "ContactSupport",
       "source": "src/pages/ContactSupport",
-      "line": 142
+      "line": 143
     },
     {
       "path": "/legal/:document",
       "kind": "public",
       "component": "LegalPage",
       "source": "src/pages/LegalPage",
-      "line": 143
+      "line": 144
     },
     {
       "path": "/faqs",
       "kind": "compatibility",
       "component": "Navigate",
       "source": "",
-      "line": 144
+      "line": 145
     },
     {
       "path": "/support",
       "kind": "compatibility",
       "component": "Navigate",
       "source": "",
-      "line": 145
+      "line": 146
     },
     {
       "path": "/create",
       "kind": "compatibility",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 146
+      "line": 147
     },
     {
       "path": "/messages",
       "kind": "compatibility",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 147
+      "line": 148
     },
     {
       "path": "/messages/:conversationId",
       "kind": "compatibility",
       "component": "LegacyConversationRedirect",
       "source": "",
-      "line": 148
+      "line": 149
     },
     {
       "path": "/post",
       "kind": "protected",
       "component": "CreateListing",
       "source": "src/pages/CreateListing",
-      "line": 153
+      "line": 154
     },
     {
       "path": "/create-service",
       "kind": "protected",
       "component": "CreateService",
       "source": "src/pages/CreateService",
-      "line": 154
+      "line": 155
     },
     {
       "path": "/my-services",
       "kind": "protected",
       "component": "MyServices",
       "source": "src/pages/MyServices",
-      "line": 155
+      "line": 156
     },
     {
       "path": "/saved",
       "kind": "protected",
       "component": "Saved",
       "source": "src/pages/Saved",
-      "line": 156
+      "line": 157
     },
     {
       "path": "/profile",
       "kind": "protected",
       "component": "Profile",
       "source": "src/pages/Profile",
-      "line": 157
+      "line": 158
     },
     {
       "path": "/my-listings",
       "kind": "protected",
       "component": "MyListings",
       "source": "src/pages/MyListings",
-      "line": 158
+      "line": 159
     },
     {
       "path": "/settings",
       "kind": "protected",
       "component": "Settings",
       "source": "src/pages/Settings",
-      "line": 159
+      "line": 160
     },
     {
       "path": "/chats",
       "kind": "protected",
       "component": "Inquiries",
       "source": "src/pages/Inquiries",
-      "line": 160
+      "line": 161
     },
     {
       "path": "/chats/:conversationId",
       "kind": "protected",
       "component": "Inquiries",
       "source": "src/pages/Inquiries",
-      "line": 161
+      "line": 162
     },
     {
       "path": "/business-profiles",
       "kind": "protected",
       "component": "BusinessProfiles",
       "source": "src/pages/BusinessProfiles",
-      "line": 162
+      "line": 163
     },
     {
       "path": "/notifications",
       "kind": "protected",
       "component": "NotificationCenter",
       "source": "src/pages/NotificationCenter",
-      "line": 163
+      "line": 164
     },
     {
       "path": "/admin",
       "kind": "admin",
       "component": "AdminDashboard",
       "source": "src/pages/admin/AdminDashboard",
-      "line": 169
+      "line": 170
     },
     {
       "path": "/admin/listings",
       "kind": "admin",
       "component": "AdminListings",
       "source": "src/pages/admin/AdminListings",
-      "line": 170
+      "line": 171
     },
     {
       "path": "/admin/users",
       "kind": "admin",
       "component": "AdminUsers",
       "source": "src/pages/admin/AdminUsers",
-      "line": 171
+      "line": 172
     },
     {
       "path": "/admin/reports",
       "kind": "admin",
       "component": "AdminReports",
       "source": "src/pages/admin/AdminReports",
-      "line": 172
+      "line": 173
     },
     {
       "path": "/admin/categories",
       "kind": "admin",
       "component": "AdminCategories",
       "source": "src/pages/admin/AdminCategories",
-      "line": 173
+      "line": 174
     },
     {
       "path": "/admin/audit-log",
       "kind": "admin",
       "component": "AdminAuditLog",
       "source": "src/pages/admin/AdminAuditLog",
-      "line": 174
+      "line": 175
     },
     {
       "path": "*",
       "kind": "fallback",
       "component": "PageNotFound",
       "source": "src/lib/PageNotFound",
-      "line": 178
+      "line": 179
     }
   ],
   "failures": [],
-  "warnings": [
-    {
-      "severity": "medium",
-      "code": "DUPLICATE_ROUTE",
-      "file": "src/App.jsx",
-      "line": null,
-      "message": "Route /peek is declared 2 times.",
-      "evidence": ""
-    }
-  ],
+  "warnings": [],
   "summary": {
     "failureCount": 0,
-    "warningCount": 1,
+    "warningCount": 0,
     "failureSeverity": {},
-    "warningSeverity": {
-      "medium": 1
-    }
+    "warningSeverity": {}
   }
 }

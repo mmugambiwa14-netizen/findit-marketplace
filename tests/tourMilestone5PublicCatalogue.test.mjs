@@ -133,9 +133,10 @@ test('feed filters and return position survive canonical navigation', () => {
 
 test('production route uses the real Peek catalogue only when Tours is enabled', () => {
   assert.match(app, /const Tours = lazy/);
-  assert.match(app, /featureFlags\.tours && <Route path="\/peek" element=\{<Tours \/>\}/);
+  assert.equal((app.match(/<Route path="\/peek"/g) ?? []).length, 1);
+  assert.match(app, /\(featureFlags\.tours \|\| featureFlags\.toursPreview\) && \(/);
+  assert.match(app, /<Route path="\/peek" element=\{featureFlags\.tours \? <Tours \/> : <ToursPlaceholder \/>\} \/>/);
   assert.match(app, /path="\/tours" element=\{<LegacyPathRedirect to="\/peek" \/>\}/);
-  assert.match(app, /!featureFlags\.tours && featureFlags\.toursPreview/);
   assert.match(packageJson, /test:tours-discovery-local/);
   assert.match(packageJson, /tours-public-catalogue-smoke-local\.mjs/);
 });
