@@ -85,7 +85,12 @@ $$;
 revoke all on function public.refresh_recommendation_popularity_daily(date) from public, anon, authenticated;
 grant execute on function public.refresh_recommendation_popularity_daily(date) to service_role;
 
-create or replace function public.refresh_listing_recommendation_features_batch(
+-- PostgreSQL cannot change an existing function return shape with CREATE OR REPLACE.
+-- No application role can execute the previous worker function, so replace it
+-- explicitly inside this migration before exposing the new cursor metadata.
+drop function public.refresh_listing_recommendation_features_batch(uuid, integer);
+
+create function public.refresh_listing_recommendation_features_batch(
   p_after_listing_id uuid default null,
   p_limit integer default 500
 )
