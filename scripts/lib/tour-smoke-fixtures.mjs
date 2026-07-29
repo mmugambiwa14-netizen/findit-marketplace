@@ -132,7 +132,8 @@ export async function invokeFunction(name, { accessToken, body = {}, authorizati
  *   parentId?: string,
  *   bytes: Uint8Array,
  *   durationSeconds?: number,
- *   idempotencyKey?: string
+ *   idempotencyKey?: string,
+ *   intent?: { response: Response, body: any } | null
  * }} input
  * @returns {Promise<any>}
  */
@@ -145,19 +146,16 @@ export async function createTourUpload({
   bytes,
   durationSeconds = 10,
   idempotencyKey = crypto.randomUUID(),
+  intent: suppliedIntent = null,
 }) {
   assert.ok(parentId, 'a Tour smoke parent is required');
-  const intent = await invokeFunction('tour-upload-intent', {
-    accessToken: owner.session.access_token,
-    body: {
-      parentType,
-      parentId,
-      filename: 'tour-smoke.mp4',
-      mimeType: 'video/mp4',
-      byteSize: bytes.length,
-      durationSeconds,
-      idempotencyKey,
-    },
+  const intent = suppliedIntent ?? await createTourIntent({
+    owner,
+    parentType,
+    parentId,
+    bytes,
+    durationSeconds,
+    idempotencyKey,
   });
   assert.equal(intent.response.status, 201, `Tour intent failed: ${JSON.stringify(intent.body)}`);
   assert.match(intent.body.path, new RegExp(`^${owner.userId}/[0-9a-f-]{36}/source/[0-9a-f-]{36}\\.mp4$`));
@@ -177,6 +175,28 @@ export async function createTourUpload({
   assert.equal(completed.response.status, 200, `Tour completion failed: ${JSON.stringify(completed.body)}`);
   assert.equal(completed.body.tourId, intent.body.tourId);
   return { ...intent.body, idempotencyKey };
+}
+
+export async function createTourIntent({
+  owner,
+  parentType = 'listing',
+  parentId,
+  bytes,
+  durationSeconds = 10,
+  idempotencyKey = crypto.randomUUID(),
+}) {
+  return invokeFunction('tour-upload-intent', {
+    accessToken: owner.session.access_token,
+    body: {
+      parentType,
+      parentId,
+      filename: 'tour-smoke.mp4',
+      mimeType: 'video/mp4',
+      byteSize: bytes.length,
+      durationSeconds,
+      idempotencyKey,
+    },
+  });
 }
 
 export async function claimTourProcessing(tourId) {

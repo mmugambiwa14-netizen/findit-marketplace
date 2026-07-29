@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import {
   cleanupTourFixtures,
   createAvailableListing,
+  createTourIntent,
   createSmokeUser,
   createTourUpload,
   invokeFunction,
@@ -66,24 +67,29 @@ try {
   assert.equal(tooLong.response.status, 422, 'the two-minute boundary is enforced before authorization');
 
   const idempotencyKey = crypto.randomUUID();
-  uploaded = await createTourUpload({ owner, listingId, bytes, idempotencyKey });
+  const intentRequest = {
+    owner,
+    parentType: 'listing',
+    parentId: listingId,
+    bytes,
+    durationSeconds: 10,
+    idempotencyKey,
+  };
+  const intent = await createTourIntent(intentRequest);
+  assert.equal(intent.response.status, 201, `initial intent failed: ${JSON.stringify(intent.body)}`);
+  const repeated = await createTourIntent(intentRequest);
+  assert.equal(repeated.response.status, 201, `authorized idempotent intent failed: ${JSON.stringify(repeated.body)}`);
+  assert.equal(repeated.body.intentId, intent.body.intentId);
+  assert.equal(repeated.body.tourId, intent.body.tourId);
+  assert.equal(repeated.body.path, intent.body.path);
 
-  const repeated = await invokeFunction('tour-upload-intent', {
-    accessToken: owner.session.access_token,
-    body: {
-      parentType: 'listing',
-      parentId: listingId,
-      filename: 'tour-smoke.mp4',
-      mimeType: 'video/mp4',
-      byteSize: bytes.length,
-      durationSeconds: 10,
-      idempotencyKey,
-    },
+  uploaded = await createTourUpload({
+    owner,
+    listingId,
+    bytes,
+    idempotencyKey,
+    intent,
   });
-  assert.equal(repeated.response.status, 201, `idempotent intent failed: ${JSON.stringify(repeated.body)}`);
-  assert.equal(repeated.body.intentId, uploaded.intentId);
-  assert.equal(repeated.body.tourId, uploaded.tourId);
-  assert.equal(repeated.body.path, uploaded.path);
 
   const duplicateComplete = await invokeFunction('tour-upload-complete', {
     accessToken: owner.session.access_token,
