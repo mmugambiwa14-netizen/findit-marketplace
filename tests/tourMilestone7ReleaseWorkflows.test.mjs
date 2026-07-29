@@ -38,6 +38,19 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
   assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"/);
   assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
+  for (const requiredFlag of [
+    'VITE_FEATURE_GOOGLE_OAUTH',
+    'VITE_FEATURE_INTERNATIONAL_LISTING',
+    'VITE_FEATURE_MANUAL_LOCATION',
+    'VITE_FEATURE_CURRENT_LOCATION',
+    'VITE_FEATURE_REPORTING',
+  ]) assert.match(acceptanceWorkflow, new RegExp(`${requiredFlag}: "true"`));
+  for (const closedFlag of [
+    'VITE_FEATURE_LISTING_EXPIRY',
+    'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
+    'VITE_FEATURE_PREVIEW_FIXTURES',
+    'VITE_PREVIEW_AUTH_BYPASS',
+  ]) assert.match(acceptanceWorkflow, new RegExp(`${closedFlag}: "false"`));
   assert.match(acceptanceWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
   assert.match(acceptanceWorkflow, /apt-get install --yes --no-install-recommends ffmpeg/);
   assert.match(acceptanceWorkflow, /ffmpeg -hide_banner -version/);
