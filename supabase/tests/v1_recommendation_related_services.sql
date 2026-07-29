@@ -233,7 +233,7 @@ select extensions.ok(
   ),
   'browser cannot bypass the related-services Edge transport'
 );
-select extensions.throws_matching(
+select extensions.throws_ok(
   $$insert into public.recommendation_events (
     id,
     occurred_at,
@@ -257,7 +257,8 @@ select extensions.throws_matching(
     '{"surface":"listing_detail","source":"constraint-test","position":0,"page_size":1,"result_count":1}'::jsonb,
     now() + interval '30 days'
   )$$,
-  '.*recommendation_events_subject_boundary.*',
+  '22023',
+  'event subject is not publicly eligible',
   'listing recommendation services cannot write provider-only subjects'
 );
 
