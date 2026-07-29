@@ -9,10 +9,10 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Current implementation evidence head | `a85d5b4e8293ff18f6424e00545a6bc58640b3f9` |
+| Current implementation evidence head | `d5d92ef103ec7757ba51ca9df9d30437318f21c7` |
 | Previous hosted UI head | `cdba0ce8ebeab6e746da6b764bb983b9a04f46e5` |
 | SQL boundary | migration `0074`, 74 migrations and 45 rollback capsules |
-| CI | all four checks passed on `a85d5b4`; inspect PR #1 after any later commit |
+| CI | all four checks passed on `d5d92ef`; inspect PR #1 after any later commit |
 
 Confirm the real head before doing anything:
 
@@ -57,6 +57,8 @@ gate gaps:
   available and awaited in non-Edge runtimes.
 - CI now typechecks every Supabase Edge Function with Deno through
   `npm run typecheck:edge-functions`.
+- First-party GitHub actions use their Node 24 majors; the Pages workflow no
+  longer emits the deprecated Node 20 runtime warning.
 - The hosted recommendation smoke harness now checks browser-style preflight,
   Supabase client transport, public services, contextual orchestration, and the
   protected personalized boundary.
@@ -285,7 +287,7 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 `npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
-**CI on implementation evidence head `a85d5b4`: all four checks passed** on PR #1:
+**CI on implementation evidence head `d5d92ef`: all four checks passed** on PR #1:
 frontend/source contracts, database reset/RLS/recommendation certification,
 recommendation pgTAP, and release verification. The PR remains draft.
 
@@ -297,7 +299,7 @@ Local Docker later became unavailable because Docker Desktop's WSL data disk
 failed during bootstrap. Before that failure, the Phase 5 and Phase 6 pgTAP
 suites passed locally. Both clean GitHub database jobs subsequently applied all
 74 migrations, linted the schema, and passed all eleven recommendation pgTAP
-suites on `a85d5b4`.
+suites on `d5d92ef`.
 
 ## 3.1 Hosted staging evidence
 
@@ -338,7 +340,7 @@ staging, not on production. Exactly `recently_listed_service` is enabled on
 staging; the other six policies remain disabled.
 
 Phase 4 staging frontend: `https://mmugambiwa14-netizen.github.io/findit-marketplace/`.
-Deployment run `30484437635` built and deployed `885abbf`. Live HTTP checks
+Deployment run `30485179425` built and deployed `d5d92ef`. Live HTTP checks
 confirmed the 200 application shell, current hashed assets, settings and admin
 chunks, and the deep-link route handoff. The connected visual browser was
 unavailable for this final deployment, so the latest screenshot evidence
@@ -489,14 +491,14 @@ From the project instructions and from defects already paid for once:
 
 | Phase | Source | Local | CI | Hosted | Certified |
 |---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on `a85d5b4` | staging guards pass | local/staging |
-| 1 — data foundation | complete | partial local, full CI | green on `a85d5b4` | migrations through `0074` applied | staging |
-| 2 — independent services | complete | pass | green on `a85d5b4` | all seven real-result paths certified; six restored disabled | staging |
-| 3 — contextual intelligence | complete | pass | green on `a85d5b4` | guarded timeout/circuit suite passes | **staging certified** |
-| 4 — listing detail UX | complete | pass | green on `a85d5b4` | Pages run `30484437635` passed; prior desktop/mobile visual pass | staging |
-| 5 — personalization | complete | pass | green on `a85d5b4` | consent, results and clear pass | **staging certified** |
-| 6 — analytics | complete | pass | green on `a85d5b4` | aggregate refresh and admin report pass | **staging certified** |
-| 7 — scale and certification | source/staging complete | pass | green on `a85d5b4` | budgets, timeouts, circuits and cleanup pass | production pending |
+| 0 — release safety | complete | pass | green on `d5d92ef` | staging guards pass | local/staging |
+| 1 — data foundation | complete | partial local, full CI | green on `d5d92ef` | migrations through `0074` applied | staging |
+| 2 — independent services | complete | pass | green on `d5d92ef` | all seven real-result paths certified; six restored disabled | staging |
+| 3 — contextual intelligence | complete | pass | green on `d5d92ef` | guarded timeout/circuit suite passes | **staging certified** |
+| 4 — listing detail UX | complete | pass | green on `d5d92ef` | Pages run `30485179425` passed; prior desktop/mobile visual pass | staging |
+| 5 — personalization | complete | pass | green on `d5d92ef` | consent, results and clear pass | **staging certified** |
+| 6 — analytics | complete | pass | green on `d5d92ef` | aggregate refresh and admin report pass | **staging certified** |
+| 7 — scale and certification | source/staging complete | pass | green on `d5d92ef` | budgets, timeouts, circuits and cleanup pass | production pending |
 
 Phase 2 was reported executable-certified on `aaeeef4`. That claim was true for
 the gates as written and false in substance: the services could not answer a
