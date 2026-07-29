@@ -1,6 +1,13 @@
 -- 0062_recommendation_service_operations_and_audit.sql
 -- Phase 2 operational boundary: audited service configuration, health and bounded cache control.
 
+alter table public.recommendation_service_policies
+  add column if not exists id uuid default gen_random_uuid();
+update public.recommendation_service_policies set id = gen_random_uuid() where id is null;
+alter table public.recommendation_service_policies alter column id set not null;
+create unique index if not exists idx_recommendation_service_policies_id
+  on public.recommendation_service_policies(id);
+
 alter table public.recommendation_configuration_audit
   drop constraint if exists recommendation_configuration_audit_entity_type_check;
 alter table public.recommendation_configuration_audit
@@ -57,7 +64,7 @@ begin
     raise exception 'invalid recommendation service policy' using errcode = '22023';
   end if;
 
-  select gen_random_uuid(), to_jsonb(policy)
+  select policy.id, to_jsonb(policy)
   into policy_id, before_value
   from public.recommendation_service_policies policy
   where policy.service_name = p_service_name
@@ -122,21 +129,17 @@ set search_path = public
 as $$
 declare
   deleted_count integer := 0;
-  audit_id uuid := gen_random_uuid();
+  policy_id uuid;
 begin
   if not public.is_admin() then
     raise exception 'admin access required' using errcode = '42501';
   end if;
 
-  if p_service_name not in (
-    'similar_listings_service',
-    'seller_recommendations_service',
-    'related_services_service',
-    'related_products_service',
-    'nearby_service',
-    'recently_listed_service',
-    'personalized_recommendation_service'
-  ) or p_limit not between 1 and 50000 then
+  select policy.id into policy_id
+  from public.recommendation_service_policies policy
+  where policy.service_name = p_service_name;
+
+  if policy_id is null or p_limit not between 1 and 50000 then
     raise exception 'invalid recommendation cache purge request' using errcode = '22023';
   end if;
 
@@ -160,7 +163,7 @@ begin
   ) values (
     auth.uid(),
     'service_policy',
-    audit_id,
+    policy_id,
     'purge_cache',
     null,
     jsonb_build_object(
@@ -173,7 +176,7 @@ begin
 
   perform public.write_audit_log(
     'recommendation.service_cache.purge',
-    audit_id,
+    policy_id,
     'recommendation_service_policy'
   );
 
