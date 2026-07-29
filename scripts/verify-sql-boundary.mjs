@@ -49,8 +49,8 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 
 // Release-tip anchor: bump this deliberately when a migration is added, so an
 // accidental or unreviewed migration cannot ride along silently.
-if (basename(migrationFiles.at(-1) ?? '') !== '0049_listing_location_privacy_and_public_projection.sql') {
-  failures.push(`latest expected migration is 0049, found ${migrationFiles.at(-1) ?? 'none'}`);
+if (basename(migrationFiles.at(-1) ?? '') !== '0050_recommendation_data_foundation.sql') {
+  failures.push(`latest expected migration is 0050, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
 if (failures.length) {
