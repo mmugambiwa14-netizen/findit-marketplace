@@ -60,15 +60,21 @@ function normalizeOptionalString(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
-async function withTimeout(promise) {
+async function withTimeout(requestFactory) {
+  const controller = new AbortController();
   let timeoutId;
   const timeout = new Promise((resolve) => {
-    timeoutId = setTimeout(() => resolve({ data: null, error: { code: 'client_timeout' } }), REQUEST_TIMEOUT_MS);
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      resolve({ data: null, error: { code: 'client_timeout' } });
+    }, REQUEST_TIMEOUT_MS);
   });
 
-  const result = await Promise.race([promise, timeout]);
-  clearTimeout(timeoutId);
-  return result;
+  try {
+    return await Promise.race([requestFactory(controller.signal), timeout]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /**
@@ -97,7 +103,7 @@ export async function recordRecommendationEvent({
   if (!EVENT_TYPES.has(eventType)) return { accepted: false, eventId: null };
 
   try {
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeout((signal) => (
       supabase.rpc('record_recommendation_event', {
         p_event_type: eventType,
         p_listing_id: normalizeOptionalString(listingId),
@@ -107,8 +113,8 @@ export async function recordRecommendationEvent({
         p_recommendation_service: normalizeOptionalString(recommendationService),
         p_reason_code: normalizeOptionalString(reasonCode),
         p_context: sanitizeContext(context),
-      }),
-    );
+      }).abortSignal(signal)
+    ));
 
     if (error || typeof data !== 'string' || !data) {
       return { accepted: false, eventId: null };

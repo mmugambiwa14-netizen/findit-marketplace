@@ -19,7 +19,9 @@ test('Phase 4 recommendation hydration is bounded, ordered and public-only', () 
 });
 
 test('Phase 4 sections fail independently and expose complete accessible states', () => {
-  assert.match(component, /Promise\.all\(plannedSections\.map/);
+  assert.match(component, /Promise\.allSettled\(plannedSections\.map/);
+  assert.match(component, /response\.status === 'fulfilled'/);
+  assert.match(component, /reason: 'transport_unavailable'/);
   assert.match(component, /unavailable: result\.degraded && result\.items\.length === 0/);
   assert.match(component, /RecommendationLoading/);
   assert.match(component, /Suggestions could not be loaded/);

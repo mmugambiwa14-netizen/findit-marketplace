@@ -162,10 +162,11 @@ site_url = "https://mmugambiwa14-netizen.github.io/findit-marketplace/"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
   "http://localhost:5173",
+  "http://localhost:5173/**",
   "http://127.0.0.1:5173",
+  "http://127.0.0.1:5173/**",
   "https://mmugambiwa14-netizen.github.io/findit-marketplace/",
-  "https://mmugambiwa14-netizen.github.io/findit-marketplace/login",
-  "https://mmugambiwa14-netizen.github.io/findit-marketplace/reset-password",
+  "https://mmugambiwa14-netizen.github.io/findit-marketplace/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600

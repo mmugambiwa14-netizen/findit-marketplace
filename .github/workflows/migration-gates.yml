@@ -121,6 +121,9 @@ jobs:
       - name: Run contextual ecosystem intelligence matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
 
+      - name: Run recommendation personalization privacy matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
+
       - name: Stop local Supabase stack
         if: always()
         run: npx --yes supabase@2.84.2 stop --no-backup

@@ -15,6 +15,8 @@ import {
   getSimilarListings,
 } from '@/services/recommendationServices';
 import { getPublicListingsByIds } from '@/services/publicListingsService';
+import { getRecommendationPersonalizationPreference } from '@/services/recommendationPersonalizationService';
+import { useAuth } from '@/lib/AuthContext';
 
 const MAX_SECTIONS = 6;
 const MAX_ITEMS_PER_SECTION = 6;
@@ -30,7 +32,7 @@ const SERVICE_DEFINITIONS = Object.freeze({
   personalized_recommendation_service: { title: 'Picked for you', load: getPersonalizedRecommendations },
 });
 
-async function loadListingRecommendations(subjectListingId, signal) {
+async function loadListingRecommendations(subjectListingId, signal, includePersonalized) {
   const plan = await fetchContextualEcosystemPlan({
     subjectListingId,
     maxSections: MAX_SECTIONS,
@@ -41,12 +43,23 @@ async function loadListingRecommendations(subjectListingId, signal) {
     throw new Error('Recommendation plan unavailable');
   }
 
-  const plannedSections = plan.sections
+  const contextualSections = plan.sections
     .filter((section) => SERVICE_DEFINITIONS[section.service])
-    .slice(0, MAX_SECTIONS);
+    .filter((section) => section.service !== 'personalized_recommendation_service');
+  const plannedSections = includePersonalized
+    ? [
+      ...contextualSections.slice(0, MAX_SECTIONS - 1),
+      {
+        contextKey: 'viewer:personalized',
+        maximumItems: MAX_ITEMS_PER_SECTION,
+        reasonCode: 'explicit_personalization_consent',
+        service: 'personalized_recommendation_service',
+      },
+    ]
+    : contextualSections.slice(0, MAX_SECTIONS);
   if (plannedSections.length === 0) return { sections: [] };
 
-  const responses = await Promise.all(plannedSections.map(async (section) => {
+  const settledResponses = await Promise.allSettled(plannedSections.map(async (section) => {
     const definition = SERVICE_DEFINITIONS[section.service];
     const limit = Math.min(section.maximumItems, MAX_ITEMS_PER_SECTION);
     const result = await definition.load({
@@ -58,9 +71,28 @@ async function loadListingRecommendations(subjectListingId, signal) {
   }));
   if (signal.aborted) throw new DOMException('Request cancelled', 'AbortError');
 
+  const responses = settledResponses.map((response, index) => {
+    if (response.status === 'fulfilled') return response.value;
+    const section = plannedSections[index];
+    return {
+      definition: SERVICE_DEFINITIONS[section.service],
+      result: {
+        degraded: true,
+        items: [],
+        reason: 'transport_unavailable',
+        requestId: null,
+      },
+      section,
+    };
+  });
+  const visibleResponses = responses.filter(({ result, section }) => !(
+    section.service === 'personalized_recommendation_service'
+    && ['service_disabled', 'personalization_not_enabled'].includes(result.reason)
+  ));
+
   const listingIds = [];
   const seen = new Set([subjectListingId]);
-  for (const { result } of responses) {
+  for (const { result } of visibleResponses) {
     for (const item of result.items) {
       if (seen.has(item.listingId)) continue;
       seen.add(item.listingId);
@@ -74,7 +106,7 @@ async function loadListingRecommendations(subjectListingId, signal) {
   const listingById = new Map(listings.map((listing) => [listing.id, listing]));
 
   return {
-    sections: responses.map(({ definition, result, section }) => ({
+    sections: visibleResponses.map(({ definition, result, section }) => ({
       contextKey: section.contextKey,
       reasonCode: section.reasonCode,
       requestId: result.requestId,
@@ -204,9 +236,18 @@ function RecommendationLoading() {
 }
 
 export default function ListingRecommendations({ subjectListingId }) {
+  const { user } = useAuth();
+  const personalization = useQuery({
+    queryKey: ['recommendation-personalization', user?.id],
+    queryFn: getRecommendationPersonalizationPreference,
+    enabled: Boolean(user?.id),
+    staleTime: 30_000,
+    retry: false,
+  });
+  const includePersonalized = personalization.data?.enabled === true;
   const query = useQuery({
-    queryKey: ['listing-recommendations', subjectListingId],
-    queryFn: ({ signal }) => loadListingRecommendations(subjectListingId, signal),
+    queryKey: ['listing-recommendations', subjectListingId, includePersonalized],
+    queryFn: ({ signal }) => loadListingRecommendations(subjectListingId, signal, includePersonalized),
     enabled: Boolean(subjectListingId),
     staleTime: 30_000,
     retry: false,

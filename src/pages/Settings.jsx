@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Eye, EyeOff, Lock, User } from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
 import * as authService from "@/services/authService";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import SellerProfileFields from "@/components/settings/SellerProfileFields";
+import PersonalizationSettings from "@/components/settings/PersonalizationSettings";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -154,6 +155,10 @@ export default function Settings() {
 
         <Section icon={User} title="Seller profile">
           <SellerProfileFields user={user} onSaved={checkUserAuth} />
+        </Section>
+
+        <Section icon={ShieldCheck} title="Recommendation privacy">
+          <PersonalizationSettings userId={user?.id} />
         </Section>
       </div>
     </div>
