@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: "17 * * * *"
     - cron: "23 2 * * *"
+    - cron: "11 3 * * *"
     - cron: "*/5 * * * *"
     - cron: "37 * * * *"
     - cron: "*/10 * * * *"
@@ -55,6 +56,24 @@ jobs:
             --data '{}' \
             "${SUPABASE_URL}/functions/v1/listing-expiry-worker"
 
+  recommendation-maintenance:
+    if: vars.FINDIT_RECOMMENDATION_MAINTENANCE_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '11 3 * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Maintain recommendation partitions, aggregates and retention
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_RECOMMENDATION_MAINTENANCE_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"retentionLimit":5000,"includeProjection":false}' \
+            "${SUPABASE_URL}/functions/v1/recommendation-maintenance"
 
   tour-processing:
     if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
