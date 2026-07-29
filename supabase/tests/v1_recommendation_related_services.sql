@@ -186,7 +186,7 @@ select extensions.isnt(
   null::uuid,
   'anonymous browser records aggregate-safe service impression attribution'
 );
-select extensions.throws_matching(
+select extensions.throws_ok(
   $$select public.record_recommended_service_event_v1(
     'recommendation_click',
     '73000000-0000-4000-8000-000000000302',
@@ -233,7 +233,7 @@ select extensions.ok(
   ),
   'browser cannot bypass the related-services Edge transport'
 );
-select extensions.throws_ok(
+select extensions.throws_matching(
   $$insert into public.recommendation_events (
     id,
     occurred_at,
