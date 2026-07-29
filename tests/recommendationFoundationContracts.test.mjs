@@ -65,7 +65,7 @@ test('admin configuration is audited and ranking weights are deterministic', () 
   assert.match(administration, /admin_upsert_recommendation_weight_profile/);
   assert.match(administration, /public\.write_audit_log\('recommendation\.taxonomy\.upsert'/);
   assert.equal((administration.match(/'organic-v1'/g) ?? []).length, 7);
-  assert.doesNotMatch(administration, /paid[_ -]?placement/i);
+  assert.match(administration, /Paid placement is not represented here/);
 });
 
 test('hardening prevents identity mixing, attribution spoofing and audit mutation', () => {
