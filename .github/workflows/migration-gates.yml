@@ -110,6 +110,9 @@ jobs:
       - name: Run recommendation query-plan and cursor scale suite
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
 
+      - name: Run contextual ecosystem intelligence matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
+
       - name: Stop local Supabase stack
         if: always()
         run: npx --yes supabase@2.84.2 stop --no-backup

@@ -7,6 +7,7 @@ on:
       - "supabase/migrations/**"
       - "supabase/rollback/**"
       - "supabase/tests/v1_recommendation_*.sql"
+      - "supabase/tests/v1_contextual_ecosystem_intelligence.sql"
       - "scripts/verify-sql-boundary.mjs"
       - ".github/workflows/recommendation-database-gates.yml"
 
@@ -49,7 +50,12 @@ jobs:
         run: |
           npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
           npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_projection_queue.sql --local
+          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_eligibility_geospatial.sql --local
+          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_publication_boundary.sql --local
+          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_services.sql --local
+          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_service_operations.sql --local
           npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
+          npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
 
       - name: Stop local database
         if: always()
