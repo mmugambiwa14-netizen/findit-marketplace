@@ -32,6 +32,7 @@ test('release candidate CI runs the complete locked static and build boundary', 
 test('staging acceptance is manual, guarded, comprehensive and emits a named record', () => {
   assert.match(acceptanceWorkflow, /workflow_dispatch/);
   assert.match(acceptanceWorkflow, /environment: staging-tours/);
+  assert.match(acceptanceWorkflow, /npm ci --include=dev --ignore-scripts/);
   assert.match(acceptanceWorkflow, /FINDIT_ALLOW_HOSTED_SMOKE: staging/);
   assert.match(acceptanceWorkflow, /FINDIT_EXPECTED_PROJECT_REF/);
   assert.match(acceptanceWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"/);

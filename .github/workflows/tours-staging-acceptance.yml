@@ -79,7 +79,7 @@ jobs:
           cache: npm
 
       - name: Install locked dependencies
-        run: npm ci --ignore-scripts
+        run: npm ci --include=dev --ignore-scripts
 
       - name: Install media toolchain
         run: |
