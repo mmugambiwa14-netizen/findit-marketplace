@@ -10,6 +10,34 @@ create index if not exists idx_services_recommendation_subcategory
   on public.services (lower(trim(subcategory)), created_at desc, id desc)
   where status = 'active' and category <> 'legal' and subcategory is not null;
 
+alter table public.recommendation_events
+  drop constraint recommendation_events_subject_boundary;
+alter table public.recommendation_events
+  add constraint recommendation_events_subject_boundary
+  check (
+    (event_type = 'search' and listing_id is null)
+    or (event_type = 'seller_follow' and listing_id is null and seller_id is not null)
+    or (
+      event_type in (
+        'view',
+        'save',
+        'tour_watch',
+        'chat_start',
+        'recommendation_impression',
+        'recommendation_click'
+      )
+      and listing_id is not null
+    )
+    or (
+      event_type in ('recommendation_impression', 'recommendation_click')
+      and listing_id is null
+      and seller_id is not null
+      and recommendation_service = 'related-services-service'
+    )
+  ) not valid;
+alter table public.recommendation_events
+  validate constraint recommendation_events_subject_boundary;
+
 create or replace function public.related_services_service_v1(
   p_subject_listing_id uuid,
   p_cursor text default null,
