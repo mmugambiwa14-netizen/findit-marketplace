@@ -9,8 +9,8 @@ const [
   administration,
   hardening,
   certification,
-  integrity,
   projectionQueue,
+  integrity,
   eventService,
   maintenanceWorker,
   sqlBoundary,
@@ -20,8 +20,8 @@ const [
   read('../supabase/migrations/0052_recommendation_taxonomy_weights_and_admin.sql'),
   read('../supabase/migrations/0053_recommendation_foundation_hardening.sql'),
   read('../supabase/migrations/0054_recommendation_foundation_certification_corrections.sql'),
-  read('../supabase/migrations/0055_recommendation_partition_and_configuration_integrity.sql'),
-  read('../supabase/migrations/0056_recommendation_projection_queue.sql'),
+  read('../supabase/migrations/0055_recommendation_projection_queue.sql'),
+  read('../supabase/migrations/0056_recommendation_partition_and_configuration_integrity.sql'),
   read('../src/services/recommendationEventsService.js'),
   read('../supabase/functions/recommendation-maintenance/index.ts'),
   read('../scripts/verify-sql-boundary.mjs'),
@@ -81,15 +81,6 @@ test('certification corrections avoid full projection rewrites', () => {
   assert.doesNotMatch(certification, /update public\.listing_recommendation_features\s+set\s+popularity_score = 0\s*,\s*projected_at = now\(\)\s*;/);
 });
 
-test('partition and configuration integrity handles populated partitions and audited activation changes', () => {
-  assert.match(integrity, /recommendation_events_partition_buffer/);
-  assert.match(integrity, /lock table public\.recommendation_events_default in access exclusive mode/);
-  assert.match(integrity, /taxonomy attributes contain an unsupported field/);
-  assert.match(integrity, /taxonomy parent would create a cycle/);
-  assert.match(integrity, /recommendation\.weights\.deactivate/);
-  assert.match(integrity, /counts_are_estimates/);
-});
-
 test('listing writes enqueue asynchronously and fail open', () => {
   assert.match(projectionQueue, /create table if not exists public\.recommendation_projection_jobs/);
   assert.match(projectionQueue, /create table if not exists public\.recommendation_projection_dead_letters/);
@@ -99,9 +90,19 @@ test('listing writes enqueue asynchronously and fail open', () => {
   assert.match(projectionQueue, /p_max_attempts not between 1 and 20/);
   assert.match(projectionQueue, /projection_failed/);
   assert.match(projectionQueue, /listing_write_dependency/);
-  assert.match(projectionQueue, /"schema_version":56/);
+  assert.match(projectionQueue, /"schema_version":55/);
   assert.doesNotMatch(projectionQueue, /sqlerrm|sqlstate|last_error_message/i);
   assert.doesNotMatch(projectionQueue, /grant execute on function public\.process_listing_recommendation_projection_jobs[\s\S]{0,80}to (?:anon|authenticated)/i);
+});
+
+test('partition and configuration integrity handles populated partitions and audited activation changes', () => {
+  assert.match(integrity, /recommendation_events_partition_buffer/);
+  assert.match(integrity, /lock table public\.recommendation_events_default in access exclusive mode/);
+  assert.match(integrity, /taxonomy attributes contain an unsupported field/);
+  assert.match(integrity, /taxonomy parent would create a cycle/);
+  assert.match(integrity, /recommendation\.weights\.deactivate/);
+  assert.match(integrity, /counts_are_estimates/);
+  assert.match(integrity, /"schema_version":56/);
 });
 
 test('browser event delivery is session scoped and non-blocking', () => {
@@ -135,8 +136,8 @@ test('every Phase 1 migration has a non-destructive rollback and the boundary is
     '0052': 'recommendation_taxonomy_weights_and_admin',
     '0053': 'recommendation_foundation_hardening',
     '0054': 'recommendation_foundation_certification_corrections',
-    '0055': 'recommendation_partition_and_configuration_integrity',
-    '0056': 'recommendation_projection_queue',
+    '0055': 'recommendation_projection_queue',
+    '0056': 'recommendation_partition_and_configuration_integrity',
   };
 
   for (const [number, name] of Object.entries(rollbackNames)) {
@@ -144,5 +145,5 @@ test('every Phase 1 migration has a non-destructive rollback and the boundary is
     assert.doesNotMatch(rollback, /\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i);
     assert.match(rollback, /revoke|force row level security/i);
   }
-  assert.match(sqlBoundary, /0056_recommendation_projection_queue\.sql/);
+  assert.match(sqlBoundary, /0056_recommendation_partition_and_configuration_integrity\.sql/);
 });
