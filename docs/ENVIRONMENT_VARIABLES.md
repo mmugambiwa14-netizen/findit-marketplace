@@ -1,6 +1,6 @@
 # Environment Variables
 
-Reviewed: 2026-07-27
+Reviewed: 2026-07-29
 
 Never commit real values. Only `VITE_` variables may enter browser builds.
 
@@ -41,6 +41,8 @@ Never commit real values. Only `VITE_` variables may enter browser builds.
 | `FINDIT_LISTING_EXPIRY_WORKER_SECRET` | Scheduler bearer for expiry worker | Hosted | Yes |
 | `FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED` | Enables bounded essential-notification fan-out workers | Production notifications | No |
 | `FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET` | Scheduler bearer for saved-listing notification fan-out | Worker enabled | Yes |
+| `FINDIT_RECOMMENDATION_WORKERS_ENABLED` | Enables recommendation partition, aggregate and retention maintenance | Recommendation maintenance enabled | No |
+| `FINDIT_RECOMMENDATION_WORKER_SECRET` | Dedicated scheduler bearer for recommendation maintenance | Worker enabled | Yes |
 | `TOURS_BACKEND_ENABLED` | Server-side Tour kill switch | Tours environments | No |
 | `FINDIT_TOURS_RELEASE_ACCEPTED` | Explicit production acceptance gate | Production Tours | No |
 | `FINDIT_TOURS_ACCEPTANCE_ID` | Named staging acceptance record | Accepted production Tours | No |
@@ -53,6 +55,8 @@ Never commit real values. Only `VITE_` variables may enter browser builds.
 | `TOUR_PROCESSING_CALLBACK_URL` | FindIt callback endpoint | Tours enabled | No |
 | `TOUR_CACHE_PURGE_URL` | Optional CDN purge endpoint | Optional | No |
 | `TOUR_CACHE_PURGE_SECRET` | Optional CDN purge credential | With purge URL | Yes |
+
+Recommendation maintenance is intentionally independent from listing delivery. The scheduled job remains disabled until `FINDIT_RECOMMENDATION_WORKERS_ENABLED=true` is configured in GitHub Actions and the same randomly generated bearer is stored as `FINDIT_RECOMMENDATION_WORKER_SECRET` in both GitHub Actions and Supabase Edge Function secrets. Failure of this worker may delay projection backfills, partition preparation, popularity refreshes or retention cleanup, but it must never make listing routes unavailable.
 
 ## Operations/test-only variables
 
@@ -81,5 +85,4 @@ observability secrets are not application requirements while their
 features/providers are disabled. Add them only with an approved provider,
 owner, rotation policy and corresponding documentation.
 
-Validation is `npm run validate:env`. A closed production build requires HTTPS, all three existing MVP flags on, the essential-notification fan-out worker enabled, all deferred browser flags off, and both Tour flags off. A Tours-enabled production build additionally requires `FINDIT_TOURS_RELEASE_ACCEPTED=true`, a valid `FINDIT_TOURS_ACCEPTANCE_ID`, the browser and backend Tour flags enabled, and the complete processor, cleanup, cache, observability, and notification fan-out worker configuration above.
-
+Validation is `npm run validate:env`. A closed production build requires HTTPS, all three existing MVP flags on, the essential-notification fan-out worker enabled, all deferred browser flags off, and both Tour flags off. Recommendation maintenance remains independently opt-in and requires its dedicated secret whenever enabled. A Tours-enabled production build additionally requires `FINDIT_TOURS_RELEASE_ACCEPTED=true`, a valid `FINDIT_TOURS_ACCEPTANCE_ID`, the browser and backend Tour flags enabled, and the complete processor, cleanup, cache, observability, and notification fan-out worker configuration above.
