@@ -52,7 +52,7 @@ create table if not exists public.listing_recommendation_features (
 );
 
 create table if not exists public.recommendation_events (
-  id uuid primary key default gen_random_uuid(),
+  id uuid not null default gen_random_uuid(),
   occurred_at timestamptz not null default now(),
   actor_id uuid references auth.users(id) on delete set null,
   anonymous_session_id uuid,
@@ -64,6 +64,7 @@ create table if not exists public.recommendation_events (
   reason_code text,
   context jsonb not null default '{}'::jsonb,
   expires_at timestamptz not null default (now() + interval '180 days'),
+  primary key (occurred_at, id),
   check (actor_id is not null or anonymous_session_id is not null),
   check (expires_at > occurred_at)
 ) partition by range (occurred_at);
@@ -106,8 +107,8 @@ create index if not exists idx_listing_recommendation_seller on public.listing_r
 create index if not exists idx_listing_recommendation_location on public.listing_recommendation_features(location_key, category_key, published_at desc, listing_id);
 create index if not exists idx_recommendation_events_actor_cursor on public.recommendation_events(actor_id, occurred_at desc, id) where actor_id is not null;
 create index if not exists idx_recommendation_events_session_cursor on public.recommendation_events(anonymous_session_id, occurred_at desc, id) where anonymous_session_id is not null;
-create index if not exists idx_recommendation_events_listing on public.recommendation_events(listing_id, event_type, occurred_at desc) where listing_id is not null;
-create index if not exists idx_recommendation_events_expiry on public.recommendation_events(expires_at);
+create index if not exists idx_recommendation_events_listing on public.recommendation_events(listing_id, event_type, occurred_at desc, id) where listing_id is not null;
+create index if not exists idx_recommendation_events_expiry on public.recommendation_events(expires_at, occurred_at, id);
 create index if not exists idx_recommendation_cache_expiry on public.recommendation_cache(service_name, expires_at, cache_key);
 create index if not exists idx_recommendation_popularity_listing on public.recommendation_popularity_daily(listing_id, metric_date desc);
 
