@@ -17,7 +17,7 @@
     "verify:base44-elimination": "node ./scripts/verify-base44-elimination.mjs",
     "audit:production": "node ./scripts/audit-production.mjs",
     "test:contracts": "node --experimental-strip-types --test ./tests/*.test.mjs",
-    "test:recommendation-contracts": "node --test ./tests/recommendationFoundationContracts.test.mjs",
+    "test:recommendation-contracts": "node --test ./tests/recommendation*Contracts.test.mjs",
     "test:recommendation-foundation-local": "supabase test db supabase/tests/v1_recommendation_foundation.sql --local",
     "test:recommendation-scale-local": "supabase test db supabase/tests/v1_recommendation_scale.sql --local",
     "verify:recommendation-phase1": "npm run verify:sql-boundary && npm run test:recommendation-contracts",
