@@ -183,6 +183,7 @@ declare
   before_value jsonb;
   after_value jsonb;
   audit_action text;
+  displaced_profile record;
 begin
   if not public.is_admin() then
     raise exception 'admin access required' using errcode = '42501';
@@ -214,12 +215,23 @@ begin
   audit_action := case when profile_id is null then 'create' else 'update' end;
 
   if p_is_active then
-    update public.recommendation_weight_profiles
-    set is_active = false
-    where service_name = service_key
-      and contract_version = p_contract_version
-      and is_active
-      and (profile_id is null or id <> profile_id);
+    for displaced_profile in
+      update public.recommendation_weight_profiles
+      set is_active = false
+      where service_name = service_key
+        and contract_version = p_contract_version
+        and is_active
+        and (profile_id is null or id <> profile_id)
+      returning id, to_jsonb(recommendation_weight_profiles.*) as prior_state
+    loop
+      insert into public.recommendation_configuration_audit (
+        actor_id, entity_type, entity_id, action, before_state, after_state
+      ) values (
+        auth.uid(), 'weight_profile', displaced_profile.id, 'deactivate',
+        displaced_profile.prior_state,
+        jsonb_set(displaced_profile.prior_state, '{is_active}', 'false'::jsonb)
+      );
+    end loop;
   end if;
 
   insert into public.recommendation_weight_profiles (

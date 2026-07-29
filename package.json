@@ -16,7 +16,7 @@
     "typecheck:active": "node ./scripts/active-v1-typecheck.mjs",
     "verify:base44-elimination": "node ./scripts/verify-base44-elimination.mjs",
     "audit:production": "node ./scripts/audit-production.mjs",
-    "test:contracts": "node --experimental-strip-types --test ./tests/*.test.mjs",
+    "test:contracts": "node --test ./tests/*.test.mjs",
     "test:recommendation-contracts": "node --test ./tests/recommendation*Contracts.test.mjs",
     "test:recommendation-foundation-local": "supabase test db supabase/tests/v1_recommendation_foundation.sql --local",
     "test:recommendation-projection-queue-local": "supabase test db supabase/tests/v1_recommendation_projection_queue.sql --local",

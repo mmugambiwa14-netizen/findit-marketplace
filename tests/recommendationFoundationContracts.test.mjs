@@ -121,8 +121,9 @@ test('closure enforces active-seller eligibility, privacy-safe geography and del
 });
 
 test('browser event delivery is session scoped and non-blocking', () => {
-  assert.match(eventService, /window\.sessionStorage/);
-  assert.doesNotMatch(eventService, /localStorage/);
+  assert.match(eventService, /readStoredString\('session'/);
+  assert.match(eventService, /writeStoredString\('session'/);
+  assert.doesNotMatch(eventService, /window\.sessionStorage|window\.localStorage|\blocalStorage\b/);
   assert.match(eventService, /Promise\.race/);
   assert.match(eventService, /REQUEST_TIMEOUT_MS = 1500/);
   assert.match(eventService, /catch \{\s*return \{ accepted: false, eventId: null \};\s*\}/);
@@ -161,5 +162,5 @@ test('every Phase 1 migration has a non-destructive rollback and the boundary is
     assert.doesNotMatch(rollback, /\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i);
     assert.match(rollback, /revoke|force row level security/i);
   }
-  assert.match(sqlBoundary, /0057_recommendation_eligibility_geospatial_and_deletion_closure\.sql/);
+  assert.match(sqlBoundary, /0065_recommendation_certification_corrections\.sql/);
 });

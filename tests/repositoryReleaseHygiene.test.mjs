@@ -42,5 +42,5 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0049_listing_location_privacy_and_public_projection\.sql/);
+  assert.match(sqlBoundary, /0065_recommendation_certification_corrections\.sql/);
 });

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient';
+import { readStoredString, writeStoredString } from '@/lib/browserStorage';
 
 const EVENT_TYPES = new Set([
   'view',
@@ -36,16 +37,10 @@ function createSessionId() {
 
 function getAnonymousSessionId() {
   const generated = createSessionId();
-  if (typeof window === 'undefined' || !window.sessionStorage) return generated;
-
-  try {
-    const existing = window.sessionStorage.getItem(ANONYMOUS_SESSION_KEY);
-    if (existing) return existing;
-    if (generated) window.sessionStorage.setItem(ANONYMOUS_SESSION_KEY, generated);
-    return generated;
-  } catch {
-    return generated;
-  }
+  const existing = readStoredString('session', ANONYMOUS_SESSION_KEY, null);
+  if (existing) return existing;
+  if (generated) writeStoredString('session', ANONYMOUS_SESSION_KEY, generated);
+  return generated;
 }
 
 function sanitizeContext(context) {

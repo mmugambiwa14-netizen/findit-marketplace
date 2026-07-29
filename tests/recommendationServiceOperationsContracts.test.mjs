@@ -47,11 +47,16 @@ test('policy updates and cache purges are bounded', () => {
 });
 
 test('health contract contains operational counts but no customer data', () => {
+  const healthFunction = migration.slice(
+    migration.indexOf('create or replace function public.recommendation_services_health_v1()'),
+    migration.indexOf('revoke all on function public.recommendation_services_health_v1()'),
+  );
+
   assert.match(migration, /recommendation_services_health_v1/);
   assert.match(migration, /freshCacheEntries/);
   assert.match(migration, /staleCacheEntries/);
   assert.match(migration, /expiredCacheEntries/);
-  assert.doesNotMatch(migration, /actor_id|anonymous_session_id|email|phone|message_body/);
+  assert.doesNotMatch(healthFunction, /actor_id|anonymous_session_id|email|phone|message_body/);
   assert.match(migration, /revoke all on function public\.recommendation_services_health_v1\(\)[\s\S]*from public, anon, authenticated/);
 });
 

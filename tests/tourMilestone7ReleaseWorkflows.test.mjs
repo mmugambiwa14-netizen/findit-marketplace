@@ -11,7 +11,7 @@ const [releaseWorkflow, acceptanceWorkflow, stagingWorkflow, validator] = await 
 ]);
 
 test('release candidate CI runs the complete locked static and build boundary', () => {
-  assert.match(releaseWorkflow, /npm ci --ignore-scripts/);
+  assert.match(releaseWorkflow, /npm ci --include=dev --ignore-scripts/);
   for (const gate of [
     'npm run validate:env', 'npm run verify:source-graph', 'npm run test:contracts',
     'npm run test:tours-contracts', 'npm run lint', 'npm run typecheck',
