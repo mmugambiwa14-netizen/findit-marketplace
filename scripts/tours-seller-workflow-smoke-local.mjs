@@ -215,7 +215,11 @@ try {
       idempotencyKey: crypto.randomUUID(),
     },
   });
-  assert.equal(legalServiceDenied.response.status, 403, 'legal service records cannot receive Tours in the MVP');
+  assert.equal(
+    legalServiceDenied.response.status,
+    403,
+    `legal service records cannot receive Tours in the MVP: ${JSON.stringify(legalServiceDenied.body)}`,
+  );
 
   console.log(`Tours ${smokeTarget.label} seller workflow passed: listing review states, same-intent renewal, stale-parent renewal denial, late exact-object confirmation, active service upload, unavailable-parent denial and legal-service exclusion.`);
 } finally {

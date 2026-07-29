@@ -20,6 +20,7 @@ test('large Tour bytes upload directly to signed Storage, not through the Edge r
 test('upload intent authenticates the user and delegates ownership to a service-only RPC', () => {
   assert.match(intent, /user\.auth\.getUser\(\)/);
   assert.match(intent, /rpc\("authorize_tour_upload"/);
+  assert.match(intent, /message\.includes\("parent not found"\) \? 403/);
   assert.match(complete, /rpc\("complete_tour_upload"/);
   assert.match(complete, /userData\.user\.id/);
 });

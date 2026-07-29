@@ -117,7 +117,7 @@ Deno.serve(async (req: Request) => {
       const message = authorizeError?.message ?? "Tour upload could not be authorized";
       const status = message.includes("rate exceeded") ? 429
         : message.includes("pending Tour") ? 409
-        : message.includes("ownership") || message.includes("eligible") ? 403
+        : message.includes("ownership") || message.includes("eligible") || message.includes("parent not found") ? 403
         : message.includes("disabled") ? 503
         : 400;
       return json(req, status, {
