@@ -76,6 +76,20 @@ async function withTimeout(promise) {
   return result;
 }
 
+/**
+ * @typedef {Object} RecommendationEventInput
+ * @property {string} eventType
+ * @property {string | null} [listingId]
+ * @property {string | null} [sellerId]
+ * @property {string | null} [recommendationRequestId]
+ * @property {string | null} [recommendationService]
+ * @property {string | null} [reasonCode]
+ * @property {Record<string, unknown>} [context]
+ */
+
+/**
+ * @param {RecommendationEventInput} input
+ */
 export async function recordRecommendationEvent({
   eventType,
   listingId = null,
@@ -84,7 +98,7 @@ export async function recordRecommendationEvent({
   recommendationService = null,
   reasonCode = null,
   context = {},
-} = {}) {
+}) {
   if (!EVENT_TYPES.has(eventType)) return { accepted: false, eventId: null };
 
   try {
@@ -111,6 +125,9 @@ export async function recordRecommendationEvent({
   }
 }
 
+/**
+ * @param {RecommendationEventInput} event
+ */
 export function queueRecommendationEvent(event) {
   const enqueue = typeof queueMicrotask === 'function'
     ? queueMicrotask
