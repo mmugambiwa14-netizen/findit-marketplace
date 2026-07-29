@@ -1,0 +1,151 @@
+import { supabase } from '@/lib/supabaseClient';
+
+const DEFAULT_TIMEOUT_MS = 1600;
+const MAX_PAGE_SIZE = 100;
+const MAX_CURSOR_LENGTH = 1024;
+
+const SERVICE_ENDPOINTS = Object.freeze({
+  similar_listings_service: 'similar-listings',
+  seller_recommendations_service: 'seller-recommendations',
+  related_services_service: 'related-services',
+  related_products_service: 'related-products',
+  nearby_service: 'nearby-listings',
+  recently_listed_service: 'recently-listed',
+  personalized_recommendation_service: 'personalized-recommendations',
+});
+
+function emptyResult(service, reason = 'unavailable') {
+  return {
+    contractVersion: 1,
+    service,
+    requestId: null,
+    items: [],
+    nextCursor: null,
+    degraded: true,
+    reason,
+  };
+}
+
+function validUuid(value) {
+  return typeof value === 'string'
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function boundedInteger(value, fallback, minimum, maximum) {
+  const resolved = value ?? fallback;
+  if (!Number.isInteger(resolved) || resolved < minimum || resolved > maximum) return null;
+  return resolved;
+}
+
+function normalizeCursor(value) {
+  if (value == null) return null;
+  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_CURSOR_LENGTH) return undefined;
+  return value;
+}
+
+function normalizeItem(value) {
+  if (!value || typeof value !== 'object' || !validUuid(value.listingId)) return null;
+  return {
+    listingId: value.listingId,
+    sellerId: validUuid(value.sellerId) ? value.sellerId : null,
+    categoryKey: typeof value.categoryKey === 'string' ? value.categoryKey : null,
+    subcategoryKey: typeof value.subcategoryKey === 'string' ? value.subcategoryKey : null,
+    countryCode: typeof value.countryCode === 'string' ? value.countryCode : null,
+    locationKey: typeof value.locationKey === 'string' ? value.locationKey : null,
+    priceAmount: typeof value.priceAmount === 'number' && Number.isFinite(value.priceAmount) ? value.priceAmount : null,
+    currency: typeof value.currency === 'string' ? value.currency : null,
+    publishedAt: typeof value.publishedAt === 'string' ? value.publishedAt : null,
+    score: typeof value.score === 'number' && Number.isFinite(value.score) ? value.score : 0,
+    reasonCode: typeof value.reasonCode === 'string' ? value.reasonCode : 'unspecified',
+  };
+}
+
+function normalizeResponse(service, value) {
+  if (!value || typeof value !== 'object' || value.service !== service || !Array.isArray(value.items)) {
+    return emptyResult(service, 'invalid_response');
+  }
+
+  const items = value.items.map(normalizeItem).filter(Boolean);
+  const nextCursor = value.nextCursor == null
+    ? null
+    : (typeof value.nextCursor === 'string' && value.nextCursor.length <= MAX_CURSOR_LENGTH ? value.nextCursor : null);
+
+  return {
+    contractVersion: Number.isInteger(value.contractVersion) ? value.contractVersion : 1,
+    service,
+    requestId: validUuid(value.requestId) ? value.requestId : null,
+    items,
+    nextCursor,
+    degraded: value.degraded === true,
+    reason: typeof value.reason === 'string' ? value.reason : null,
+    stale: value.stale === true,
+    cache: typeof value.cache === 'string' ? value.cache : null,
+  };
+}
+
+async function invokeWithTimeout(endpoint, body, timeoutMs) {
+  let timeoutId;
+  const timeout = new Promise((resolve) => {
+    timeoutId = setTimeout(() => resolve({ data: null, error: { code: 'client_timeout' } }), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([
+      supabase.functions.invoke(endpoint, { body }),
+      timeout,
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function fetchRecommendationService(service, {
+  subjectListingId,
+  cursor = null,
+  limit = 12,
+  maxDistanceMeters,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+} = {}) {
+  const endpoint = SERVICE_ENDPOINTS[service];
+  if (!endpoint) return emptyResult(service, 'unknown_service');
+
+  const subjectRequired = !['recently_listed_service', 'personalized_recommendation_service'].includes(service);
+  if (subjectRequired && !validUuid(subjectListingId)) return emptyResult(service, 'invalid_subject');
+
+  const normalizedCursor = normalizeCursor(cursor);
+  const normalizedLimit = boundedInteger(limit, 12, 1, MAX_PAGE_SIZE);
+  const normalizedTimeout = boundedInteger(timeoutMs, DEFAULT_TIMEOUT_MS, 250, 5000);
+  if (normalizedCursor === undefined || normalizedLimit === null || normalizedTimeout === null) {
+    return emptyResult(service, 'invalid_request');
+  }
+
+  const body = {
+    ...(subjectRequired ? { subjectListingId } : {}),
+    cursor: normalizedCursor,
+    limit: normalizedLimit,
+  };
+
+  if (service === 'nearby_service') {
+    const distance = boundedInteger(maxDistanceMeters, 50_000, 100, 500_000);
+    if (distance === null) return emptyResult(service, 'invalid_distance');
+    body.maxDistanceMeters = distance;
+  }
+
+  try {
+    const { data, error } = await invokeWithTimeout(endpoint, body, normalizedTimeout);
+    if (error) return emptyResult(service, error.code === 'client_timeout' ? 'client_timeout' : 'service_unavailable');
+    return normalizeResponse(service, data);
+  } catch {
+    return emptyResult(service, 'service_unavailable');
+  }
+}
+
+export const getSimilarListings = (options) => fetchRecommendationService('similar_listings_service', options);
+export const getSellerRecommendations = (options) => fetchRecommendationService('seller_recommendations_service', options);
+export const getRelatedServices = (options) => fetchRecommendationService('related_services_service', options);
+export const getRelatedProducts = (options) => fetchRecommendationService('related_products_service', options);
+export const getNearbyListings = (options) => fetchRecommendationService('nearby_service', options);
+export const getRecentlyListed = (options) => fetchRecommendationService('recently_listed_service', options);
+export const getPersonalizedRecommendations = (options) => fetchRecommendationService('personalized_recommendation_service', options);
+
+export { fetchRecommendationService };
