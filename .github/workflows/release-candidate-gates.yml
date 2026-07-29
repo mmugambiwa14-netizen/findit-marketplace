@@ -57,6 +57,8 @@ jobs:
       FINDIT_TOURS_ACCEPTANCE_ID: "tour-acceptance-ci-build-validation-0001"
       FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
       FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: release-validation-fanout-secret
+      FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"
+      FINDIT_RECOMMENDATION_WORKER_SECRET: release-validation-recommendation-secret
 
     steps:
       - name: Check out repository

@@ -100,6 +100,8 @@ const productionBase = {
   VITE_FEATURE_TOURS_PREVIEW: 'false',
   FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
   FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: 'release-notification-fanout-secret',
+  FINDIT_RECOMMENDATION_WORKERS_ENABLED: 'true',
+  FINDIT_RECOMMENDATION_WORKER_SECRET: 'release-recommendation-worker-secret',
 };
 
 try {

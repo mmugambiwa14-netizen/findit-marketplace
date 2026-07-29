@@ -25,6 +25,8 @@ test('release candidate CI runs the complete locked static and build boundary', 
   assert.match(releaseWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
   assert.match(releaseWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"/);
   assert.match(releaseWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
+  assert.match(releaseWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"/);
+  assert.match(releaseWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
 });
 
 test('staging acceptance is manual, guarded, comprehensive and emits a named record', () => {
@@ -34,6 +36,8 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /FINDIT_EXPECTED_PROJECT_REF/);
   assert.match(acceptanceWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"/);
   assert.match(acceptanceWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
+  assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"/);
+  assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
   assert.match(acceptanceWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
   assert.match(acceptanceWorkflow, /ffmpeg -hide_banner -version/);
   for (const gate of [
@@ -73,8 +77,9 @@ test('staging deployment can expose preview or public Tours without weakening pr
     'VITE_PREVIEW_AUTH_BYPASS',
     'VITE_FEATURE_LISTING_EXPIRY',
     'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
-    'FINDIT_RECOMMENDATION_WORKERS_ENABLED',
   ]) assert.match(stagingWorkflow, new RegExp(`${closedFlag}: "false"`));
+  assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: \$\{\{ vars\.FINDIT_RECOMMENDATION_WORKERS_ENABLED \}\}/);
+  assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
 });
 
 test('preview access cannot be enabled without the complete backend worker boundary', () => {
