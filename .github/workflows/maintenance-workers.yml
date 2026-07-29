@@ -56,6 +56,25 @@ jobs:
             --data '{}' \
             "${SUPABASE_URL}/functions/v1/listing-expiry-worker"
 
+  recommendation-projection:
+    if: vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Process bounded recommendation projection queue
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_RECOMMENDATION_WORKER_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"mode":"projection","projectionLimit":200,"projectionMaxAttempts":8}' \
+            "${SUPABASE_URL}/functions/v1/recommendation-maintenance"
+
   recommendation-maintenance:
     if: vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '11 3 * * *')
     runs-on: ubuntu-latest
@@ -72,7 +91,7 @@ jobs:
             --header "apikey: ${SUPABASE_ANON_KEY}" \
             --header "Authorization: Bearer ${WORKER_SECRET}" \
             --header "Content-Type: application/json" \
-            --data '{"retentionLimit":5000,"includeProjection":false}' \
+            --data '{"mode":"maintenance","retentionLimit":5000}' \
             "${SUPABASE_URL}/functions/v1/recommendation-maintenance"
 
   tour-processing:
