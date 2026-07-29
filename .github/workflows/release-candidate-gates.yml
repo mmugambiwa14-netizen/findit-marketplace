@@ -63,6 +63,11 @@ jobs:
           node-version: 24
           cache: npm
 
+      - name: Use Deno for Edge Function checks
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Install locked dependencies
         run: npm ci --include=dev --ignore-scripts
 
@@ -95,6 +100,7 @@ jobs:
           npm run typecheck
           npm run typecheck:migration
           npm run typecheck:active
+          npm run typecheck:edge-functions
 
       - name: Build production application
         run: npm run build

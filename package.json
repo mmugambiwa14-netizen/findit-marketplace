@@ -14,6 +14,7 @@
     "typecheck": "tsc -p ./jsconfig.json",
     "typecheck:migration": "tsc -p ./jsconfig.migration.json",
     "typecheck:active": "node ./scripts/active-v1-typecheck.mjs",
+    "typecheck:edge-functions": "node ./scripts/edge-functions-typecheck.mjs",
     "verify:base44-elimination": "node ./scripts/verify-base44-elimination.mjs",
     "audit:production": "node ./scripts/audit-production.mjs",
     "test:contracts": "node --test ./tests/*.test.mjs",

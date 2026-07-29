@@ -16,14 +16,23 @@ const publicFunctions = [
   'personalized-recommendations',
 ];
 
-test('every browser-invoked recommendation function has a JWT-verifying deployment entry', () => {
-  for (const functionName of [...publicFunctions, 'contextual-ecosystem']) {
+test('anonymous browser recommendation functions accept opaque publishable keys at the gateway', () => {
+  for (const functionName of publicFunctions.filter((name) => name !== 'personalized-recommendations')) {
     assert.match(
       config,
-      new RegExp(`\\[functions\\.${functionName}\\][\\s\\S]*?verify_jwt = true`),
-      `${functionName} must require a valid Supabase JWT at the gateway`,
+      new RegExp(`\\[functions\\.${functionName}\\][\\s\\S]*?verify_jwt = false`),
+      `${functionName} must not require a JWT-format anon key at the gateway`,
     );
   }
+  assert.match(config, /\[functions\.contextual-ecosystem\][\s\S]*?verify_jwt = false/);
+});
+
+test('personalized recommendations still require authenticated gateway access', () => {
+  assert.match(
+    config,
+    /\[functions\.personalized-recommendations\][\s\S]*?verify_jwt = true/,
+    'personalized recommendations must still require a valid Supabase session JWT',
+  );
 });
 
 test('internal recommendation worker and health endpoints stay off gateway JWT verification', () => {
@@ -57,8 +66,13 @@ test('health output contains service readiness without behavioural identities', 
 
 test('hosted smoke harness enforces fail-soft public services and protected personalization', () => {
   for (const functionName of publicFunctions) assert.match(smoke, new RegExp(functionName));
-  assert.match(smoke, /response\.status, 200/);
-  assert.match(smoke, /personalizedResponse\.status, 401/);
+  assert.match(smoke, /contextual-ecosystem/);
+  assert.match(smoke, /method: 'OPTIONS'/);
+  assert.match(smoke, /Origin/);
+  assert.match(smoke, /x-client-info/);
+  assert.match(smoke, /supabase\.functions\.invoke/);
+  assert.match(smoke, /error, null/);
+  assert.match(smoke, /\[401, 403\]\.includes\(personalizedResponse\.status\)/);
   assert.match(smoke, /AbortController/);
   assert.doesNotMatch(smoke, /service_role|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_SECRET_KEY/);
 });

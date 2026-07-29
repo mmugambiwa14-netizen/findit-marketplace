@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [packageJsonText, workflow, stagingWorkflow, certification, hygiene, sqlBoundary] = await Promise.all([
+const [packageJsonText, workflow, stagingWorkflow, migrationWorkflow, certification, hygiene, sqlBoundary] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
   read('.github/workflows/tours-staging-acceptance.yml'),
+  read('.github/workflows/migration-gates.yml'),
   read('scripts/tours-release-certification.mjs'),
   read('scripts/verify-repository-hygiene.mjs'),
   read('scripts/verify-sql-boundary.mjs'),
@@ -43,4 +44,12 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
   assert.match(sqlBoundary, /0068_contextual_ecosystem_completion\.sql/);
+});
+
+test('PR gates typecheck Supabase Edge Functions with Deno', () => {
+  assert.equal(packageJson.scripts['typecheck:edge-functions'], 'node ./scripts/edge-functions-typecheck.mjs');
+  assert.match(workflow, /denoland\/setup-deno@v2/);
+  assert.match(workflow, /npm run typecheck:edge-functions/);
+  assert.match(migrationWorkflow, /denoland\/setup-deno@v2/);
+  assert.match(migrationWorkflow, /npm run typecheck:edge-functions/);
 });

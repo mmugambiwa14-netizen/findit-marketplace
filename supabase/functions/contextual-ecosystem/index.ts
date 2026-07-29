@@ -1,21 +1,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
+import { configuredAdminKey } from "../_shared/tour-runtime.ts";
 import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson } from "../_shared/request-guards.ts";
 
 const JOURNEY_STAGES = new Set(["discover", "evaluate", "prepare", "transact", "own"]);
 const REQUEST_TIMEOUT_MS = 900;
 const MAXIMUM_REQUEST_BYTES = 2048;
-
-function configuredAdminKey(): string {
-  const direct = Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (direct) return direct;
-  const serialized = Deno.env.get("SUPABASE_SECRET_KEYS");
-  if (serialized) {
-    const values = JSON.parse(serialized) as Record<string, string>;
-    const value = values.default ?? Object.values(values)[0];
-    if (value) return value;
-  }
-  throw new Error("Missing Supabase service credential");
-}
 
 function allowedOrigin(request: Request): string | null {
   const origin = request.headers.get("origin");
@@ -44,7 +33,7 @@ function headers(request: Request, cacheControl: string = "no-store"): HeadersIn
     "Vary": "Origin",
     ...(origin ? {
       "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Headers": "apikey, content-type",
+      "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
       "Access-Control-Allow-Methods": "POST, OPTIONS",
     } : {}),
   };
@@ -112,7 +101,7 @@ Deno.serve(async (request: Request) => {
         p_subject_listing_id: body.subjectListingId,
         p_journey_stage: body.journeyStage ?? null,
         p_max_sections: maxSections,
-      }, { signal: controller.signal }));
+      }).abortSignal(controller.signal));
     } finally {
       clearTimeout(timeout);
     }

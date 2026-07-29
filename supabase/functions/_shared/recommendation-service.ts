@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.110.7";
-import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson, withBoundedTimeout } from "./request-guards.ts";
+import { configuredPublishableKey } from "./tour-runtime.ts";
+import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson } from "./request-guards.ts";
 
 const MAXIMUM_REQUEST_BYTES = 4096;
 const IDENTITY_TIMEOUT_MS = 1000;
@@ -87,9 +88,7 @@ function supabaseUrl(): string {
 }
 
 function publicKey(): string {
-  const value = Deno.env.get("SUPABASE_ANON_KEY");
-  if (!value) throw new Error("Missing SUPABASE_ANON_KEY");
-  return value;
+  return configuredPublishableKey();
 }
 
 function allowedOrigin(request: Request): string | null {
@@ -157,21 +156,25 @@ async function authenticatedUserId(request: Request): Promise<string | null> {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return null;
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), IDENTITY_TIMEOUT_MS);
   const client = createClient(supabaseUrl(), publicKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: authorization } },
+    global: {
+      headers: { Authorization: authorization },
+      fetch: (input, init = {}) => fetch(input, { ...init, signal: controller.signal }),
+    },
   });
 
-  // Identity resolution happens before the database policy timeout applies, so it
-  // needs its own bound or a slow auth response holds the isolate open past the
-  // caller's timeout. Treating a slow response as anonymous is safe: the only
-  // authentication-required service rejects a null viewer outright.
-  const resolved = await withBoundedTimeout(
-    client.auth.getUser().then(({ data, error }) => (error || !data.user ? null : data.user.id)),
-    IDENTITY_TIMEOUT_MS,
-    null,
-  );
-  return resolved;
+  try {
+    const { data, error } = await client.auth.getUser();
+    return error || !data.user ? null : data.user.id;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") return null;
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function rpcArguments(
@@ -202,14 +205,20 @@ async function executeWithTimeout(
   args: Record<string, unknown>,
   timeoutMs: number,
 ): Promise<{ data: unknown; error: unknown; timedOut: boolean }> {
-  let timeoutHandle: number | undefined;
-  const timeout = new Promise<{ data: null; error: null; timedOut: true }>((resolve) => {
-    timeoutHandle = setTimeout(() => resolve({ data: null, error: null, timedOut: true }), timeoutMs);
-  });
-  const query = client.rpc(rpc, args).then(({ data, error }) => ({ data, error, timedOut: false as const }));
-  const result = await Promise.race([query, timeout]);
-  if (timeoutHandle !== undefined) clearTimeout(timeoutHandle);
-  return result;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const { data, error } = await client.rpc(rpc, args).abortSignal(controller.signal);
+    return { data, error, timedOut: false };
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return { data: null, error: null, timedOut: true };
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function runtimePolicy(client: SupabaseClient, service: RecommendationServiceName): Promise<RuntimePolicy> {
@@ -327,26 +336,32 @@ function circuitOpen(service: RecommendationServiceName, policy: RuntimePolicy |
   return Boolean(state && state.openUntil > Date.now());
 }
 
-function recordSuccess(service: RecommendationServiceName, client?: SupabaseClient): void {
+async function recordSuccess(service: RecommendationServiceName, client?: SupabaseClient): Promise<void> {
   circuitStates.set(service, { consecutiveFailures: 0, openUntil: 0 });
-  persistOutcome(service, true, client);
+  await persistOutcome(service, true, client);
 }
 
-function recordFailure(service: RecommendationServiceName, client?: SupabaseClient): void {
+async function recordFailure(service: RecommendationServiceName, client?: SupabaseClient): Promise<void> {
   const current = circuitStates.get(service) ?? { consecutiveFailures: 0, openUntil: 0 };
   const failures = current.consecutiveFailures + 1;
   circuitStates.set(service, {
     consecutiveFailures: failures,
     openUntil: failures >= FAILURE_THRESHOLD ? Date.now() + CIRCUIT_OPEN_MS : 0,
   });
-  persistOutcome(service, false, client);
+  await persistOutcome(service, false, client);
 }
 
-// Deliberately not awaited. Breaker bookkeeping must never add latency to, or fail,
-// the response the viewer is waiting for.
-function persistOutcome(service: RecommendationServiceName, succeeded: boolean, client?: SupabaseClient): void {
+type EdgeRuntimeLike = {
+  waitUntil?: (promise: Promise<unknown>) => void;
+};
+
+function edgeRuntime(): EdgeRuntimeLike | null {
+  return (globalThis as typeof globalThis & { EdgeRuntime?: EdgeRuntimeLike }).EdgeRuntime ?? null;
+}
+
+async function persistOutcome(service: RecommendationServiceName, succeeded: boolean, client?: SupabaseClient): Promise<void> {
   if (!client) return;
-  void client
+  const persistence = client
     .rpc("record_recommendation_service_outcome_v1", {
       p_service_name: service,
       p_succeeded: succeeded,
@@ -354,6 +369,13 @@ function persistOutcome(service: RecommendationServiceName, succeeded: boolean, 
       p_open_seconds: Math.round(CIRCUIT_OPEN_MS / 1000),
     })
     .then(() => undefined, () => undefined);
+
+  const runtime = edgeRuntime();
+  if (runtime?.waitUntil) {
+    runtime.waitUntil(Promise.resolve(persistence));
+    return;
+  }
+  await persistence;
 }
 
 /**
@@ -493,15 +515,15 @@ export function serveRecommendationService(service: RecommendationServiceName): 
 
       const result = await executeWithTimeout(adminClient, config.rpc, rpcArguments(service, body, viewerId), policy.timeoutMs);
       if (result.timedOut) {
-        recordFailure(service, adminClient);
+        await recordFailure(service, adminClient);
         return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "timeout", cached), "private, max-age=0");
       }
       if (result.error || !validPayload(result.data, service, policy.contractVersion)) {
-        recordFailure(service, adminClient);
+        await recordFailure(service, adminClient);
         return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "invalid_or_unavailable_response", cached));
       }
 
-      recordSuccess(service, adminClient);
+      await recordSuccess(service, adminClient);
       const payload = result.data;
       if (key && payload.degraded === false) {
         try {
@@ -518,7 +540,7 @@ export function serveRecommendationService(service: RecommendationServiceName): 
         viewerCacheControl(viewerId),
       );
     } catch (error) {
-      recordFailure(service);
+      await recordFailure(service);
       console.error("recommendation service unavailable", { correlationId, service, error });
       return json(request, 200, degradedPayload(service, policy?.contractVersion ?? 1, correlationId, "service_unavailable", cached));
     }

@@ -34,6 +34,16 @@ test('edge service validates bounded public input and fails softly', () => {
   assert.match(edge, /invalid_journey_stage/);
   assert.match(edge, /return json\(request, 200, degraded/);
   assert.match(edge, /subjectListingId/);
+  assert.match(edge, /\.abortSignal\(controller\.signal\)/);
+  assert.doesNotMatch(edge, /\}, \{ signal: controller\.signal \}/);
+});
+
+test('contextual browser CORS accepts Supabase client headers and opaque publishable keys', async () => {
+  const config = await readFile('supabase/config.toml', 'utf8');
+  assert.match(edge, /authorization, apikey, content-type, x-client-info/);
+  assert.match(edge, /Access-Control-Allow-Methods": "POST, OPTIONS"/);
+  assert.match(edge, /Vary": "Origin"/);
+  assert.match(config, /\[functions\.contextual-ecosystem\][\s\S]*?verify_jwt = false/);
 });
 
 test('frontend adapter never throws into listing delivery', () => {

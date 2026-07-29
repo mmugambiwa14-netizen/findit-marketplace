@@ -472,24 +472,26 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.similar-listings]
-# Public recommendation service invoked via supabase.functions.invoke(), which
-# always attaches a valid anon or session JWT even for anonymous browsing.
-verify_jwt = true
+# Public recommendation service invoked by browsers with an sb_publishable_* key.
+# New publishable keys are opaque credentials, not Supabase JWTs, so gateway JWT
+# verification must stay off. The function still enforces origin, method, body,
+# policy, budget and service-specific authentication boundaries itself.
+verify_jwt = false
 
 [functions.seller-recommendations]
-verify_jwt = true
+verify_jwt = false
 
 [functions.related-services]
-verify_jwt = true
+verify_jwt = false
 
 [functions.related-products]
-verify_jwt = true
+verify_jwt = false
 
 [functions.nearby-listings]
-verify_jwt = true
+verify_jwt = false
 
 [functions.recently-listed]
-verify_jwt = true
+verify_jwt = false
 
 [functions.personalized-recommendations]
 # The function itself enforces authentication (401 without a signed-in user);
@@ -497,8 +499,11 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.contextual-ecosystem]
-# Public contextual orchestration service invoked via supabase.functions.invoke().
-verify_jwt = true
+# Public contextual orchestration service invoked by browsers with an opaque
+# publishable key. It is intentionally anonymous and fail-soft; keep gateway JWT
+# verification off so browser preflight and anonymous calls can reach the
+# function-level boundary checks.
+verify_jwt = false
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"

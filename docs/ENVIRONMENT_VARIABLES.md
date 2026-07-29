@@ -43,6 +43,9 @@ Never commit real values. Only `VITE_` variables may enter browser builds.
 | `FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET` | Scheduler bearer for saved-listing notification fan-out | Worker enabled | Yes |
 | `FINDIT_RECOMMENDATION_WORKERS_ENABLED` | Enables recommendation partition, aggregate and retention maintenance | Recommendation maintenance enabled | No |
 | `FINDIT_RECOMMENDATION_WORKER_SECRET` | Dedicated scheduler bearer for recommendation maintenance | Worker enabled | Yes |
+| `FINDIT_REQUEST_BUDGET_SALT` | Salt for opaque recommendation request-budget caller digests | Hosted recommendation services | Yes |
+| `FINDIT_RECOMMENDATION_HEALTH_SECRET` | Dedicated bearer for recommendation service health endpoint | Hosted recommendation health checks | Yes |
+| `FINDIT_CONTEXTUAL_HEALTH_SECRET` | Dedicated bearer for contextual ecosystem health endpoint | Hosted contextual health checks | Yes |
 | `TOURS_BACKEND_ENABLED` | Server-side Tour kill switch | Tours environments | No |
 | `FINDIT_TOURS_RELEASE_ACCEPTED` | Explicit production acceptance gate | Production Tours | No |
 | `FINDIT_TOURS_ACCEPTANCE_ID` | Named staging acceptance record | Accepted production Tours | No |
@@ -73,6 +76,9 @@ Recommendation maintenance is intentionally independent from listing delivery. T
 | `FINDIT_MAILPIT_URL` | Local Auth email test endpoint |
 | `FINDIT_EXPECT_GOOGLE_OAUTH` | Expected hosted Google provider status for `verify:oauth-providers` |
 | `FINDIT_EXPECT_APPLE_OAUTH` | Expected hosted Apple provider status for `verify:oauth-providers` |
+| `FINDIT_RECOMMENDATION_SMOKE_URL` | Explicit Supabase project URL for recommendation hosted smoke |
+| `FINDIT_RECOMMENDATION_SMOKE_ORIGIN` | Browser origin expected in recommendation CORS checks |
+| `FINDIT_RECOMMENDATION_SMOKE_LISTING_ID` | Published listing id used for hosted recommendation and contextual smoke |
 
 Google and Apple OAuth secrets are server/provider credentials and never use a
 `VITE_` prefix. For local-only Auth containers the documented variables are

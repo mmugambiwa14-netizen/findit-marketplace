@@ -72,7 +72,7 @@ export async function withBoundedTimeout<T>(
   timeoutMs: number,
   fallback: T,
 ): Promise<T> {
-  let timeoutHandle: number | undefined;
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<T>((resolve) => {
     timeoutHandle = setTimeout(() => resolve(fallback), timeoutMs);
   });

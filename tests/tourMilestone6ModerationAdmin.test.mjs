@@ -65,7 +65,9 @@ test('Tour reports have explicit durable target identity and preserve parent con
 });
 
 test('generic report decisions can never delete a Tour parent listing', () => {
-  const tourBranch = migration.match(/if target_type = 'tour' then[\s\S]*?return after_row;\n    end if;/)?.[0] || '';
+  const tourBranch = migration
+    .replace(/\r\n/g, '\n')
+    .match(/if target_type = 'tour' then[\s\S]*?return after_row;\n    end if;/)?.[0] || '';
   assert.match(tourBranch, /admin_reject_tour\(target_tour/);
   assert.match(tourBranch, /admin_approve_tour\(target_tour/);
   assert.doesNotMatch(tourBranch, /delete from public\.listings|delete from public\.services/);

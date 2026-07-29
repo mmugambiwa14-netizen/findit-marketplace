@@ -35,7 +35,7 @@ test('service contracts are cursor-only, versioned and reason-code based', () =>
 });
 
 test('runtime degrades safely and isolates repeated service failures', () => {
-  assert.match(runtime, /Promise\.race/);
+  assert.match(runtime, /\.abortSignal\(controller\.signal\)/);
   assert.match(runtime, /"timeout"/);
   assert.match(runtime, /"service_unavailable"/);
   assert.match(runtime, /FAILURE_THRESHOLD = 3/);
@@ -140,8 +140,9 @@ test('the circuit breaker survives isolate recycling and abuse controls are boun
   assert.match(runtime, /if \(policy\?\.circuitOpen\) return true;/);
 
   // Breaker bookkeeping must never add latency to the viewer's response.
-  assert.match(runtime, /function persistOutcome/);
-  assert.match(runtime, /void client$/m);
+  assert.match(runtime, /function edgeRuntime/);
+  assert.match(runtime, /runtime\.waitUntil\(Promise\.resolve\(persistence\)\)/);
+  assert.match(runtime, /await persistence/);
 
   // The budget stores an opaque salted digest, never an address.
   assert.match(runtime, /FINDIT_REQUEST_BUDGET_SALT/);
@@ -160,5 +161,12 @@ test('the shared cache key space is bounded by a closed set of page sizes', () =
 
 test('identity resolution cannot outlive its own budget', () => {
   assert.match(runtime, /IDENTITY_TIMEOUT_MS = 1000/);
-  assert.match(runtime, /withBoundedTimeout\(/);
+  assert.match(runtime, /fetch\(input, \{ \.\.\.init, signal: controller\.signal \}\)/);
+  assert.match(runtime, /AbortError/);
+});
+
+test('runtime accepts Supabase publishable key formats through the shared resolver', () => {
+  assert.match(runtime, /configuredPublishableKey/);
+  assert.doesNotMatch(runtime, /Missing SUPABASE_ANON_KEY/);
+  assert.match(runtime, /authorization, apikey, content-type/);
 });

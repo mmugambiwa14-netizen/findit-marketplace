@@ -9,8 +9,8 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Head at handoff | `06617e35bc69bb4e2d119e432b8e2b352860e4c3` |
-| Previous heads | `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
+| Head at handoff | this commit, after `9fa6711c71e19f56f51efb6b18056dbaf8404abb` |
+| Previous heads | `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
 | SQL boundary | migration `0068`, 68 migrations and 39 rollback capsules |
 | CI on head | all four required checks pass |
 
@@ -26,17 +26,42 @@ gh pr checks 1
 Do not create a replacement branch, a replacement PR, a new repository, or a
 parallel implementation. Do not merge PR #1.
 
-There is an unrelated folder on this machine at
-`Downloads/FindIt-Extensive-Product-Audit-Remediated-v2-2026-07-27/`. It is a
-stale extracted archive with no git history and migrations only to `0045`. It is
-not this project's working tree. The working clone is
-`Downloads/findit-marketplace-work/`.
+The main checkout at
+`C:\Users\mmuga\OneDrive\Desktop\FindIt-Extensive-Product-Audit-Remediated-v2-2026-07-27`
+contains intentional uncommitted branding changes. Do not reset, clean, stash or
+switch that worktree. Feature edits in this continuation were made in the
+separate worktree `C:\tmp\findit-listing-intel-review-9fa6711`.
 
 ## 2. What changed in this session
 
-Three commits. `8e2cd94` fixed the runtime-reachability defects, `7737924` added
-this document, and `06617e3` completed Phase 3 and closed four hardening
-findings. All four CI checks pass on `06617e3`.
+Earlier commits: `8e2cd94` fixed the runtime-reachability defects, `7737924`
+added this document, `06617e3` completed Phase 3 and closed four hardening
+findings, and `9fa6711` refreshed the handoff. All four checks passed on
+`9fa6711`.
+
+This continuation resolves the publishable-key gateway blocker and local release
+gate gaps:
+
+- Public recommendation functions and `contextual-ecosystem` now use
+  `verify_jwt = false` so browsers using opaque `sb_publishable_*` keys can
+  reach the function-level public boundary.
+- `personalized-recommendations` remains `verify_jwt = true`.
+- Recommendation identity and service RPC timeouts now abort underlying
+  fetch/PostgREST work instead of only racing the caller.
+- Contextual orchestration uses PostgREST `.abortSignal(...)` and CORS now
+  allows `authorization`, `apikey`, `content-type`, and `x-client-info`.
+- Recommendation runtime publishable-key lookup reuses
+  `configuredPublishableKey()`, including `SUPABASE_PUBLISHABLE_KEY`,
+  `SUPABASE_PUBLISHABLE_KEYS`, and legacy `SUPABASE_ANON_KEY`.
+- Circuit-breaker persistence is registered with `EdgeRuntime.waitUntil` when
+  available and awaited in non-Edge runtimes.
+- CI now typechecks every Supabase Edge Function with Deno through
+  `npm run typecheck:edge-functions`.
+- The hosted recommendation smoke harness now checks browser-style preflight,
+  Supabase client transport, public services, contextual orchestration, and the
+  protected personalized boundary.
+- The Windows CRLF-only Tour moderation contract now normalizes line endings
+  before its branch extraction assertion.
 
 Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`.
 
@@ -146,11 +171,11 @@ so the function's own check is authoritative). Counts and timestamps only.
 
 | Finding | Resolution |
 |---|---|
-| O-3 per-isolate breaker | Durable `recommendation_service_circuit_state`, read on the same call that already fetches the policy so the hot path gains no round trip. The in-isolate map is kept as a fast local short-circuit. Outcomes are persisted without being awaited. |
+| O-3 per-isolate breaker | Durable `recommendation_service_circuit_state`, read on the same call that already fetches the policy so the hot path gains no additional round trip. The in-isolate map is kept as a fast local short-circuit. Outcomes are persisted through `EdgeRuntime.waitUntil` when available and awaited outside Edge. |
 | O-4 no abuse control | Windowed request budget keyed by an opaque salted digest (`FINDIT_REQUEST_BUDGET_SALT`). No address, header value or account identifier is stored. Consumed only when a request is about to reach the database, and **fails open**. |
 | O-4 cache-key amplification | Page sizes are a closed bucket set (6, 12, 24, 48, 100). The adapter requests a bucket value directly, so requested page, returned page and next cursor stay aligned. |
 | O-5 bypassable body guard | `readBoundedJson` in `_shared/request-guards.ts` bounds bytes actually buffered. Used by both runtimes. |
-| O-6 unbounded identity call | `withBoundedTimeout` caps `auth.getUser()` at 1000 ms. A slow response is treated as anonymous, which is safe because the one authentication-required service rejects a null viewer outright. |
+| O-6 unbounded identity call | `auth.getUser()` is made through an abortable fetch and capped at 1000 ms. A slow response is treated as anonymous, which is safe because the one authentication-required service rejects a null viewer outright. |
 
 **A required new secret.** `FINDIT_REQUEST_BUDGET_SALT` must be set before
 deployment or the request budget silently does nothing (`clientHash` returns
@@ -161,30 +186,33 @@ the new health endpoint, which refuses every request without it.
 
 ## 3. Verified state
 
-Executed locally against `06617e3` on Node 24 (CI runs Node 22):
+Executed locally in `C:\tmp\findit-listing-intel-review-9fa6711` on Node 24:
 
 | Gate | Result |
 |---|---|
 | `npm run lint` | pass |
 | `npm run typecheck` | pass |
-| `npm run test:contracts` | 307 of 308 pass |
+| `npm run test:contracts` | pass, 312/312 |
+| `npm run test:recommendation-contracts` | pass, 49/49 |
 | `npm run verify:sql-boundary` | pass, 68 migrations, 39 rollback capsules |
-| `npm run verify:hygiene` | pass, 642 files |
-| `npm run verify:source-graph` | pass, 358 modules, 0 unresolved |
+| `npm run verify:hygiene` | pass, 646 files |
+| `npm run verify:source-graph` | pass, 359 modules, 0 unresolved |
 | `npm run audit:product-surface` | pass, 0 failures, 1 warning |
-| `npm run build` (NODE_ENV=production) | pass, 535,080 B raw / 157,898 B gzip |
+| `npm run typecheck:edge-functions` | pass, Deno checked every file under `supabase/functions` |
+| `npm run audit:production` | pass, no reachable Moderate/High/Critical advisories |
+| `npm run build` (NODE_ENV=production) | pass, 534,644 B raw / 157,831 B gzip |
+
+`npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
 **CI on `06617e3`: all four required checks pass** — `verify`, `Frontend and
 source contracts`, `Database reset, RLS and recommendation certification`, and
 `Reset, lint and recommendation pgTAP`. This is what validates migrations `0067`
 and `0068` and the new pgTAP assertions, none of which could be run locally.
 
-The one failing contract test is
-`tests/tourMilestone6ModerationAdmin.test.mjs:67`. It is a **Windows-only local
-artifact**: `core.autocrlf=true` rewrites the file to CRLF on checkout, breaking
-a literal `\n` match. The committed blob is LF-only (`git show HEAD:<path>`
-confirms), and the test passes on Linux CI. Do not "fix" it by changing the
-committed file.
+The previous Windows-only contract failure in
+`tests/tourMilestone6ModerationAdmin.test.mjs` is fixed by normalizing line
+endings before the literal branch extraction.
 
 **Not verified locally:** anything needing Docker. `supabase start`, the full
 migration chain, `db lint`, and all pgTAP suites could not run — the Docker
@@ -194,18 +222,12 @@ before trusting any pgTAP or migration claim.**
 
 ## 4. Immediate next actions
 
-1. **Settle the `verify_jwt` question (O-1).** This is now the single blocker
-   with the widest downstream effect: it decides whether anonymous visitors can
-   reach the services at all, which in turn decides how Phase 4 designs the
-   public listing page. It cannot be answered by reading the repository. The
-   exact request is in section 5.
+1. **Configure required secrets before any hosted deployment.**
+   `FINDIT_REQUEST_BUDGET_SALT`, `FINDIT_RECOMMENDATION_HEALTH_SECRET`, and
+   `FINDIT_CONTEXTUAL_HEALTH_SECRET`. The budget salt fails open when unset, so
+   an unconfigured deployment looks identical to a working one.
 
-2. **Configure the two new secrets before any hosted deployment.**
-   `FINDIT_REQUEST_BUDGET_SALT` and `FINDIT_CONTEXTUAL_HEALTH_SECRET`. The
-   budget salt fails open when unset, so an unconfigured deployment looks
-   identical to a working one.
-
-3. **Enable and certify what is currently disabled.** All seven service policies
+2. **Enable and certify what is currently disabled.** All seven service policies
    ship `enabled = false`, and `contextual-ecosystem` is registered
    `enabled = false` in `supabase/config.toml`. With `0068` in place, a disabled
    service is correctly never proposed, which means **the contextual plan is
@@ -213,50 +235,20 @@ before trusting any pgTAP or migration claim.**
    a fault, but it also means Phase 3 cannot be hosted-certified until at least
    one service is enabled deliberately.
 
-4. **Then Phase 4**, and Phases 5 to 7 in the locked order.
+3. **Then Phase 4**, and Phases 5 to 7 in the locked order.
 
 ## 5. Open findings not fixed, in priority order
 
-### O-1 (High, needs a live check) — `verify_jwt = true` on the public services
+### O-1 closed - publishable-key gateway boundary
 
-`supabase/config.toml` sets `verify_jwt = true` for `similar-listings`,
+`supabase/config.toml` now sets `verify_jwt = false` for `similar-listings`,
 `seller-recommendations`, `related-services`, `related-products`,
-`nearby-listings`, `recently-listed` and `contextual-ecosystem`. The code in
-`recommendation-service.ts` declares all of these `authenticationRequired: false`,
-and they are meant to render on **public listing detail pages that anonymous
-visitors browse**.
-
-The config comment reasons that the browser client "always attaches a valid anon
-or session JWT even for anonymous browsing". That is true **only for legacy
-JWT-format anon keys**. This project's CI uses the new publishable format
-(`sb_publishable_...`), which is not a JWT. If the live project issues
-publishable keys to the browser, the gateway rejects every anonymous request
-before the function runs, and no anonymous visitor ever sees a recommendation.
-
-I did not change this blind, because if the project genuinely uses legacy JWT
-anon keys the current setting is correct and strictly more secure.
-
-**Resolve it empirically, not by reading code:**
-
-```
-curl -i -X POST "https://<ref>.supabase.co/functions/v1/similar-listings" \
-  -H "apikey: <the exact key the browser build ships>" \
-  -H "Authorization: Bearer <the same key>" \
-  -H "Content-Type: application/json" \
-  -H "Origin: <an allowed origin>" \
-  -d '{"subjectListingId":"<a real published listing id>","cursor":null,"limit":12}'
-```
-
-- HTTP 200 with a payload: the current config is fine, record the evidence.
-- HTTP 401 from the gateway: set `verify_jwt = false` for the six public
-  services **and** `contextual-ecosystem`, and update
-  `tests/recommendationServiceDeploymentContracts.test.mjs:23`, which currently
-  asserts `verify_jwt = true` for exactly that list. Leave
-  `personalized-recommendations` at `verify_jwt = true`; it is genuinely
-  authenticated-only and already returns its own 401 when `viewerId` is null.
-
-Also note this request is the fastest end-to-end confirmation that Defect 1 and
-Defect 2 are actually fixed against the hosted project.
+`nearby-listings`, `recently-listed`, and `contextual-ecosystem`. These public
+browser endpoints are protected by function-level origin, method, body, policy,
+budget, and service-specific authentication checks rather than by Supabase
+gateway JWT verification, because the browser key is expected to be an opaque
+`sb_publishable_*` credential. `personalized-recommendations` remains
+`verify_jwt = true`.
 
 ### O-2 (Medium) — `contextual-ecosystem` is `enabled = false`
 
@@ -273,9 +265,7 @@ section 2.3 for what each resolution does. Two things to carry forward rather
 than assume settled:
 
 - The durable breaker is only meaningful if `record_recommendation_service_outcome_v1`
-  is actually reached. It is called without `await` so it cannot add latency,
-  which also means a failure to persist is silent by design. Phase 7 should
-  certify the breaker by driving real failures and reading
+  is actually reached. Phase 7 should certify the breaker by driving real failures and reading
   `recommendation_service_circuit_state`, not by reading the code.
 - The request budget **fails open in three separate ways**: no salt configured,
   a malformed client hash, or any internal error. That is deliberate — an abuse
