@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: migration-gates-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   frontend:
     name: Frontend and source contracts
@@ -62,3 +66,36 @@ jobs:
 
       - name: Build and scan generated output
         run: npm run build
+
+  database:
+    name: Database reset, RLS and scale certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Start a clean Supabase stack and apply all migrations
+        run: npx --yes supabase@2.84.2 start
+
+      - name: Lint database schema
+        run: npx --yes supabase@2.84.2 db lint --local --level error
+
+      - name: Run recommendation RLS and lifecycle matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
+
+      - name: Run fail-open projection queue matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_projection_queue.sql --local
+
+      - name: Run recommendation query-plan and cursor scale suite
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
+
+      - name: Stop local Supabase stack
+        if: always()
+        run: npx --yes supabase@2.84.2 stop --no-backup
