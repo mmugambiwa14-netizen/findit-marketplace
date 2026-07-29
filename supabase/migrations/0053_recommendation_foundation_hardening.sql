@@ -102,9 +102,9 @@ set search_path = public
 as $$
 declare
   actor uuid := auth.uid();
-  event_name text := lower(trim(coalesce(p_event_type, ''));
+  event_name text := lower(trim(coalesce(p_event_type, '')));
   service_name text := public.normalize_recommendation_key(p_recommendation_service);
-  reason text := upper(trim(coalesce(p_reason_code, ''));
+  reason text := upper(trim(coalesce(p_reason_code, '')));
   safe_context jsonb := coalesce(p_context, '{}'::jsonb);
   event_id uuid := gen_random_uuid();
   event_time timestamptz := now();
