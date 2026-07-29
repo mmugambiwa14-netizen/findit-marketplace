@@ -7,7 +7,7 @@ dependency.
 
 ## Run locally
 
-Prerequisites: Node.js 20+, npm, Docker Desktop and Supabase CLI 2.109+.
+Prerequisites: Node.js 24, npm, Docker Desktop and Supabase CLI 2.109+.
 
 ```powershell
 npm ci --ignore-scripts

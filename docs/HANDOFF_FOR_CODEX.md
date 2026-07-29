@@ -9,10 +9,10 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Head at handoff | this commit, after `9fa6711c71e19f56f51efb6b18056dbaf8404abb` |
-| Previous heads | `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
+| Head at handoff | `5e24accc4e53397a932c20b4fcf76514a510f958` before this handoff refresh |
+| Previous heads | `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
 | SQL boundary | migration `0068`, 68 migrations and 39 rollback capsules |
-| CI on head | all four required checks pass |
+| CI on head | inspect PR #1; do not rely on this document for current check state |
 
 Confirm the real head before doing anything:
 
@@ -30,7 +30,7 @@ The main checkout at
 `C:\Users\mmuga\OneDrive\Desktop\FindIt-Extensive-Product-Audit-Remediated-v2-2026-07-27`
 contains intentional uncommitted branding changes. Do not reset, clean, stash or
 switch that worktree. Feature edits in this continuation were made in the
-separate worktree `C:\tmp\findit-listing-intel-review-9fa6711`.
+separate worktree `C:\tmp\findit-listing-intel-work`.
 
 ## 2. What changed in this session
 
@@ -186,7 +186,7 @@ the new health endpoint, which refuses every request without it.
 
 ## 3. Verified state
 
-Executed locally in `C:\tmp\findit-listing-intel-review-9fa6711` on Node 24:
+Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 
 | Gate | Result |
 |---|---|
@@ -205,20 +205,19 @@ Executed locally in `C:\tmp\findit-listing-intel-review-9fa6711` on Node 24:
 `npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
-**CI on `06617e3`: all four required checks pass** — `verify`, `Frontend and
-source contracts`, `Database reset, RLS and recommendation certification`, and
-`Reset, lint and recommendation pgTAP`. This is what validates migrations `0067`
-and `0068` and the new pgTAP assertions, none of which could be run locally.
+**CI on `5e24acc`: inspect PR #1 before relying on this line.** Earlier checks
+were green on `9fa6711` and the branch has since added the public Edge boundary
+fix. Treat the PR check output, not this document, as the source of truth.
 
 The previous Windows-only contract failure in
 `tests/tourMilestone6ModerationAdmin.test.mjs` is fixed by normalizing line
 endings before the literal branch extraction.
 
-**Not verified locally:** anything needing Docker. `supabase start`, the full
-migration chain, `db lint`, and all pgTAP suites could not run — the Docker
-daemon is unreachable in this environment. Those run in CI only. **CI results
-for `8e2cd94` were still in flight when this document was written — read them
-before trusting any pgTAP or migration claim.**
+**Not verified locally in that earlier session:** anything needing Docker.
+`supabase start`, the full migration chain, `db lint`, and all pgTAP suites
+could not run because the Docker daemon was unreachable in that environment.
+Those run in CI only; read the current PR check output before trusting any pgTAP
+or migration claim.
 
 ## 4. Immediate next actions
 
@@ -228,12 +227,11 @@ before trusting any pgTAP or migration claim.**
    an unconfigured deployment looks identical to a working one.
 
 2. **Enable and certify what is currently disabled.** All seven service policies
-   ship `enabled = false`, and `contextual-ecosystem` is registered
-   `enabled = false` in `supabase/config.toml`. With `0068` in place, a disabled
-   service is correctly never proposed, which means **the contextual plan is
-   empty until services are explicitly enabled**. That is intended behaviour, not
-   a fault, but it also means Phase 3 cannot be hosted-certified until at least
-   one service is enabled deliberately.
+   ship `enabled = false`. With `0068` in place, a disabled service is correctly
+   never proposed, which means **the contextual plan is empty until services are
+   explicitly enabled**. That is intended behaviour, not a fault, but it also
+   means Phase 3 cannot be hosted-certified until at least one service is enabled
+   deliberately.
 
 3. **Then Phase 4**, and Phases 5 to 7 in the locked order.
 
@@ -250,13 +248,12 @@ gateway JWT verification, because the browser key is expected to be an opaque
 `sb_publishable_*` credential. `personalized-recommendations` remains
 `verify_jwt = true`.
 
-### O-2 (Medium) — `contextual-ecosystem` is `enabled = false`
+### O-2 (Medium) - hosted Phase 3 is not certified
 
-`supabase/config.toml` disables the function, so it is never deployed. That is
-consistent with the rule that service policies stay disabled until explicitly
-certified, but **Phase 3 cannot be certified while it is off**. Plan a
-deliberate enable-and-certify step, with hosted evidence, before claiming Phase
-3 complete.
+`contextual-ecosystem` is present in `supabase/config.toml` with
+`verify_jwt = false`, but no hosted end-to-end recommendation/contextual call has
+passed on the visible Supabase projects. Plan a deliberate deploy-and-certify
+step, with hosted evidence, before claiming Phase 3 complete.
 
 ### O-3 to O-6 — closed in `06617e3`
 
@@ -330,9 +327,12 @@ From the project instructions and from defects already paid for once:
 
 ## 7. Environment notes
 
-- The live dev/staging Supabase project is `mfapduvnlcmmevrqjbis` (eu-west-2,
-  Postgres 17.6). The project ref is not in the repository; there is no `.env`
-  on disk, only `.env.example`.
+- The visible Supabase projects in the authenticated organization
+  `pyktbmobvwktiuiqbobd` are `FindIt Staging`
+  (`bwgklpxoetrrkutottdb`, eu-west-2) and `FindIt Marketplace`
+  (`jvbpxnfxkptuexgssplj`, eu-west-2). The older project
+  `mfapduvnlcmmevrqjbis` is not visible in the current account and must not be
+  used as a deployment target.
 - The founder-admin lock in `0030` binds admin to a SHA-256 of a normalized
   email, and the hash matches the repository owner's address. Signing up with
   that address auto-grants admin and super_admin.
@@ -340,9 +340,7 @@ From the project instructions and from defects already paid for once:
   `apply_migration`: `0029` ships an explicit `begin`/`commit` (strip it, the
   tool already wraps in a transaction), and `0020`'s `alter type ... add value`
   must stay in its own migration.
-- CI pins Node 22. Local Node here is 24, which strips TypeScript natively; do
-  not rely on that. Any test that imports a `.ts` file at runtime must work on
-  the pinned CI version.
+- CI pins Node 24. Local Node here is 24, matching the current workflows.
 - `core.autocrlf=true` on this machine causes literal `\n` assertions to fail
   locally against LF-committed files. Verify with `git show HEAD:<path>` before
   concluding a test is genuinely broken.
