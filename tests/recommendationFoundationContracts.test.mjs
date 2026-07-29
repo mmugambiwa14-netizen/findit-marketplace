@@ -162,5 +162,5 @@ test('every Phase 1 migration has a non-destructive rollback and the boundary is
     assert.doesNotMatch(rollback, /\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i);
     assert.match(rollback, /revoke|force row level security/i);
   }
-  assert.match(sqlBoundary, /0075_tour_processing_claim_output_qualification\.sql/);
+  assert.match(sqlBoundary, /0076_tour_cleanup_claim_output_disambiguation\.sql/);
 });
