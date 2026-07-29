@@ -102,6 +102,9 @@ jobs:
       - name: Run independent recommendation service matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_services.sql --local
 
+      - name: Run service operations and audit matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_service_operations.sql --local
+
       - name: Run recommendation query-plan and cursor scale suite
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
 
