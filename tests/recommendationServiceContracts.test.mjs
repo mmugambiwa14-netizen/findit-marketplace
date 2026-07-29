@@ -70,7 +70,11 @@ test('personalization requires an authenticated user and direct dispatcher acces
 });
 
 test('HTTP boundaries enforce payload, origin, cursor and page-size limits', () => {
-  assert.match(runtime, /contentLength > 4096/);
+  // The bound is enforced against bytes actually buffered, not against a
+  // content-length header a chunked request can simply omit.
+  assert.match(runtime, /MAXIMUM_REQUEST_BYTES = 4096/);
+  assert.match(runtime, /readBoundedJson\(request, MAXIMUM_REQUEST_BYTES\)/);
+  assert.match(runtime, /BODY_TOO_LARGE/);
   assert.match(runtime, /origin_not_allowed/);
   assert.match(runtime, /body\.cursor\.length > 1024/);
   assert.match(runtime, /boundedInteger\(body\.limit, 12, 1, 100\)/);
@@ -123,4 +127,38 @@ test('a null cursor is accepted as the first-page signal', async () => {
   const adapter = await readFile('src/services/recommendationServices.js', 'utf8');
   assert.match(adapter, /cursor: normalizedCursor/);
   assert.match(adapter, /if \(value == null\) return null;/);
+});
+
+test('the circuit breaker survives isolate recycling and abuse controls are bounded', async () => {
+  const durability = await readFile('supabase/migrations/0067_recommendation_abuse_and_circuit_durability.sql', 'utf8');
+
+  // Per-isolate memory alone reset on every cold start, so the breaker rarely
+  // engaged. Durable state arrives on the call that already fetches the policy.
+  assert.match(durability, /create table if not exists public\.recommendation_service_circuit_state/);
+  assert.match(runtime, /recommendation_service_runtime_state_v1/);
+  assert.match(runtime, /function circuitOpen\(service: RecommendationServiceName, policy: RuntimePolicy \| null\)/);
+  assert.match(runtime, /if \(policy\?\.circuitOpen\) return true;/);
+
+  // Breaker bookkeeping must never add latency to the viewer's response.
+  assert.match(runtime, /function persistOutcome/);
+  assert.match(runtime, /void client$/m);
+
+  // The budget stores an opaque salted digest, never an address.
+  assert.match(runtime, /FINDIT_REQUEST_BUDGET_SALT/);
+  assert.match(durability, /client_hash text not null check \(client_hash ~ '\^\[0-9a-f\]\{64\}\$'\)/);
+  assert.match(durability, /request_budget_stores_client_address', false/);
+
+  // An abuse control must never be the reason a listing page loses its sections.
+  assert.match(durability, /exception when others then\s*\n\s*return true;/);
+  assert.match(runtime, /request_budget_exhausted/);
+});
+
+test('the shared cache key space is bounded by a closed set of page sizes', () => {
+  assert.match(runtime, /LIMIT_BUCKETS = \[6, 12, 24, 48, 100\]/);
+  assert.match(runtime, /body\.limit = bucketedLimit\(/);
+});
+
+test('identity resolution cannot outlive its own budget', () => {
+  assert.match(runtime, /IDENTITY_TIMEOUT_MS = 1000/);
+  assert.match(runtime, /withBoundedTimeout\(/);
 });

@@ -4,6 +4,17 @@ const DEFAULT_TIMEOUT_MS = 1600;
 const MAX_PAGE_SIZE = 100;
 const MAX_CURSOR_LENGTH = 1024;
 
+// The services answer in a closed set of page sizes so the shared cache key space
+// stays bounded. Requesting a bucket value directly keeps the page the caller asked
+// for, the page the service returns, and the cursor that follows it all aligned; a
+// request for an in-between size would otherwise leave the skipped items
+// unreachable through the next cursor.
+const LIMIT_BUCKETS = Object.freeze([6, 12, 24, 48, 100]);
+
+function bucketedLimit(limit) {
+  return LIMIT_BUCKETS.find((bucket) => limit <= bucket) ?? MAX_PAGE_SIZE;
+}
+
 const SERVICE_ENDPOINTS = Object.freeze({
   similar_listings_service: 'similar-listings',
   seller_recommendations_service: 'seller-recommendations',
@@ -136,11 +147,12 @@ async function fetchRecommendationService(service, {
   if (subjectRequired && !validUuid(subjectListingId)) return emptyResult(service, 'invalid_subject');
 
   const normalizedCursor = normalizeCursor(cursor);
-  const normalizedLimit = boundedInteger(limit, 12, 1, MAX_PAGE_SIZE);
+  const requestedLimit = boundedInteger(limit, 12, 1, MAX_PAGE_SIZE);
   const normalizedTimeout = boundedInteger(timeoutMs, DEFAULT_TIMEOUT_MS, 250, 5000);
-  if (normalizedCursor === undefined || normalizedLimit === null || normalizedTimeout === null) {
+  if (normalizedCursor === undefined || requestedLimit === null || normalizedTimeout === null) {
     return emptyResult(service, 'invalid_request');
   }
+  const normalizedLimit = bucketedLimit(requestedLimit);
 
   const body = {
     ...(subjectRequired ? { subjectListingId } : {}),

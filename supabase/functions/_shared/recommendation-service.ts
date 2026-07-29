@@ -1,4 +1,8 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.110.7";
+import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson, withBoundedTimeout } from "./request-guards.ts";
+
+const MAXIMUM_REQUEST_BYTES = 4096;
+const IDENTITY_TIMEOUT_MS = 1000;
 
 export type RecommendationServiceName =
   | "similar_listings_service"
@@ -31,6 +35,9 @@ interface RuntimePolicy {
   cacheFreshSeconds: number;
   cacheStaleSeconds: number;
   maximumPageSize: number;
+  circuitOpen: boolean;
+  requestBudgetPerWindow: number;
+  requestBudgetWindowSeconds: number;
 }
 
 interface CachedRecommendation {
@@ -131,6 +138,14 @@ function validUuid(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+// A closed set of page sizes keeps the shared cache key space small and bounded.
+// Rounding up never returns fewer items than were asked for.
+const LIMIT_BUCKETS = [6, 12, 24, 48, 100] as const;
+
+function bucketedLimit(limit: number): number {
+  return LIMIT_BUCKETS.find((bucket) => limit <= bucket) ?? LIMIT_BUCKETS[LIMIT_BUCKETS.length - 1];
+}
+
 function boundedInteger(value: unknown, fallback: number, minimum: number, maximum: number): number | null {
   const resolved = value === undefined ? fallback : value;
   if (typeof resolved !== "number" || !Number.isInteger(resolved)) return null;
@@ -146,9 +161,17 @@ async function authenticatedUserId(request: Request): Promise<string | null> {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: authorization } },
   });
-  const { data, error } = await client.auth.getUser();
-  if (error || !data.user) return null;
-  return data.user.id;
+
+  // Identity resolution happens before the database policy timeout applies, so it
+  // needs its own bound or a slow auth response holds the isolate open past the
+  // caller's timeout. Treating a slow response as anonymous is safe: the only
+  // authentication-required service rejects a null viewer outright.
+  const resolved = await withBoundedTimeout(
+    client.auth.getUser().then(({ data, error }) => (error || !data.user ? null : data.user.id)),
+    IDENTITY_TIMEOUT_MS,
+    null,
+  );
+  return resolved;
 }
 
 function rpcArguments(
@@ -190,7 +213,9 @@ async function executeWithTimeout(
 }
 
 async function runtimePolicy(client: SupabaseClient, service: RecommendationServiceName): Promise<RuntimePolicy> {
-  const { data, error } = await client.rpc("get_recommendation_service_policy_v1", { p_service_name: service });
+  // Policy and durable circuit state arrive together, so enforcing the breaker
+  // across isolates costs no additional round trip.
+  const { data, error } = await client.rpc("recommendation_service_runtime_state_v1", { p_service_name: service });
   if (error || !data || typeof data !== "object") throw new Error("recommendation policy unavailable");
 
   const value = data as Record<string, unknown>;
@@ -202,6 +227,9 @@ async function runtimePolicy(client: SupabaseClient, service: RecommendationServ
     cacheFreshSeconds: Number(value.cacheFreshSeconds),
     cacheStaleSeconds: Number(value.cacheStaleSeconds),
     maximumPageSize: Number(value.maximumPageSize),
+    circuitOpen: value.circuitOpen === true,
+    requestBudgetPerWindow: Number(value.requestBudgetPerWindow),
+    requestBudgetWindowSeconds: Number(value.requestBudgetWindowSeconds),
   };
 
   if (
@@ -210,7 +238,9 @@ async function runtimePolicy(client: SupabaseClient, service: RecommendationServ
     !Number.isInteger(policy.timeoutMs) || policy.timeoutMs < 50 || policy.timeoutMs > 5000 ||
     !Number.isInteger(policy.cacheFreshSeconds) || policy.cacheFreshSeconds < 0 ||
     !Number.isInteger(policy.cacheStaleSeconds) || policy.cacheStaleSeconds < 1 ||
-    !Number.isInteger(policy.maximumPageSize) || policy.maximumPageSize < 1 || policy.maximumPageSize > 100
+    !Number.isInteger(policy.maximumPageSize) || policy.maximumPageSize < 1 || policy.maximumPageSize > 100 ||
+    !Number.isInteger(policy.requestBudgetPerWindow) || policy.requestBudgetPerWindow < 1 ||
+    !Number.isInteger(policy.requestBudgetWindowSeconds) || policy.requestBudgetWindowSeconds < 1
   ) {
     throw new Error("invalid recommendation policy");
   }
@@ -288,22 +318,54 @@ function validPayload(payload: unknown, service: RecommendationServiceName, cont
     typeof value.degraded === "boolean";
 }
 
-function circuitOpen(service: RecommendationServiceName): boolean {
+// The in-isolate map stays as a fast local short-circuit for a warm isolate. The
+// durable state carried on the policy read is what makes the breaker meaningful
+// across the many isolates an Edge Function actually runs in.
+function circuitOpen(service: RecommendationServiceName, policy: RuntimePolicy | null): boolean {
+  if (policy?.circuitOpen) return true;
   const state = circuitStates.get(service);
   return Boolean(state && state.openUntil > Date.now());
 }
 
-function recordSuccess(service: RecommendationServiceName): void {
+function recordSuccess(service: RecommendationServiceName, client?: SupabaseClient): void {
   circuitStates.set(service, { consecutiveFailures: 0, openUntil: 0 });
+  persistOutcome(service, true, client);
 }
 
-function recordFailure(service: RecommendationServiceName): void {
+function recordFailure(service: RecommendationServiceName, client?: SupabaseClient): void {
   const current = circuitStates.get(service) ?? { consecutiveFailures: 0, openUntil: 0 };
   const failures = current.consecutiveFailures + 1;
   circuitStates.set(service, {
     consecutiveFailures: failures,
     openUntil: failures >= FAILURE_THRESHOLD ? Date.now() + CIRCUIT_OPEN_MS : 0,
   });
+  persistOutcome(service, false, client);
+}
+
+// Deliberately not awaited. Breaker bookkeeping must never add latency to, or fail,
+// the response the viewer is waiting for.
+function persistOutcome(service: RecommendationServiceName, succeeded: boolean, client?: SupabaseClient): void {
+  if (!client) return;
+  void client
+    .rpc("record_recommendation_service_outcome_v1", {
+      p_service_name: service,
+      p_succeeded: succeeded,
+      p_failure_threshold: FAILURE_THRESHOLD,
+      p_open_seconds: Math.round(CIRCUIT_OPEN_MS / 1000),
+    })
+    .then(() => undefined, () => undefined);
+}
+
+/**
+ * Opaque, salted digest of the caller. No address is stored or logged; only this
+ * digest reaches the database, and it rotates whenever the salt is rotated.
+ */
+async function clientHash(request: Request): Promise<string | null> {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",", 1)[0]?.trim();
+  if (!forwarded) return null;
+  const salt = Deno.env.get("FINDIT_REQUEST_BUDGET_SALT") ?? "";
+  if (!salt) return null;
+  return await sha256(`${salt}:${forwarded}`);
 }
 
 function degradedPayload(
@@ -354,17 +416,16 @@ export function serveRecommendationService(service: RecommendationServiceName): 
     if (contentType !== "application/json") {
       return json(request, 415, { correlationId, code: "unsupported_media_type", message: "A JSON request is required." });
     }
-    const contentLength = Number(request.headers.get("content-length") ?? 0);
-    if (Number.isFinite(contentLength) && contentLength > 4096) {
+    // Bound what is actually buffered. A chunked request carries no content-length,
+    // so a header-only check can be bypassed entirely.
+    const parsed = await readBoundedJson(request, MAXIMUM_REQUEST_BYTES);
+    if (parsed === BODY_TOO_LARGE) {
       return json(request, 413, { correlationId, code: "payload_too_large", message: "The request is too large." });
     }
-
-    let body: RecommendationRequest;
-    try {
-      body = await request.json() as RecommendationRequest;
-    } catch {
+    if (parsed === BODY_INVALID || !parsed || typeof parsed !== "object") {
       return json(request, 400, { correlationId, code: "invalid_json", message: "The request could not be read." });
     }
+    const body = parsed as RecommendationRequest;
 
     if (config.subjectRequired && !validUuid(body.subjectListingId)) {
       return json(request, 400, { correlationId, code: "invalid_subject", message: "A valid listing is required." });
@@ -395,7 +456,9 @@ export function serveRecommendationService(service: RecommendationServiceName): 
         auth: { persistSession: false, autoRefreshToken: false },
       });
       policy = await runtimePolicy(adminClient, service);
-      body.limit = Math.min(requestedLimit, policy.maximumPageSize);
+      // Bucket the page size before it reaches the cache key, so a caller cannot
+      // mint unbounded distinct cache entries by varying the limit by one.
+      body.limit = bucketedLimit(Math.min(requestedLimit, policy.maximumPageSize));
 
       if (!policy.enabled) {
         return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "service_disabled"));
@@ -409,21 +472,36 @@ export function serveRecommendationService(service: RecommendationServiceName): 
         }
       }
 
-      if (circuitOpen(service)) {
+      if (circuitOpen(service, policy)) {
         return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "circuit_open", cached));
+      }
+
+      // Budget is consumed only once a request is about to reach the database, so
+      // cache hits and disabled services do not spend it.
+      const hash = await clientHash(request);
+      if (hash) {
+        const { data: withinBudget } = await adminClient.rpc("consume_recommendation_request_budget_v1", {
+          p_client_hash: hash,
+          p_service_name: service,
+          p_budget: policy.requestBudgetPerWindow,
+          p_window_seconds: policy.requestBudgetWindowSeconds,
+        });
+        if (withinBudget === false) {
+          return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "request_budget_exhausted", cached), "private, max-age=0");
+        }
       }
 
       const result = await executeWithTimeout(adminClient, config.rpc, rpcArguments(service, body, viewerId), policy.timeoutMs);
       if (result.timedOut) {
-        recordFailure(service);
+        recordFailure(service, adminClient);
         return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "timeout", cached), "private, max-age=0");
       }
       if (result.error || !validPayload(result.data, service, policy.contractVersion)) {
-        recordFailure(service);
+        recordFailure(service, adminClient);
         return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "invalid_or_unavailable_response", cached));
       }
 
-      recordSuccess(service);
+      recordSuccess(service, adminClient);
       const payload = result.data;
       if (key && payload.degraded === false) {
         try {

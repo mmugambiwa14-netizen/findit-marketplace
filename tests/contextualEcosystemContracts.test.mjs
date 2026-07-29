@@ -43,3 +43,59 @@ test('frontend adapter never throws into listing delivery', () => {
   assert.match(client, /AbortController/);
   assert.doesNotMatch(client, /throw new Error/);
 });
+
+test('Phase 3 selects on listing state, service availability and taxonomy precedence', async () => {
+  const completion = await readFile('supabase/migrations/0068_contextual_ecosystem_completion.sql', 'utf8');
+
+  // A disabled service can only answer empty, so it is never contextually relevant.
+  assert.match(completion, /join public\.recommendation_service_policies policy/);
+  assert.match(completion, /and policy\.enabled/);
+
+  // Listing-state gates test presence only; no coordinate, price or seller value
+  // leaves the orchestrator.
+  assert.match(completion, /subject_has_location/);
+  assert.match(completion, /subject_has_price/);
+  assert.match(completion, /subject_has_seller_inventory/);
+  assert.match(completion, /requires_location/);
+
+  // Specificity is explicit: subcategory beats category beats global, and every
+  // remaining tie is broken deterministically.
+  assert.match(completion, /when node\.node_type = 'subcategory'/);
+  assert.match(completion, /order by candidate\.service_name, candidate\.specificity, candidate\.rule_priority/);
+  assert.match(completion, /'precedence'/);
+
+  assert.match(completion, /'contractVersion', 2/);
+  assert.doesNotMatch(completion, /personalized_recommendation_service/);
+});
+
+test('contextual rule conditions are validated against a closed vocabulary', async () => {
+  const completion = await readFile('supabase/migrations/0068_contextual_ecosystem_completion.sql', 'utf8');
+  assert.match(completion, /contextual_condition_keys_v1/);
+  assert.match(completion, /contextual_conditions_valid_v1/);
+  assert.match(completion, /recommendation_context_rules_conditions_vocabulary/);
+});
+
+test('contextual health is internal, counts only, and never a browser API', async () => {
+  const completion = await readFile('supabase/migrations/0068_contextual_ecosystem_completion.sql', 'utf8');
+  const healthEdge = await readFile('supabase/functions/contextual-ecosystem-health/index.ts', 'utf8');
+  const config = await readFile('supabase/config.toml', 'utf8');
+
+  assert.match(completion, /contextual_ecosystem_health_v1/);
+  assert.match(completion, /revoke all on function public\.contextual_ecosystem_health_v1\(\) from public, anon, authenticated;/);
+
+  const healthBody = completion.slice(completion.indexOf('contextual_ecosystem_health_v1()'));
+  assert.doesNotMatch(healthBody.slice(0, healthBody.indexOf('$$;')), /seller_id|actor_id|email/);
+
+  assert.match(healthEdge, /FINDIT_CONTEXTUAL_HEALTH_SECRET/);
+  assert.match(healthEdge, /constantTimeEqual/);
+  assert.match(healthEdge, /"Cache-Control": "no-store"/);
+  assert.match(config, /\[functions\.contextual-ecosystem-health\][\s\S]*?verify_jwt = false/);
+});
+
+test('the contextual plan is only cached when it is complete', async () => {
+  assert.match(edge, /CACHEABLE_PLAN/);
+  assert.match(edge, /function headers\(request: Request, cacheControl: string = "no-store"\)/);
+  // A rejected request and a fail-soft empty plan must not be retained by a shared
+  // cache, or a transient outage outlives the recovery.
+  assert.match(edge, /return json\(request, 200, degraded\(correlationId, "service_unavailable", body\.subjectListingId\)\);/);
+});

@@ -1,7 +1,9 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
+import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson } from "../_shared/request-guards.ts";
 
 const JOURNEY_STAGES = new Set(["discover", "evaluate", "prepare", "transact", "own"]);
 const REQUEST_TIMEOUT_MS = 900;
+const MAXIMUM_REQUEST_BYTES = 2048;
 
 function configuredAdminKey(): string {
   const direct = Deno.env.get("SUPABASE_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -79,14 +81,14 @@ Deno.serve(async (request: Request) => {
   if (request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase() !== "application/json") {
     return json(request, 415, { code: "unsupported_media_type", correlationId });
   }
-  if (Number(request.headers.get("content-length") ?? 0) > 2048) return json(request, 413, { code: "payload_too_large", correlationId });
-
-  let body: { subjectListingId?: unknown; journeyStage?: unknown; maxSections?: unknown };
-  try {
-    body = await request.json();
-  } catch {
+  // Bound what is actually buffered rather than trusting a header a chunked
+  // request can omit.
+  const parsed = await readBoundedJson(request, MAXIMUM_REQUEST_BYTES);
+  if (parsed === BODY_TOO_LARGE) return json(request, 413, { code: "payload_too_large", correlationId });
+  if (parsed === BODY_INVALID || !parsed || typeof parsed !== "object") {
     return json(request, 400, { code: "invalid_json", correlationId });
   }
+  const body = parsed as { subjectListingId?: unknown; journeyStage?: unknown; maxSections?: unknown };
 
   if (!validUuid(body.subjectListingId)) return json(request, 400, { code: "invalid_subject", correlationId });
   if (body.journeyStage !== undefined && (typeof body.journeyStage !== "string" || !JOURNEY_STAGES.has(body.journeyStage))) {

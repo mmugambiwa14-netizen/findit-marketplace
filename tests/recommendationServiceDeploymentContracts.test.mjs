@@ -27,7 +27,11 @@ test('every browser-invoked recommendation function has a JWT-verifying deployme
 });
 
 test('internal recommendation worker and health endpoints stay off gateway JWT verification', () => {
-  for (const functionName of ['recommendation-maintenance', 'recommendation-service-health']) {
+  for (const functionName of [
+    'recommendation-maintenance',
+    'recommendation-service-health',
+    'contextual-ecosystem-health',
+  ]) {
     assert.match(
       config,
       new RegExp(`\\[functions\\.${functionName}\\][\\s\\S]*?verify_jwt = false`),

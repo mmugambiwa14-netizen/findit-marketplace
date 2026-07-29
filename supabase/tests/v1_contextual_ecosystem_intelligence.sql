@@ -1,5 +1,5 @@
 begin;
-select plan(21);
+select plan(42);
 
 select has_table('public', 'recommendation_contexts', 'context catalogue exists');
 select has_table('public', 'recommendation_context_rules', 'context rule table exists');
@@ -77,6 +77,101 @@ select ok(
   (select count(*) = count(distinct (context_id, coalesce(source_node_id, '00000000-0000-0000-0000-000000000000'::uuid), service_name, reason_code))
    from public.recommendation_context_rules),
   'global and taxonomy-scoped rule identities are unique'
+);
+
+-- Phase 3 completion: validated condition vocabulary, precedence, service
+-- availability awareness and operational health.
+
+select has_function('public', 'contextual_condition_keys_v1', 'closed condition vocabulary exists');
+select has_function('public', 'contextual_conditions_valid_v1', array['jsonb'], 'condition validator exists');
+select has_function('public', 'contextual_ecosystem_health_v1', 'contextual operational health exists');
+
+select ok(public.contextual_conditions_valid_v1('{}'::jsonb), 'an empty condition set is valid');
+select ok(
+  public.contextual_conditions_valid_v1('{"requires_location": true, "requires_price": false}'::jsonb),
+  'boolean state conditions are accepted'
+);
+select ok(
+  public.contextual_conditions_valid_v1('{"minimum_quality_score": 0.5}'::jsonb),
+  'an in-range quality threshold is accepted'
+);
+select ok(
+  public.contextual_conditions_valid_v1('{"listing_statuses": ["available", "under_offer"]}'::jsonb),
+  'known listing statuses are accepted'
+);
+select ok(
+  not public.contextual_conditions_valid_v1('{"unknown_condition": true}'::jsonb),
+  'an unknown condition key is rejected rather than silently ignored'
+);
+select ok(
+  not public.contextual_conditions_valid_v1('{"requires_location": "yes"}'::jsonb),
+  'a mistyped state condition is rejected'
+);
+select ok(
+  not public.contextual_conditions_valid_v1('{"minimum_quality_score": 2}'::jsonb),
+  'an out-of-range quality threshold is rejected'
+);
+select ok(
+  not public.contextual_conditions_valid_v1('{"listing_statuses": ["deleted"]}'::jsonb),
+  'an unpublishable listing status is rejected'
+);
+select ok(
+  not public.contextual_conditions_valid_v1('[]'::jsonb),
+  'a non-object condition set is rejected'
+);
+
+select ok(
+  exists (
+    select 1 from pg_constraint
+    where conname = 'recommendation_context_rules_conditions_vocabulary'
+      and conrelid = 'public.recommendation_context_rules'::regclass
+  ),
+  'the condition vocabulary is enforced by a table constraint'
+);
+
+select is(
+  (public.contextual_ecosystem_plan_v1(gen_random_uuid(), null, 6) ->> 'contractVersion'),
+  '2',
+  'the completed plan advertises contract version 2'
+);
+
+select is(
+  (public.contextual_ecosystem_health_v1() ->> 'contractVersion'),
+  '1',
+  'contextual health advertises its own contract version'
+);
+select ok(
+  public.contextual_ecosystem_health_v1() ? 'activeContexts'
+  and public.contextual_ecosystem_health_v1() ? 'activeRules'
+  and public.contextual_ecosystem_health_v1() ? 'rulesReferencingDisabledServices',
+  'contextual health reports operational counts'
+);
+select ok(
+  not (public.contextual_ecosystem_health_v1()::text ~* 'listing_id|seller_id|actor_id|email|viewer'),
+  'contextual health contains no customer or identity data'
+);
+select is(
+  (public.contextual_ecosystem_health_v1() ->> 'activeContexts'),
+  '5',
+  'contextual health counts the seeded active contexts'
+);
+
+-- Every seeded rule targets a service that is disabled by default, so a plan can
+-- never advertise a section whose service would refuse to answer.
+select is(
+  (public.contextual_ecosystem_health_v1() ->> 'rulesReferencingDisabledServices'),
+  '6',
+  'seeded rules are reported against their disabled services'
+);
+
+select ok(
+  not has_function_privilege('anon', 'public.contextual_ecosystem_health_v1()', 'EXECUTE')
+  and not has_function_privilege('authenticated', 'public.contextual_ecosystem_health_v1()', 'EXECUTE'),
+  'browser roles cannot read contextual operational health'
+);
+select ok(
+  has_function_privilege('service_role', 'public.contextual_ecosystem_health_v1()', 'EXECUTE'),
+  'service role can read contextual operational health'
 );
 
 select * from finish();

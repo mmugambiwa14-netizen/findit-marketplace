@@ -464,6 +464,13 @@ verify_jwt = false
 # function's own credential check runs.
 verify_jwt = false
 
+[functions.contextual-ecosystem-health]
+# Internal monitoring endpoint for the Phase 3 contextual layer. Same boundary as
+# recommendation-service-health: a dedicated constant-time compared secret
+# (FINDIT_CONTEXTUAL_HEALTH_SECRET), not a Supabase JWT, so gateway verification
+# stays off and the function's own credential check is authoritative.
+verify_jwt = false
+
 [functions.similar-listings]
 # Public recommendation service invoked via supabase.functions.invoke(), which
 # always attaches a valid anon or session JWT even for anonymous browsing.
