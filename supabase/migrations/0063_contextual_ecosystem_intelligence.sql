@@ -51,8 +51,8 @@ create index if not exists idx_recommendation_context_rules_context
 
 alter table public.recommendation_contexts enable row level security;
 alter table public.recommendation_context_rules enable row level security;
-revoke all on public.recommendation_contexts from public, anon, authenticated;
-revoke all on public.recommendation_context_rules from public, anon, authenticated;
+revoke all on public.recommendation_contexts from public, anon, authenticated, service_role;
+revoke all on public.recommendation_context_rules from public, anon, authenticated, service_role;
 grant select on public.recommendation_contexts to service_role;
 grant select on public.recommendation_context_rules to service_role;
 

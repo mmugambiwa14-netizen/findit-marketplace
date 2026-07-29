@@ -118,7 +118,7 @@ $$;
 
 revoke all on function public.admin_upsert_recommendation_context_rule_v1(
   text, uuid, text, text, integer, integer, jsonb, boolean, timestamptz, timestamptz
-) from public, anon;
+) from public, anon, service_role;
 grant execute on function public.admin_upsert_recommendation_context_rule_v1(
   text, uuid, text, text, integer, integer, jsonb, boolean, timestamptz, timestamptz
 ) to authenticated;
