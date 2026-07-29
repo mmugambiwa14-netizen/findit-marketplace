@@ -1,10 +1,12 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
 
+type MaintenanceMode = "projection" | "maintenance" | "all";
+
 interface MaintenanceRequest {
-  projectionCursor?: string | null;
+  mode?: MaintenanceMode;
   projectionLimit?: number;
+  projectionMaxAttempts?: number;
   retentionLimit?: number;
-  includeProjection?: boolean;
 }
 
 function configuredAdminKey(): string {
@@ -36,20 +38,16 @@ function constantTimeEqual(left: string, right: string): boolean {
   return difference === 0;
 }
 
-function boundedInteger(value: unknown, fallback: number, min: number, max: number): number {
-  if (typeof value !== "number" || !Number.isInteger(value)) return fallback;
-  return Math.min(max, Math.max(min, value));
-}
-
-function normalizeCursor(value: unknown): string | null {
-  if (value === null || value === undefined || value === "") return null;
-  if (
-    typeof value !== "string"
-    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-  ) {
-    throw new Error("Invalid projection cursor");
-  }
-  return value;
+function boundedInteger(
+  value: unknown,
+  fallback: number,
+  minimum: number,
+  maximum: number,
+): number | null {
+  const resolved = value === undefined ? fallback : value;
+  if (typeof resolved !== "number" || !Number.isInteger(resolved)) return null;
+  if (resolved < minimum || resolved > maximum) return null;
+  return resolved;
 }
 
 function json(status: number, body: Record<string, unknown>): Response {
@@ -59,6 +57,7 @@ function json(status: number, body: Record<string, unknown>): Response {
       "Cache-Control": "no-store",
       "Content-Type": "application/json",
       "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "no-referrer",
     },
   });
 }
@@ -89,67 +88,92 @@ Deno.serve(async (request: Request) => {
       });
     }
 
+    let body: MaintenanceRequest;
+    try {
+      body = await request.json() as MaintenanceRequest;
+    } catch {
+      return json(400, { code: "invalid_json", message: "The maintenance request could not be read." });
+    }
+
+    const mode = body.mode ?? "all";
+    const projectionLimit = boundedInteger(body.projectionLimit, 200, 1, 500);
+    const projectionMaxAttempts = boundedInteger(body.projectionMaxAttempts, 8, 1, 20);
+    const retentionLimit = boundedInteger(body.retentionLimit, 5000, 1, 50_000);
+
+    if (!(mode === "projection" || mode === "maintenance" || mode === "all")) {
+      return json(400, { code: "invalid_mode", message: "The requested maintenance mode is not supported." });
+    }
+    if (projectionLimit === null || projectionMaxAttempts === null || retentionLimit === null) {
+      return json(400, {
+        code: "invalid_limits",
+        message: "One or more maintenance limits are outside the allowed range.",
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     if (!supabaseUrl) throw new Error("Missing SUPABASE_URL");
     const adminClient = createClient(supabaseUrl, configuredAdminKey(), {
       auth: { persistSession: false, autoRefreshToken: false },
     });
 
-    const body = await request.json() as MaintenanceRequest;
-    const projectionLimit = boundedInteger(body.projectionLimit, 500, 1, 2000);
-    const retentionLimit = boundedInteger(body.retentionLimit, 5000, 1, 50000);
-    const projectionCursor = normalizeCursor(body.projectionCursor);
-    const includeProjection = body.includeProjection === true;
+    let projection: unknown = null;
+    let partitionsEnsured = 0;
+    let popularityDatesRefreshed = 0;
+    let retention: Record<string, unknown> = {};
 
-    const now = new Date();
-    const partitionMonths = Array.from({ length: 7 }, (_, offset) => {
-      const value = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1));
-      return value.toISOString().slice(0, 10);
-    });
-
-    for (const month of partitionMonths) {
-      const { error } = await adminClient.rpc("ensure_recommendation_event_partition", { p_month: month });
-      if (error) throw new Error("recommendation partition operation failed");
-    }
-
-    const today = now.toISOString().slice(0, 10);
-    const yesterday = new Date(now.getTime() - 86_400_000).toISOString().slice(0, 10);
-    for (const metricDate of [yesterday, today]) {
-      const { error } = await adminClient.rpc("refresh_recommendation_popularity_daily", {
-        p_metric_date: metricDate,
-      });
-      if (error) throw new Error("recommendation popularity operation failed");
-    }
-
-    const { data: retentionData, error: retentionError } = await adminClient.rpc(
-      "purge_expired_recommendation_data",
-      { p_limit: retentionLimit },
-    );
-    if (retentionError) throw new Error("recommendation retention operation failed");
-
-    let projectionData: unknown = null;
-    if (includeProjection) {
-      const { data, error } = await adminClient.rpc("refresh_listing_recommendation_features_batch", {
-        p_after_listing_id: projectionCursor,
+    if (mode === "projection" || mode === "all") {
+      const { data, error } = await adminClient.rpc("process_listing_recommendation_projection_jobs", {
         p_limit: projectionLimit,
+        p_max_attempts: projectionMaxAttempts,
       });
-      if (error) throw new Error("recommendation projection operation failed");
-      projectionData = Array.isArray(data) ? data[0] ?? null : data;
+      if (error) throw new Error("recommendation projection queue operation failed");
+      projection = Array.isArray(data) ? data[0] ?? null : data;
+    }
+
+    if (mode === "maintenance" || mode === "all") {
+      const now = new Date();
+      const partitionMonths = Array.from({ length: 7 }, (_, offset) => {
+        const value = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + offset, 1));
+        return value.toISOString().slice(0, 10);
+      });
+
+      for (const month of partitionMonths) {
+        const { error } = await adminClient.rpc("ensure_recommendation_event_partition", { p_month: month });
+        if (error) throw new Error("recommendation partition operation failed");
+      }
+      partitionsEnsured = partitionMonths.length;
+
+      const today = now.toISOString().slice(0, 10);
+      const yesterday = new Date(now.getTime() - 86_400_000).toISOString().slice(0, 10);
+      for (const metricDate of [yesterday, today]) {
+        const { error } = await adminClient.rpc("refresh_recommendation_popularity_daily", {
+          p_metric_date: metricDate,
+        });
+        if (error) throw new Error("recommendation popularity operation failed");
+      }
+      popularityDatesRefreshed = 2;
+
+      const { data: retentionData, error: retentionError } = await adminClient.rpc(
+        "purge_expired_recommendation_data",
+        { p_limit: retentionLimit },
+      );
+      if (retentionError) throw new Error("recommendation retention operation failed");
+      retention = Array.isArray(retentionData) ? retentionData[0] ?? {} : retentionData ?? {};
     }
 
     const { data: healthData, error: healthError } = await adminClient.rpc("recommendation_foundation_health");
     if (healthError) throw new Error("recommendation health operation failed");
 
-    const retention = Array.isArray(retentionData) ? retentionData[0] ?? {} : retentionData ?? {};
     return json(200, {
       correlationId,
-      partitionsEnsured: partitionMonths.length,
-      popularityDatesRefreshed: 2,
+      mode,
+      projection,
+      partitionsEnsured,
+      popularityDatesRefreshed,
       retention: {
         eventsDeleted: Number(retention.events_deleted ?? 0),
         cacheEntriesDeleted: Number(retention.cache_entries_deleted ?? 0),
       },
-      projection: projectionData,
       health: healthData,
     });
   } catch (error) {
