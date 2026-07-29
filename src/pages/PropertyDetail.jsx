@@ -8,6 +8,7 @@ import ListingCode from "@/components/listings/ListingCode";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
+import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import { ContactBar, DetailError, DetailLoading, DetailMissing, DetailSection, SafetyPanel, SellerPanel } from "@/components/listings/ListingDetailLayout";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
@@ -122,6 +123,7 @@ export default function PropertyDetail() {
             {isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}
           </SafetyPanel>
 
+          <ListingRecommendations subjectListingId={property.id} />
           <ReportListingDialog listing={property} listingType="property" />
         </div>
       </main>

@@ -9,6 +9,7 @@ import ListingCode from "@/components/listings/ListingCode";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
+import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -88,6 +89,7 @@ export default function CarDetail() {
           {car.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{car.description}</p></DetailSection>}
           <SellerPanel name={car.seller_name} email={car.contact_email || car.seller_email} />
           <SafetyPanel>Request a test drive, verify ownership documents and consider an independent mechanical inspection. Never send money before seeing the vehicle.</SafetyPanel>
+          <ListingRecommendations subjectListingId={car.id} />
           <ReportListingDialog listing={car} listingType="car" />
         </div>
       </main>

@@ -27,6 +27,7 @@ export default function MarketplaceCard({
   tour = null,
   tourLabel = 'Tour',
   className = null,
+  onOpen = null,
 }) {
   const publicTour = tour && (tour.status === 'ready' || tour.status === 'approved' || tour.isReady === true);
   const tourDuration = publicTour ? formatDuration(tour.durationSeconds) : null;
@@ -34,7 +35,7 @@ export default function MarketplaceCard({
 
   return (
     <article className={cn('group relative overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-floating', className)}>
-      <Link to={to} className="block focus-visible:ring-inset" aria-label={`${title}, ${priceLabel}`}>
+      <Link to={to} className="block focus-visible:ring-inset" aria-label={`${title}, ${priceLabel}`} onClick={onOpen}>
         <div className="relative aspect-[4/3] overflow-hidden bg-surface-secondary">
           {imageUrl || fallbackImageUrl ? (
             <img

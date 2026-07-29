@@ -9,10 +9,10 @@ Written 2026-07-29. Supersedes any earlier handoff for the same branch.
 | Repository | `mmugambiwa14-netizen/findit-marketplace` |
 | Branch | `feature/listing-intelligence-foundation` (never work on `main`) |
 | Pull request | #1, draft, must stay draft |
-| Base before this continuation | `1bdd5439f1f065f1d6991b609d889c8a77f6443d` |
-| Previous heads | `1bdd543` (latest base), `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
+| Base before Phase 4 | `00d8da596979cbade26a2f85fa493d5d1548c994` |
+| Previous heads | `00d8da5` (Phase 3 staging certification), `1bdd543` (release hardening), `5e24acc` (public Edge boundary), `9fa6711` (Phase 3 handoff refresh), `06617e3` (Phase 3 completion), `7737924` (handoff), `8e2cd94` (runtime fixes), `aaeeef4` (prior session) |
 | SQL boundary | migration `0070`, 70 migrations and 41 rollback capsules |
-| CI before this continuation | all four checks passed on `1bdd543`; inspect PR #1 for the current head |
+| CI before Phase 4 | all four checks passed on `00d8da5`; inspect PR #1 for the current head |
 
 Confirm the real head before doing anything:
 
@@ -74,8 +74,20 @@ gate gaps:
   boundaries, forces real Edge timeouts with a bounded staging-only lock,
   verifies durable circuit state and recovery, proves listing independence, and
   removes fixtures and cache rows.
+- Phase 4 adds one fail-soft recommendation surface to property, car and
+  machinery details only after the authoritative listing has loaded.
+- The UI bounds planner output to six sections, six cards per section and 24
+  unique listings, hydrates those IDs through one public-status query, preserves
+  recommendation order and filters out the current listing.
+- Loading, empty, degraded, error and retry states are accessible and responsive.
+  Recommendation impressions require visibility, clicks require an explicit
+  card open, and analytics delivery remains non-blocking.
+- Query cancellation now reaches contextual planning, recommendation Edge
+  calls and the public listing PostgREST query. Recommendation failures never
+  enter the listing query or route-loading path.
 
-Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`.
+Sections 2.1 and 2.2 below describe `8e2cd94`; section 2.3 describes `06617e3`;
+section 2.4 describes the Phase 4 continuation.
 
 ### 2.1 and 2.2 — the runtime-reachability defects
 
@@ -196,6 +208,23 @@ deliberate fail-open behaviour, but it means an unset salt looks identical to a
 working deployment. `FINDIT_CONTEXTUAL_HEALTH_SECRET` is likewise required for
 the new health endpoint, which refuses every request without it.
 
+### 2.4 - Phase 4 listing-detail integration
+
+`ListingRecommendations.jsx` is a shared child of all three public listing
+detail pages. It obtains the contextual plan, calls each selected service
+independently, hydrates only public listing IDs through the existing listing
+mapper, and renders standard `ListingCard` components. The parent detail
+queries do not import recommendation services and complete before the child is
+mounted, so recommendation latency or failure cannot suppress canonical listing
+content.
+
+The local browser verification used disposable preview fixtures and a mock
+transport only. It covered desktop and mobile layouts, loading and real-result
+rendering, and a stopped-transport failure. The authoritative listing remained
+visible with a retryable recommendation error and no horizontal overflow.
+This is local UI evidence, not a hosted frontend deployment or production
+certification.
+
 ## 3. Verified state
 
 Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
@@ -204,20 +233,20 @@ Executed locally in `C:\tmp\findit-listing-intel-work` on Node 24:
 |---|---|
 | `npm run lint` | pass |
 | `npm run typecheck` | pass |
-| `npm run test:contracts` | pass, 315/315 |
-| `npm run test:recommendation-contracts` | pass, 52/52 |
+| `npm run test:contracts` | pass, 319/319 |
+| `npm run test:recommendation-contracts` | pass, 56/56 |
 | `npm run verify:sql-boundary` | pass, 70 migrations, 41 rollback capsules |
-| `npm run verify:hygiene` | pass, 650 files |
-| `npm run verify:source-graph` | pass, 360 modules, 0 unresolved |
+| `npm run verify:hygiene` | pass, 652 files |
+| `npm run verify:source-graph` | pass, 362 modules, 0 unresolved |
 | `npm run audit:product-surface` | pass, 0 failures, 1 warning |
 | `npm run typecheck:edge-functions` | pass, Deno checked every file under `supabase/functions` |
 | `npm run audit:production` | pass, no reachable Moderate/High/Critical advisories |
-| `npm run build` (NODE_ENV=production) | pass, 534,644 B raw / 157,831 B gzip |
+| `npm run build` (NODE_ENV=production) | pass, 534,528 B raw / 157,745 B gzip |
 
 `npm run validate:env` fails closed without local `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY`, which is expected for this worktree.
 
-**CI on base `1bdd543`: all four checks passed** on PR #1. Inspect the current
+**CI on Phase 3 head `00d8da5`: all four checks passed** on PR #1. Inspect the current
 head after pushing this continuation. The PR must remain draft.
 
 The previous Windows-only contract failure in
@@ -259,14 +288,14 @@ Executed against `https://bwgklpxoetrrkutottdb.supabase.co/functions/v1`:
 
 Phase 3 is **hosted-certified on staging**, not on production. Exactly
 `recently_listed_service` is enabled on staging; the other six policies remain
-disabled. No recommendation adapter is imported by the UI, so this activation
-does not change the current user-visible application.
+disabled. The Phase 4 frontend source consumes this hosted service, but that UI
+has not been deployed to a hosted frontend target in this continuation.
 
 ## 4. Immediate next actions
 
-1. Push this continuation, wait for every PR check, and keep PR #1 draft.
-2. Begin Phase 4 listing-detail integration with recommendation failure kept
-   outside the listing-delivery dependency path.
+1. Push the Phase 4 continuation, wait for every PR check, and keep PR #1 draft.
+2. Identify the repository's staging frontend deployment target and certify the
+   Phase 4 UI there without changing production.
 3. Before broader service activation, exhaust and verify a real request-budget
    window; the budget deliberately fails open and has not yet been hosted
    exhaustion-tested.
@@ -308,15 +337,13 @@ than assume settled:
   ineffective budget is indistinguishable from a working one without an explicit
   test. Certify it by exhausting a window against a real deployment.
 
-### O-7 (informational) — the adapters are not yet imported by any UI
+### O-7 closed locally — adapters integrated without listing dependency
 
-`recommendationServices.js`, `contextualEcosystemService.js` and
-`recommendationEventsService.js` have **no consumers** in `src/`. This is
-correct for Phase 2 and is actively asserted by
-`tests/recommendationFoundationContracts.test.mjs` ("recommendation adapters are
-not imported into listing UI during Phase 2"). **Those assertions must be
-deliberately updated when Phase 4 begins** — they will fail as soon as listing
-detail imports an adapter, and that failure is expected, not a regression.
+The shared Phase 4 component now consumes the contextual, recommendation and
+event adapters. Detail pages import only that child after their canonical
+loading, error and missing-listing guards. The application shell and public
+listing service remain independent, and executable contracts lock that
+boundary. Hosted frontend verification is still pending.
 
 ### O-8 narrowed (informational) — remaining service integration scope
 
@@ -389,11 +416,11 @@ From the project instructions and from defects already paid for once:
 
 | Phase | Source | Local | CI | Hosted | Certified |
 |---|---|---|---|---|---|
-| 0 — release safety | complete | pass | green on base `1bdd543` | staging guards pass | local/staging |
-| 1 — data foundation | complete | pass | green on base `1bdd543` | migrations through `0070` applied | staging |
-| 2 — independent services | complete | pass | green on base `1bdd543` | one service returns real results; six remain disabled | staging for enabled service |
-| 3 — contextual intelligence | complete | pass | green on base `1bdd543` | full guarded certification passes | **staging certified** |
-| 4 — listing detail UX | not started | — | — | — | — |
+| 0 — release safety | complete | pass | green on `00d8da5` | staging guards pass | local/staging |
+| 1 — data foundation | complete | pass | green on `00d8da5` | migrations through `0070` applied | staging |
+| 2 — independent services | complete | pass | green on `00d8da5` | one service returns real results; six remain disabled | staging for enabled service |
+| 3 — contextual intelligence | complete | pass | green on `00d8da5` | full guarded certification passes | **staging certified** |
+| 4 — listing detail UX | source complete | pass | pending current head | frontend not deployed | local browser verified |
 | 5 — personalization | not started | — | — | — | — |
 | 6 — analytics | not started | — | — | — | — |
 | 7 — scale and certification | not started | — | — | — | — |
@@ -412,9 +439,10 @@ safety, privacy boundaries, timeout handling, fail-soft fallback, failure
 isolation, operational health, pgTAP coverage, source contracts, rollback
 support and deployment registration.
 
-It is **staging certified** with one non-personalized service enabled and real
-hosted evidence. It is not production certified, no production project was
-changed, and Phase 4 UI work has not started.
+Phase 3 is **staging certified** with one non-personalized service enabled and
+real hosted evidence. Phase 4 is source-complete and locally browser-verified.
+It is not hosted-frontend or production certified, and no production project
+was changed.
 
 ## 9. Update PR #1 after material progress
 

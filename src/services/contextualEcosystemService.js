@@ -31,6 +31,14 @@ function validSection(section) {
     && section.maximumItems <= 24;
 }
 
+/**
+ * @param {{
+ *   subjectListingId?: string,
+ *   journeyStage?: string | null,
+ *   maxSections?: number,
+ *   signal?: AbortSignal,
+ * }} [options]
+ */
 export async function fetchContextualEcosystemPlan({
   subjectListingId,
   journeyStage = null,
@@ -44,7 +52,8 @@ export async function fetchContextualEcosystemPlan({
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   const abort = () => controller.abort();
-  signal?.addEventListener('abort', abort, { once: true });
+  if (signal?.aborted) abort();
+  else signal?.addEventListener('abort', abort, { once: true });
 
   try {
     const { data, error } = await supabase.functions.invoke('contextual-ecosystem', {

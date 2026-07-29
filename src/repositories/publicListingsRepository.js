@@ -94,6 +94,24 @@ export async function findSavedListingsByIds(listingIds) {
   return data ?? [];
 }
 
+export async function findPublicListingsByIds(listingIds, signal) {
+  if (!listingIds.length) return [];
+  let query = supabase
+    .from('listings')
+    .select(PUBLIC_LISTING_SELECT)
+    .in('id', listingIds)
+    .in('status', ['available', 'under_offer']);
+  if (signal) query = query.abortSignal(signal);
+  const { data, error } = await query;
+
+  if (error) {
+    const repositoryError = new Error('Unable to load recommended listings');
+    repositoryError.cause = error;
+    throw repositoryError;
+  }
+  return data ?? [];
+}
+
 const SEARCH_SORTS = {
   newest: { column: 'created_at', ascending: false },
   price_asc: { column: 'price', ascending: true },

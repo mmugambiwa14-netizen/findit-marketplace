@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-07-29T14:21:12.689Z",
+  "generatedAt": "2026-07-29T16:12:55.391Z",
   "scope": {
-    "sourceModules": 230,
+    "sourceModules": 231,
     "routedPatterns": 43,
     "pageModules": 34,
-    "uniqueControlInstances": 541,
-    "pageExpandedControlInstances": 733
+    "uniqueControlInstances": 543,
+    "pageExpandedControlInstances": 748
   },
   "controlsByElement": {
     "a": 3,
     "AlertDialog": 4,
     "button": 75,
-    "Button": 186,
+    "Button": 188,
     "Checkbox": 1,
     "Dialog": 18,
     "DropdownMenuTrigger": 1,

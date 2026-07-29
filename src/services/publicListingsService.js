@@ -1,6 +1,7 @@
 import {
   findLatestAvailableListings,
   findPublicListingById,
+  findPublicListingsByIds,
   findPublicListingTitleSuggestions,
   findPublicListingsPage,
 } from '@/repositories/publicListingsRepository';
@@ -18,6 +19,24 @@ import {
 } from '@/services/localPreviewListings';
 
 const MAX_HOME_RESULTS = 24;
+const MAX_RECOMMENDATION_RESULTS = 24;
+
+function normalizeListingIds(listingIds) {
+  if (!Array.isArray(listingIds)) return [];
+  const unique = [];
+  const seen = new Set();
+  for (const value of listingIds) {
+    if (
+      typeof value !== 'string'
+      || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+      || seen.has(value)
+    ) continue;
+    seen.add(value);
+    unique.push(value);
+    if (unique.length === MAX_RECOMMENDATION_RESULTS) break;
+  }
+  return unique;
+}
 
 function normalizeLimit(limit) {
   if (!Number.isInteger(limit) || limit < 1 || limit > MAX_HOME_RESULTS) {
@@ -63,6 +82,37 @@ export async function getPublicListing(kind, id) {
   const listing = mapPublicListing(hydrated);
   const [withTour] = await attachPublicTourSummaries([listing], 'listing');
   return withTour;
+}
+
+/**
+ * @param {unknown[]} listingIds
+ * @param {{ signal?: AbortSignal }} [options]
+ */
+export async function getPublicListingsByIds(listingIds, { signal } = {}) {
+  const ids = normalizeListingIds(listingIds);
+  if (ids.length === 0) return [];
+  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+
+  if (localPreviewListingsEnabled()) {
+    const listings = ids.flatMap((id) => (
+      ['property', 'car', 'machinery']
+        .map((kind) => findLocalPreviewListing(kind, id))
+        .filter(Boolean)
+        .slice(0, 1)
+    ));
+    const mapped = listings.map(mapPublicListing);
+    const byId = new Map(mapped.map((listing) => [listing.id, listing]));
+    return ids.map((id) => byId.get(id)).filter(Boolean);
+  }
+
+  const rows = await findPublicListingsByIds(ids, signal);
+  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+  const hydrated = (await hydrateListingImages(rows)).map(mapPublicListing);
+  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+  const withTours = await attachPublicTourSummaries(hydrated, 'listing');
+  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+  const byId = new Map(withTours.map((listing) => [listing.id, listing]));
+  return ids.map((id) => byId.get(id)).filter(Boolean);
 }
 
 export async function searchPublicListingsPage(input) {

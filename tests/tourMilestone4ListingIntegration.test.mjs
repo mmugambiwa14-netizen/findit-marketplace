@@ -116,7 +116,11 @@ test('saved listings retain canonical unavailable rows and private images withou
   assert.match(migration, /create policy "listing_image_authorized_read"/);
   assert.match(favourites, /findSavedListingsByIds/);
   assert.match(savedRepository, /export async function findSavedListingsByIds/);
-  const savedFunction = savedRepository.slice(savedRepository.indexOf('export async function findSavedListingsByIds'), savedRepository.indexOf('function escapeLikePattern'));
+  const normalizedRepository = savedRepository.replaceAll('\r\n', '\n');
+  const savedFunction = normalizedRepository.match(
+    /export async function findSavedListingsByIds[\s\S]*?(?=\n(?:export async function|const|function) )/,
+  )?.[0] ?? '';
+  assert.match(savedFunction, /export async function findSavedListingsByIds/);
   assert.doesNotMatch(savedFunction, /\.eq\('status'|\.in\('status'/);
   assert.doesNotMatch(`${migration}\n${favourites}`, /saved_tours|saved_tour_id/i);
   assert.match(contactButtons, /Existing chats remain available, but new enquiries are closed/);

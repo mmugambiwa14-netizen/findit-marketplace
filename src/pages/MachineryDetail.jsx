@@ -9,6 +9,7 @@ import ListingCode from "@/components/listings/ListingCode";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
+import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -94,6 +95,7 @@ export default function MachineryDetail() {
           {item.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{item.description}</p></DetailSection>}
           <SellerPanel name={item.seller_name} email={item.contact_email || item.seller_email} />
           <SafetyPanel>Inspect machinery in person and request maintenance records, serial-number verification and applicable certification before purchasing.</SafetyPanel>
+          <ListingRecommendations subjectListingId={item.id} />
           <ReportListingDialog listing={item} listingType="machinery" />
         </div>
       </main>

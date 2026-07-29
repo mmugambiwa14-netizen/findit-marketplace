@@ -132,6 +132,17 @@ async function invokeWithTimeout(endpoint, body, timeoutMs, signal) {
   }
 }
 
+/**
+ * @param {keyof typeof SERVICE_ENDPOINTS} service
+ * @param {{
+ *   subjectListingId?: string,
+ *   cursor?: string | null,
+ *   limit?: number,
+ *   maxDistanceMeters?: number,
+ *   timeoutMs?: number,
+ *   signal?: AbortSignal,
+ * }} [options]
+ */
 async function fetchRecommendationService(service, {
   subjectListingId,
   cursor = null,
@@ -154,6 +165,12 @@ async function fetchRecommendationService(service, {
   }
   const normalizedLimit = bucketedLimit(requestedLimit);
 
+  /** @type {{
+   *   subjectListingId?: string,
+   *   cursor: string | null,
+   *   limit: number,
+   *   maxDistanceMeters?: number,
+   * }} */
   const body = {
     ...(subjectRequired ? { subjectListingId } : {}),
     cursor: normalizedCursor,

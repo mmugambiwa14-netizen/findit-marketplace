@@ -63,7 +63,13 @@ function tourSummary(listing) {
   };
 }
 
-export default function ListingCard({ listing, type = 'property', onSave = null, isSaved = false }) {
+export default function ListingCard({
+  listing,
+  type = 'property',
+  onSave = null,
+  isSaved = false,
+  onOpen = null,
+}) {
   const [liked, setLiked] = useState(isSaved);
   const [guestOpen, setGuestOpen] = useState(false);
   const { user } = useAuth();
@@ -126,6 +132,7 @@ export default function ListingCard({ listing, type = 'property', onSave = null,
         badges={badges}
         save={{ active: liked, onToggle: toggleLike }}
         tour={tourSummary(listing)}
+        onOpen={onOpen}
       />
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action="save listings and contact sellers" returnTo={`/${DETAIL_PATHS[type]}/${listing.id}`} />
     </>
