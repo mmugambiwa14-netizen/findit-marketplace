@@ -93,6 +93,9 @@ jobs:
       - name: Run fail-open projection queue matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_projection_queue.sql --local
 
+      - name: Run eligibility, geography and deletion matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_eligibility_geospatial.sql --local
+
       - name: Run recommendation query-plan and cursor scale suite
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
 
