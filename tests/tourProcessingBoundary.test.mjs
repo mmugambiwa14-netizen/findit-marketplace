@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [worker, callback, provider, runner, mediaProcessor, processingSmoke, maintenance, processingSql, config] = await Promise.all([
+const [worker, callback, provider, runner, mediaProcessor, processingSmoke, maintenance, processingSql, claimFix, claimFixRollback, config] = await Promise.all([
   read('supabase/functions/tour-processing-worker/index.ts'),
   read('supabase/functions/tour-processing-callback/index.ts'),
   read('supabase/functions/_shared/tour-provider.ts'),
@@ -12,6 +12,8 @@ const [worker, callback, provider, runner, mediaProcessor, processingSmoke, main
   read('scripts/tours-processing-smoke-local.mjs'),
   read('.github/workflows/maintenance-workers.yml'),
   read('supabase/migrations/0033_v1_tour_processing_and_publication.sql'),
+  read('supabase/migrations/0075_tour_processing_claim_output_qualification.sql'),
+  read('supabase/rollback/0075_tour_processing_claim_output_qualification.rollback.sql'),
   read('supabase/config.toml'),
 ]);
 
@@ -61,6 +63,14 @@ test('processing uses bounded database leases and idempotent finalization', () =
   assert.match(processingSql, /fail_tour_processing/);
   assert.match(worker, /rpc\("claim_tour_processing_jobs"/);
   assert.match(worker, /rpc\("mark_tour_processing_dispatched"/);
+});
+
+test('processing claim event output is qualified against the RETURNS TABLE variable', () => {
+  assert.match(claimFix, /insert into public\.listing_tour_events as e/);
+  assert.match(claimFix, /returning e\.tour_id/);
+  assert.doesNotMatch(claimFix, /returning tour_id/);
+  assert.match(claimFixRollback, /create or replace function public\.claim_tour_processing_jobs/);
+  assert.doesNotMatch(claimFixRollback, /drop table|truncate|delete from/i);
 });
 
 test('processor callbacks require timestamped HMAC and reject stale requests', () => {
