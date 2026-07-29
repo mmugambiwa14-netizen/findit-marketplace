@@ -6,6 +6,14 @@ const certification = await readFile(
   new URL('../scripts/recommendation-phase7-staging-certification.mjs', import.meta.url),
   'utf8',
 );
+const timeoutBudgetMigration = await readFile(
+  new URL('../supabase/migrations/0074_nearby_service_hosted_timeout_budget.sql', import.meta.url),
+  'utf8',
+);
+const timeoutBudgetRollback = await readFile(
+  new URL('../supabase/rollback/0074_nearby_service_hosted_timeout_budget.rollback.sql', import.meta.url),
+  'utf8',
+);
 
 test('Phase 7 hosted certification is exact-target guarded and reversible', () => {
   assert.match(certification, /assertSmokeTarget/);
@@ -44,4 +52,14 @@ test('Phase 7 certifies consent and aggregate-only analytics without exposing id
   assert.match(certification, /admin_recommendation_analytics_v1/);
   assert.match(certification, /actor_id\|anonymous_session_id\|listing_id\|seller_id\|recommendation_request_id/);
   assert.match(certification, /canonical listing/);
+});
+
+test('hosted nearby execution uses a bounded abortable budget', () => {
+  assert.match(timeoutBudgetMigration, /service_name = 'nearby_service'/);
+  assert.match(timeoutBudgetMigration, /greatest\(timeout_ms, 1000\)/);
+  assert.match(timeoutBudgetMigration, /timeout_ms < 1000/);
+  assert.match(timeoutBudgetMigration, /schema_version', 74/);
+  assert.doesNotMatch(timeoutBudgetMigration, /5000\)/);
+  assert.match(timeoutBudgetRollback, /enabled = false/);
+  assert.doesNotMatch(timeoutBudgetRollback, /timeout_ms\s*=/);
 });
