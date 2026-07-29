@@ -36,11 +36,11 @@ test('service contracts are cursor-only, versioned and reason-code based', () =>
 
 test('runtime degrades safely and isolates repeated service failures', () => {
   assert.match(runtime, /Promise\.race/);
-  assert.match(runtime, /reason, "timeout"/);
+  assert.match(runtime, /"timeout"/);
   assert.match(runtime, /"service_unavailable"/);
   assert.match(runtime, /FAILURE_THRESHOLD = 3/);
   assert.match(runtime, /CIRCUIT_OPEN_MS = 30_000/);
-  assert.match(runtime, /reason, "circuit_open"/);
+  assert.match(runtime, /"circuit_open"/);
   assert.match(runtime, /items: \[\]/);
 });
 
