@@ -39,6 +39,7 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"/);
   assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
   assert.match(acceptanceWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
+  assert.match(acceptanceWorkflow, /apt-get install --yes --no-install-recommends ffmpeg/);
   assert.match(acceptanceWorkflow, /ffmpeg -hide_banner -version/);
   for (const gate of [
     'test:tours-upload-hosted', 'test:tours-processing-hosted', 'test:tours-seller-hosted',

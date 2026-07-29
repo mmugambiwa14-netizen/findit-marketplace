@@ -39,6 +39,7 @@ test('first-party processor performs bounded FFmpeg transcoding and validated up
   assert.match(mediaProcessor, /openAsBlob/);
   assert.doesNotMatch(mediaProcessor, /readFile\(playbackPath\)/);
   assert.match(maintenance, /npm run run:tours-processor -- --batch-size 5/);
+  assert.match(maintenance, /apt-get install --yes --no-install-recommends ffmpeg/);
 });
 
 test('hosted processing acceptance transcodes a real generated video', () => {
