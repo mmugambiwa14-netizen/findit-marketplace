@@ -36,6 +36,15 @@ Completion gate:
 - Adversarial tests cover guest, owner, unrelated user, suspended user, moderator, and admin access.
 - No raw invasive tracking identifier is required.
 
+Implementation state:
+
+- Source implementation is complete through migration `0056` with matching non-destructive rollback capsules.
+- Listing projection is asynchronous and fail-open. Listing and detail writes only enqueue work inside a protected exception boundary; projection failures cannot abort listing transactions.
+- Projection workers use bounded `FOR UPDATE SKIP LOCKED` batches, capped retries, stable-code dead letters and no raw database-error persistence.
+- Privacy-limited event ingestion, partition preparation, retention, popularity aggregation, audited taxonomy/weight controls, health reporting and cursor/index scale fixtures are implemented.
+- Source contracts and pgTAP suites cover isolation, RLS, spoofing, privacy, retention, partition migration, queue failure, recovery and query plans.
+- The execution gate remains open: GitHub Actions currently reports `startup_failure` before allocating any job, and this environment cannot run a Docker-backed Supabase reset. Phase 2 remains blocked until reset, lint and the three Phase 1 database suites execute successfully.
+
 ## Phase 2 — Independent Recommendation Services
 
 Services:
