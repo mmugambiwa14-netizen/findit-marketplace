@@ -249,7 +249,7 @@ export default function ListingMediaViewer({
         {mode === "photos" && (
           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
             <div className="flex flex-wrap gap-2">
-              {hasTour && mode !== "tour" && (
+              {hasTour && (
                 <Button
                   type="button"
                   size="sm"
