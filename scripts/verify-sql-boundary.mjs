@@ -55,10 +55,11 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0093_private_marketplace_view_implementation.sql
 // - 0094_private_recommended_service_event_implementation.sql
 // - 0095_private_support_request_implementation.sql
+// - 0096_private_recommendation_event_implementation.sql
 // Release-tip anchor: bump this deliberately when a migration is added, so an
 // accidental or unreviewed migration cannot ride along silently.
-if (basename(migrationFiles.at(-1) ?? '') !== '0096_private_recommendation_event_implementation.sql') {
-  failures.push(`latest expected migration is 0096, found ${migrationFiles.at(-1) ?? 'none'}`);
+if (basename(migrationFiles.at(-1) ?? '') !== '0097_private_public_listing_search_implementation.sql') {
+  failures.push(`latest expected migration is 0097, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
 if (failures.length) {
