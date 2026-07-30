@@ -38,8 +38,8 @@ test('Phase 1 storage is normalized, partitioned and RLS protected', () => {
     'recommendation_cache',
     'recommendation_popularity_daily',
   ]) {
-    assert.match(foundation, new RegExp(`create table if not exists public\\.${table}`));
-    assert.match(foundation, new RegExp(`alter table public\\.${table} enable row level security`));
+    assert.match(foundation, new RegExp(`create table if not exists public\.${table}`));
+    assert.match(foundation, new RegExp(`alter table public\.${table} enable row level security`));
   }
   assert.match(foundation, /partition by range \(occurred_at\)/);
   assert.match(foundation, /No advertising identifier, fingerprint, message body or contact inference/i);
@@ -162,5 +162,5 @@ test('every Phase 1 migration has a non-destructive rollback and the boundary is
     assert.doesNotMatch(rollback, /\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i);
     assert.match(rollback, /revoke|force row level security/i);
   }
-  assert.match(sqlBoundary, /0076_tour_cleanup_claim_output_disambiguation\.sql/);
+  assert.match(sqlBoundary, /0077_real_marketplace_view_counting\.sql/);
 });
