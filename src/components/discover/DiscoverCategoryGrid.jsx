@@ -4,27 +4,35 @@ import DiscoverCategoryCard from './DiscoverCategoryCard';
 const CATEGORIES = [
   {
     title: 'Property',
-    description: 'Homes, land and commercial spaces',
+    description: 'Homes, flats, land and commercial spaces',
     icon: Building2,
     target: '/search?type=property',
+    iconClassName: 'bg-blue-500/14 text-blue-600 dark:text-blue-400',
+    glowClassName: 'bg-blue-500/16',
   },
   {
     title: 'Vehicles',
-    description: 'Cars, vans and everyday transport',
+    description: 'Cars, vans, bikes and everyday transport',
     icon: Car,
     target: '/search?type=car',
+    iconClassName: 'bg-emerald-500/14 text-emerald-600 dark:text-emerald-400',
+    glowClassName: 'bg-emerald-500/16',
   },
   {
-    title: 'Heavy Equipment',
-    description: 'Machinery, trucks and working assets',
+    title: 'Machinery',
+    description: 'Trucks, tractors and working equipment',
     icon: Tractor,
     target: '/search?type=machinery',
+    iconClassName: 'bg-amber-500/14 text-amber-600 dark:text-amber-400',
+    glowClassName: 'bg-amber-500/16',
   },
   {
     title: 'Services',
-    description: 'Trusted help for assets and property',
+    description: 'Repairs, maintenance and specialist help',
     icon: Wrench,
     target: '/services',
+    iconClassName: 'bg-violet-500/14 text-violet-600 dark:text-violet-400',
+    glowClassName: 'bg-violet-500/16',
   },
 ];
 
