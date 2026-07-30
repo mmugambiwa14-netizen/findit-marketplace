@@ -4,7 +4,13 @@ import { readFile } from 'node:fs/promises';
 import { evaluateHostedAuthConfig } from '../scripts/lib/auth-config-policy.mjs';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const script = await read('scripts/verify-hosted-auth-hardening.mjs');
+const [script, packageText, environmentDocumentation, deploymentRunbook] = await Promise.all([
+  read('scripts/verify-hosted-auth-hardening.mjs'),
+  read('package.json'),
+  read('docs/ENVIRONMENT_VARIABLES.md'),
+  read('docs/DEPLOYMENT_RUNBOOK.md'),
+]);
+const packageJson = JSON.parse(packageText);
 
 const productionEnvironment = {
   FINDIT_AUTH_PREFLIGHT_MODE: 'production',
@@ -80,7 +86,7 @@ test('production Auth policy fails closed when expected values or API fields are
   assert.equal(result.status, 'failed');
   assert.ok(result.problems.length >= 10);
   assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_AUTH_SITE_URL')));
-  assert.ok(result.problems.some((problem) => problem.includes('password_hibp_enabled')));
+  assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION')));
 });
 
 test('hosted Auth preflight is read-only, exact-target guarded and never prints the access token', () => {
@@ -92,4 +98,26 @@ test('hosted Auth preflight is read-only, exact-target guarded and never prints 
   assert.match(script, /api\.supabase\.com\/v1\/projects\/\$\{expectedProjectRef\}\/config\/auth/);
   assert.doesNotMatch(script, /console\.(?:log|error)\([^\n]*accessToken/);
   assert.doesNotMatch(script, /response\.text\(\)/);
+});
+
+test('Auth hardening preflight is an explicit documented release gate', () => {
+  assert.equal(
+    packageJson.scripts['verify:hosted-auth-hardening'],
+    'node ./scripts/verify-hosted-auth-hardening.mjs',
+  );
+  for (const name of [
+    'FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT',
+    'FINDIT_EXPECT_AUTH_SITE_URL',
+    'FINDIT_EXPECT_AUTH_REDIRECT_URLS',
+    'FINDIT_EXPECT_PASSWORD_MIN_LENGTH',
+    'FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION',
+    'FINDIT_EXPECT_TOTP_MFA',
+    'FINDIT_EXPECT_AUTH_CAPTCHA',
+    'FINDIT_EXPECT_CUSTOM_SMTP',
+  ]) {
+    assert.match(environmentDocumentation, new RegExp(name));
+  }
+  assert.match(deploymentRunbook, /npm\.cmd run verify:hosted-auth-hardening/);
+  assert.match(deploymentRunbook, /Management API token must not enter ordinary PR CI/);
+  assert.match(deploymentRunbook, /GET-only and exact-target guarded/);
 });
