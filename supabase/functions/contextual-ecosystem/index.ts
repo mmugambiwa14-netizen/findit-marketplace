@@ -4,7 +4,7 @@ import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson } from "../_shared/reques
 
 const JOURNEY_STAGES = new Set(["discover", "evaluate", "prepare", "transact", "own"]);
 const PROJECTION_TIMEOUT_MS = 250;
-const PLAN_TIMEOUT_MS = 800;
+const REQUEST_TIMEOUT_MS = 900;
 const MAXIMUM_REQUEST_BYTES = 2048;
 
 function allowedOrigin(request: Request): string | null {
@@ -107,7 +107,7 @@ Deno.serve(async (request: Request) => {
     await ensureProjection(client, body.subjectListingId);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), PLAN_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     let data: unknown;
     let error: unknown;
     try {
