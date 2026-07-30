@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [repair, evidence] = await Promise.all([
+const [repair, evidence, repair0083, evidence0083] = await Promise.all([
   read('supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-2026-07-30.md'),
+  read('supabase/maintenance/reconcile_staging_migration_history_0083.sql'),
+  read('docs/certification/staging-migration-ledger-reconciliation-0083-2026-07-30.md'),
 ]);
 
 const mappings = [
@@ -46,4 +48,25 @@ test('reconciliation evidence names staging and explicitly excludes production',
   assert.match(evidence, /production project/i);
   assert.match(evidence, /remain(?:s)?(?: unchanged)? at\s+`0049`/i);
   assert.match(evidence, /migration metadata\s+reconciliation, not a production migration/i);
+});
+
+test('0083 reconciliation verifies the applied index migration and updates metadata only', () => {
+  assert.match(repair0083, /where version = '0083'/i);
+  assert.match(repair0083, /foreign_key_covering_indexes/);
+  assert.match(repair0083, /1a5b9aba07f6fd7307d8ea6f9cb9bcc9/);
+  assert.match(repair0083, /length\(array_to_string\(statements, E'\\n'\)\) = 4801/i);
+  assert.match(repair0083, /set version = '0083'/i);
+  assert.match(repair0083, /source_version !~ '\^20260730\[0-9\]\{6\}\$'/i);
+  assert.doesNotMatch(repair0083, /\bcreate\s+(?:table|function|view|index)\b/i);
+  assert.doesNotMatch(repair0083, /\balter\s+(?:table|function|view|extension)\b/i);
+  assert.doesNotMatch(repair0083, /\bdrop\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('0083 evidence records a canonical 83-migration staging ledger and no production change', () => {
+  assert.match(evidence0083, /bwgklpxoetrrkutottdb/);
+  assert.match(evidence0083, /Canonical migration rows \| 83/);
+  assert.match(evidence0083, /Last version \| `0083`/);
+  assert.match(evidence0083, /Sequence mismatches \| 0/);
+  assert.match(evidence0083, /Remaining generated `20260730\.\.\.` versions \| 0/);
+  assert.match(evidence0083, /production[\s\S]{0,120}remains at migration\s+`0049`/i);
 });
