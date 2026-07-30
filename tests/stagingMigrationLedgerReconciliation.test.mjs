@@ -44,6 +44,6 @@ test('reconciliation evidence names staging and explicitly excludes production',
   assert.match(evidence, /bwgklpxoetrrkutottdb/);
   assert.match(evidence, /Production impact: none/);
   assert.match(evidence, /production project/i);
-  assert.match(evidence, /remains at\s+`0049`/i);
+  assert.match(evidence, /remain(?:s)?(?: unchanged)? at\s+`0049`/i);
   assert.match(evidence, /migration metadata reconciliation, not a production migration/i);
 });
