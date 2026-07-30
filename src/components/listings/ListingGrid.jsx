@@ -19,14 +19,19 @@ export default function ListingGrid({ listings = [], type = 'property', onSave =
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4" aria-label="Loading listings">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-          <div key={item} className="grid min-h-[11rem] grid-cols-[9rem_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:block sm:min-h-0">
-            <div className="animate-pulse bg-surface-raised sm:aspect-[4/3]" />
-            <div className="space-y-2 p-3">
-              <div className="h-4 w-3/5 animate-pulse rounded bg-surface-raised sm:w-5/6" />
-              <div className="h-4 w-full animate-pulse rounded bg-surface-raised" />
-              <div className="h-3 w-4/5 animate-pulse rounded bg-surface-raised" />
-              <div className="h-3 w-full animate-pulse rounded bg-surface-raised" />
+          <div key={item} className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+            <div className="grid min-h-[13rem] grid-cols-[10.25rem_minmax(0,1fr)] sm:block sm:min-h-0">
+              <div className="animate-pulse bg-surface-raised sm:aspect-[4/3]" />
+              <div className="space-y-2 p-3">
+                <div className="h-3 w-2/5 animate-pulse rounded bg-surface-raised" />
+                <div className="h-5 w-3/5 animate-pulse rounded bg-surface-raised sm:w-5/6" />
+                <div className="h-4 w-full animate-pulse rounded bg-surface-raised" />
+                <div className="h-3 w-4/5 animate-pulse rounded bg-surface-raised" />
+                <div className="h-3 w-full animate-pulse rounded bg-surface-raised" />
+              </div>
             </div>
+            <div className="h-11 animate-pulse border-t border-border bg-surface-raised/60" />
+            <div className="grid grid-cols-2 divide-x divide-border border-t border-border"><div className="h-14 animate-pulse bg-surface-raised/40" /><div className="h-14 animate-pulse bg-surface-raised/40" /></div>
           </div>
         ))}
       </div>
