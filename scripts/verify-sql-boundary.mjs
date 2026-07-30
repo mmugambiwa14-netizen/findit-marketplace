@@ -50,7 +50,7 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // Previous reviewed release tip: 0089_private_country_helper_implementations.sql.
 // Release-tip anchor: bump this deliberately when a migration is added, so an
 // accidental or unreviewed migration cannot ride along silently.
-if (basename(migrationFiles.at(-1) ?? '') !== '0090_private_public_seller_profile_implementation.sql') {
+if (basename(migrationFiles.at(-1) ?? '') !== '0090_seller_profile_identifier_privacy.sql') {
   failures.push(`latest expected migration is 0090, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
