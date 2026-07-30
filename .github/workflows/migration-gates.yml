@@ -136,6 +136,12 @@ jobs:
       - name: Run private recommended-service event implementation matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_recommended_service_event_implementation.sql --local
 
+      - name: Run private support request implementation matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_support_request_implementation.sql --local
+
+      - name: Run complete contact-support privacy and rate-limit matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contact_support.sql --local
+
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
 
