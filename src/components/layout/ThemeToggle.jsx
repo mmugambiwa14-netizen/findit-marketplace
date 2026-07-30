@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { writeStoredString } from '@/lib/browserStorage';
 
 const THEME_STORAGE_KEY = 'theme';
 
@@ -12,7 +13,7 @@ function applyTheme(theme) {
   const dark = theme === 'dark';
   document.documentElement.classList.toggle('dark', dark);
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  writeStoredString('local', THEME_STORAGE_KEY, theme);
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#090b10' : '#f7f8fb');
 }
 
