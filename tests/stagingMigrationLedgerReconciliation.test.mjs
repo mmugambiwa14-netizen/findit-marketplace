@@ -16,6 +16,8 @@ const [
   evidence0087,
   repair0088,
   evidence0088,
+  repair0089,
+  evidence0089,
 ] = await Promise.all([
   read('supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-2026-07-30.md'),
@@ -29,6 +31,8 @@ const [
   read('docs/certification/staging-migration-ledger-reconciliation-0087-2026-07-30.md'),
   read('supabase/maintenance/reconcile_staging_migration_history_0088.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-0088-2026-07-30.md'),
+  read('supabase/maintenance/reconcile_staging_migration_history_0089.sql'),
+  read('docs/certification/staging-migration-ledger-reconciliation-0089-2026-07-30.md'),
 ]);
 
 const mappings = [
@@ -183,4 +187,28 @@ test('0088 evidence records private authorization implementations and no product
   assert.match(evidence0088, /Active-user policy dependencies \| 27/);
   assert.match(evidence0088, /Admin policy dependencies \| 75/);
   assert.match(evidence0088, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
+});
+
+test('0089 reconciliation verifies the exact country helper migration and changes metadata only', () => {
+  assert.match(repair0089, /where version = '0089'/i);
+  assert.match(repair0089, /private_country_helper_implementations/);
+  assert.match(repair0089, /4eec3db83666d4d91087d5b8083a92f8/);
+  assert.match(repair0089, /length\(array_to_string\(statements, E'\\n'\)\) = 10477/i);
+  assert.match(repair0089, /set version = '0089'/i);
+  assert.match(repair0089, /source_version !~ '\^20260730\[0-9\]\{6\}\$'/i);
+  assert.doesNotMatch(repair0089, /\bcreate\s+(?:table|function|view|index|policy)\b/i);
+  assert.doesNotMatch(repair0089, /\balter\s+(?:table|function|view|extension|policy)\b/i);
+  assert.doesNotMatch(repair0089, /\bdrop\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('0089 evidence records private country implementations and no production change', () => {
+  assert.match(evidence0089, /bwgklpxoetrrkutottdb/);
+  assert.match(evidence0089, /Canonical migration rows \| 89/);
+  assert.match(evidence0089, /Last version \| `0089`/);
+  assert.match(evidence0089, /Remaining generated versions \| 0/);
+  assert.match(evidence0089, /Private country definers \| 3/);
+  assert.match(evidence0089, /Public invoker compatibility wrappers \| 3/);
+  assert.match(evidence0089, /Preserved stored call paths \| 4/);
+  assert.match(evidence0089, /clearing six targeted warnings/i);
+  assert.match(evidence0089, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
 });
