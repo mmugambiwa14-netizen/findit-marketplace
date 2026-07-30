@@ -21,6 +21,8 @@ const [
   recommendationForeignKeyRollback,
   rlsAuthMigration,
   rlsAuthRollback,
+  permissivePolicyMigration,
+  permissivePolicyRollback,
 ] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
@@ -39,6 +41,8 @@ const [
   read('supabase/rollback/0084_recommendation_foreign_key_covering_indexes.rollback.sql'),
   read('supabase/migrations/0085_rls_auth_initialization_plans.sql'),
   read('supabase/rollback/0085_rls_auth_initialization_plans.rollback.sql'),
+  read('supabase/migrations/0086_rls_permissive_policy_consolidation.sql'),
+  read('supabase/rollback/0086_rls_permissive_policy_consolidation.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -71,7 +75,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0085_rls_auth_initialization_plans\.sql/);
+  assert.match(sqlBoundary, /0086_rls_permissive_policy_consolidation\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
@@ -163,6 +167,26 @@ test('RLS auth initialization plans are fingerprinted, reversible and independen
   assert.doesNotMatch(rlsAuthMigration, /drop policy|drop table|truncate|delete from/i);
   assert.doesNotMatch(rlsAuthRollback, /drop policy|drop table|truncate|delete from/i);
   assert.match(migrationWorkflow, /v1_rls_auth_initialization_plans\.sql/);
+});
+
+test('overlapping permissive policies are fingerprinted, split by action and reversible', () => {
+  assert.match(permissivePolicyMigration, /findit_permissive_policy_expected/);
+  assert.match(permissivePolicyMigration, /expected_count <> 18/);
+  assert.match(permissivePolicyMigration, /md5\(coalesce\(policy\.qual, ''\)\)/);
+  assert.match(permissivePolicyMigration, /drop policy announcements_admin_write/);
+  assert.match(permissivePolicyMigration, /create policy announcements_admin_insert/);
+  assert.match(permissivePolicyMigration, /create policy announcements_admin_update/);
+  assert.match(permissivePolicyMigration, /create policy announcements_admin_delete/);
+  assert.match(permissivePolicyMigration, /listing_private_locations_server_insert/);
+  assert.match(permissivePolicyMigration, /users_update_own_or_admin/);
+  assert.match(permissivePolicyMigration, /overlapping_count <> 0/);
+  assert.match(permissivePolicyRollback, /expected_count <> 33/);
+  assert.match(permissivePolicyRollback, /create policy announcements_admin_write/);
+  assert.match(permissivePolicyRollback, /create policy users_admin_manage/);
+  assert.match(permissivePolicyRollback, /create policy users_update_own_profile_fields/);
+  assert.doesNotMatch(permissivePolicyMigration, /drop table|truncate|delete from/i);
+  assert.doesNotMatch(permissivePolicyRollback, /drop table|truncate|delete from/i);
+  assert.match(migrationWorkflow, /v1_rls_permissive_policy_consolidation\.sql/);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
