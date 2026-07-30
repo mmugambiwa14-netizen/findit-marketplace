@@ -88,7 +88,7 @@ export default function ListingResults({
           )}
 
           {!isLoading && !hasNextPage && loaded > 0 && (
-            <p className="mt-7 text-center text-xs text-muted-foreground">You have reached the end of these results.</p>
+            <p className="mt-7 pb-5 text-center text-xs text-muted-foreground">You have reached the end of these results.</p>
           )}
         </>
       )}
