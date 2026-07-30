@@ -3,9 +3,8 @@ import {
   Car, Bike, Truck, Crown, Wrench, Bus,
   HardHat, Tractor, Pickaxe, Factory, Zap, Hammer, Anchor, LayoutGrid,
 } from "lucide-react";
+import { V1_SERVICE_CATEGORIES } from '@/lib/serviceConstants';
 
-// Curated quick-filter chips per listing type. `value` matches the entity `category`.
-// `value: ""` is the "All" chip.
 const PROPERTY_CHIPS = [
   { value: "", label: "All", icon: LayoutGrid },
   { value: "house_sale", label: "Houses", icon: Home },
@@ -40,10 +39,20 @@ const MACHINERY_CHIPS = [
   { value: "boats", label: "Marine", icon: Anchor },
 ];
 
+const SERVICE_CHIPS = [
+  { value: "", label: "All services", icon: LayoutGrid },
+  ...V1_SERVICE_CATEGORIES.map((category) => ({
+    value: category.value,
+    label: category.label,
+    icon: category.icon,
+  })),
+];
+
 const CHIPS_BY_TYPE = {
   property: PROPERTY_CHIPS,
   car: CAR_CHIPS,
   machinery: MACHINERY_CHIPS,
+  service: SERVICE_CHIPS,
 };
 
 export default function CategoryFilterChips({ type, category, onSelect }) {
@@ -51,20 +60,21 @@ export default function CategoryFilterChips({ type, category, onSelect }) {
   if (!chips.length) return null;
 
   return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pt-3">
+    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pt-3">
       {chips.map(({ value, label, icon: Icon }) => {
         const active = (category || "") === value;
         return (
-          <button type="button"
+          <button
+            type="button"
             key={value || "all"}
             onClick={() => onSelect(value)}
-            className={`flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+            className={`flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
               active
-                ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
-                : "bg-muted/50 text-muted-foreground border-border hover:border-primary/40"
+                ? "border-primary bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                : "border-border bg-muted/50 text-muted-foreground hover:border-primary/40"
             }`}
           >
-            <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={2.25} />
+            <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
             {label}
           </button>
         );
