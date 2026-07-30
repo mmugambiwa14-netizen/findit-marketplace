@@ -1,4 +1,4 @@
-import { Building2, Car, Tractor } from 'lucide-react';
+import { Building2, Car, Tractor, Wrench } from 'lucide-react';
 import BackButton from '@/components/layout/BackButton';
 import CategoryFilterChips from '@/components/search/CategoryFilterChips';
 import { cn } from '@/lib/utils';
@@ -7,6 +7,7 @@ const TYPE_OPTIONS = [
   { value: 'property', label: 'Property', title: 'Property', icon: Building2 },
   { value: 'car', label: 'Vehicles', title: 'Vehicles', icon: Car },
   { value: 'machinery', label: 'Equipment', title: 'Heavy Equipment', icon: Tractor },
+  { value: 'service', label: 'Services', title: 'Services', icon: Wrench },
 ];
 
 export default function CategoryResultsHeader({ type, category, onTypeChange, onCategorySelect }) {
@@ -28,7 +29,7 @@ export default function CategoryResultsHeader({ type, category, onTypeChange, on
         </div>
       </div>
 
-      <div className="mt-4 flex gap-1.5 overflow-x-auto no-scrollbar" role="tablist" aria-label="Listing category">
+      <div className="no-scrollbar mt-4 flex gap-1.5 overflow-x-auto" role="tablist" aria-label="Marketplace category">
         {TYPE_OPTIONS.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
