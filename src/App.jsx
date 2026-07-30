@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   BrowserRouter as Router,
@@ -103,6 +103,19 @@ function LegacyConversationRedirect() {
   return <Navigate to={`/chats/${encodeURIComponent(conversationId)}${location.search}${location.hash}`} replace />;
 }
 
+function ThemeAwareSonner() {
+  const readTheme = () => document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  const [theme, setTheme] = useState(readTheme);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => setTheme(readTheme()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return <SonnerToaster position="top-center" richColors theme={theme} />;
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, blockedAccount, checkUserAuth, logout } = useAuth();
   if (isLoadingPublicSettings || isLoadingAuth) return <LoadingScreen />;
@@ -195,7 +208,7 @@ function App() {
             <AuthenticatedApp />
           </Router>
           <Toaster />
-          <SonnerToaster position="top-center" richColors theme="dark" />
+          <ThemeAwareSonner />
         </QueryClientProvider>
       </CurrencyProvider>
     </AuthProvider>
