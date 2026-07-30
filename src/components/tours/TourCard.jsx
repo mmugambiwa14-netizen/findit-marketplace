@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
 import MessageDialog from '@/components/listings/MessageDialog';
 import TourReportDialog from '@/components/tours/TourReportDialog';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { featureFlags } from '@/lib/featureFlags';
 import { cn } from '@/lib/utils';
@@ -39,7 +38,7 @@ function listingTypeLabel(item) {
   return 'Property';
 }
 
-const railButtonClass = 'flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-lg backdrop-blur-md transition-transform hover:scale-105 hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-60';
+const overlayActionClass = 'inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black/55 px-3 text-[11px] font-semibold text-white shadow-lg backdrop-blur-md transition-colors hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-60';
 
 export default function TourCard({ item, active, onActivate, isSaved = false, onSavedChange, onReported }) {
   const { user } = useAuth();
@@ -195,7 +194,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
               <div className="h-full w-full bg-surface-raised" />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/15 to-black/20" aria-hidden="true" />
-            <span className="absolute left-1/2 top-[40%] flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
+            <span className="absolute left-1/2 top-[35%] flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
               {loadingPlayback ? <RotateCcw className="h-6 w-6 animate-spin" /> : <Play className="ml-1 h-7 w-7 fill-current" />}
             </span>
           </button>
@@ -207,41 +206,28 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
               {formatDuration(item.durationSeconds)}
             </span>
 
-            <div className="absolute right-3 top-[39%] z-20 flex -translate-y-1/2 flex-col items-center gap-3 text-[10px] font-semibold text-white">
-              {listingOnly && (
-                <div className="flex flex-col items-center gap-1">
-                  <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(railButtonClass, liked && 'text-red-400')}>
-                    <Heart className={cn('h-5 w-5', liked && 'fill-current')} />
+            <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-white sm:p-5">
+              <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+                {listingOnly && (
+                  <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(overlayActionClass, liked && 'text-red-300')}>
+                    <Heart className={cn('h-4 w-4', liked && 'fill-current')} />
+                    {liked ? 'Saved' : 'Save'}
                   </button>
-                  <span>{liked ? 'Saved' : 'Save'}</span>
-                </div>
-              )}
-
-              {canMessage ? (
-                <div className="flex flex-col items-center gap-1">
-                  <button type="button" onClick={openChat} aria-label="Message seller" className={railButtonClass}>
-                    <MessageCircle className="h-5 w-5" />
+                )}
+                {canMessage ? (
+                  <button type="button" onClick={openChat} aria-label="Message seller" className={overlayActionClass}>
+                    <MessageCircle className="h-4 w-4" /> Message
                   </button>
-                  <span>Message</span>
-                </div>
-              ) : !isOwner ? (
-                <div className="flex flex-col items-center gap-1">
-                  <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={railButtonClass}>
-                    <MessageCircle className="h-5 w-5" />
+                ) : !isOwner ? (
+                  <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={overlayActionClass}>
+                    <MessageCircle className="h-4 w-4" /> Contact
                   </Link>
-                  <span>Contact</span>
-                </div>
-              ) : null}
-
-              <div className="flex flex-col items-center gap-1">
-                <button type="button" onClick={share} aria-label="Share listing" className={railButtonClass}>
-                  <Share2 className="h-5 w-5" />
+                ) : null}
+                <button type="button" onClick={share} aria-label="Share listing" className={overlayActionClass}>
+                  <Share2 className="h-4 w-4" /> Share
                 </button>
-                <span>Share</span>
               </div>
-            </div>
 
-            <div className="absolute inset-x-0 bottom-0 z-10 p-4 pr-[5.25rem] text-white sm:p-5 sm:pr-24">
               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-white/80">
                 <span className="truncate">{item.sellerDisplayName}</span>
                 <span className="rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide backdrop-blur-sm">{listingTypeLabel(item)}</span>
@@ -271,14 +257,17 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
                 </div>
               )}
 
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/10 pt-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">Price</p>
                   <p className="mt-0.5 truncate text-xl font-black text-white sm:text-2xl">{priceLabel(item, format)}</p>
                 </div>
-                <Button asChild className="h-12 shrink-0 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-lg hover:bg-primary-hover">
-                  <Link to={detailPath}>View listing <ArrowUpRight className="ml-2 h-4 w-4" /></Link>
-                </Button>
+                <Link
+                  to={detailPath}
+                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-xs font-bold text-primary-foreground shadow-lg transition-colors hover:bg-primary-hover sm:text-sm"
+                >
+                  View listing <ArrowUpRight className="ml-1.5 h-4 w-4" />
+                </Link>
               </div>
             </div>
           </>
