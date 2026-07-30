@@ -8,6 +8,7 @@ import ContactButtons from "@/components/listings/ContactButtons";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import { ContactBar, DetailLoading, DetailSection, SafetyPanel, SellerPanel } from "@/components/listings/ListingDetailLayout";
+import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { getServiceCategory, getSubcategoryLabel } from "@/lib/serviceConstants";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getPublicService } from "@/services/servicesService";
@@ -22,6 +23,7 @@ export default function ServiceDetail() {
     queryFn: () => getPublicService(id),
     enabled: Boolean(id),
   });
+  useMarketplaceView('service', id, 'service', Boolean(service));
 
   if (isLoading) return <DetailLoading />;
   if (error) return <ServiceError onRetry={refetch} />;
@@ -47,28 +49,16 @@ export default function ServiceDetail() {
     <div className="min-h-screen bg-background pb-32">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={shareService} showSave={false} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer
-          photos={service.photos}
-          title={service.title}
-          fallbackImage={null}
-          tour={service.tour || null}
-          tourActionLabel="See their work"
-          tourOwnerId={service.provider_id}
-          parentType="service"
-          parentId={service.id}
-        />
+        <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="See their work" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              {category && <Badge variant="secondary">{category.label}</Badge>}
-              {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
-            </div>
+            <div className="flex flex-wrap items-center gap-2">{category && <Badge variant="secondary">{category.label}</Badge>}{subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}</div>
             <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{service.title}</h1>
             <p className="mt-4 text-3xl font-bold text-primary">{priceDisplay}</p>
             {service.location_name && <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{service.location_name}</p>}
             {service.can_travel && <p className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary/10 px-4 text-sm font-medium text-primary"><Car className="h-4 w-4" />Can travel to other areas</p>}
+            <p className="mt-3 text-sm text-muted-foreground">{Number(service.views || 0).toLocaleString()} views</p>
           </section>
-
           {service.description && <DetailSection title="About this service"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{service.description}</p></DetailSection>}
           <SellerPanel name={service.provider_name || "FindIt service provider"} email={service.contact_email} />
           <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. FindIt does not handle service payments.</SafetyPanel>
