@@ -127,6 +127,9 @@ jobs:
       - name: Run private public seller-profile implementation matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_public_seller_profile_implementation.sql --local
 
+      - name: Run private public Tour-summary implementation matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_public_tour_summaries_implementation.sql --local
+
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
 
