@@ -26,17 +26,30 @@ export default function MarketplaceCard({
   save = null,
   tour = null,
   tourLabel = 'Tour',
+  layout = 'grid',
   className = null,
   onOpen = null,
 }) {
   const publicTour = tour && (tour.status === 'ready' || tour.status === 'approved' || tour.isReady === true);
   const tourDuration = publicTour ? formatDuration(tour.durationSeconds) : null;
   const tourTarget = `${to}${to.includes('?') ? '&' : '?'}media=tour`;
+  const browseLayout = layout === 'browse';
 
   return (
     <article className={cn('group relative overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-floating', className)}>
-      <Link to={to} className="block focus-visible:ring-inset" aria-label={`${title}, ${priceLabel}`} onClick={onOpen}>
-        <div className="relative aspect-[4/3] overflow-hidden bg-surface-secondary">
+      <Link
+        to={to}
+        className={cn(
+          'block focus-visible:ring-inset',
+          browseLayout && 'grid grid-cols-[9rem_minmax(0,1fr)] sm:block',
+        )}
+        aria-label={`${title}, ${priceLabel}`}
+        onClick={onOpen}
+      >
+        <div className={cn(
+          'relative aspect-[4/3] overflow-hidden bg-surface-secondary',
+          browseLayout && 'aspect-auto min-h-[11rem] sm:aspect-[4/3] sm:min-h-0',
+        )}>
           {imageUrl || fallbackImageUrl ? (
             <img
               src={imageUrl || fallbackImageUrl}
@@ -65,28 +78,50 @@ export default function MarketplaceCard({
               ))}
             </div>
           )}
-          <p className="absolute bottom-2.5 left-3 right-3 truncate text-base font-extrabold tracking-tight text-white sm:text-lg">
+          <p className={cn(
+            'absolute bottom-2.5 left-3 right-3 truncate text-base font-extrabold tracking-tight text-white sm:text-lg',
+            browseLayout && 'hidden sm:block',
+          )}>
             {priceLabel}
           </p>
         </div>
 
-        <div className="p-3 sm:p-3.5">
-          <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-foreground">{title}</h3>
+        <div className={cn('p-3 sm:p-3.5', browseLayout && 'min-w-0')}>
+          {browseLayout && (
+            <p className="mb-1 text-base font-extrabold tracking-tight text-foreground sm:hidden">
+              {priceLabel}
+            </p>
+          )}
+          <h3 className={cn(
+            'line-clamp-2 min-h-10 text-sm font-semibold leading-5 text-foreground',
+            browseLayout && 'line-clamp-3 min-h-0 text-[15px] sm:line-clamp-2 sm:min-h-10 sm:text-sm',
+          )}>
+            {title}
+          </h3>
           {codeNode}
           {locationLabel && (
-            <p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{locationLabel}</span>
+            <p className="mt-1.5 flex items-start gap-1 text-xs text-muted-foreground">
+              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span className={cn(browseLayout ? 'line-clamp-2' : 'truncate')}>{locationLabel}</span>
             </p>
           )}
           {attributes.length > 0 && (
-            <div className="mt-2.5 flex min-h-5 items-center gap-x-2.5 gap-y-1 overflow-hidden text-[11px] text-muted-foreground">
+            <div className={cn(
+              'mt-2.5 min-h-5 items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground',
+              browseLayout ? 'flex flex-wrap' : 'flex overflow-hidden',
+            )}>
               {attributes.slice(0, 3).map((attribute, index) => {
                 const Icon = attribute.icon;
                 return (
-                  <span key={`${attribute.label}-${index}`} className="flex min-w-0 shrink items-center gap-1 whitespace-nowrap">
+                  <span
+                    key={`${attribute.label}-${index}`}
+                    className={cn(
+                      'flex items-center gap-1 whitespace-nowrap',
+                      browseLayout ? 'shrink-0' : 'min-w-0 shrink',
+                    )}
+                  >
                     {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-                    <span className="truncate">{attribute.label}</span>
+                    <span className={cn(!browseLayout && 'truncate')}>{attribute.label}</span>
                   </span>
                 );
               })}
@@ -94,7 +129,7 @@ export default function MarketplaceCard({
           )}
           {meta && (
             <div className="mt-2.5 border-t border-border pt-2.5 text-[10px] text-muted-foreground">
-              <span className="block truncate">{meta}</span>
+              <span className={cn('block', browseLayout ? 'line-clamp-2' : 'truncate')}>{meta}</span>
             </div>
           )}
         </div>
@@ -106,7 +141,10 @@ export default function MarketplaceCard({
           onClick={save.onToggle}
           aria-label={save.active ? 'Remove from saved' : 'Save listing'}
           aria-pressed={save.active}
-          className="absolute right-2.5 top-2.5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-sm backdrop-blur-md transition-transform hover:scale-105 focus-visible:ring-offset-0 active:scale-95"
+          className={cn(
+            'absolute top-2.5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white shadow-sm backdrop-blur-md transition-transform hover:scale-105 focus-visible:ring-offset-0 active:scale-95',
+            browseLayout ? 'left-[5.65rem] sm:left-auto sm:right-2.5' : 'right-2.5',
+          )}
         >
           <Heart className={cn('h-[19px] w-[19px]', save.active && 'fill-destructive text-destructive')} />
         </button>
@@ -115,7 +153,10 @@ export default function MarketplaceCard({
       {publicTour && (
         <Link
           to={tourTarget}
-          className="absolute bottom-[calc(7.75rem)] left-2.5 z-10 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/15 bg-black/65 px-2.5 text-[10px] font-semibold text-white backdrop-blur-md hover:bg-black/80 sm:bottom-[calc(7.9rem)]"
+          className={cn(
+            'absolute left-2.5 z-10 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-white/15 bg-black/65 px-2.5 text-[10px] font-semibold text-white backdrop-blur-md hover:bg-black/80',
+            browseLayout ? 'bottom-2.5 sm:bottom-[calc(7.9rem)]' : 'bottom-[calc(7.75rem)] sm:bottom-[calc(7.9rem)]',
+          )}
           aria-label={`${tourLabel} for ${title}${tourDuration ? `, ${tourDuration}` : ''}`}
         >
           <Play className="h-3.5 w-3.5 fill-current" />
