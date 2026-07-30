@@ -47,11 +47,11 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
   for (const [tag, count] of dollarQuoteBalance(content)) failures.push(`${name} has unbalanced ${tag} delimiters (${count})`);
 }
 
-// Previous reviewed release tip: 0089_private_country_helper_implementations.sql.
+// Previous reviewed release tip: 0090_seller_profile_identifier_privacy.sql.
 // Release-tip anchor: bump this deliberately when a migration is added, so an
 // accidental or unreviewed migration cannot ride along silently.
-if (basename(migrationFiles.at(-1) ?? '') !== '0090_seller_profile_identifier_privacy.sql') {
-  failures.push(`latest expected migration is 0090, found ${migrationFiles.at(-1) ?? 'none'}`);
+if (basename(migrationFiles.at(-1) ?? '') !== '0091_private_public_tour_summaries_implementation.sql') {
+  failures.push(`latest expected migration is 0091, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
 if (failures.length) {
