@@ -6,9 +6,9 @@ import ConversationThread from '@/components/messaging/ConversationThread';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useTimeAgo } from '@/hooks/useTimeAgo';
 import { useAuth } from '@/lib/AuthContext';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { formatInboxTimestamp } from '@/lib/messageTimestamps';
 import { getMessageInboxPage } from '@/services/messagingService';
 
 const PAGE_SIZE = 30;
@@ -66,13 +66,8 @@ export default function Inquiries() {
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-40 border-b bg-card/95 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <Button type="button" variant="ghost" size="icon" onClick={() => navigate('/profile')} aria-label="Back to profile">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-lg font-bold">Chats</h1>
-            <p className="text-xs text-muted-foreground">Private conversations about FindIt listings</p>
-          </div>
+          <Button type="button" variant="ghost" size="icon" onClick={() => navigate('/profile')} aria-label="Back to profile"><ArrowLeft className="h-5 w-5" /></Button>
+          <div><h1 className="text-lg font-bold">Chats</h1><p className="text-xs text-muted-foreground">Private conversations about FindIt listings</p></div>
         </div>
       </header>
 
@@ -83,9 +78,7 @@ export default function Inquiries() {
             <label htmlFor="message-inbox-search" className="sr-only">Search messages</label>
             <Input id="message-inbox-search" className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search person or listing" maxLength={100} />
           </div>
-          <Button type="button" variant={unreadOnly ? 'default' : 'outline'} onClick={() => setUnreadOnly((value) => !value)}>
-            {unreadOnly ? 'Showing unread' : 'Unread only'}
-          </Button>
+          <Button type="button" variant={unreadOnly ? 'default' : 'outline'} onClick={() => setUnreadOnly((value) => !value)}>{unreadOnly ? 'Showing unread' : 'Unread only'}</Button>
         </div>
 
         {inboxQuery.isError && <div className="mt-5 rounded-xl border bg-card p-6 text-center"><h2 className="font-semibold">We could not load your messages</h2><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="mt-4" onClick={() => inboxQuery.refetch()}>Try again</Button></div>}
@@ -101,18 +94,8 @@ export default function Inquiries() {
           </div>
         ) : !inboxQuery.isError && (
           <div className="mt-5 overflow-hidden rounded-xl border bg-card">
-            <div className="divide-y">
-              {conversations.map((conversation) => (
-                <ConversationRow key={conversation.conversation_id} conversation={conversation} onOpen={() => navigate(`/chats/${conversation.conversation_id}`)} />
-              ))}
-            </div>
-            {inboxQuery.hasNextPage && (
-              <div className="border-t p-3 text-center">
-                <Button type="button" variant="outline" disabled={inboxQuery.isFetchingNextPage} onClick={() => inboxQuery.fetchNextPage()}>
-                  {inboxQuery.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more chats'}
-                </Button>
-              </div>
-            )}
+            <div className="divide-y">{conversations.map((conversation) => <ConversationRow key={conversation.conversation_id} conversation={conversation} onOpen={() => navigate(`/chats/${conversation.conversation_id}`)} />)}</div>
+            {inboxQuery.hasNextPage && <div className="border-t p-3 text-center"><Button type="button" variant="outline" disabled={inboxQuery.isFetchingNextPage} onClick={() => inboxQuery.fetchNextPage()}>{inboxQuery.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more chats'}</Button></div>}
           </div>
         )}
       </main>
@@ -121,7 +104,7 @@ export default function Inquiries() {
 }
 
 function ConversationRow({ conversation, onOpen }) {
-  const timeAgo = useTimeAgo(conversation.last_message_at);
+  const timestamp = formatInboxTimestamp(conversation.last_message_at);
   const { format } = useCurrency();
   const available = ['available', 'under_offer'].includes(conversation.listing_status);
   const duration = durationLabel(conversation.tour_duration_seconds);
@@ -129,10 +112,10 @@ function ConversationRow({ conversation, onOpen }) {
     <button type="button" onClick={onOpen} className="flex min-h-24 w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-muted/50">
       <div className="relative h-14 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted">
         {conversation.listing_photo ? <img src={conversation.listing_photo} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center"><ImageOff className="h-5 w-5 text-muted-foreground" /></div>}
-        {conversation.has_tour && <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-white"><Play className="h-2.5 w-2.5 fill-current" />{duration || 'Tour'}</span>}
+        {conversation.has_tour && <span className="absolute bottom-1 left-1 inline-flex items-center gap-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-white"><Play className="h-2.5 w-2.5 fill-current" />{duration || 'Peek'}</span>}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2"><p className={conversation.has_unread ? 'truncate text-sm font-bold' : 'truncate text-sm font-medium'}>{conversation.other_user_name}</p><span className="shrink-0 text-[11px] text-muted-foreground">{timeAgo}</span></div>
+        <div className="flex items-center justify-between gap-2"><p className={conversation.has_unread ? 'truncate text-sm font-bold' : 'truncate text-sm font-medium'}>{conversation.other_user_name}</p><time dateTime={conversation.last_message_at} className="shrink-0 text-[11px] text-muted-foreground">{timestamp}</time></div>
         <div className="mt-0.5 flex min-w-0 items-center gap-2"><p className="truncate text-xs font-medium text-foreground">{conversation.listing_title}</p>{!available && <Badge variant="destructive" className="h-5 shrink-0 px-1.5 text-[9px]">{statusLabel(conversation.listing_status)}</Badge>}</div>
         {conversation.listing_price != null && <p className="mt-0.5 text-xs font-semibold text-primary">{format(conversation.listing_price)}</p>}
         <p className={conversation.has_unread ? 'mt-1 truncate text-xs font-medium text-foreground' : 'mt-1 truncate text-xs text-muted-foreground'}>{conversation.last_message}</p>
