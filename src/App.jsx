@@ -144,7 +144,7 @@ const AuthenticatedApp = () => {
           <Route path="/property/:id" element={<PropertyDetail />} />
           <Route path="/car/:id" element={<CarDetail />} />
           <Route path="/machinery/:id" element={<MachineryDetail />} />
-          <Route path="/seller/:email" element={<SellerProfile />} />
+          <Route path="/seller/:sellerId" element={<SellerProfile />} />
           {featureFlags.businessProfiles && <Route path="/business/:id" element={<PublicBusinessProfile />} />}
           {featureFlags.businessProfiles && <Route path="/dealer/:id" element={<PublicBusinessProfile />} />}
           <Route path="/services" element={<Services />} />
