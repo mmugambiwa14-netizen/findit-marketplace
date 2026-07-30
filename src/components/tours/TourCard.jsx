@@ -31,8 +31,9 @@ function priceLabel(item, format) {
   return `${prefix}${format(item.price)}${suffix}`;
 }
 
-const actionClass = 'group flex min-h-12 w-full items-center gap-2.5 px-1 py-2 text-left text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-wait disabled:opacity-60';
-const actionIconClass = 'flex h-9 w-9 shrink-0 items-center justify-center text-primary transition-transform group-hover:scale-105';
+const actionClass = 'group flex min-h-12 w-full min-w-0 items-center gap-2 px-0.5 py-2 text-left text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-wait disabled:opacity-60';
+const actionIconClass = 'flex h-8 w-8 shrink-0 items-center justify-center text-primary transition-transform group-hover:scale-105';
+const actionLabelClass = 'min-w-0 whitespace-nowrap';
 
 export default function TourCard({ item, active, onActivate, isSaved = false, onSavedChange, onReported }) {
   const { user } = useAuth();
@@ -213,7 +214,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
         )}
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3 border-t border-border bg-card p-4 text-card-foreground sm:grid-cols-[minmax(0,1fr)_7rem] sm:p-5">
+      <div className="grid grid-cols-[minmax(0,1fr)_7.25rem] gap-2.5 border-t border-border bg-card p-4 text-card-foreground sm:grid-cols-[minmax(0,1fr)_7.5rem] sm:gap-3 sm:p-5">
         <div className="min-w-0 py-0.5">
           <div className="flex min-w-0 items-center gap-2">
             <p className="min-w-0 truncate text-sm font-bold text-foreground">{item.sellerDisplayName}</p>
@@ -244,27 +245,27 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
           <p className="mt-4 truncate text-xl font-black text-primary sm:text-2xl">{priceLabel(item, format)}</p>
         </div>
 
-        <div className="flex flex-col justify-center divide-y divide-border border-l border-border pl-3">
+        <div className="flex min-w-0 flex-col justify-center divide-y divide-border border-l border-border pl-2.5">
           {listingOnly && (
             <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(actionClass, liked && 'text-destructive')}>
               <span className={cn(actionIconClass, liked && 'text-destructive')}><Heart className={cn('h-5 w-5', liked && 'fill-current')} /></span>
-              <span>{liked ? 'Saved' : 'Save'}</span>
+              <span className={actionLabelClass}>{liked ? 'Saved' : 'Save'}</span>
             </button>
           )}
           {canMessage ? (
             <button type="button" onClick={openChat} aria-label="Message seller" className={actionClass}>
               <span className={actionIconClass}><MessageCircle className="h-5 w-5" /></span>
-              <span>Message</span>
+              <span className={actionLabelClass}>Message</span>
             </button>
           ) : !isOwner ? (
             <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={actionClass}>
               <span className={actionIconClass}><MessageCircle className="h-5 w-5" /></span>
-              <span>Contact</span>
+              <span className={actionLabelClass}>Contact</span>
             </Link>
           ) : null}
           <button type="button" onClick={share} aria-label="Share listing" className={actionClass}>
             <span className={actionIconClass}><Share2 className="h-5 w-5" /></span>
-            <span>Share</span>
+            <span className={actionLabelClass}>Share</span>
           </button>
         </div>
       </div>
