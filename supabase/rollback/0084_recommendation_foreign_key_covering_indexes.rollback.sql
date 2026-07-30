@@ -1,0 +1,4 @@
+drop index if exists public.idx_fk_recommendation_cache_subject_listing_id;
+drop index if exists public.idx_fk_recommendation_events_seller_id;
+drop index if exists public.idx_fk_recommendation_service_policies_updated_by;
+drop index if exists public.idx_fk_recommendation_weight_profiles_created_by;
