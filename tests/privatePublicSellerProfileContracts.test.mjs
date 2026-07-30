@@ -3,12 +3,34 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [migration, rollback, workflow, sqlBoundary, repository] = await Promise.all([
+const [
+  migration,
+  rollback,
+  workflow,
+  sqlBoundary,
+  repository,
+  service,
+  contracts,
+  app,
+  sellerPage,
+  detailLayout,
+  propertyDetail,
+  carDetail,
+  machineryDetail,
+] = await Promise.all([
   read('supabase/migrations/0090_seller_profile_identifier_privacy.sql'),
   read('supabase/rollback/0090_seller_profile_identifier_privacy.rollback.sql'),
   read('.github/workflows/migration-gates.yml'),
   read('scripts/verify-sql-boundary.mjs'),
   read('src/repositories/sellerProfilesRepository.js'),
+  read('src/services/sellerProfilesService.js'),
+  read('src/services/sellerProfileContracts.js'),
+  read('src/App.jsx'),
+  read('src/pages/SellerProfile.jsx'),
+  read('src/components/listings/ListingDetailLayout.jsx'),
+  read('src/pages/PropertyDetail.jsx'),
+  read('src/pages/CarDetail.jsx'),
+  read('src/pages/MachineryDetail.jsx'),
 ]);
 
 test('public seller profiles use opaque UUIDs behind a private definer and public invoker wrapper', () => {
@@ -39,10 +61,32 @@ test('seller profile privacy migration fails closed and rollback restores the ex
   assert.match(rollback, /0090 rollback did not restore the legacy seller profile function/);
 });
 
-test('the active client calls the UUID RPC and never sends an email identifier', () => {
+test('the active data path calls the UUID RPC and validates opaque identifiers', () => {
   assert.match(repository, /findPublicSellerProfile\(sellerId\)/);
   assert.match(repository, /\.rpc\('get_public_seller_profile', \{ p_seller_id: sellerId \}\)/);
   assert.doesNotMatch(repository, /seller_email/);
+  assert.match(service, /normalizeSellerProfileId\(sellerId\)/);
+  assert.doesNotMatch(service, /normalizeSellerProfileEmail|sellerEmail/);
+  assert.match(contracts, /isSellerProfileId/);
+  assert.match(contracts, /normalizeSellerProfileId/);
+  assert.doesNotMatch(contracts, /Seller email|normalizeSellerProfileEmail/);
+});
+
+test('the routed seller surface never embeds or resolves account emails', () => {
+  assert.match(app, /path="\/seller\/:sellerId"/);
+  assert.doesNotMatch(app, /path="\/seller\/:email"/);
+  assert.match(sellerPage, /const \{ sellerId = "" \} = useParams\(\)/);
+  assert.match(sellerPage, /isSellerProfileId\(sellerId\)/);
+  assert.match(sellerPage, /enabled: validSellerId/);
+  assert.doesNotMatch(sellerPage, /normalizeSellerProfileEmail|seller_email|\{ email =/);
+  assert.match(detailLayout, /SellerPanel\(\{ name, sellerId \}\)/);
+  assert.match(detailLayout, /`\/seller\/\$\{encodeURIComponent\(sellerId\)\}`/);
+  assert.doesNotMatch(detailLayout, /encodeURIComponent\(email\)|\{ name, email \}/);
+
+  for (const detail of [propertyDetail, carDetail, machineryDetail]) {
+    assert.match(detail, /<SellerPanel name=\{[^}]+\.seller_name\} sellerId=\{[^}]+\.seller_id\} \/>/);
+    assert.doesNotMatch(detail, /<SellerPanel[^>]+email=/);
+  }
 });
 
 test('migration gates run the seller profile matrix and SQL boundary is advanced to the privacy migration', () => {
