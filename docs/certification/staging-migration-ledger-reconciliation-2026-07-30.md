@@ -3,6 +3,7 @@
 Date: 2026-07-30
 Target: FindIt Staging (`bwgklpxoetrrkutottdb`)
 Production impact: none
+Status: completed and verified
 
 ## Reason
 
@@ -24,37 +25,43 @@ applied.
 | `0081` | `20260730141354` | `public_business_profile_view_security` | `1e7fd9e2fe6f1c479ae91b163c3f0efa` | 2393 |
 | `0082` | `20260730142631` | `pg_trgm_extension_schema_security` | `b717618066f5730b9f7887b2bdfbe0ed` | 423 |
 
-Each source row contains one statement and the expected migration name. No
+Each source row contained one statement and the expected migration name. No
 canonical `0077`-`0082` ledger row existed before repair.
 
 ## Repair
 
-Run only:
+The only executed repair was:
 
 `supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql`
 
 The script:
 
-- locks only the migration ledger for the transaction;
-- verifies exact migration name, statement MD5 and statement length;
-- accepts only the known `20260730HHMMSS` source versions;
-- refuses occupied canonical versions, duplicate source rows or content drift;
-- changes only `supabase_migrations.schema_migrations.version`;
-- executes no schema or data migration statement;
-- is idempotent after successful reconciliation.
+- locked only the migration ledger for the transaction;
+- verified exact migration name, statement MD5 and statement length;
+- accepted only the known `20260730HHMMSS` source versions;
+- refused occupied canonical versions, duplicate source rows or content drift;
+- changed only `supabase_migrations.schema_migrations.version`;
+- executed no schema or data migration statement;
+- became idempotent after successful reconciliation.
 
-## Completion requirements
+## Completion evidence
 
-After the transaction:
+The repair transaction completed successfully. A post-repair query returned:
 
-- `supabase_migrations.schema_migrations` must contain exactly one row for every
-  version from `0001` through `0082`;
-- no generated `20260730...` migration version may remain;
-- names `real_marketplace_view_counting` through
-  `pg_trgm_extension_schema_security` must map to `0077` through `0082`;
-- all three repository CI suites must remain green;
-- hosted Security Advisor and the two new security matrices must remain green;
-- production must remain unchanged at `0049`.
+| Check | Result |
+|---|---:|
+| Canonical migration rows | 82 |
+| First version | `0001` |
+| Last version | `0082` |
+| Sequence mismatches | 0 |
+| Remaining generated `20260730...` versions | 0 |
 
-This is migration metadata reconciliation, not a production migration or schema
-change.
+The hosted migration list now maps `real_marketplace_view_counting` through
+`pg_trgm_extension_schema_security` to canonical versions `0077` through `0082`.
+The production project was not queried or changed by the repair and remains at
+`0049`.
+
+All schema behaviour is unchanged because this was migration metadata
+reconciliation, not a production migration or schema change. The repository
+contract prevents the maintenance script from creating, altering, dropping,
+truncating or deleting application objects or data.
