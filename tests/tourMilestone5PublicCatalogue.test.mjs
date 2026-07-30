@@ -98,7 +98,7 @@ test('catalogue UI is cinematic but not a social-video feed', () => {
   assert.match(card, /View listing/);
   assert.match(card, /Save/);
   assert.match(card, /Share/);
-  assert.match(card, /Chat/);
+  assert.match(card, /Message/);
   assert.doesNotMatch(`${page}\n${card}`, /public likes|comments|followers|trending|reaction|creator feed/i);
   assert.doesNotMatch(card, /loop|playsInline[\s\S]*autoPlay[\s\S]*unmuted/i);
 });
