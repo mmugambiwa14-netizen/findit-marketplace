@@ -1,14 +1,31 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { normalizeSellerProfileEmail } from '../src/services/sellerProfileContracts.js';
+import {
+  isSellerProfileId,
+  normalizeSellerListingsPageRequest,
+  normalizeSellerProfileId,
+} from '../src/services/sellerProfileContracts.js';
 
-test('normalizes a seller profile route identity', () => {
-  assert.equal(normalizeSellerProfileEmail(' Seller@Example.COM '), 'seller@example.com');
+const SELLER_ID = '90000000-0000-4000-8000-000000000001';
+
+test('normalizes an opaque seller profile UUID route identity', () => {
+  assert.equal(isSellerProfileId(` ${SELLER_ID.toUpperCase()} `), true);
+  assert.equal(normalizeSellerProfileId(` ${SELLER_ID.toUpperCase()} `), SELLER_ID);
 });
 
-test('rejects invalid seller profile route identities', () => {
-  assert.throws(() => normalizeSellerProfileEmail(''), /invalid/);
-  assert.throws(() => normalizeSellerProfileEmail('not-an-email'), /invalid/);
-  assert.throws(() => normalizeSellerProfileEmail('x'.repeat(255)), /invalid/);
+test('rejects email, empty and malformed seller profile route identities', () => {
+  for (const value of ['', 'seller@example.com', 'not-a-uuid', '00000000-0000-0000-0000-000000000000']) {
+    assert.equal(isSellerProfileId(value), false);
+    assert.throws(() => normalizeSellerProfileId(value), /Seller ID is invalid/);
+  }
+});
+
+test('normalizes bounded seller listing pages around the same opaque identity', () => {
+  assert.deepEqual(normalizeSellerListingsPageRequest(SELLER_ID, { limit: 12 }), {
+    sellerId: SELLER_ID,
+    limit: 12,
+    cursor: null,
+  });
+  assert.equal(normalizeSellerListingsPageRequest(SELLER_ID, { limit: 500 }).limit, 48);
 });
