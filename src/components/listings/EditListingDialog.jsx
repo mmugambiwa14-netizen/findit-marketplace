@@ -96,7 +96,7 @@ export default function EditListingDialog({ listing, ownerId, open, onOpenChange
   const handleOpenChange = async (nextOpen) => {
     if (!nextOpen) {
       if (uploading || tourBusy) {
-        toast.error(tourBusy ? "Wait for the Tour upload to finish" : "Wait for the image upload to finish");
+        toast.error(tourBusy ? "Wait for the Peek upload to finish" : "Wait for the image upload to finish");
         return;
       }
       const staged = media.filter((item) => !item.existing);
