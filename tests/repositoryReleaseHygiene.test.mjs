@@ -17,6 +17,8 @@ const [
   extensionRollback,
   foreignKeyIndexMigration,
   foreignKeyIndexRollback,
+  recommendationForeignKeyMigration,
+  recommendationForeignKeyRollback,
 ] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
@@ -31,6 +33,8 @@ const [
   read('supabase/rollback/0082_pg_trgm_extension_schema_security.rollback.sql'),
   read('supabase/migrations/0083_foreign_key_covering_indexes.sql'),
   read('supabase/rollback/0083_foreign_key_covering_indexes.rollback.sql'),
+  read('supabase/migrations/0084_recommendation_foreign_key_covering_indexes.sql'),
+  read('supabase/rollback/0084_recommendation_foreign_key_covering_indexes.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -63,7 +67,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0083_foreign_key_covering_indexes\.sql/);
+  assert.match(sqlBoundary, /0084_recommendation_foreign_key_covering_indexes\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
@@ -110,6 +114,31 @@ test('advisor-reported foreign keys receive reversible covering indexes', () => 
   }
   assert.doesNotMatch(foreignKeyIndexMigration, /drop index|delete from|truncate/i);
   assert.doesNotMatch(foreignKeyIndexRollback, /drop table|delete from|truncate/i);
+});
+
+test('recommendation foreign keys receive parent-aware reversible coverage', () => {
+  const expectedIndexes = [
+    'idx_fk_recommendation_cache_subject_listing_id',
+    'idx_fk_recommendation_events_seller_id',
+    'idx_fk_recommendation_service_policies_updated_by',
+    'idx_fk_recommendation_weight_profiles_created_by',
+  ];
+  assert.equal(
+    (recommendationForeignKeyMigration.match(/create index if not exists/gi) ?? []).length,
+    expectedIndexes.length,
+  );
+  assert.equal(
+    (recommendationForeignKeyRollback.match(/drop index if exists/gi) ?? []).length,
+    expectedIndexes.length,
+  );
+  for (const indexName of expectedIndexes) {
+    assert.match(recommendationForeignKeyMigration, new RegExp(indexName));
+    assert.match(recommendationForeignKeyRollback, new RegExp(indexName));
+  }
+  assert.match(recommendationForeignKeyMigration, /on public\.recommendation_events \(seller_id\)/i);
+  assert.doesNotMatch(recommendationForeignKeyMigration, /only public\.recommendation_events/i);
+  assert.doesNotMatch(recommendationForeignKeyMigration, /drop index|delete from|truncate/i);
+  assert.doesNotMatch(recommendationForeignKeyRollback, /drop table|delete from|truncate/i);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
