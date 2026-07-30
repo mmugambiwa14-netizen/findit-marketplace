@@ -48,7 +48,7 @@ export default function AppLayout() {
         Skip to main content
       </a>
       {!selfContained && <TopNav />}
-      <main id="main-content" tabIndex={-1} className="min-h-[70vh] pb-20 md:pb-0">
+      <main id="main-content" tabIndex={-1} className="min-h-[70vh] pb-28 md:pb-0">
         <Outlet />
       </main>
       {!selfContained && <SiteFooter />}
