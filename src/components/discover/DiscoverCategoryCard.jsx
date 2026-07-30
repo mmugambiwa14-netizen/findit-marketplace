@@ -2,28 +2,36 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function DiscoverCategoryCard({ title, description, icon: Icon, to, className = null }) {
+export default function DiscoverCategoryCard({
+  title,
+  description,
+  icon: Icon,
+  to,
+  className = null,
+  iconClassName = 'bg-primary/12 text-primary',
+  glowClassName = 'bg-primary/10',
+}) {
   return (
     <Link
       to={to}
       className={cn(
-        'group relative flex min-h-[168px] overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card transition-[transform,border-color,background-color] duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:bg-surface-raised focus-visible:ring-offset-4 sm:min-h-[190px] sm:p-5',
+        'group relative flex min-h-[148px] overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-card transition-[transform,border-color,background-color] duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:bg-surface-raised focus-visible:ring-offset-4 sm:min-h-[168px] sm:p-5',
         className,
       )}
     >
-      <div className="absolute -bottom-12 -right-10 h-36 w-36 rounded-full bg-primary/8 blur-2xl transition-colors group-hover:bg-primary/14" aria-hidden="true" />
+      <div className={cn('absolute -bottom-12 -right-10 h-36 w-36 rounded-full opacity-70 blur-3xl transition-opacity group-hover:opacity-100', glowClassName)} aria-hidden="true" />
       <div className="relative flex w-full flex-col justify-between">
         <div className="flex items-start justify-between gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/12 text-primary">
-            <Icon className="h-5 w-5" strokeWidth={2} />
+          <span className={cn('flex h-11 w-11 items-center justify-center rounded-xl', iconClassName)}>
+            <Icon className="h-5 w-5" strokeWidth={2.2} />
           </span>
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary">
-            <ArrowUpRight className="h-4 w-4" />
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-border bg-background/35 text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary">
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </span>
         </div>
         <div>
-          <h2 className="text-lg font-bold tracking-tight sm:text-xl">{title}</h2>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">{description}</p>
+          <h2 className="text-base font-extrabold tracking-tight sm:text-lg">{title}</h2>
+          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-muted-foreground sm:text-xs sm:leading-5">{description}</p>
         </div>
       </div>
     </Link>
