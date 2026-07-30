@@ -65,8 +65,7 @@ Anonymous hosted verification returned a real eligible seller profile with
 exactly the fields `id`, `full_name`, `bio` and `avatar_url`. No email field was
 present. Unknown and null UUIDs returned no profile. The hosted Security Advisor
 no longer reports the seller-profile RPC as an anonymous- or
-authenticated-executable `SECURITY DEFINER` function, clearing two targeted
-warnings.
+authenticated-executable `SECURITY DEFINER` function, clearing two targeted warnings.
 
 Production was not queried or changed by this migration or reconciliation and
 remains at migration `0049`.
