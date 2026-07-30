@@ -18,6 +18,8 @@ const [
   evidence0088,
   repair0089,
   evidence0089,
+  repair0090,
+  evidence0090,
 ] = await Promise.all([
   read('supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-2026-07-30.md'),
@@ -33,6 +35,8 @@ const [
   read('docs/certification/staging-migration-ledger-reconciliation-0088-2026-07-30.md'),
   read('supabase/maintenance/reconcile_staging_migration_history_0089.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-0089-2026-07-30.md'),
+  read('supabase/maintenance/reconcile_staging_migration_history_0090.sql'),
+  read('docs/certification/staging-migration-ledger-reconciliation-0090-2026-07-30.md'),
 ]);
 
 const mappings = [
@@ -211,4 +215,28 @@ test('0089 evidence records private country implementations and no production ch
   assert.match(evidence0089, /Preserved stored call paths \| 4/);
   assert.match(evidence0089, /clearing six targeted warnings/i);
   assert.match(evidence0089, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
+});
+
+test('0090 reconciliation verifies the exact seller profile privacy migration and changes metadata only', () => {
+  assert.match(repair0090, /where version = '0090'/i);
+  assert.match(repair0090, /seller_profile_identifier_privacy/);
+  assert.match(repair0090, /c90a4e5942969979fafe8ef7b02e812b/);
+  assert.match(repair0090, /length\(array_to_string\(statements, E'\\n'\)\) = 8212/i);
+  assert.match(repair0090, /set version = '0090'/i);
+  assert.match(repair0090, /source_version !~ '\^20260730\[0-9\]\{6\}\$'/i);
+  assert.doesNotMatch(repair0090, /\bcreate\s+(?:table|function|view|index|policy)\b/i);
+  assert.doesNotMatch(repair0090, /\balter\s+(?:table|function|view|extension|policy)\b/i);
+  assert.doesNotMatch(repair0090, /\bdrop\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('0090 evidence records UUID seller profile privacy and no production change', () => {
+  assert.match(evidence0090, /bwgklpxoetrrkutottdb/);
+  assert.match(evidence0090, /Canonical migration rows \| 90/);
+  assert.match(evidence0090, /Last version \| `0090`/);
+  assert.match(evidence0090, /Remaining generated versions \| 0/);
+  assert.match(evidence0090, /Private UUID seller-profile definers \| 1/);
+  assert.match(evidence0090, /Public UUID invoker wrappers \| 1/);
+  assert.match(evidence0090, /Legacy email overloads \| 0/);
+  assert.match(evidence0090, /clearing two targeted warnings/i);
+  assert.match(evidence0090, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
 });
