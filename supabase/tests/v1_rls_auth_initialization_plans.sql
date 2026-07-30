@@ -40,7 +40,7 @@ with expected(table_name, policy_name) as (
     ('services', 'services_owner_write'),
     ('services', 'services_public_read_active'),
     ('users', 'users_select_own_or_admin'),
-    ('users', 'users_update_own_profile_fields')
+    ('users', 'users_update_own_or_admin')
 ), missing_or_uninitialized as (
   select expected.table_name, expected.policy_name
   from expected
@@ -106,7 +106,7 @@ select extensions.is(
       and policyname in (
         'listings_owner_update',
         'services_owner_update',
-        'users_update_own_profile_fields'
+        'users_update_own_or_admin'
       )
       and cmd = 'UPDATE'
       and qual is not null
