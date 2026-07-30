@@ -1,0 +1,45 @@
+name: Process staging Peeks on implementation updates
+
+on:
+  push:
+    branches:
+      - feature/listing-intelligence-foundation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: findit-staging-tour-processing
+  cancel-in-progress: false
+
+jobs:
+  process-staging-peeks:
+    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging-tours
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Install media toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+
+      - name: Process due Peek videos
+        env:
+          FINDIT_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          FINDIT_SUPABASE_SECRET_KEY: ${{ secrets.FINDIT_SUPABASE_SECRET_KEY }}
+          FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
+        run: npm run run:tours-processor -- --batch-size 5
