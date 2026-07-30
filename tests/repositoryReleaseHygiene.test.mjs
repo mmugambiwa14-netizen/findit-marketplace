@@ -13,6 +13,8 @@ const [
   sqlBoundary,
   publicProfileMigration,
   publicProfileRollback,
+  extensionMigration,
+  extensionRollback,
 ] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
@@ -23,6 +25,8 @@ const [
   read('scripts/verify-sql-boundary.mjs'),
   read('supabase/migrations/0081_public_business_profile_view_security.sql'),
   read('supabase/rollback/0081_public_business_profile_view_security.rollback.sql'),
+  read('supabase/migrations/0082_pg_trgm_extension_schema_security.sql'),
+  read('supabase/rollback/0082_pg_trgm_extension_schema_security.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -55,7 +59,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0081_public_business_profile_view_security\.sql/);
+  assert.match(sqlBoundary, /0082_pg_trgm_extension_schema_security\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
@@ -69,6 +73,14 @@ test('public business profiles use an invoker view and a non-exposed least-colum
   assert.doesNotMatch(publicProfileMigration, /registration_number|issuing_body|verification_status/);
   assert.match(publicProfileRollback, /security_invoker = false/i);
   assert.match(publicProfileRollback, /drop function if exists private\.public_business_profiles\(\)/i);
+});
+
+test('pg_trgm extension is relocated out of the public API schema with a reversible migration', () => {
+  assert.match(extensionMigration, /alter extension pg_trgm set schema extensions/i);
+  assert.match(extensionMigration, /create schema if not exists extensions/i);
+  assert.match(extensionRollback, /alter extension pg_trgm set schema public/i);
+  assert.doesNotMatch(extensionMigration, /drop extension/i);
+  assert.doesNotMatch(extensionRollback, /drop extension/i);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
