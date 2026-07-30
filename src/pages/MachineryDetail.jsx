@@ -54,7 +54,7 @@ export default function MachineryDetail() {
     <div className="min-h-screen bg-background pb-32">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Watch Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} />
+        <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Take a Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5">
             <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{getMachineryLabel(item.category)}</Badge>{item.listing_number ? <Badge variant="outline" className="font-mono">{item.listing_number}</Badge> : <ListingCode type="machinery" id={item.id} />}{item.status !== "available" && <Badge variant="destructive" className="capitalize">{String(item.status).replaceAll("_", " ")}</Badge>}{item.ce_certification && <Badge variant="outline">CE certified</Badge>}</div>
