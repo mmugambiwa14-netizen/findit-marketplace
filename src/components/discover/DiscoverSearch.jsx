@@ -28,10 +28,10 @@ export default function DiscoverSearch({ location }) {
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search property, vehicles or equipment"
+        placeholder="Search listings, services or locations"
         aria-label="Search FindIt"
         maxLength={100}
-        className="h-14 rounded-2xl border-border bg-card pl-12 pr-4 text-sm shadow-card focus-visible:bg-surface-secondary"
+        className="h-14 rounded-2xl border-border bg-card pl-12 pr-4 text-sm shadow-card transition-colors focus-visible:bg-surface-secondary sm:text-base"
       />
     </form>
   );
