@@ -119,8 +119,10 @@ export default function ListingCard({
   ].filter(Boolean);
   const enquiryEligible = ['available', 'under_offer'].includes(listing.status);
   const canCall = Boolean(listing.contact_phone);
+  const canWhatsApp = Boolean(listing.contact_whatsapp);
+  const canEmail = Boolean(listing.contact_email || listing.seller_email);
   const canMessage = enquiryEligible && featureFlags.messaging && user?.id !== listing.seller_id;
-  const actions = canCall || canMessage
+  const actions = canCall || canWhatsApp || canEmail || canMessage
     ? <ContactButtons listing={listing} type={type} placement="browse" />
     : null;
 
@@ -140,6 +142,7 @@ export default function ListingCard({
         save={{ active: liked, onToggle: toggleLike }}
         tour={tourSummary(listing)}
         sellerName={listing.seller_name}
+        views={listing.views}
         actions={actions}
         layout="browse"
         onOpen={onOpen}
