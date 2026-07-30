@@ -37,8 +37,8 @@ const [
   read('supabase/rollback/0083_foreign_key_covering_indexes.rollback.sql'),
   read('supabase/migrations/0084_recommendation_foreign_key_covering_indexes.sql'),
   read('supabase/rollback/0084_recommendation_foreign_key_covering_indexes.rollback.sql'),
-  read('supabase/migrations/0085_rls_auth_initialization_plans.sql'),
-  read('supabase/rollback/0085_rls_auth_initialization_plans.rollback.sql'),
+  read('supabase/migrations/0085_rls_auth_initplan_optimization.sql'),
+  read('supabase/rollback/0085_rls_auth_initplan_optimization.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -71,7 +71,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0085_rls_auth_initialization_plans\.sql/);
+  assert.match(sqlBoundary, /0085_rls_auth_initplan_optimization\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
@@ -145,22 +145,24 @@ test('recommendation foreign keys receive parent-aware reversible coverage', () 
   assert.doesNotMatch(recommendationForeignKeyRollback, /drop table|delete from|truncate/i);
 });
 
-test('RLS auth initialization plans are bounded, reversible and independently certified', () => {
-  assert.match(rlsAuthMigration, /expected_count <> 36/);
-  assert.match(rlsAuthMigration, /candidate_count <> 36/);
+test('RLS auth initialization plans are fingerprinted, reversible and independently certified', () => {
   assert.match(rlsAuthMigration, /findit_rls_initplan_expected/);
-  assert.match(rlsAuthMigration, /policy\.cmd <> expected\.command_name/);
-  assert.match(rlsAuthMigration, /policy\.roles::text <> expected\.roles_text/);
-  assert.match(rlsAuthMigration, /replace\(policy_record\.qual, 'auth\.uid\(\)', '\(select auth\.uid\(\)\)'\)/);
-  assert.match(rlsAuthMigration, /alter policy %I on %I\.%I/);
-  assert.match(rlsAuthMigration, /residual_count <> 0/);
+  assert.match(rlsAuthMigration, /qual_md5 text not null/);
+  assert.match(rlsAuthMigration, /with_check_md5 text not null/);
+  assert.match(rlsAuthMigration, /md5\(coalesce\(policy\.qual, ''\)\)/);
+  assert.match(rlsAuthMigration, /expected_count <> 36/);
+  assert.match(rlsAuthMigration, /direct_policy_count <> 36/);
+  assert.match(rlsAuthMigration, /unexpected_policy_count <> 0/);
+  assert.match(rlsAuthMigration, /optimized_policy_count <> 36/);
+  assert.match(rlsAuthMigration, /replace\(policy_row\.qual, 'auth\.uid\(\)', '\(select auth\.uid\(\)\)'\)/);
+  assert.match(rlsAuthMigration, /alter policy %I on public\.%I/);
   assert.match(rlsAuthRollback, /expected_count <> 36/);
   assert.match(rlsAuthRollback, /optimized_policy_count <> 36/);
   assert.match(rlsAuthRollback, /regexp_replace/);
   assert.match(rlsAuthRollback, /'auth\.uid\(\)'/);
   assert.doesNotMatch(rlsAuthMigration, /drop policy|drop table|truncate|delete from/i);
   assert.doesNotMatch(rlsAuthRollback, /drop policy|drop table|truncate|delete from/i);
-  assert.match(migrationWorkflow, /v1_rls_auth_initialization_plans\.sql/);
+  assert.match(migrationWorkflow, /v1_rls_auth_initplan\.sql/);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
