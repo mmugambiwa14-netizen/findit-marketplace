@@ -21,7 +21,7 @@ export function mapPublicListing(row) {
 
   const detail = one(row[detailField]) ?? {};
   const location = one(row.location);
-  const locationName = location?.name ?? row.public_location_label ?? '';
+  const locationName = row.public_location_label || location?.name || '';
 
   return {
     ...row,
