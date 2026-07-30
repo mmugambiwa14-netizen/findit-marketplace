@@ -7,7 +7,8 @@
 --
 -- The migration fails closed on each function's signature, stored body, result
 -- type, volatility, owner, search path and ACL plus exact policy expressions.
--- Stored-body hashes avoid environment-specific pg_get_functiondef rendering.
+-- Stored-body hashes normalize CRLF to LF before comparison so identical SQL
+-- remains stable across hosted and clean local PostgreSQL environments.
 
 create temporary table findit_0087_expected_functions (
   function_name text not null,
@@ -20,8 +21,8 @@ create temporary table findit_0087_expected_functions (
 ) on commit drop;
 
 insert into findit_0087_expected_functions values
-  ('can_read_listing_context', 'p_listing_id uuid, p_seller_id uuid, p_content_suspended_at timestamp with time zone', 'boolean', 's', '7fb0e948a92564f55a773b31b921f4fa', '{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}'),
-  ('has_active_tour_upload_intent', 'p_storage_path text', 'boolean', 's', '8300d6200a46015bbfa8c23892d6b2b7', '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'),
+  ('can_read_listing_context', 'p_listing_id uuid, p_seller_id uuid, p_content_suspended_at timestamp with time zone', 'boolean', 's', '91e97b8347ad3b1f4233d2ec006a98b3', '{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}'),
+  ('has_active_tour_upload_intent', 'p_storage_path text', 'boolean', 's', '9037023a6b379266fc50341d55878398', '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'),
   ('has_valid_listing_upload_intent', 'p_storage_path text', 'boolean', 's', '940938d15c514265b6d7b5e3a325754c', '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'),
   ('has_valid_marketplace_image_upload_intent', 'p_storage_path text', 'boolean', 's', '716ffa4e2fe4ae108c8a8b103a83d281', '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'),
   ('is_attached_marketplace_image', 'p_storage_path text', 'boolean', 's', '7d23c769c2e471b49d7719c62330e9ef', '{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}'),
@@ -71,7 +72,7 @@ begin
      or function_record.provolatile <> expected.volatility
      or function_record.proconfig::text <> '{search_path=public}'
      or coalesce(function_record.proacl::text, '') <> expected.acl_text
-     or md5(function_record.prosrc) <> expected.body_md5;
+     or md5(replace(function_record.prosrc, E'\r\n', E'\n')) <> expected.body_md5;
 
   if mismatch_count <> 0 then
     raise exception '0087 refused because % helper fingerprints drifted', mismatch_count;
