@@ -13,7 +13,7 @@ select extensions.is(
       and pg_get_function_identity_arguments(function_record.oid) = ''
       and function_record.prosecdef
       and function_record.provolatile = 's'
-      and function_record.proconfig = array['search_path=']::text[]
+      and function_record.proconfig = array['search_path=""']::text[]
   ),
   3::bigint,
   'three locked SECURITY DEFINER authorization implementations live in private'
@@ -29,7 +29,7 @@ select extensions.is(
       and pg_get_function_identity_arguments(function_record.oid) = ''
       and not function_record.prosecdef
       and function_record.provolatile = 's'
-      and function_record.proconfig = array['search_path=']::text[]
+      and function_record.proconfig = array['search_path=""']::text[]
       and position('private.' || function_record.proname || '()' in function_record.prosrc) > 0
   ),
   3::bigint,
