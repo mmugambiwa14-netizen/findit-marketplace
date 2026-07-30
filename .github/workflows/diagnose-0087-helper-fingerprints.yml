@@ -2,6 +2,9 @@ name: Diagnose 0087 helper fingerprints
 
 on:
   pull_request:
+  push:
+    branches:
+      - feature/listing-intelligence-foundation
   workflow_dispatch:
 
 permissions:
