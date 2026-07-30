@@ -7,20 +7,19 @@ export default function DiscoverHeader({ location, onLocationChange }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="w-full">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <button
             type="button"
-            className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3 text-left transition-colors hover:border-border-strong hover:bg-surface-raised"
+            className="flex min-h-14 w-full min-w-0 items-center gap-3 rounded-2xl border border-border bg-card px-4 text-left shadow-card transition-colors hover:border-border-strong hover:bg-surface-raised"
             aria-label={`Change location${location?.cityName ? `, currently ${location.cityName}` : ''}`}
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/12 text-primary">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
               <MapPin className="h-4 w-4" />
             </span>
-            <span className="min-w-0">
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Location</span>
-              <span className="block truncate text-sm font-semibold">{location?.cityName || 'All locations'}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+              {location?.cityName || 'All locations'}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
           </button>
