@@ -1,30 +1,32 @@
 import { useState, useEffect } from "react";
 
+const LOCALE = 'en-TR';
+
+function exactLabel(date, includeDate = false) {
+  return new Intl.DateTimeFormat(LOCALE, includeDate
+    ? { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }
+    : { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+}
+
 function computeTimeAgo(dateStr) {
   if (!dateStr) return "";
   const now = Date.now();
-  // Ensure UTC parsing — append Z if no timezone info present
   const normalized = /[Z+\-]\d*$/.test(dateStr.trim()) ? dateStr : dateStr + "Z";
   const date = new Date(normalized);
   if (isNaN(date.getTime())) return "";
   const diffMs = now - date.getTime();
-  // If in the future (clock skew), show "Just now"
-  if (diffMs < 0) return "Just now";
+  if (diffMs < 0) return `Just now · ${exactLabel(date)}`;
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
-  if (diffMins < 1) return "Just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-  return `${Math.floor(diffDays / 30)}mo ago`;
+  if (diffMins < 1) return `Just now · ${exactLabel(date)}`;
+  if (diffMins < 60) return `${diffMins}m ago · ${exactLabel(date)}`;
+  if (diffHours < 24) return `${diffHours}h ago · ${exactLabel(date)}`;
+  if (diffDays < 7) return `${diffDays}d ago · ${exactLabel(date, true)}`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago · ${exactLabel(date, true)}`;
+  return `${Math.floor(diffDays / 30)}mo ago · ${exactLabel(date, true)}`;
 }
 
-/**
- * Returns a live-updating "time ago" string that refreshes every minute.
- * Pass a single ISO date string.
- */
 export function useTimeAgo(dateStr) {
   const [label, setLabel] = useState(() => computeTimeAgo(dateStr));
 
