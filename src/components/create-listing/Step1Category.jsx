@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { CheckCircle2, Building2, Car, Tractor } from "lucide-react";
+import { CheckCircle2, Building2, Car, Tractor, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PROPERTY_CATEGORIES, CAR_CATEGORIES, MACHINERY_CATEGORIES } from "@/lib/constants";
@@ -33,24 +33,31 @@ const CATEGORIES = [
     desc: "Excavators, bulldozers, cranes, mining, generators, agricultural equipment and heavy machinery",
     options: MACHINERY_CATEGORIES,
   },
+  {
+    key: "service",
+    icon: Wrench,
+    color: "text-violet-600 dark:text-violet-400",
+    bg: "bg-violet-50 dark:bg-violet-500/10",
+    label: "Services",
+    desc: "Mechanics, property professionals, builders, surveyors and equipment specialists",
+    options: null,
+  },
 ];
 
-// Group flat option lists by their `group` key (machinery has no group → single list)
 function groupOptions(options) {
   const groups = {};
-  options.forEach(opt => {
-    const g = opt.group || "All";
-    if (!groups[g]) groups[g] = [];
-    groups[g].push(opt);
+  options.forEach((opt) => {
+    const group = opt.group || "All";
+    if (!groups[group]) groups[group] = [];
+    groups[group].push(opt);
   });
   return groups;
 }
 
-export default function Step1Category({ formData, update, onContinue }) {
+export default function Step1Category({ formData, update, onContinue, onSelectService }) {
   const [error, setError] = useState("");
-
-  const selected = CATEGORIES.find(c => c.key === formData.listing_category);
-  const grouped = useMemo(() => (selected ? groupOptions(selected.options) : {}), [selected]);
+  const selected = CATEGORIES.find((category) => category.key === formData.listing_category);
+  const grouped = useMemo(() => (selected?.options ? groupOptions(selected.options) : {}), [selected]);
 
   const handleContinue = () => {
     if (!formData.listing_category) { setError("Please select a category"); return; }
@@ -62,41 +69,44 @@ export default function Step1Category({ formData, update, onContinue }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold">What are you listing?</h2>
-        <p className="text-muted-foreground text-sm mt-1">Choose the category that best fits your listing</p>
+        <h2 className="text-2xl font-bold">What are you posting?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Choose an asset category or offer a professional service</p>
       </div>
 
       <div className="space-y-3">
-        {CATEGORIES.map(cat => {
-          const isSelected = formData.listing_category === cat.key;
-          const Icon = cat.icon;
+        {CATEGORIES.map((category) => {
+          const isSelected = formData.listing_category === category.key;
+          const Icon = category.icon;
           return (
             <button
-              key={cat.key}
+              key={category.key}
               type="button"
               onClick={() => {
-                update("listing_category", cat.key);
+                if (category.key === "service") {
+                  setError("");
+                  onSelectService?.();
+                  return;
+                }
+                update("listing_category", category.key);
                 update("category", "");
-                update("type", cat.key);
+                update("type", category.key);
                 update("detail", {});
               }}
               className={cn(
-                "w-full text-left p-4 rounded-2xl border-2 transition-all relative",
+                "relative w-full rounded-2xl border-2 p-4 text-left transition-all",
                 isSelected
                   ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border bg-card hover:border-primary/40 hover:shadow-sm"
+                  : "border-border bg-card hover:border-primary/40 hover:shadow-sm",
               )}
             >
-              {isSelected && (
-                <CheckCircle2 className="absolute top-3 right-3 w-5 h-5 text-primary" />
-              )}
+              {isSelected && <CheckCircle2 className="absolute right-3 top-3 h-5 w-5 text-primary" />}
               <div className="flex items-start gap-3.5">
-                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", cat.bg)}>
-                  <Icon className={cn("w-6 h-6", cat.color)} strokeWidth={2} />
+                <div className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl", category.bg)}>
+                  <Icon className={cn("h-6 w-6", category.color)} strokeWidth={2} />
                 </div>
-                <div>
-                  <p className="font-bold text-base">{cat.label}</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">{cat.desc}</p>
+                <div className="min-w-0">
+                  <p className="font-bold">{category.label}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">{category.desc}</p>
                 </div>
               </div>
             </button>
@@ -104,20 +114,20 @@ export default function Step1Category({ formData, update, onContinue }) {
         })}
       </div>
 
-      {selected && (
+      {selected?.options && (
         <div>
-          <label htmlFor="listing-subcategory" className="text-sm font-semibold block mb-1">Subcategory *</label>
-          <Select value={formData.category || ""} onValueChange={v => update("category", v)}>
+          <label htmlFor="listing-subcategory" className="mb-1 block text-sm font-semibold">Subcategory *</label>
+          <Select value={formData.category || ""} onValueChange={(value) => update("category", value)}>
             <SelectTrigger id="listing-subcategory" className="h-11 rounded-xl">
               <SelectValue placeholder="Select subcategory..." />
             </SelectTrigger>
             <SelectContent className="max-h-72">
-              {Object.entries(grouped).map(([groupName, opts]) => (
+              {Object.entries(grouped).map(([groupName, options]) => (
                 <SelectGroup key={groupName}>
                   {selected.key !== "machinery" && <SelectLabel>{groupName}</SelectLabel>}
-                  {opts.map(o => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.icon ? `${o.icon} ${o.label}` : o.label}
+                  {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.icon ? `${option.icon} ${option.label}` : option.label}
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -127,10 +137,8 @@ export default function Step1Category({ formData, update, onContinue }) {
         </div>
       )}
 
-      {error && <p className="text-destructive text-sm">{error}</p>}
-
+      {error && <p className="text-sm text-destructive">{error}</p>}
       <StepNav showBack={false} onContinue={handleContinue} />
-
     </div>
   );
 }
