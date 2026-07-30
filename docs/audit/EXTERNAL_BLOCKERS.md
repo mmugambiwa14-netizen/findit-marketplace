@@ -1,118 +1,205 @@
-# External Blockers
+# External Production Blockers
 
-Checks that could **not** be run in this audit, and why. These are recorded as
-blocked, not as passed or failed. Nothing in this list was assumed, simulated or
-inferred from existing documentation.
+Reviewed: 2026-07-30
 
-This matters for one reason: several claims that can only be proven by these
-checks — particularly about scale and runtime behaviour — are therefore
-**unproven**, and PRODUCTION_READINESS.md is explicit that it makes no capacity
-claim without them.
+This file records only boundaries that still require an external provider,
+credential, owner decision, physical device or production change window. Local,
+CI and hosted staging evidence is no longer listed as blocked.
 
-## 1. Docker Desktop + Supabase CLI
+## Cleared evidence
 
-**Blocks:** the entire local Supabase stack.
+The following former blockers are closed on the current implementation branch:
 
-| Command | Purpose |
-|---|---|
-| `supabase start` | Local Postgres/Auth/Storage/Edge runtime |
-| `supabase db reset --local --no-seed` | Apply all 44 migrations to a clean database |
-| `supabase db lint --local` | Schema linting |
-| `supabase test db` | The 12 pgTAP suites in `supabase/tests/` |
+- all 82 migrations apply to clean PostgreSQL/Supabase stacks in GitHub Actions;
+- both clean-database jobs pass schema lint and the complete pgTAP matrix;
+- release candidate, migration and recommendation database workflows pass on
+  branch head `0b9496c004aec244fb98e2faef44d5eb1d7ba377`;
+- hosted staging is migrated through `0082`;
+- hosted listing, service, messaging, recommendation, analytics, worker and Peek
+  acceptance evidence exists;
+- the staging frontend is deployed on GitHub Pages;
+- the former Security Advisor definer-view ERROR is fixed;
+- `pg_trgm` is no longer installed in the exposed `public` schema;
+- Base44 production dependencies and runtime references are removed.
 
-**Unproven as a result:**
-- That the 44 migrations actually apply cleanly end to end. Static analysis says
-  they are contiguous, non-destructive and self-provisioning, but **execution is
-  the only proof.**
-- The 12 pgTAP suites, which are the *runtime* verification of RLS, the function
-  privilege matrix, storage policies and the tour foundation. The 239 passing
-  contract tests are static source assertions and are **not** a substitute.
+Historical statements that Docker, migrations, GitHub Actions, runtime smoke or
+the staging frontend had never run are superseded by this evidence.
 
-**To unblock:** install Docker Desktop and Supabase CLI ≥ 2.109, then run the
-sequence in `README.md`. This is the single highest-value unblock available.
+## 1. Production release authorization and cutover window
 
-## 2. Supabase credentials (`.env`)
+**Blocks:** every production database, Edge Function, worker and frontend
+change.
 
-**Blocks:** every check that needs a project URL and key.
+Required externally:
 
-| Command | Observed | Why |
-|---|---|---|
-| `npm run validate:env` | **exit 1** | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` missing |
-| `npm run verify:oauth-providers` | **exit 1** | needs `FINDIT_SUPABASE_URL`, `FINDIT_SUPABASE_ANON_KEY` |
-| `npm run dev` | not run | client throws at load without config |
+- explicit owner approval to promote the frozen implementation commit;
+- named release operator, independent reviewer, rollback decision-maker and
+  incident lead;
+- a maintenance/cutover window covering migrations `0050` through `0082` and
+  all changed Edge Functions;
+- a signed fresh-launch decision. The production project is empty and staging
+  fixtures, users and objects must not be copied by assumption;
+- a release completion record with checksums, migration/function versions,
+  reconciliation totals and final sign-off.
 
-Both failures are **correct fail-closed behaviour**, not defects — the app
-refuses to start unconfigured rather than silently defaulting to some backend.
+Production `jvbpxnfxkptuexgssplj` remains intentionally untouched at migration
+`0049` until these conditions are met.
 
-**To unblock:** `cp .env.example .env` and populate from `supabase status`
-(local) or the project dashboard (hosted). Never place a service-role key in a
-`VITE_` variable.
+## 2. Production domain, host, DNS and TLS
 
-## 3. Running Supabase instance — smoke suites
+**Blocks:** production redirects, OAuth publication, sender-domain mail links,
+HSTS/CSP certification and real-user traffic.
 
-**Blocks:** ~30 `test:*-local` and `test:*-hosted` scripts. All exist on disk
-(all 40 script paths in `package.json` resolve) but need a live stack:
+Required externally:
 
-- Auth: `test:auth-local`, `test:auth-hosted`
-- Domain: owner-listings, services, admin, business-profiles, messaging,
-  notifications, listing-creation, listing-expiry, media-lifecycle
-- Tours: upload, processing, lifecycle, seller, integration, discovery,
-  moderation, scale, observability
-- Scale: `test:search-scale`, `test:messaging-scale`, `test:notification-scale`
-- `npm run certify:release-candidate`
+- final application domain and frontend host/CDN;
+- DNS ownership and HTTPS certificate;
+- SPA fallback, immutable hashed-asset caching and non-immutable HTML caching;
+- tested HSTS, Content Security Policy and other response headers;
+- exact production origin in Supabase Auth redirects, upload CORS and OAuth
+  provider configuration;
+- deep-link checks for public, protected, admin, recovery and not-found routes.
 
-**Unproven as a result:** all runtime behaviour — auth flows, RLS under real
-sessions, upload paths, worker scheduling, and **every scale characteristic**.
+The GitHub Pages site remains staging only and is bound to the staging Supabase
+project.
 
-## 4. GitHub Actions
+## 3. Hosted Auth hardening
 
-**Blocks:** all 5 workflows — `deploy-staging-pages`, `maintenance-workers`,
-`migration-gates`, `release-candidate-gates`, `tours-staging-acceptance`.
+**Blocks:** production signup, account recovery and privileged administration.
 
-`README.md` records that the account returns `startup_failure` before creating
-jobs, and that the gates were instead executed from a clean local checkout. That
-account-level block is a pre-existing launch item, carried forward here.
+The repository now includes the read-only, exact-target guarded command:
 
-**Note:** this audit found two gates that fail *locally on Windows* for reasons
-CI would not have surfaced (F-03, F-02). Local execution is therefore not fully
-equivalent to CI, and the CI block should not be treated as cosmetic.
+```powershell
+npm.cmd run verify:hosted-auth-hardening
+```
 
-## 5. Deployment targets
+The provider-side settings still require an authorized owner session and a
+compatible plan. Production certification requires:
 
-Not provisioned, and explicitly out of scope for this audit:
+- canonical HTTPS site URL and exact redirect allowlist;
+- email confirmations enabled;
+- minimum password length of at least 12 and the approved strongest character
+  policy;
+- leaked-password protection enabled;
+- TOTP MFA enabled and enrolled for every founder/admin account;
+- CAPTCHA or equivalent bot protection enabled for Auth entry points;
+- anonymous Auth and direct phone signup disabled for the current release;
+- custom SMTP and verified sender configured;
+- Google OAuth publicly published and callback-tested if its button is enabled;
+- Apple remaining disabled and hidden unless separately approved.
 
-- Frontend host / domain (currently a GitHub Pages URL hardcoded in
-  `config.toml` — D-04)
-- Production SMTP (`config.toml` has the block commented out; the 13 email
-  templates exist and are wired but cannot deliver)
-- CDN for tour media (`TOUR_CACHE_PURGE_URL` unset — P-05)
-- Dedicated always-on media processing infrastructure beyond the repository-owned
-  FFmpeg GitHub Actions worker, if Peek volume exceeds the bounded MVP worker capacity
-- Monitoring/alerting sink for `operational_alerts`
-- Backup schedule and a **rehearsed** restore (P-06)
+The Management API access token remains process-only and must never enter
+ordinary PR CI or browser variables.
 
-## 6. Browser and device acceptance
+## 4. Production SMTP and sender domain
 
-No browser was launched. Not assessed: real rendering, responsive behaviour at
-breakpoints, keyboard navigation in practice, screen-reader output, touch
-targets, or mobile network performance.
+**Blocks:** reliable confirmation, recovery, email-change and security mail.
 
-The static accessibility signals are good — `audit:product-surface` reports 0
-findings, the search combobox implements `aria-activedescendant` with full arrow/
-enter/escape handling, and a keyboard skip link is asserted by the contract
-suite. But static assertions and real assistive-technology behaviour are
-different things, and only the former was verified.
+Required externally:
 
-## Summary
+- approved SMTP provider or compatible Supabase plan;
+- verified sender domain, sender address and DNS records;
+- published repository templates;
+- provider link tracking disabled so Auth URLs are not rewritten;
+- delivery, bounce and suppression monitoring;
+- confirmation, recovery, email-change and security-message browser tests.
 
-| Blocker | Unblocked by | Priority |
-|---|---|---|
-| Docker + Supabase CLI | Local install | **Highest** — proves the migrations |
-| `.env` credentials | Copy template, fill from `supabase status` | High |
-| Live stack for smoke suites | Follows from the above two | High |
-| GitHub Actions | Account-level resolution | Medium |
-| Deployment targets | Provisioning decisions | Medium |
-| Browser/device acceptance | Manual QA pass | Medium |
+Supabase's default testing mail service is not accepted for production.
 
-Until items 1–3 are cleared, the honest position is: **the schema and code have
-been read and analysed thoroughly, and they have not been executed.**
+## 5. Monitoring and incident response destinations
+
+**Blocks:** safe production operation even though database-side metrics,
+health functions, bounded workers and operational alerts exist.
+
+Required externally:
+
+- approved frontend and Edge error sink;
+- delivery destination for `operational_alerts` and worker dead-letter alerts;
+- database, Auth, Storage, latency, saturation and abuse dashboards;
+- alert thresholds, escalation route and incident ownership;
+- log retention and access controls appropriate to user privacy;
+- canary/soak stop conditions and a tested incident procedure.
+
+An alert table without a routed human destination is not production monitoring.
+
+## 6. Native backup, PITR and isolated restore
+
+**Blocks:** production migrations and real user data.
+
+Required externally:
+
+- provider-native backup/PITR on a plan that meets the approved objective;
+- numeric RPO and RTO plus a named backup owner;
+- encrypted pre-cutover database backup;
+- Storage bytes and metadata captured at the same recovery point;
+- native restore into a separate isolated project;
+- count, checksum, Auth/profile, foreign-key, RLS and object verification;
+- measured recovery time and data-loss result;
+- credential/session rotation procedure for compromise scenarios.
+
+The verified staging logical export is useful evidence but is not a substitute
+for provider-native recovery.
+
+## 7. Production secrets and worker schedules
+
+**Blocks:** production notifications, cleanup, expiry, recommendation
+maintenance and Peek processing.
+
+Required externally:
+
+- independent, randomly generated production worker secrets;
+- matching secret placement in Supabase and the approved scheduler only;
+- exact production upload origins;
+- request-budget salt and protected health credentials;
+- enabled schedules for media cleanup, listing expiry, notification fan-out,
+  recommendation maintenance, Peek processing, cleanup, cache invalidation and
+  observability;
+- one bounded smoke invocation per worker with retry/dead-letter evidence;
+- secret rotation owner and schedule.
+
+No service-role or worker secret may enter a `VITE_` variable or generated
+frontend asset.
+
+## 8. Browser, device and assistive-technology acceptance
+
+**Blocks:** opening the exact production build to broad traffic.
+
+Required physical or hosted-browser evidence:
+
+- iPhone Safari and Chrome;
+- Android Chrome;
+- desktop Chrome, Safari and Firefox;
+- keyboard-only and screen-reader navigation;
+- reduced-motion mode;
+- slow and interrupted mobile networks;
+- expired signed media, failed upload, failed processing and failed playback;
+- signup, confirmation, Google callback, refresh, logout, recovery and revoked
+  sessions;
+- responsive layout, safe-area handling, touch targets and deep links.
+
+Static accessibility and route contracts remain necessary but are not a
+replacement for real assistive-technology testing.
+
+## 9. Capacity and cost acceptance
+
+**Blocks:** claims that the initial production configuration can sustain large
+traffic rather than merely scale architecturally.
+
+Required externally:
+
+- approved initial Supabase, frontend host, Storage/CDN and Actions/provider
+  plans;
+- production-like load tests for public search, listing detail, messaging,
+  notifications, recommendation services and Peek delivery;
+- connection, database, Storage, bandwidth, FFmpeg queue and Actions-minute
+  budgets;
+- alert thresholds and scaling triggers;
+- a documented degraded mode that keeps canonical listing pages available when
+  recommendations, analytics, notifications or Peek infrastructure fails.
+
+## Current production decision
+
+The codebase and hosted staging environment are release candidates. Production
+remains blocked by the external items above. Do not merge the draft PR, migrate
+the production project or onboard real users until the owner-approved cutover
+record closes or explicitly accepts each item.
