@@ -2,17 +2,17 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { recordMarketplaceView } from '@/services/marketplaceViewsService';
 
-export function useMarketplaceView(parentType, parentId, queryKey, enabled = true) {
+export function useMarketplaceView(parentType, parentId, queryKeyPrefix, enabled = true) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!enabled || !parentId) return undefined;
+    if (!enabled || !parentId || !queryKeyPrefix) return undefined;
     let cancelled = false;
 
     recordMarketplaceView(parentType, parentId)
       .then((views) => {
         if (cancelled || views == null) return;
-        queryClient.setQueryData(queryKey, (current) => (
+        queryClient.setQueryData([queryKeyPrefix, parentId], (current) => (
           current ? { ...current, views } : current
         ));
         queryClient.invalidateQueries({ queryKey: ['public-listing-search-page'] });
@@ -22,5 +22,5 @@ export function useMarketplaceView(parentType, parentId, queryKey, enabled = tru
       });
 
     return () => { cancelled = true; };
-  }, [enabled, parentId, parentType, queryClient, queryKey]);
+  }, [enabled, parentId, parentType, queryClient, queryKeyPrefix]);
 }
