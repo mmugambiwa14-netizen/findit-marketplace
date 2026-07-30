@@ -78,19 +78,21 @@ test('Search keeps its service boundary and is decomposed into focused UI compon
   }
 });
 
-test('listing and service cards share one visual shell with a dormant Tour contract', () => {
+test('listing and service cards share one visual shell with a dormant video contract', () => {
   assert.match(listingCard, /MarketplaceCard/);
   assert.match(serviceCard, /MarketplaceCard/);
   assert.match(marketplaceCard, /tour/);
   assert.match(marketplaceCard, /media=tour/);
 });
 
-test('all public detail types use the shared media contract', () => {
+test('all public detail types use the shared media contract and Peek language', () => {
   for (const source of [propertyDetail, carDetail, machineryDetail, serviceDetail]) {
     assert.match(source, /ListingMediaViewer/);
+    assert.match(source, /Take a Peek/);
   }
-  assert.match(serviceDetail, /See their work/);
-  assert.match(propertyDetail, /Watch Peek/);
+  for (const source of [propertyDetail, carDetail, machineryDetail, serviceDetail]) {
+    assert.doesNotMatch(source, /Watch Peek|See their work/);
+  }
 });
 
 test('protected sign-in and registration retain the requested internal destination', () => {
