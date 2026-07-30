@@ -1,20 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Bell, ChevronDown, MapPin } from 'lucide-react';
+import { ChevronDown, MapPin } from 'lucide-react';
 import { HierarchicalLocationSelector } from '@/components/location/LocationSelector';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { useAuth } from '@/lib/AuthContext';
-import { featureFlags } from '@/lib/featureFlags';
-import { createLoginPath } from '@/lib/authNavigation';
 
 export default function DiscoverHeader({ location, onLocationChange }) {
-  const { user } = useAuth();
   const [open, setOpen] = useState(false);
 
-  const notificationTarget = user && featureFlags.essentialNotifications ? '/notifications' : createLoginPath('/notifications');
-
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex items-center gap-3">
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
           <button
@@ -62,14 +55,6 @@ export default function DiscoverHeader({ location, onLocationChange }) {
           </div>
         </SheetContent>
       </Sheet>
-
-      <Link
-        to={notificationTarget}
-        className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-border-strong hover:text-foreground"
-        aria-label={user ? 'Open notifications' : 'Sign in for notifications'}
-      >
-        <Bell className="h-[19px] w-[19px]" />
-      </Link>
     </div>
   );
 }
