@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Bath, Bed, Calendar, Gauge, Maximize, Settings } from 'lucide-react';
+import { Bath, Bed, Calendar, Fuel, Gauge, Maximize, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
 import ContactButtons from '@/components/listings/ContactButtons';
 import MarketplaceCard from '@/components/marketplace/MarketplaceCard';
 import { useAuth } from '@/lib/AuthContext';
 import { getCategoryLabel, getMachineryLabel } from '@/lib/constants';
+import { featureFlags } from '@/lib/featureFlags';
 import { getListingPlaceholder } from '@/lib/listingPlaceholders';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { addFavourite, removeFavourite } from '@/services/favouritesService';
@@ -42,7 +43,7 @@ function listingAttributes(listing, type) {
       listing.year && { icon: Calendar, label: String(listing.year) },
       Number.isFinite(Number(listing.mileage)) && { icon: Gauge, label: `${Number(listing.mileage).toLocaleString()} km` },
       listing.transmission && { icon: Settings, label: listing.transmission },
-      listing.fuel_type && { icon: Gauge, label: listing.fuel_type },
+      listing.fuel_type && { icon: Fuel, label: listing.fuel_type },
     ].filter(Boolean);
   }
 
@@ -116,6 +117,12 @@ export default function ListingCard({
     listing.is_featured && { label: 'Featured' },
     availability && { label: availability, variant: 'destructive' },
   ].filter(Boolean);
+  const enquiryEligible = ['available', 'under_offer'].includes(listing.status);
+  const canCall = Boolean(listing.contact_phone);
+  const canMessage = enquiryEligible && featureFlags.messaging && user?.id !== listing.seller_id;
+  const actions = canCall || canMessage
+    ? <ContactButtons listing={listing} type={type} placement="browse" />
+    : null;
 
   return (
     <>
@@ -133,7 +140,7 @@ export default function ListingCard({
         save={{ active: liked, onToggle: toggleLike }}
         tour={tourSummary(listing)}
         sellerName={listing.seller_name}
-        actions={<ContactButtons listing={listing} type={type} placement="browse" />}
+        actions={actions}
         layout="browse"
         onOpen={onOpen}
       />
