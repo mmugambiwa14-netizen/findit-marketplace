@@ -13,7 +13,7 @@ export function useMarketplaceView(parentType, parentId, queryKeyPrefix, enabled
       .then((views) => {
         if (cancelled || views == null) return;
         queryClient.setQueryData([queryKeyPrefix, parentId], (current) => (
-          current ? { ...current, views } : current
+          current && typeof current === 'object' ? { ...current, views } : current
         ));
         queryClient.invalidateQueries({ queryKey: ['public-listing-search-page'] });
       })
