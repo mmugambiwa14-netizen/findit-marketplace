@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/listing-intelligence-foundation
   workflow_dispatch:
 
 permissions:
