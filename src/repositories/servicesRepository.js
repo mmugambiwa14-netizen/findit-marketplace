@@ -130,10 +130,13 @@ export async function updateOwnerServiceRow(providerId, id, input) {
 }
 
 export async function deleteOwnerServiceRow(providerId, id) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('services')
     .delete()
     .eq('provider_id', providerId)
-    .eq('id', id);
+    .eq('id', id)
+    .select(PUBLIC_SERVICE_SELECT)
+    .single();
   if (error) throw toRepositoryError('Unable to delete the service', error);
+  return data;
 }
