@@ -82,7 +82,7 @@ export default function PropertyDetail() {
             {property.has_pool && <ListingFeatureItem icon={Waves} label="Pool" value="Yes" />}
           </div></section>
           {property.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{property.description}</p></DetailSection>}
-          <SellerPanel name={property.seller_name} email={property.contact_email || property.seller_email} />
+          <SellerPanel name={property.seller_name} sellerId={property.seller_id} />
           <SafetyPanel>Always view the property in person before making a payment. Never send money to someone you have not met. FindIt does not handle buyer–seller payments.{isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}</SafetyPanel>
           <ListingRecommendations subjectListingId={property.id} />
           <ReportListingDialog listing={property} listingType="property" />
