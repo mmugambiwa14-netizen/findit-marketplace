@@ -3,7 +3,17 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [packageJsonText, workflow, stagingWorkflow, migrationWorkflow, certification, hygiene, sqlBoundary] = await Promise.all([
+const [
+  packageJsonText,
+  workflow,
+  stagingWorkflow,
+  migrationWorkflow,
+  certification,
+  hygiene,
+  sqlBoundary,
+  publicProfileMigration,
+  publicProfileRollback,
+] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
   read('.github/workflows/tours-staging-acceptance.yml'),
@@ -11,6 +21,8 @@ const [packageJsonText, workflow, stagingWorkflow, migrationWorkflow, certificat
   read('scripts/tours-release-certification.mjs'),
   read('scripts/verify-repository-hygiene.mjs'),
   read('scripts/verify-sql-boundary.mjs'),
+  read('supabase/migrations/0081_public_business_profile_view_security.sql'),
+  read('supabase/rollback/0081_public_business_profile_view_security.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -43,7 +55,20 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0080_listing_detail_related_services_context\.sql/);
+  assert.match(sqlBoundary, /0081_public_business_profile_view_security\.sql/);
+});
+
+test('public business profiles use an invoker view and a non-exposed least-column function', () => {
+  assert.match(publicProfileMigration, /create schema if not exists private/i);
+  assert.match(publicProfileMigration, /security definer/i);
+  assert.match(publicProfileMigration, /set search_path = ''/i);
+  assert.match(publicProfileMigration, /security_invoker = true/i);
+  assert.match(publicProfileMigration, /security_barrier = true/i);
+  assert.match(publicProfileMigration, /revoke all on table public\.business_profiles_public from public, anon, authenticated, service_role/i);
+  assert.match(publicProfileMigration, /grant select on table public\.business_profiles_public to anon, authenticated, service_role/i);
+  assert.doesNotMatch(publicProfileMigration, /registration_number|issuing_body|verification_status/);
+  assert.match(publicProfileRollback, /security_invoker = false/i);
+  assert.match(publicProfileRollback, /drop function if exists private\.public_business_profiles\(\)/i);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
