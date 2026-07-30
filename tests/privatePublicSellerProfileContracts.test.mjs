@@ -17,6 +17,7 @@ const [
   propertyDetail,
   carDetail,
   machineryDetail,
+  serviceDetail,
 ] = await Promise.all([
   read('supabase/migrations/0090_seller_profile_identifier_privacy.sql'),
   read('supabase/rollback/0090_seller_profile_identifier_privacy.rollback.sql'),
@@ -31,6 +32,7 @@ const [
   read('src/pages/PropertyDetail.jsx'),
   read('src/pages/CarDetail.jsx'),
   read('src/pages/MachineryDetail.jsx'),
+  read('src/pages/ServiceDetail.jsx'),
 ]);
 
 test('public seller profiles use opaque UUIDs behind a private definer and public invoker wrapper', () => {
@@ -87,6 +89,9 @@ test('the routed seller surface never embeds or resolves account emails', () => 
     assert.match(detail, /<SellerPanel name=\{[^}]+\.seller_name\} sellerId=\{[^}]+\.seller_id\} \/>/);
     assert.doesNotMatch(detail, /<SellerPanel[^>]+email=/);
   }
+
+  assert.match(serviceDetail, /<SellerPanel name=\{service\.provider_name \|\| "FindIt service provider"\} sellerId=\{service\.provider_id\} \/>/);
+  assert.doesNotMatch(serviceDetail, /<SellerPanel[^>]+email=/);
 });
 
 test('migration gates run the seller profile matrix and SQL boundary is advanced to the privacy migration', () => {
