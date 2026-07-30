@@ -3,13 +3,24 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [repair, evidence, repair0083, evidence0083, repair0084, evidence0084] = await Promise.all([
+const [
+  repair,
+  evidence,
+  repair0083,
+  evidence0083,
+  repair0084,
+  evidence0084,
+  repair0085,
+  evidence0085,
+] = await Promise.all([
   read('supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-2026-07-30.md'),
   read('supabase/maintenance/reconcile_staging_migration_history_0083.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-0083-2026-07-30.md'),
   read('supabase/maintenance/reconcile_staging_migration_history_0084.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-0084-2026-07-30.md'),
+  read('supabase/maintenance/reconcile_staging_migration_history_0085.sql'),
+  read('docs/certification/staging-migration-ledger-reconciliation-0085-2026-07-30.md'),
 ]);
 
 const mappings = [
@@ -94,4 +105,27 @@ test('0084 evidence records complete foreign key coverage and no production chan
   assert.match(evidence0084, /Recommendation-event relations left uncovered \| 0/);
   assert.match(evidence0084, /unindexed_foreign_keys/);
   assert.match(evidence0084, /production[\s\S]{0,160}remains at migration\s+`0049`/i);
+});
+
+test('0085 reconciliation verifies exact RLS initialization migration identity', () => {
+  assert.match(repair0085, /where version = '0085'/i);
+  assert.match(repair0085, /rls_auth_initialization_plans/);
+  assert.match(repair0085, /ac1a27efc299f4e77fe7bc585ff9278a/);
+  assert.match(repair0085, /length\(array_to_string\(statements, E'\\n'\)\) = 11544/i);
+  assert.match(repair0085, /set version = '0085'/i);
+  assert.match(repair0085, /source_version !~ '\^20260730\[0-9\]\{6\}\$'/i);
+  assert.doesNotMatch(repair0085, /\bcreate\s+(?:table|function|view|index|policy)\b/i);
+  assert.doesNotMatch(repair0085, /\balter\s+(?:table|function|view|extension|policy)\b/i);
+  assert.doesNotMatch(repair0085, /\bdrop\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('0085 evidence records canonical RLS optimization and no production change', () => {
+  assert.match(evidence0085, /bwgklpxoetrrkutottdb/);
+  assert.match(evidence0085, /Canonical migration rows \| 85/);
+  assert.match(evidence0085, /Last version \| `0085`/);
+  assert.match(evidence0085, /Sequence mismatches \| 0/);
+  assert.match(evidence0085, /Policies using initialized `auth\.uid\(\)` \| 36/);
+  assert.match(evidence0085, /Policies retaining direct `auth\.uid\(\)` \| 0/);
+  assert.match(evidence0085, /auth_rls_initplan/);
+  assert.match(evidence0085, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
 });
