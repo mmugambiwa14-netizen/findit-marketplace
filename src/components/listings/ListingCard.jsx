@@ -11,7 +11,6 @@ import { getListingPlaceholder } from '@/lib/listingPlaceholders';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { addFavourite, removeFavourite } from '@/services/favouritesService';
 
-
 const DETAIL_PATHS = {
   property: 'property',
   car: 'car',
@@ -104,7 +103,8 @@ export default function ListingCard({
 
   const variants = (listing.variants || []).filter((variant) => variant && Number(variant.price) > 0);
   const prefix = variants.length > 1 ? 'From ' : '';
-  const location = [listing.suburb, listing.city].filter(Boolean).join(', ');
+  const location = listing.public_location_label
+    || [listing.suburb, listing.city, listing.province].filter(Boolean).join(', ');
   const categoryMeta = type === 'property'
     ? getCategoryLabel(listing.category)
     : type === 'machinery'
@@ -132,6 +132,7 @@ export default function ListingCard({
         badges={badges}
         save={{ active: liked, onToggle: toggleLike }}
         tour={tourSummary(listing)}
+        layout="browse"
         onOpen={onOpen}
       />
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action="save listings and contact sellers" returnTo={`/${DETAIL_PATHS[type]}/${listing.id}`} />
