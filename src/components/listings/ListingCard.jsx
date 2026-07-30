@@ -70,6 +70,8 @@ export default function ListingCard({
   onSave = null,
   isSaved = false,
   onOpen = null,
+  layout = 'browse',
+  className = null,
 }) {
   const [liked, setLiked] = useState(isSaved);
   const [guestOpen, setGuestOpen] = useState(false);
@@ -122,7 +124,7 @@ export default function ListingCard({
   const canWhatsApp = Boolean(listing.contact_whatsapp);
   const canEmail = Boolean(listing.contact_email || listing.seller_email);
   const canMessage = enquiryEligible && featureFlags.messaging && user?.id !== listing.seller_id;
-  const actions = canCall || canWhatsApp || canEmail || canMessage
+  const actions = layout === 'browse' && (canCall || canWhatsApp || canEmail || canMessage)
     ? <ContactButtons listing={listing} type={type} placement="browse" />
     : null;
 
@@ -144,7 +146,8 @@ export default function ListingCard({
         sellerName={listing.seller_name}
         views={listing.views}
         actions={actions}
-        layout="browse"
+        layout={layout}
+        className={className}
         onOpen={onOpen}
       />
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action="save listings and contact sellers" returnTo={`/${DETAIL_PATHS[type]}/${listing.id}`} />
