@@ -17,11 +17,16 @@ export default function ListingGrid({ listings = [], type = 'property', onSave =
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4" aria-label="Loading listings">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4" aria-label="Loading listings">
         {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-          <div key={item} className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-            <div className="aspect-[4/3] animate-pulse bg-surface-raised" />
-            <div className="space-y-2 p-3"><div className="h-4 w-5/6 animate-pulse rounded bg-surface-raised" /><div className="h-3 w-3/5 animate-pulse rounded bg-surface-raised" /><div className="h-3 w-full animate-pulse rounded bg-surface-raised" /></div>
+          <div key={item} className="grid min-h-[11rem] grid-cols-[9rem_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-card shadow-card sm:block sm:min-h-0">
+            <div className="animate-pulse bg-surface-raised sm:aspect-[4/3]" />
+            <div className="space-y-2 p-3">
+              <div className="h-4 w-3/5 animate-pulse rounded bg-surface-raised sm:w-5/6" />
+              <div className="h-4 w-full animate-pulse rounded bg-surface-raised" />
+              <div className="h-3 w-4/5 animate-pulse rounded bg-surface-raised" />
+              <div className="h-3 w-full animate-pulse rounded bg-surface-raised" />
+            </div>
           </div>
         ))}
       </div>
@@ -38,7 +43,7 @@ export default function ListingGrid({ listings = [], type = 'property', onSave =
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
       {listings.map((listing) => (
         <ListingCard key={listing.id} listing={listing} type={type} onSave={onSave} isSaved={favouriteIds.has(listing.id)} />
       ))}
