@@ -38,7 +38,7 @@ function listingTypeLabel(item) {
   return 'Property';
 }
 
-const overlayActionClass = 'inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black/55 px-3 text-[11px] font-semibold text-white shadow-lg backdrop-blur-md transition-colors hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-60';
+const overlayActionClass = 'inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-black/55 px-2.5 text-[11px] font-semibold text-white shadow-lg backdrop-blur-md transition-colors hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-60';
 
 export default function TourCard({ item, active, onActivate, isSaved = false, onSavedChange, onReported }) {
   const { user } = useAuth();
@@ -59,6 +59,8 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
   const isOwner = Boolean(user?.id && user.id === item.sellerId);
   const canMessage = listingOnly && featureFlags.messaging && !isOwner;
   const showingPlayback = Boolean(active && playback?.playbackUrl && !playbackError);
+  const actionCount = (listingOnly ? 1 : 0) + (canMessage || !isOwner ? 1 : 0) + 1;
+  const actionGridClass = actionCount >= 3 ? 'grid-cols-3' : actionCount === 2 ? 'grid-cols-2' : 'grid-cols-1';
 
   useEffect(() => setLiked(isSaved), [isSaved]);
   useEffect(() => {
@@ -207,32 +209,11 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             </span>
 
             <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-white sm:p-5">
-              <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
-                {listingOnly && (
-                  <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(overlayActionClass, liked && 'text-red-300')}>
-                    <Heart className={cn('h-4 w-4', liked && 'fill-current')} />
-                    {liked ? 'Saved' : 'Save'}
-                  </button>
-                )}
-                {canMessage ? (
-                  <button type="button" onClick={openChat} aria-label="Message seller" className={overlayActionClass}>
-                    <MessageCircle className="h-4 w-4" /> Message
-                  </button>
-                ) : !isOwner ? (
-                  <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={overlayActionClass}>
-                    <MessageCircle className="h-4 w-4" /> Contact
-                  </Link>
-                ) : null}
-                <button type="button" onClick={share} aria-label="Share listing" className={overlayActionClass}>
-                  <Share2 className="h-4 w-4" /> Share
-                </button>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-white/80">
-                <span className="truncate">{item.sellerDisplayName}</span>
-                <span className="rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide backdrop-blur-sm">{listingTypeLabel(item)}</span>
+              <div className="flex min-w-0 items-center gap-2 text-xs font-semibold text-white/80">
+                <span className="max-w-[58%] truncate">{item.sellerDisplayName}</span>
+                <span className="shrink-0 rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide backdrop-blur-sm">{listingTypeLabel(item)}</span>
                 {!isOwner && (
-                  <button type="button" onClick={openReport} aria-label="Report Peek" className="inline-flex min-h-8 items-center gap-1 rounded-lg px-1.5 text-[10px] text-white/65 hover:bg-white/10 hover:text-white">
+                  <button type="button" onClick={openReport} aria-label="Report Peek" className="ml-auto inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[10px] text-white/65 hover:bg-white/10 hover:text-white">
                     <Flag className="h-3 w-3" /> Report
                   </button>
                 )}
@@ -257,14 +238,35 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
                 </div>
               )}
 
-              <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/10 pt-3">
+              <div className={cn('mt-4 grid gap-2 border-t border-white/10 pt-3', actionGridClass)}>
+                {listingOnly && (
+                  <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(overlayActionClass, liked && 'text-red-300')}>
+                    <Heart className={cn('h-4 w-4', liked && 'fill-current')} />
+                    {liked ? 'Saved' : 'Save'}
+                  </button>
+                )}
+                {canMessage ? (
+                  <button type="button" onClick={openChat} aria-label="Message seller" className={overlayActionClass}>
+                    <MessageCircle className="h-4 w-4" /> Message
+                  </button>
+                ) : !isOwner ? (
+                  <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={overlayActionClass}>
+                    <MessageCircle className="h-4 w-4" /> Contact
+                  </Link>
+                ) : null}
+                <button type="button" onClick={share} aria-label="Share listing" className={overlayActionClass}>
+                  <Share2 className="h-4 w-4" /> Share
+                </button>
+              </div>
+
+              <div className="mt-2 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">Price</p>
                   <p className="mt-0.5 truncate text-xl font-black text-white sm:text-2xl">{priceLabel(item, format)}</p>
                 </div>
                 <Link
                   to={detailPath}
-                  className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-xs font-bold text-primary-foreground shadow-lg transition-colors hover:bg-primary-hover sm:text-sm"
+                  className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-primary px-4 text-xs font-bold text-primary-foreground shadow-lg transition-colors hover:bg-primary-hover sm:text-sm"
                 >
                   View listing <ArrowUpRight className="ml-1.5 h-4 w-4" />
                 </Link>
