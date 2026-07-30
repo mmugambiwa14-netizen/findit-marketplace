@@ -1,6 +1,6 @@
 # Environment Variables
 
-Reviewed: 2026-07-29
+Reviewed: 2026-07-30
 
 Never commit real values. Only `VITE_` variables may enter browser builds.
 
@@ -70,7 +70,7 @@ Recommendation maintenance is intentionally independent from listing delivery. T
 | `FINDIT_SUPABASE_URL` | Explicit smoke/backup target |
 | `FINDIT_SUPABASE_ANON_KEY` | Public smoke key |
 | `FINDIT_SUPABASE_SECRET_KEY` | Admin fixture key; process-only |
-| `FINDIT_SUPABASE_ACCESS_TOKEN` | Management API token used only by the guarded staging timeout certification; process-only |
+| `FINDIT_SUPABASE_ACCESS_TOKEN` | Supabase Management API token; process-only and never printed or persisted |
 | `FINDIT_ALLOW_HOSTED_SMOKE=staging` | Required destructive-safety opt-in |
 | `FINDIT_ALLOW_STAGING_FOUNDER_SESSION=staging` | Allows guarded Phase 3 certification to create and immediately sign out a one-time staging founder session for audited policy operations |
 | `FINDIT_ALLOW_STAGING_TIMEOUT_LOCK=staging` | Allows the Phase 3 certification to hold a bounded 15-second projection-table lock on the exact staging target |
@@ -79,11 +79,43 @@ Recommendation maintenance is intentionally independent from listing delivery. T
 | `FINDIT_SMOKE_ORIGIN` | Exact hosted upload origin |
 | `FINDIT_BACKUP_DIRECTORY` | Explicit logical-backup output path |
 | `FINDIT_MAILPIT_URL` | Local Auth email test endpoint |
-| `FINDIT_EXPECT_GOOGLE_OAUTH` | Expected hosted Google provider status for `verify:oauth-providers` |
-| `FINDIT_EXPECT_APPLE_OAUTH` | Expected hosted Apple provider status for `verify:oauth-providers` |
+| `FINDIT_EXPECT_GOOGLE_OAUTH` | Expected hosted Google provider status |
+| `FINDIT_EXPECT_APPLE_OAUTH` | Expected hosted Apple provider status |
 | `FINDIT_RECOMMENDATION_SMOKE_URL` | Explicit Supabase project URL for recommendation hosted smoke |
 | `FINDIT_RECOMMENDATION_SMOKE_ORIGIN` | Browser origin expected in recommendation CORS checks |
 | `FINDIT_RECOMMENDATION_SMOKE_LISTING_ID` | Published listing id used for hosted recommendation and contextual smoke |
+
+## Hosted Auth hardening preflight
+
+`npm run verify:hosted-auth-hardening` performs a read-only request to the exact
+Supabase project Auth configuration and fails closed when the declared policy is
+not met. It never changes provider configuration and must not run in ordinary PR
+CI because its Management API token is privileged.
+
+| Name | Production expectation |
+|---|---|
+| `FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT=production` | Explicit read-only production opt-in; must equal the selected mode |
+| `FINDIT_AUTH_PREFLIGHT_MODE=production` | Enforces the complete production policy |
+| `FINDIT_EXPECTED_PROJECT_REF` | Exact production project reference |
+| `FINDIT_SUPABASE_ACCESS_TOKEN` | Process-only Management API token |
+| `FINDIT_EXPECT_AUTH_SITE_URL` | Final canonical HTTPS frontend origin |
+| `FINDIT_EXPECT_AUTH_REDIRECT_URLS` | Exact comma-separated HTTPS callback and recovery allowlist; no loopback URLs |
+| `FINDIT_EXPECT_EMAIL_CONFIRMATIONS=true` | Sign-up confirmation remains enabled |
+| `FINDIT_EXPECT_PASSWORD_MIN_LENGTH=12` | Minimum accepted password length |
+| `FINDIT_EXPECT_PASSWORD_REQUIRED_CHARACTERS` | Strongest selected character-class policy from hosted Auth settings |
+| `FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION=true` | Compromised-password rejection enabled; requires a compatible Supabase plan |
+| `FINDIT_EXPECT_TOTP_MFA=true` | TOTP enrollment and verification both enabled |
+| `FINDIT_EXPECT_AUTH_CAPTCHA=true` | Auth bot protection enabled with an approved provider |
+| `FINDIT_EXPECT_CUSTOM_SMTP=true` | Custom SMTP host and sender configured |
+| `FINDIT_EXPECT_GOOGLE_OAUTH=true` | Use only after public Google consent and production callback acceptance |
+| `FINDIT_EXPECT_APPLE_OAUTH=false` | Apple remains outside the current release scope |
+| `FINDIT_EXPECT_ANONYMOUS_AUTH=false` | Anonymous Auth disabled |
+| `FINDIT_EXPECT_PHONE_SIGNUP=false` | Direct phone signup disabled until an approved SMS onboarding path exists |
+
+Audit and staging modes use the same evaluator but require their matching
+`FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT` value. Missing production expectations,
+missing provider fields, weak password settings, redirect drift, default mail,
+disabled MFA, disabled CAPTCHA, or provider-state mismatches fail the command.
 
 Google and Apple OAuth secrets are server/provider credentials and never use a
 `VITE_` prefix. For local-only Auth containers the documented variables are
