@@ -83,14 +83,14 @@ test('public card summaries are metadata-only and signed playback remains a sepa
   assert.match(mediaViewer, /onClick=\{openTour\}/);
 });
 
-test('cards and details use one canonical identity with explicit Tour deep links', () => {
+test('cards and details use one canonical identity with explicit Peek deep links', () => {
   assert.match(marketplaceCard, /const tourTarget =/);
   assert.match(marketplaceCard, /media=tour/);
   assert.match(marketplaceCard, /\{tourLabel\}\{tourDuration \? ` · \$\{tourDuration\}`/);
   assert.match(listingCard, /tour=\{tourSummary\(listing\)\}/);
-  assert.match(serviceCard, /tourLabel="See their work"/);
-  assert.match(mediaViewer, /requestedTour && \"ring-2/);
-  assert.match(mediaViewer, /Play \${tourActionLabel\.toLowerCase\(\)}/);
+  assert.match(serviceCard, /tourLabel="Peek"/);
+  assert.match(mediaViewer, /requestedTour && "ring-2/);
+  assert.match(mediaViewer, /requestedTour \? "Play Peek" : tourActionLabel/);
   assert.match(mediaViewer, /onError=\{onPlaybackError\}/);
   assert.match(mediaViewer, /playback link expired or the video could not be loaded/);
   assert.match(mediaViewer, /onClick=\{showPhotos\}/);
@@ -109,7 +109,7 @@ test('cards and details use one canonical identity with explicit Tour deep links
   assert.match(publicSearchSql, /l\.status in \('available', 'under_offer'\)/);
 });
 
-test('saved listings retain canonical unavailable rows and private images without a saved-Tour model', () => {
+test('saved listings retain canonical unavailable rows and private images without a saved-Peek model', () => {
   assert.match(migration, /select 1\s+from public\.saved_listings saved/);
   assert.match(migration, /from public\.conversations conversation/);
   assert.match(migration, /create policy "listing_media_read"/);
@@ -127,7 +127,7 @@ test('saved listings retain canonical unavailable rows and private images withou
   assert.match(smoke, /saved entitlement is removed/);
 });
 
-test('seller and business inventory surfaces reuse standard Tour-aware cards', () => {
+test('seller and business inventory surfaces reuse standard Peek-aware cards', () => {
   assert.match(sellerProfiles, /attachPublicTourSummaries/);
   assert.match(businessProfiles, /attachPublicTourSummaries/);
   assert.match(dealerListings, /<ListingCard/);
@@ -135,7 +135,7 @@ test('seller and business inventory surfaces reuse standard Tour-aware cards', (
   assert.doesNotMatch(`${dealerListings}\n${publicBusiness}`, /Reels|Videos tab|followers|creator statistics/i);
 });
 
-test('chat context preserves listing identity, price and availability without exposing Tour storage', () => {
+test('chat context preserves listing identity, price and availability without exposing Peek storage', () => {
   assert.match(migration, /listing_price numeric/);
   assert.match(migration, /listing_status text/);
   assert.match(migration, /has_tour boolean/);
@@ -150,7 +150,7 @@ test('chat context preserves listing identity, price and availability without ex
   assert.doesNotMatch(`${conversation}\n${inbox}\n${messagingService}`, /playback_storage_path|source_storage_path|thumbnail_storage_path/);
 });
 
-test('existing conversation participants retain unavailable listing media without reopening Tour playback', () => {
+test('existing conversation participants retain unavailable listing media without reopening Peek playback', () => {
   const conversationEntitlements = migration.match(/from public\.conversations conversation/g) ?? [];
   assert.ok(conversationEntitlements.length >= 3, 'listing rows, media metadata and storage objects require conversation entitlement');
   assert.match(smoke, /remove saved entitlement before chat-context check/);
@@ -160,7 +160,7 @@ test('existing conversation participants retain unavailable listing media withou
   assert.match(smoke, /new enquiries close after unavailability/);
 });
 
-test('pending-review and live listings expose Tour management without duplicate owner submission', () => {
+test('pending-review and live listings expose Peek management without duplicate owner submission', () => {
   assert.match(myListings, /pendingListings\.map[\s\S]*onEdit=\{\(\) => setEditing\(listing\)\}/);
   assert.match(myListings, /onEdit=\{\['available', 'under_offer'\]\.includes\(listing\.status\)/);
   assert.match(editListing, /<TourManagementPanel[\s\S]*parentType="listing"/);
@@ -170,7 +170,7 @@ test('pending-review and live listings expose Tour management without duplicate 
   assert.doesNotMatch(editListing, /autoReviewOnEdit/);
 });
 
-test('Tour, edit and lifecycle mutations invalidate every canonical projection', () => {
+test('Peek, edit and lifecycle mutations invalidate every canonical projection', () => {
   for (const key of [
     'public-listing-search', 'public-search-suggestions', 'favourite-listings',
     'seller-public-page', 'public-business-profile', 'message-inbox', 'message-conversation',
@@ -186,7 +186,7 @@ test('Tour, edit and lifecycle mutations invalidate every canonical projection',
   assert.match(migration, /after update of status, title, price, currency, photos, location_id, location_name/);
 });
 
-test('guest authentication preserves Tour-selected listing actions', () => {
+test('guest authentication preserves Peek-selected listing actions', () => {
   assert.match(guestPrompt, /location\.pathname\}\$\{location\.search\}\$\{location\.hash/);
   assert.match(marketplaceCard, /media=tour/);
 });
