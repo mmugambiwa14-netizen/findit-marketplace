@@ -15,6 +15,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import TourReportAction from "@/components/tours/TourReportAction";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getPublicTourPlayback } from "@/services/listingToursService";
@@ -50,6 +51,7 @@ export default function ListingMediaViewer({
   fallbackImage = null,
   tour = null,
   tourActionLabel = "Take a Peek",
+  tourOwnerId = null,
   parentType = "listing",
   parentId = null,
   className = null,
@@ -60,6 +62,7 @@ export default function ListingMediaViewer({
     return normalised.length ? normalised : (fallbackImage ? [fallbackImage] : []);
   }, [fallbackImage, photos]);
 
+  const [tourReported, setTourReported] = useState(false);
   const [mode, setMode] = useState("photos");
   const [playback, setPlayback] = useState(null);
   const [playbackState, setPlaybackState] = useState("idle");
@@ -68,12 +71,13 @@ export default function ListingMediaViewer({
   const [imageFailed, setImageFailed] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
 
-  const hasTour = tour?.status === "ready" && Boolean(tour?.id || tour?.tourId || tour?.tour_id);
+  const hasTour = !tourReported && tour?.status === "ready" && Boolean(tour?.id || tour?.tourId || tour?.tour_id);
   const requestedTour = searchParams.get("media") === "tour";
   const posterUrl = playback?.thumbnailUrl || tour?.thumbnailUrl || tour?.thumbnail_url || images[0] || fallbackImage;
   const tourDuration = tour?.durationSeconds || tour?.duration_seconds;
 
   useEffect(() => {
+    setTourReported(false);
     setPlayback(null);
     setPlaybackState("idle");
     setPlaybackError("");
@@ -248,11 +252,27 @@ export default function ListingMediaViewer({
             )}
           </div>
 
-          {mode === "photos" && images.length > 0 && (
-            <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
-              {current + 1} of {images.length}
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {mode === "photos" && images.length > 0 && (
+              <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+                {current + 1} of {images.length}
+              </span>
+            )}
+            {mode === "tour" && playbackState === "ready" && (
+              <TourReportAction
+                tourId={playback?.id || tour?.id || tour?.tourId || tour?.tour_id}
+                title={title}
+                sellerId={tourOwnerId}
+                variant="surface"
+                className="min-h-10"
+                onReported={() => {
+                  setTourReported(true);
+                  setPlayback(null);
+                  showPhotos();
+                }}
+              />
+            )}
+          </div>
         </div>
       )}
 
