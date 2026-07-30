@@ -110,7 +110,7 @@ jobs:
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foreign_key_index_coverage.sql --local
 
       - name: Run RLS auth initialization plan matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_rls_auth_initplan.sql --local
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_rls_auth_initialization_plans.sql --local
 
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
