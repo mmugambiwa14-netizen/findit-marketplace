@@ -3,8 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Bath, Bed, Calendar, Gauge, Maximize, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
+import ContactButtons from '@/components/listings/ContactButtons';
 import MarketplaceCard from '@/components/marketplace/MarketplaceCard';
-import ListingCode from '@/components/listings/ListingCode';
 import { useAuth } from '@/lib/AuthContext';
 import { getCategoryLabel, getMachineryLabel } from '@/lib/constants';
 import { getListingPlaceholder } from '@/lib/listingPlaceholders';
@@ -31,8 +31,8 @@ function statusLabel(status) {
 function listingAttributes(listing, type) {
   if (type === 'property') {
     return [
-      listing.bedrooms > 0 && { icon: Bed, label: `${listing.bedrooms} bed` },
-      listing.bathrooms > 0 && { icon: Bath, label: `${listing.bathrooms} bath` },
+      listing.bedrooms > 0 && { icon: Bed, label: `${listing.bedrooms} bed${listing.bedrooms === 1 ? '' : 's'}` },
+      listing.bathrooms > 0 && { icon: Bath, label: `${listing.bathrooms} bath${listing.bathrooms === 1 ? '' : 's'}` },
       listing.property_size > 0 && { icon: Maximize, label: `${Number(listing.property_size).toLocaleString()} m²` },
     ].filter(Boolean);
   }
@@ -42,6 +42,7 @@ function listingAttributes(listing, type) {
       listing.year && { icon: Calendar, label: String(listing.year) },
       Number.isFinite(Number(listing.mileage)) && { icon: Gauge, label: `${Number(listing.mileage).toLocaleString()} km` },
       listing.transmission && { icon: Settings, label: listing.transmission },
+      listing.fuel_type && { icon: Gauge, label: listing.fuel_type },
     ].filter(Boolean);
   }
 
@@ -128,10 +129,11 @@ export default function ListingCard({
         locationLabel={location}
         attributes={listingAttributes(listing, type)}
         meta={categoryMeta}
-        codeNode={<ListingCode type={type} id={listing.id} className="mt-1" />}
         badges={badges}
         save={{ active: liked, onToggle: toggleLike }}
         tour={tourSummary(listing)}
+        sellerName={listing.seller_name}
+        actions={<ContactButtons listing={listing} type={type} placement="browse" />}
         layout="browse"
         onOpen={onOpen}
       />
