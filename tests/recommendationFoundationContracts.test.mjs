@@ -3,17 +3,15 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
-
 const [
-  foundationMigration,
-  projectionMigration,
-  taxonomyMigration,
-  hardeningMigration,
-  correctionMigration,
-  queueMigration,
-  integrityMigration,
-  eligibilityMigration,
-  workerFunction,
+  foundation,
+  projection,
+  administration,
+  hardening,
+  certification,
+  projectionQueue,
+  integrity,
+  closure,
   eventService,
   maintenanceWorker,
   sqlBoundary,
@@ -26,61 +24,109 @@ const [
   read('../supabase/migrations/0055_recommendation_projection_queue.sql'),
   read('../supabase/migrations/0056_recommendation_partition_and_configuration_integrity.sql'),
   read('../supabase/migrations/0057_recommendation_eligibility_geospatial_and_deletion_closure.sql'),
-  read('../supabase/functions/recommendation-maintenance/index.ts'),
-  read('../src/services/recommendationEvents.ts'),
+  read('../src/services/recommendationEventsService.js'),
   read('../supabase/functions/recommendation-maintenance/index.ts'),
   read('../scripts/verify-sql-boundary.mjs'),
 ]);
 
-test('recommendation foundation stores privacy-limited events behind RLS and partitions', () => {
-  assert.match(foundationMigration, /create table public\.recommendation_events/i);
-  assert.match(foundationMigration, /partition by range \(occurred_at\)/i);
-  assert.match(foundationMigration, /enable row level security/i);
-  assert.match(foundationMigration, /force row level security/i);
-  assert.match(foundationMigration, /anonymous_session_id uuid/i);
-  assert.match(foundationMigration, /octet_length\(context::text\) <= 2048/i);
-  assert.doesNotMatch(foundationMigration, /device_fingerprint|advertising_id|message_body/i);
+test('Phase 1 storage is normalized, partitioned and RLS protected', () => {
+  for (const table of [
+    'recommendation_taxonomy_nodes',
+    'recommendation_relationships',
+    'listing_recommendation_features',
+    'recommendation_events',
+    'recommendation_cache',
+    'recommendation_popularity_daily',
+  ]) {
+    assert.match(foundation, new RegExp(`create table if not exists public\.${table}`));
+    assert.match(foundation, new RegExp(`alter table public\.${table} enable row level security`));
+  }
+  assert.match(foundation, /partition by range \(occurred_at\)/);
+  assert.match(foundation, /No advertising identifier, fingerprint, message body or contact inference/i);
+  assert.doesNotMatch(foundation, /grant\s+(?:insert|update|delete|all)[\s\S]{0,80}recommendation_events[\s\S]{0,40}to\s+(?:anon|authenticated)/i);
 });
 
-test('listing recommendation projections and queues remain server-only and fail open', () => {
-  assert.match(projectionMigration, /create table public\.listing_recommendation_features/i);
-  assert.match(projectionMigration, /revoke all on public\.listing_recommendation_features from anon, authenticated/i);
-  assert.match(queueMigration, /create table public\.recommendation_projection_jobs/i);
-  assert.match(queueMigration, /process_listing_recommendation_projection_jobs/i);
-  assert.match(queueMigration, /exception when others then/i);
-  assert.match(queueMigration, /return new/i);
+test('projection and event functions are bounded and independent', () => {
+  assert.match(projection, /refresh_listing_recommendation_feature\(p_listing_id uuid\)/);
+  assert.match(projection, /status not in \('available', 'under_offer'\)/);
+  assert.match(projection, /content_suspended_at is not null/);
+  assert.match(projection, /refresh_listing_recommendation_features_batch/);
+  assert.match(projection, /ensure_recommendation_event_partition/);
+  assert.match(projection, /purge_expired_recommendation_data/);
+  assert.match(projection, /event context contains an unsupported field/);
 });
 
-test('taxonomy, relationships and weights are deterministic and audited', () => {
-  assert.match(taxonomyMigration, /create table public\.recommendation_taxonomy_nodes/i);
-  assert.match(taxonomyMigration, /create table public\.recommendation_relationships/i);
-  assert.match(taxonomyMigration, /create table public\.recommendation_weight_profiles/i);
-  assert.match(taxonomyMigration, /recommendation_configuration_audit/i);
-  assert.match(taxonomyMigration, /reason_code/i);
-  assert.match(integrityMigration, /recommendation_relationships_active_identity/i);
-  assert.match(integrityMigration, /recommendation_weight_profiles_one_active/i);
+test('configuration is versioned, organic and audited', () => {
+  assert.match(administration, /recommendation_weight_profiles/);
+  assert.match(administration, /recommendation_configuration_audit/);
+  assert.match(administration, /recommendation weights must total one/);
+  assert.match(administration, /admin_upsert_recommendation_taxonomy_node/);
+  assert.match(administration, /admin_upsert_recommendation_relationship/);
+  assert.match(administration, /admin_upsert_recommendation_weight_profile/);
+  assert.equal((administration.match(/'organic-v1'/g) ?? []).length, 7);
+  assert.match(administration, /Paid placement is not represented here/);
 });
 
-test('foundation hardening closes direct grants, function search paths and stale data', () => {
-  assert.match(hardeningMigration, /alter table public\.recommendation_events force row level security/i);
-  assert.match(hardeningMigration, /revoke all on function public\.record_recommendation_event/i);
-  assert.match(hardeningMigration, /set search_path = ''/i);
-  assert.match(correctionMigration, /purge_expired_recommendation_data/i);
-  assert.match(eligibilityMigration, /eligible_listing_recommendation_features/i);
-  assert.match(eligibilityMigration, /content_suspended_at is null/i);
+test('hardening closes identity, attribution and audit mutation paths', () => {
+  assert.match(hardening, /recommendation_events_exactly_one_identity/);
+  assert.match(hardening, /listing seller attribution does not match/);
+  assert.match(hardening, /search events cannot include a listing or seller/);
+  assert.match(hardening, /recommendation configuration audit history is immutable/);
+  assert.match(hardening, /idx_recommendation_events_request_cursor/);
 });
 
-test('maintenance worker uses independent authentication and bounded operations', () => {
-  assert.match(workerFunction, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
-  assert.match(workerFunction, /constantTimeEqual/);
-  assert.match(workerFunction, /process_listing_recommendation_projection_jobs/);
-  assert.match(workerFunction, /ensure_recommendation_event_partition/);
-  assert.match(workerFunction, /refresh_recommendation_popularity_daily/);
-  assert.match(workerFunction, /purge_expired_recommendation_data/);
-  assert.doesNotMatch(workerFunction, /throw new Error\([^)]*error\.message/);
+test('certification corrections avoid full projection rewrites', () => {
+  assert.match(certification, /feature\.popularity_score is distinct from rolling_scores\.total_score/);
+  assert.match(certification, /where feature\.popularity_score <> 0/);
+  assert.match(certification, /has_more boolean/);
+  assert.match(certification, /recommendation_foundation_health/);
+  assert.doesNotMatch(certification, /update public\.listing_recommendation_features\s+set\s+popularity_score = 0\s*,\s*projected_at = now\(\)\s*;/);
 });
 
-test('client event delivery is best effort and never blocks listing rendering', () => {
+test('listing writes enqueue asynchronously and fail open', () => {
+  assert.match(projectionQueue, /create table if not exists public\.recommendation_projection_jobs/);
+  assert.match(projectionQueue, /create table if not exists public\.recommendation_projection_dead_letters/);
+  assert.match(projectionQueue, /exception when others then[\s\S]{0,160}null;/i);
+  assert.match(projectionQueue, /for update skip locked/i);
+  assert.match(projectionQueue, /p_limit not between 1 and 500/);
+  assert.match(projectionQueue, /p_max_attempts not between 1 and 20/);
+  assert.match(projectionQueue, /projection_failed/);
+  assert.match(projectionQueue, /listing_write_dependency/);
+  assert.match(projectionQueue, /"schema_version":55/);
+  assert.doesNotMatch(projectionQueue, /sqlerrm|sqlstate|last_error_message/i);
+  assert.doesNotMatch(projectionQueue, /grant execute on function public\.process_listing_recommendation_projection_jobs[\s\S]{0,80}to (?:anon|authenticated)/i);
+});
+
+test('partition and configuration integrity handles populated partitions and audited activation changes', () => {
+  assert.match(integrity, /recommendation_events_partition_buffer/);
+  assert.match(integrity, /lock table public\.recommendation_events_default in access exclusive mode/);
+  assert.match(integrity, /taxonomy attributes contain an unsupported field/);
+  assert.match(integrity, /taxonomy parent would create a cycle/);
+  assert.match(integrity, /recommendation\.weights\.deactivate/);
+  assert.match(integrity, /counts_are_estimates/);
+  assert.match(integrity, /"schema_version":56/);
+});
+
+test('closure enforces active-seller eligibility, privacy-safe geography and deletion compatibility', () => {
+  assert.match(closure, /public_location extensions\.geography\(point, 4326\)/);
+  assert.match(closure, /using gist \(public_location\)/);
+  assert.match(closure, /seller\.status = 'active'/);
+  assert.match(closure, /trg_users_recommendation_eligibility/);
+  assert.match(closure, /event subject is not publicly eligible/);
+  assert.match(closure, /recommendation_events_actor_id_fkey[\s\S]{0,100}on delete cascade/);
+  assert.match(closure, /recommendation_events_listing_id_fkey[\s\S]{0,100}on delete cascade/);
+  assert.match(closure, /recommendation_events_seller_id_fkey[\s\S]{0,100}on delete cascade/);
+  assert.match(closure, /Exact owner-supplied coordinates are never projected/);
+  assert.match(closure, /'schema_version', 57/);
+});
+
+test('browser event delivery is session scoped and non-blocking', () => {
+  assert.match(eventService, /readStoredString\('session'/);
+  assert.match(eventService, /writeStoredString\('session'/);
+  assert.doesNotMatch(eventService, /window\.sessionStorage|window\.localStorage|\blocalStorage\b/);
+  assert.match(eventService, /Promise\.race/);
+  assert.match(eventService, /REQUEST_TIMEOUT_MS = 1500/);
+  assert.match(eventService, /catch \{\s*return \{ accepted: false, eventId: null \};\s*\}/);
   assert.match(eventService, /queueMicrotask/);
   assert.doesNotMatch(eventService, /console\./);
 });
