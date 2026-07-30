@@ -1,6 +1,5 @@
-import { Building2, Wrench, Scale, HardHat, Mountain } from "lucide-react";
+import { Building2, Wrench, Scale, HardHat, Mountain, Cog } from "lucide-react";
 
-// Three professional groups, each with sub-categories
 export const SERVICE_CATEGORIES = [
   {
     value: "property_developer",
@@ -24,6 +23,17 @@ export const SERVICE_CATEGORIES = [
       { value: "maintenance_repair", label: "Maintenance & Repair" },
       { value: "customization_mods", label: "Customization & Modifications" },
       { value: "roadside_assistance", label: "Roadside Assistance" },
+    ],
+  },
+  {
+    value: "equipment_services",
+    label: "Equipment Services",
+    icon: Cog,
+    color: "bg-slate-600",
+    subcategories: [
+      { value: "machinery_repair", label: "Machinery Maintenance & Repair" },
+      { value: "machinery_transport", label: "Machinery Transport" },
+      { value: "operator_hire", label: "Equipment Operator Hire" },
     ],
   },
   {
