@@ -175,7 +175,7 @@ begin
     and function_record.proname in ('is_active_user', 'is_admin', 'is_super_admin')
     and pg_get_function_identity_arguments(function_record.oid) = ''
     and function_record.prosecdef
-    and function_record.proconfig = array['search_path=']::text[];
+    and function_record.proconfig = array['search_path=""']::text[];
 
   if private_count <> 3 then
     raise exception '0088 created only % of three locked private implementations', private_count;
@@ -188,7 +188,7 @@ begin
     and function_record.proname in ('is_active_user', 'is_admin', 'is_super_admin')
     and pg_get_function_identity_arguments(function_record.oid) = ''
     and not function_record.prosecdef
-    and function_record.proconfig = array['search_path=']::text[];
+    and function_record.proconfig = array['search_path=""']::text[];
 
   if public_count <> 3 then
     raise exception '0088 created only % of three public invoker wrappers', public_count;
