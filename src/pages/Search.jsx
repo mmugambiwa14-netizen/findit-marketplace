@@ -243,7 +243,7 @@ export default function Search() {
   const filterValues = { category, bedrooms, make, condition, fuelType, transmission, minPrice, maxPrice };
 
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div className="min-h-screen bg-background pb-24 md:pb-8">
       <header className="glass-bar sticky top-0 z-40 border-b">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <CategoryResultsHeader type={type} category={category} onTypeChange={changeType} onCategorySelect={(value) => updateParams({ category: value })} />
