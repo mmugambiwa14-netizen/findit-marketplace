@@ -23,6 +23,8 @@ const [
   rlsAuthRollback,
   permissivePolicyMigration,
   permissivePolicyRollback,
+  privateHelperMigration,
+  privateHelperRollback,
 ] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
@@ -43,6 +45,8 @@ const [
   read('supabase/rollback/0085_rls_auth_initialization_plans.rollback.sql'),
   read('supabase/migrations/0086_rls_permissive_policy_consolidation.sql'),
   read('supabase/rollback/0086_rls_permissive_policy_consolidation.rollback.sql'),
+  read('supabase/migrations/0087_private_policy_helper_boundary.sql'),
+  read('supabase/rollback/0087_private_policy_helper_boundary.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -75,7 +79,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0086_rls_permissive_policy_consolidation\.sql/);
+  assert.match(sqlBoundary, /0087_private_policy_helper_boundary\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
@@ -187,6 +191,41 @@ test('overlapping permissive policies are fingerprinted, split by action and rev
   assert.doesNotMatch(permissivePolicyMigration, /drop table|truncate|delete from/i);
   assert.doesNotMatch(permissivePolicyRollback, /drop table|truncate|delete from/i);
   assert.match(migrationWorkflow, /v1_rls_permissive_policy_consolidation\.sql/);
+});
+
+test('policy-only definer helpers move behind a private reversible boundary', () => {
+  const helperNames = [
+    'can_read_listing_context',
+    'has_active_tour_upload_intent',
+    'has_valid_listing_upload_intent',
+    'has_valid_marketplace_image_upload_intent',
+    'is_attached_marketplace_image',
+    'is_public_marketplace_image',
+  ];
+
+  assert.equal(
+    (privateHelperMigration.match(/alter function public\.[^(]+\([^;]+set schema private;/gi) ?? []).length,
+    6,
+  );
+  assert.match(privateHelperMigration, /findit_0087_expected_functions/);
+  assert.match(privateHelperMigration, /findit_0087_expected_policies/);
+  assert.match(privateHelperMigration, /caller_count <> 0/);
+  assert.match(privateHelperMigration, /moved_count <> 6/);
+
+  for (const helperName of helperNames) {
+    assert.match(privateHelperMigration, new RegExp(`private\\.${helperName}`));
+    assert.match(privateHelperRollback, new RegExp(`public\\.${helperName}`));
+  }
+
+  assert.match(privateHelperMigration, /alter policy listings_public_read_available/);
+  assert.match(privateHelperMigration, /alter policy tour_source_authorized_insert/);
+  assert.match(privateHelperMigration, /alter policy listing_image_validated_insert/);
+  assert.match(privateHelperMigration, /alter policy marketplace_image_validated_insert/);
+  assert.match(privateHelperMigration, /alter policy marketplace_image_owner_delete_unattached/);
+  assert.match(privateHelperMigration, /alter policy marketplace_image_authorized_read/);
+  assert.doesNotMatch(privateHelperMigration, /drop table|truncate|delete from/i);
+  assert.doesNotMatch(privateHelperRollback, /drop table|truncate|delete from/i);
+  assert.match(migrationWorkflow, /v1_private_policy_helper_boundary\.sql/);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
