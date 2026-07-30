@@ -21,6 +21,7 @@ export const PUBLIC_SERVICE_SELECT = `
   location_name,
   can_travel,
   status,
+  views,
   created_at,
   updated_at
 `;
@@ -97,52 +98,42 @@ export async function findOwnerServices(request) {
     .select(PUBLIC_SERVICE_SELECT)
     .eq('provider_id', request.providerId)
     .neq('category', 'legal');
-
   query = applyDescendingCreatedAtCursor(query, request.cursor);
   const { data, error } = await query
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(request.limit + 1);
-
   if (error) throw toRepositoryError('Unable to load your services', error);
   return data ?? [];
 }
 
-export async function insertOwnerService(row) {
+export async function insertOwnerService(input) {
   const { data, error } = await supabase
     .from('services')
-    .insert(row)
+    .insert(input)
     .select(PUBLIC_SERVICE_SELECT)
     .single();
-
-  if (error) throw toRepositoryError('Unable to publish the service', error);
+  if (error) throw toRepositoryError('Unable to create the service', error);
   return data;
 }
 
-export async function updateOwnerServiceRow(providerId, id, updates) {
+export async function updateOwnerServiceRow(providerId, id, input) {
   const { data, error } = await supabase
     .from('services')
-    .update(updates)
+    .update(input)
     .eq('provider_id', providerId)
     .eq('id', id)
-    .neq('category', 'legal')
     .select(PUBLIC_SERVICE_SELECT)
     .single();
-
   if (error) throw toRepositoryError('Unable to update the service', error);
   return data;
 }
 
 export async function deleteOwnerServiceRow(providerId, id) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('services')
     .delete()
     .eq('provider_id', providerId)
-    .eq('id', id)
-    .neq('category', 'legal')
-    .select('id,photos')
-    .single();
-
+    .eq('id', id);
   if (error) throw toRepositoryError('Unable to delete the service', error);
-  return data;
 }
