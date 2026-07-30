@@ -83,7 +83,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0090_private_public_seller_profile_implementation\.sql/);
+  assert.match(sqlBoundary, /0090_seller_profile_identifier_privacy\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
