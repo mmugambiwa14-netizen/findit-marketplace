@@ -15,7 +15,6 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import TourReportAction from "@/components/tours/TourReportAction";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getPublicTourPlayback } from "@/services/listingToursService";
@@ -51,7 +50,6 @@ export default function ListingMediaViewer({
   fallbackImage = null,
   tour = null,
   tourActionLabel = "Take a Peek",
-  tourOwnerId = null,
   parentType = "listing",
   parentId = null,
   className = null,
@@ -62,7 +60,6 @@ export default function ListingMediaViewer({
     return normalised.length ? normalised : (fallbackImage ? [fallbackImage] : []);
   }, [fallbackImage, photos]);
 
-  const [tourReported, setTourReported] = useState(false);
   const [mode, setMode] = useState("photos");
   const [playback, setPlayback] = useState(null);
   const [playbackState, setPlaybackState] = useState("idle");
@@ -71,12 +68,12 @@ export default function ListingMediaViewer({
   const [imageFailed, setImageFailed] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
 
-  const hasTour = !tourReported && tour?.status === "ready" && Boolean(tour?.id || tour?.tourId || tour?.tour_id);
+  const hasTour = tour?.status === "ready" && Boolean(tour?.id || tour?.tourId || tour?.tour_id);
   const requestedTour = searchParams.get("media") === "tour";
   const posterUrl = playback?.thumbnailUrl || tour?.thumbnailUrl || tour?.thumbnail_url || images[0] || fallbackImage;
+  const tourDuration = tour?.durationSeconds || tour?.duration_seconds;
 
   useEffect(() => {
-    setTourReported(false);
     setPlayback(null);
     setPlaybackState("idle");
     setPlaybackError("");
@@ -155,6 +152,7 @@ export default function ListingMediaViewer({
     setImageFailed(false);
     setCurrent((index) => (index === 0 ? images.length - 1 : index - 1));
   };
+
   const next = () => {
     setImageFailed(false);
     setCurrent((index) => (index === images.length - 1 ? 0 : index + 1));
@@ -214,68 +212,49 @@ export default function ListingMediaViewer({
             </MediaArrow>
           </>
         )}
-
-        {mode === "tour" && playbackState === "ready" && controlsVisible && (
-          <>
-            {images.length > 0 && (
-              <div className="absolute left-3 top-16 z-30 sm:left-4 sm:top-16">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  onClick={showPhotos}
-                  className="min-h-11 rounded-full border border-white/15 bg-black/60 px-4 text-white shadow-lg backdrop-blur-md hover:bg-black/80 hover:text-white"
-                >
-                  <Images className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Photos
-                </Button>
-              </div>
-            )}
-            <div className="absolute right-3 top-16 z-30 sm:right-4 sm:top-16">
-              <TourReportAction
-                tourId={playback?.id || tour?.id || tour?.tourId || tour?.tour_id}
-                title={title}
-                sellerId={tourOwnerId}
-                onReported={() => {
-                  setTourReported(true);
-                  setPlayback(null);
-                  showPhotos();
-                }}
-              />
-            </div>
-          </>
-        )}
-
-        {mode === "photos" && (
-          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
-              {hasTour && (
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={openTour}
-                  className={cn(
-                    "min-h-11 rounded-full bg-primary px-4 shadow-lg shadow-black/30",
-                    requestedTour && "ring-2 ring-white/70 ring-offset-2 ring-offset-black/40",
-                  )}
-                >
-                  <Play className="mr-2 h-4 w-4 fill-current" aria-hidden="true" />
-                  {requestedTour ? "Play Peek" : tourActionLabel}
-                  {tour?.durationSeconds || tour?.duration_seconds
-                    ? ` · ${formatDuration(tour.durationSeconds || tour.duration_seconds)}`
-                    : ""}
-                </Button>
-              )}
-            </div>
-
-            {images.length > 0 ? (
-              <span className="rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
-                {current + 1} / {images.length}
-              </span>
-            ) : null}
-          </div>
-        )}
       </div>
+
+      {(hasTour || (mode === "photos" && images.length > 1)) && (
+        <div className="flex min-h-14 items-center justify-between gap-3 border-t border-border bg-card px-3 py-2.5 sm:px-4">
+          <div className="inline-flex min-w-0 items-center gap-1 rounded-xl bg-surface-secondary p-1">
+            {images.length > 0 && (
+              <button
+                type="button"
+                onClick={showPhotos}
+                aria-pressed={mode === "photos"}
+                className={cn(
+                  "inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  mode === "photos" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Images className="h-4 w-4" aria-hidden="true" />
+                Photos
+              </button>
+            )}
+            {hasTour && (
+              <button
+                type="button"
+                onClick={openTour}
+                aria-label={requestedTour ? "Play Peek" : tourActionLabel}
+                aria-pressed={mode === "tour"}
+                className={cn(
+                  "inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  mode === "tour" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <Play className="h-4 w-4 fill-current" aria-hidden="true" />
+                Peek{tourDuration ? ` · ${formatDuration(tourDuration)}` : ""}
+              </button>
+            )}
+          </div>
+
+          {mode === "photos" && images.length > 0 && (
+            <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+              {current + 1} of {images.length}
+            </span>
+          )}
+        </div>
+      )}
 
       {mode === "photos" && images.length > 1 && (
         <div className="no-scrollbar flex gap-2 overflow-x-auto border-t border-border bg-card p-3" aria-label="Photo thumbnails">
