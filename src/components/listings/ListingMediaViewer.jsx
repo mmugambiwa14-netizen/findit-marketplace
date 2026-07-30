@@ -249,7 +249,7 @@ export default function ListingMediaViewer({
         {mode === "photos" && (
           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
             <div className="flex flex-wrap gap-2">
-              {hasTour && (
+              {hasTour && mode !== "tour" && (
                 <Button
                   type="button"
                   size="sm"
@@ -330,7 +330,7 @@ function PlayerIconButton({ label, onClick, children, disabled = false }) {
         event.stopPropagation();
         onClick?.();
       }}
-      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/65 text-white shadow-lg backdrop-blur-md transition hover:bg-black/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+      className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/65 text-white shadow-lg backdrop-blur-md transition hover:bg-black/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
     >
       {children}
     </button>
@@ -405,27 +405,15 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
 
   if (state === "ready" && playback?.playbackUrl) {
     return (
-      <div
-        className="relative h-full w-full touch-manipulation bg-black"
-        onClick={toggleControls}
-        onKeyDown={(event) => {
-          if (event.target !== event.currentTarget) return;
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            toggleControls();
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={`${title} Peek player. Tap to ${controlsVisible ? "hide" : "show"} controls.`}
-      >
+      <div className="relative h-full w-full touch-manipulation bg-black">
         <video
           ref={videoRef}
-          className="h-full w-full bg-black object-contain"
+          className="h-full w-full cursor-pointer bg-black object-contain"
           playsInline
           preload="metadata"
           poster={posterUrl || undefined}
-          aria-label={`${title} Peek video`}
+          aria-label={`${title} Peek video. Tap to ${controlsVisible ? "hide" : "show"} controls.`}
+          onClick={toggleControls}
           onLoadedMetadata={(event) => {
             setDuration(Number(event.currentTarget.duration) || 0);
             setCurrentTime(Number(event.currentTarget.currentTime) || 0);
@@ -449,7 +437,7 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
         </video>
 
         {controlsVisible && (
-          <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/55 via-transparent to-black/25" aria-hidden="false">
+          <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-black/55 via-transparent to-black/25" aria-hidden="false">
             {paused && (
               <button
                 type="button"
@@ -458,7 +446,7 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
                   event.stopPropagation();
                   togglePlayback();
                 }}
-                className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white shadow-xl backdrop-blur-md transition hover:scale-105 hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="pointer-events-auto absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white shadow-xl backdrop-blur-md transition hover:scale-105 hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <Play className="ml-1 h-7 w-7 fill-current" aria-hidden="true" />
               </button>
@@ -478,15 +466,13 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
               </PlayerIconButton>
             </div>
 
-            <div className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/60 px-3 py-2.5 text-white shadow-xl backdrop-blur-md sm:bottom-4 sm:left-4 sm:right-4">
+            <div className="pointer-events-auto absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/60 px-3 py-2.5 text-white shadow-xl backdrop-blur-md sm:bottom-4 sm:left-4 sm:right-4">
               <input
                 type="range"
                 min="0"
                 max={Math.max(duration, 0)}
                 step="0.1"
                 value={Math.min(currentTime, duration || 0)}
-                onClick={(event) => event.stopPropagation()}
-                onPointerDown={(event) => event.stopPropagation()}
                 onChange={(event) => {
                   const video = videoRef.current;
                   if (!video) return;
@@ -501,10 +487,7 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
                 <button
                   type="button"
                   aria-label={paused ? "Play Peek" : "Pause Peek"}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    togglePlayback();
-                  }}
+                  onClick={togglePlayback}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {paused ? <Play className="ml-0.5 h-4 w-4 fill-current" aria-hidden="true" /> : <Pause className="h-4 w-4 fill-current" aria-hidden="true" />}
