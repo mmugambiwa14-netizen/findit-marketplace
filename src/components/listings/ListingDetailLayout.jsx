@@ -40,7 +40,7 @@ export function DetailSection({ title, children }) {
   );
 }
 
-export function SellerPanel({ name, email }) {
+export function SellerPanel({ name, sellerId }) {
   const content = (
     <>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Seller</p>
@@ -48,8 +48,8 @@ export function SellerPanel({ name, email }) {
       <p className="mt-1 text-sm text-muted-foreground">View the seller’s listings and contact details.</p>
     </>
   );
-  return email
-    ? <Link to={`/seller/${encodeURIComponent(email)}`} className="surface-panel block p-5 transition hover:border-border-strong">{content}</Link>
+  return sellerId
+    ? <Link to={`/seller/${encodeURIComponent(sellerId)}`} className="surface-panel block p-5 transition hover:border-border-strong">{content}</Link>
     : <div className="surface-panel p-5">{content}</div>;
 }
 
