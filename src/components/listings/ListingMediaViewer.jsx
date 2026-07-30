@@ -465,7 +465,10 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
               </PlayerIconButton>
             </div>
 
-            <div className="pointer-events-auto absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/60 px-3 py-2.5 text-white shadow-xl backdrop-blur-md sm:bottom-4 sm:left-4 sm:right-4">
+            {/* Full-bleed controls sit on the video itself rather than in a panel.
+                The gradient is the only thing keeping the white time text and
+                icons legible over bright footage, so it must not be removed. */}
+            <div className="pointer-events-auto absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/40 to-transparent px-3 pb-3 pt-10 text-white sm:px-4 sm:pb-4">
               <input
                 type="range"
                 min="0"

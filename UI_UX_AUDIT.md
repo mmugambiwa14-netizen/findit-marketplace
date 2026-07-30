@@ -5,6 +5,14 @@ Reviewed surface: 82 page modules, active/hidden/unrouted routes, marketplace
 and admin navigation, 177 component modules, global styles, and documented
 behavior/migration findings
 
+> **Staleness warning (30 July 2026).** This document audited **82 page
+> modules**. The surface is now **34** (`npm run audit:ui-surface`), following
+> the V1 scope reduction. Several findings below therefore describe screens and
+> navigation that no longer exist, and some recommendations may already be
+> implemented. Verify any item against the current tree before planning work
+> from it. `npm run audit:ui-surface` currently reports **0 actionable static
+> interaction findings** across 826 control instances.
+
 ## Executive finding
 
 The current application contains many useful marketplace patterns, but the
