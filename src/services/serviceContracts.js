@@ -2,7 +2,7 @@ import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const V1_CATEGORIES = new Set(['property_developer', 'mechanic', 'construction', 'geological']);
+const V1_CATEGORIES = new Set(['property_developer', 'mechanic', 'equipment_services', 'construction', 'geological']);
 const PRICING_TYPES = new Set(['fixed', 'starting_from', 'hourly', 'daily', 'quote', 'quote_required', 'contact_for_price']);
 const SERVICE_STATUSES = new Set(['active', 'paused', 'unavailable']);
 const SUPPORTED_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
