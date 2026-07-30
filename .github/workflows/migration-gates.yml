@@ -112,6 +112,9 @@ jobs:
       - name: Run RLS auth initialization plan matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_rls_auth_initialization_plans.sql --local
 
+      - name: Run permissive RLS consolidation matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_rls_permissive_policy_consolidation.sql --local
+
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
 
