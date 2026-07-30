@@ -53,7 +53,7 @@ export default function CarDetail() {
     <div className="min-h-screen bg-background pb-32">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("car", car)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={car.photos} title={car.title} fallbackImage={placeholderCar} tour={car.tour || null} tourActionLabel="Watch Peek" tourOwnerId={car.seller_id} parentType="listing" parentId={car.id} />
+        <ListingMediaViewer photos={car.photos} title={car.title} fallbackImage={placeholderCar} tour={car.tour || null} tourActionLabel="Take a Peek" tourOwnerId={car.seller_id} parentType="listing" parentId={car.id} />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5">
             <div className="flex flex-wrap items-center gap-2">{car.condition && <Badge variant="secondary" className="capitalize">{car.condition}</Badge>}{car.negotiable && <Badge variant="outline">Negotiable</Badge>}{car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}<ListingCode type="car" id={car.id} /></div>
