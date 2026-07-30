@@ -31,7 +31,7 @@ function priceLabel(item, format) {
   return `${prefix}${format(item.price)}${suffix}`;
 }
 
-const actionClass = 'group flex min-h-12 w-full items-center gap-2.5 px-1 py-2 text-left text-[11px] font-semibold text-white/85 transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-wait disabled:opacity-60';
+const actionClass = 'group flex min-h-12 w-full items-center gap-2.5 px-1 py-2 text-left text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-wait disabled:opacity-60';
 const actionIconClass = 'flex h-9 w-9 shrink-0 items-center justify-center text-primary transition-transform group-hover:scale-105';
 
 export default function TourCard({ item, active, onActivate, isSaved = false, onSavedChange, onReported }) {
@@ -208,7 +208,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
         {playbackError && (
           <div className="absolute inset-x-3 bottom-3 z-30 rounded-xl border border-white/15 bg-black/80 p-3 text-white backdrop-blur-md">
             <p className="text-sm font-semibold">Peek playback failed</p>
-            <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-blue-300">Try again</button>
+            <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-blue-200 hover:text-white">Try again</button>
           </div>
         )}
       </div>
@@ -246,8 +246,8 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
         <div className="flex flex-col justify-center divide-y divide-border border-l border-border pl-3">
           {listingOnly && (
-            <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(actionClass, liked && 'text-red-300')}>
-              <span className={cn(actionIconClass, liked && 'text-red-300')}><Heart className={cn('h-5 w-5', liked && 'fill-current')} /></span>
+            <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(actionClass, liked && 'text-destructive')}>
+              <span className={cn(actionIconClass, liked && 'text-destructive')}><Heart className={cn('h-5 w-5', liked && 'fill-current')} /></span>
               <span>{liked ? 'Saved' : 'Save'}</span>
             </button>
           )}
