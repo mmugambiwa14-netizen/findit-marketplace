@@ -23,7 +23,7 @@ test('public seller profiles use opaque UUIDs behind a private definer and publi
   assert.match(migration, /listing\.status in \('available', 'under_offer'\)/);
   assert.match(migration, /listing\.content_suspended_at is null/);
   assert.match(migration, /private\.is_country_browsable/);
-  assert.doesNotMatch(migration, /seller\.email/);
+  assert.match(migration, /position\('seller\.email' in function_record\.prosrc\) = 0/);
   assert.doesNotMatch(migration, /drop table|truncate|delete from/i);
   assert.doesNotMatch(rollback, /drop table|truncate|delete from/i);
 });
