@@ -1,4 +1,5 @@
--- Roll back migration 0078 without removing the legacy conceptual service nodes.
+-- Roll back migration 0078 by deactivating the added catalog relationships and
+-- nodes. Historical recommendation attribution remains intact.
 
 with relationship_values(source_key, target_key) as (
   values
@@ -23,20 +24,30 @@ with relationship_values(source_key, target_key) as (
     ('machinery', 'operator-hire'),
     ('machinery', 'plant-hire'),
     ('machinery', 'civil-works')
+), resolved as (
+  select relationship.id
+  from relationship_values value
+  join public.recommendation_taxonomy_nodes source
+    on source.node_type = 'category'
+   and source.stable_key = value.source_key
+  join public.recommendation_taxonomy_nodes target
+    on target.node_type = 'service'
+   and target.stable_key = value.target_key
+  join public.recommendation_relationships relationship
+    on relationship.source_node_id = source.id
+   and relationship.target_node_id = target.id
+   and relationship.relationship_type = 'complements'
 )
-delete from public.recommendation_relationships relationship
-using relationship_values value,
-      public.recommendation_taxonomy_nodes source,
-      public.recommendation_taxonomy_nodes target
-where source.node_type = 'category'
-  and source.stable_key = value.source_key
-  and target.node_type = 'service'
-  and target.stable_key = value.target_key
-  and relationship.source_node_id = source.id
-  and relationship.target_node_id = target.id
-  and relationship.relationship_type = 'complements';
+update public.recommendation_relationships relationship
+set
+  is_active = false,
+  valid_until = greatest(now(), relationship.valid_from + interval '1 millisecond'),
+  updated_at = now()
+from resolved
+where relationship.id = resolved.id;
 
-delete from public.recommendation_taxonomy_nodes
+update public.recommendation_taxonomy_nodes
+set is_active = false, updated_at = now()
 where node_type = 'service'
   and stable_key in (
     'property-management',
@@ -59,9 +70,6 @@ where node_type = 'service'
     'civil-works'
   )
   and attributes ->> 'catalog_source' = 'service_form_v1';
-
-delete from public.recommendation_cache
-where service_name = 'related_services_service';
 
 update public.marketplace_operational_controls
 set
