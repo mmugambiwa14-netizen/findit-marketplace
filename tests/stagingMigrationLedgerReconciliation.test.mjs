@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [repair, evidence, repair0083, evidence0083] = await Promise.all([
+const [repair, evidence, repair0083, evidence0083, repair0084, evidence0084] = await Promise.all([
   read('supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-2026-07-30.md'),
   read('supabase/maintenance/reconcile_staging_migration_history_0083.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-0083-2026-07-30.md'),
+  read('supabase/maintenance/reconcile_staging_migration_history_0084.sql'),
+  read('docs/certification/staging-migration-ledger-reconciliation-0084-2026-07-30.md'),
 ]);
 
 const mappings = [
@@ -69,4 +71,27 @@ test('0083 evidence records a canonical 83-migration staging ledger and no produ
   assert.match(evidence0083, /Sequence mismatches \| 0/);
   assert.match(evidence0083, /Remaining generated `20260730\.\.\.` versions \| 0/);
   assert.match(evidence0083, /production[\s\S]{0,120}remains at migration\s+`0049`/i);
+});
+
+test('0084 reconciliation verifies exact recommendation index migration identity', () => {
+  assert.match(repair0084, /where version = '0084'/i);
+  assert.match(repair0084, /recommendation_foreign_key_covering_indexes/);
+  assert.match(repair0084, /07aa80888471117955790e5f04f6ae04/);
+  assert.match(repair0084, /length\(array_to_string\(statements, E'\\n'\)\) = 877/i);
+  assert.match(repair0084, /set version = '0084'/i);
+  assert.match(repair0084, /source_version !~ '\^20260730\[0-9\]\{6\}\$'/i);
+  assert.doesNotMatch(repair0084, /\bcreate\s+(?:table|function|view|index)\b/i);
+  assert.doesNotMatch(repair0084, /\balter\s+(?:table|function|view|extension)\b/i);
+  assert.doesNotMatch(repair0084, /\bdrop\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('0084 evidence records complete foreign key coverage and no production change', () => {
+  assert.match(evidence0084, /bwgklpxoetrrkutottdb/);
+  assert.match(evidence0084, /Canonical migration rows \| 84/);
+  assert.match(evidence0084, /Last version \| `0084`/);
+  assert.match(evidence0084, /Sequence mismatches \| 0/);
+  assert.match(evidence0084, /Non-partitioned targets left uncovered \| 0/);
+  assert.match(evidence0084, /Recommendation-event relations left uncovered \| 0/);
+  assert.match(evidence0084, /unindexed_foreign_keys/);
+  assert.match(evidence0084, /production[\s\S]{0,160}remains at migration\s+`0049`/i);
 });
