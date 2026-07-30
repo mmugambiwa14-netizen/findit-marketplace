@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [migration, rollback, workflow, sqlBoundary, client] = await Promise.all([
+const [migration, rollback, workflow, sqlBoundary, client, hook] = await Promise.all([
   read('supabase/migrations/0093_private_marketplace_view_implementation.sql'),
   read('supabase/rollback/0093_private_marketplace_view_implementation.rollback.sql'),
   read('.github/workflows/migration-gates.yml'),
   read('scripts/verify-sql-boundary.mjs'),
   read('src/services/marketplaceViewsService.js'),
+  read('src/hooks/useMarketplaceView.js'),
 ]);
 
 test('marketplace view counter moves behind a private volatile implementation and public invoker wrapper', () => {
@@ -42,6 +43,12 @@ test('active client preserves one-session deduplication and unchanged RPC argume
   assert.match(client, /p_parent_type: parentType/);
   assert.match(client, /p_parent_id: parentId/);
   assert.match(client, /writeStoredString\('session'/);
+});
+
+test('view telemetry remains fail-open and cannot block marketplace detail pages', () => {
+  assert.match(hook, /recordMarketplaceView\(parentType, parentId\)\.catch\(\(\) => \{/);
+  assert.match(hook, /View counting must never prevent the marketplace item from loading/);
+  assert.doesNotMatch(hook, /throw|setError|navigate/);
 });
 
 test('migration gates run the marketplace view matrix and SQL boundary is advanced to 0093', () => {
