@@ -5,6 +5,7 @@ import test from 'node:test';
 const component = await readFile('src/components/listings/ListingRecommendations.jsx', 'utf8');
 const listingCard = await readFile('src/components/listings/ListingCard.jsx', 'utf8');
 const marketplaceCard = await readFile('src/components/marketplace/MarketplaceCard.jsx', 'utf8');
+const serviceCard = await readFile('src/components/services/ServiceCard.jsx', 'utf8');
 const listingService = await readFile('src/services/publicListingsService.js', 'utf8');
 const listingRepository = await readFile('src/repositories/publicListingsRepository.js', 'utf8');
 const serviceRepository = await readFile('src/repositories/servicesRepository.js', 'utf8');
@@ -34,7 +35,18 @@ test('Phase 4 sections fail independently and expose complete accessible states'
   assert.match(component, /role="status"/);
   assert.match(component, /aria-labelledby="listing-recommendations-heading"/);
   assert.match(component, /const headingId = useId\(\)/);
-  assert.match(component, /grid-cols-2[\s\S]*md:grid-cols-3/);
+});
+
+test('Phase 4 recommendations use compact horizontally scrollable cards', () => {
+  assert.match(component, /snap-x snap-mandatory/);
+  assert.match(component, /overflow-x-auto/);
+  assert.match(component, /layout="recommendation"/);
+  assert.match(component, /w-\[13\.5rem\]/);
+  assert.match(marketplaceCard, /recommendationLayout/);
+  assert.match(marketplaceCard, /layout === 'recommendation'/);
+  assert.match(serviceCard, /layout === 'recommendation'/);
+  assert.match(serviceCard, /grid-cols-\[6\.25rem_minmax\(0,1fr\)\]/);
+  assert.doesNotMatch(component, /grid-cols-2[\s\S]*md:grid-cols-3/);
 });
 
 test('Phase 4 analytics record visible impressions and explicit card opens only', () => {
