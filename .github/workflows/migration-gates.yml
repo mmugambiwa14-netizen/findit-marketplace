@@ -132,6 +132,8 @@ jobs:
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
       - name: Run contextual ecosystem intelligence matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
+      - name: Run private personalization preference implementation matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_personalization_preference_implementations.sql --local
       - name: Run recommendation personalization privacy matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
       - name: Run aggregate recommendation analytics matrix
