@@ -7,6 +7,14 @@ const PROJECTION_TIMEOUT_MS = 250;
 const REQUEST_TIMEOUT_MS = 900;
 const MAXIMUM_REQUEST_BYTES = 2048;
 
+type RpcResponse = { data: unknown; error: unknown };
+type AbortableRpc = PromiseLike<RpcResponse> & {
+  abortSignal(signal: AbortSignal): AbortableRpc;
+};
+type ContextualRpcClient = {
+  rpc(name: string, args?: Record<string, unknown>): AbortableRpc;
+};
+
 function allowedOrigin(request: Request): string | null {
   const origin = request.headers.get("origin");
   if (!origin) return null;
@@ -56,7 +64,7 @@ function degraded(correlationId: string, reason: string, subjectListingId: strin
   };
 }
 
-async function ensureProjection(client: ReturnType<typeof createClient>, listingId: string): Promise<void> {
+async function ensureProjection(client: ContextualRpcClient, listingId: string): Promise<void> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROJECTION_TIMEOUT_MS);
   try {
@@ -102,7 +110,9 @@ Deno.serve(async (request: Request) => {
   try {
     const url = Deno.env.get("SUPABASE_URL");
     if (!url) throw new Error("Missing SUPABASE_URL");
-    const client = createClient(url, configuredAdminKey(), { auth: { persistSession: false, autoRefreshToken: false } });
+    const client = createClient(url, configuredAdminKey(), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    }) as unknown as ContextualRpcClient;
 
     await ensureProjection(client, body.subjectListingId);
 
