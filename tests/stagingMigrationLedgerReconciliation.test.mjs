@@ -12,6 +12,8 @@ const [
   evidence0084,
   repair0085,
   evidence0085,
+  repair0087,
+  evidence0087,
 ] = await Promise.all([
   read('supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-2026-07-30.md'),
@@ -21,6 +23,8 @@ const [
   read('docs/certification/staging-migration-ledger-reconciliation-0084-2026-07-30.md'),
   read('supabase/maintenance/reconcile_staging_migration_history_0085.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-0085-2026-07-30.md'),
+  read('supabase/maintenance/reconcile_staging_migration_history_0087.sql'),
+  read('docs/certification/staging-migration-ledger-reconciliation-0087-2026-07-30.md'),
 ]);
 
 const mappings = [
@@ -128,4 +132,27 @@ test('0085 evidence records canonical RLS optimization and no production change'
   assert.match(evidence0085, /Policies retaining direct `auth\.uid\(\)` \| 0/);
   assert.match(evidence0085, /auth_rls_initplan/);
   assert.match(evidence0085, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
+});
+
+test('0087 reconciliation verifies the exact private helper migration and changes metadata only', () => {
+  assert.match(repair0087, /where version = '0087'/i);
+  assert.match(repair0087, /private_policy_helper_boundary/);
+  assert.match(repair0087, /2a19735b6f615fd56d50745df38bdedb/);
+  assert.match(repair0087, /length\(array_to_string\(statements, E'\\n'\)\) = 11463/i);
+  assert.match(repair0087, /set version = '0087'/i);
+  assert.match(repair0087, /source_version !~ '\^20260730\[0-9\]\{6\}\$'/i);
+  assert.doesNotMatch(repair0087, /\bcreate\s+(?:table|function|view|index|policy)\b/i);
+  assert.doesNotMatch(repair0087, /\balter\s+(?:table|function|view|extension|policy)\b/i);
+  assert.doesNotMatch(repair0087, /\bdrop\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('0087 evidence records the canonical private helper boundary and no production change', () => {
+  assert.match(evidence0087, /bwgklpxoetrrkutottdb/);
+  assert.match(evidence0087, /Canonical migration rows \| 87/);
+  assert.match(evidence0087, /Last version \| `0087`/);
+  assert.match(evidence0087, /Sequence mismatches \| 0/);
+  assert.match(evidence0087, /Target helpers remaining in `public` \| 0/);
+  assert.match(evidence0087, /Target `SECURITY DEFINER` helpers in `private` \| 6/);
+  assert.match(evidence0087, /Dependent policies explicitly using `private\.\*` \| 6/);
+  assert.match(evidence0087, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
 });
