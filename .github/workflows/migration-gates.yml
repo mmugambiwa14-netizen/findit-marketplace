@@ -110,6 +110,8 @@ jobs:
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contact_support.sql --local
       - name: Run private recommendation event implementation matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_recommendation_event_implementation.sql --local
+      - name: Run private public listing search implementation matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_public_listing_search_implementation.sql --local
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
       - name: Run fail-open projection queue matrix
