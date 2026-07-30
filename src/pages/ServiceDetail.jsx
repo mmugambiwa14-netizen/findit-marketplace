@@ -49,7 +49,7 @@ export default function ServiceDetail() {
     <div className="min-h-screen bg-background pb-32">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={shareService} showSave={false} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="See their work" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} />
+        <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Take a Peek" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5">
             <div className="flex flex-wrap items-center gap-2">{category && <Badge variant="secondary">{category.label}</Badge>}{subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}</div>
