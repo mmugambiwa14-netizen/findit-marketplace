@@ -8,9 +8,9 @@ import { supabase } from '@/lib/supabaseClient';
  *   avatar_url: string | null
  * } | null>}
  */
-export async function findPublicSellerProfile(email) {
+export async function findPublicSellerProfile(sellerId) {
   const { data, error } = await supabase
-    .rpc('get_public_seller_profile', { seller_email: email });
+    .rpc('get_public_seller_profile', { p_seller_id: sellerId });
 
   if (error) {
     const failure = new Error('Unable to load the seller profile');
