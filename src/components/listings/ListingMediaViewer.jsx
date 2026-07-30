@@ -1,10 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ImageOff, Images, LoaderCircle, Play, RotateCcw, VideoOff } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ImageOff,
+  Images,
+  LoaderCircle,
+  Maximize,
+  Pause,
+  PictureInPicture2,
+  Play,
+  RotateCcw,
+  VideoOff,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import TourReportAction from "@/components/tours/TourReportAction";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getPublicTourPlayback } from "@/services/listingToursService";
+
+const MEDIA_CONTROLS_EVENT = "findit:media-controls-visibility";
 
 function formatDuration(seconds) {
   const total = Math.max(0, Number(seconds) || 0);
@@ -53,6 +69,7 @@ export default function ListingMediaViewer({
   const [playbackError, setPlaybackError] = useState("");
   const [current, setCurrent] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
 
   const hasTour = !tourReported && tour?.status === "ready" && Boolean(tour?.id || tour?.tourId || tour?.tour_id);
   const requestedTour = searchParams.get("media") === "tour";
@@ -64,6 +81,7 @@ export default function ListingMediaViewer({
     setPlaybackState("idle");
     setPlaybackError("");
     setMode("photos");
+    setControlsVisible(true);
   }, [tour?.id, tour?.tourId, tour?.tour_id, parentId]);
 
   useEffect(() => {
@@ -74,6 +92,21 @@ export default function ListingMediaViewer({
   useEffect(() => {
     if (!hasTour && mode === "tour") setMode("photos");
   }, [hasTour, mode]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(MEDIA_CONTROLS_EVENT, {
+      detail: {
+        active: mode === "tour" && playbackState === "ready",
+        visible: mode !== "tour" || controlsVisible,
+      },
+    }));
+  }, [controlsVisible, mode, playbackState]);
+
+  useEffect(() => () => {
+    window.dispatchEvent(new CustomEvent(MEDIA_CONTROLS_EVENT, {
+      detail: { active: false, visible: true },
+    }));
+  }, []);
 
   const updateMediaQuery = (nextMode) => {
     const next = new URLSearchParams(searchParams);
@@ -87,6 +120,7 @@ export default function ListingMediaViewer({
     if (playback && !force) return;
     setPlaybackState("loading");
     setPlaybackError("");
+    setControlsVisible(true);
     try {
       const nextPlayback = normalizePlayback(await getPublicTourPlayback(parentType, parentId));
       if (!nextPlayback) throw new Error("Peek playback is unavailable.");
@@ -101,12 +135,14 @@ export default function ListingMediaViewer({
 
   const openTour = async () => {
     setMode("tour");
+    setControlsVisible(true);
     updateMediaQuery("tour");
     await loadPlayback();
   };
 
   const showPhotos = () => {
     setMode("photos");
+    setControlsVisible(true);
     updateMediaQuery("photos");
   };
 
@@ -140,11 +176,14 @@ export default function ListingMediaViewer({
             posterUrl={posterUrl}
             state={playbackState}
             error={playbackError}
+            controlsVisible={controlsVisible}
+            onControlsVisibleChange={setControlsVisible}
             onRetry={retryPlayback}
             onPlaybackError={() => {
               setPlayback(null);
               setPlaybackState("error");
               setPlaybackError("The playback link expired or the video could not be loaded.");
+              setControlsVisible(true);
             }}
           />
         ) : images.length > 0 && !imageFailed ? (
@@ -176,56 +215,66 @@ export default function ListingMediaViewer({
           </>
         )}
 
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            {hasTour && mode !== "tour" && (
-              <Button
-                type="button"
-                size="sm"
-                onClick={openTour}
-                className={cn(
-                  "min-h-11 rounded-full bg-primary px-4 shadow-lg shadow-black/30",
-                  requestedTour && "ring-2 ring-white/70 ring-offset-2 ring-offset-black/40",
-                )}
-              >
-                <Play className="mr-2 h-4 w-4 fill-current" aria-hidden="true" />
-                {requestedTour ? "Play Peek" : tourActionLabel}
-                {tour?.durationSeconds || tour?.duration_seconds
-                  ? ` · ${formatDuration(tour.durationSeconds || tour.duration_seconds)}`
-                  : ""}
-              </Button>
+        {mode === "tour" && playbackState === "ready" && controlsVisible && (
+          <>
+            {images.length > 0 && (
+              <div className="absolute left-3 top-16 z-30 sm:left-4 sm:top-16">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={showPhotos}
+                  className="min-h-11 rounded-full border border-white/15 bg-black/60 px-4 text-white shadow-lg backdrop-blur-md hover:bg-black/80 hover:text-white"
+                >
+                  <Images className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Photos
+                </Button>
+              </div>
             )}
-            {mode === "tour" && images.length > 0 && (
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={showPhotos}
-                className="min-h-11 rounded-full bg-card/90 px-4 backdrop-blur-md"
-              >
-                <Images className="mr-2 h-4 w-4" aria-hidden="true" />
-                Photos
-              </Button>
-            )}
-          </div>
+            <div className="absolute right-3 top-16 z-30 sm:right-4 sm:top-16">
+              <TourReportAction
+                tourId={playback?.id || tour?.id || tour?.tourId || tour?.tour_id}
+                title={title}
+                sellerId={tourOwnerId}
+                onReported={() => {
+                  setTourReported(true);
+                  setPlayback(null);
+                  showPhotos();
+                }}
+              />
+            </div>
+          </>
+        )}
 
-          {mode === "tour" && playbackState === "ready" ? (
-            <TourReportAction
-              tourId={playback?.id || tour?.id || tour?.tourId || tour?.tour_id}
-              title={title}
-              sellerId={tourOwnerId}
-              onReported={() => {
-                setTourReported(true);
-                setPlayback(null);
-                showPhotos();
-              }}
-            />
-          ) : mode === "photos" && images.length > 0 ? (
-            <span className="rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
-              {current + 1} / {images.length}
-            </span>
-          ) : null}
-        </div>
+        {mode === "photos" && (
+          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {hasTour && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={openTour}
+                  className={cn(
+                    "min-h-11 rounded-full bg-primary px-4 shadow-lg shadow-black/30",
+                    requestedTour && "ring-2 ring-white/70 ring-offset-2 ring-offset-black/40",
+                  )}
+                >
+                  <Play className="mr-2 h-4 w-4 fill-current" aria-hidden="true" />
+                  {requestedTour ? "Play Peek" : tourActionLabel}
+                  {tour?.durationSeconds || tour?.duration_seconds
+                    ? ` · ${formatDuration(tour.durationSeconds || tour.duration_seconds)}`
+                    : ""}
+                </Button>
+              )}
+            </div>
+
+            {images.length > 0 ? (
+              <span className="rounded-full border border-white/10 bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
+                {current + 1} / {images.length}
+              </span>
+            ) : null}
+          </div>
+        )}
       </div>
 
       {mode === "photos" && images.length > 1 && (
@@ -270,21 +319,193 @@ function MediaArrow({ label, side, onClick, children }) {
   );
 }
 
-function TourPanel({ title, playback, posterUrl, state, error, onRetry, onPlaybackError }) {
+function PlayerIconButton({ label, onClick, children, disabled = false }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.();
+      }}
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/65 text-white shadow-lg backdrop-blur-md transition hover:bg-black/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
+function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, onControlsVisibleChange, onRetry, onPlaybackError }) {
+  const videoRef = useRef(null);
+  const hideTimerRef = useRef(null);
+  const [paused, setPaused] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [pipAvailable, setPipAvailable] = useState(false);
+
+  const clearHideTimer = () => {
+    if (hideTimerRef.current) window.clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = null;
+  };
+
+  useEffect(() => {
+    clearHideTimer();
+    if (!paused && controlsVisible) {
+      hideTimerRef.current = window.setTimeout(() => onControlsVisibleChange(false), 3000);
+    }
+    return clearHideTimer;
+  }, [controlsVisible, onControlsVisibleChange, paused]);
+
+  useEffect(() => () => clearHideTimer(), []);
+
+  const toggleControls = () => {
+    clearHideTimer();
+    onControlsVisibleChange((visible) => !visible);
+  };
+
+  const togglePlayback = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setMuted(video.muted);
+  };
+
+  const openPictureInPicture = async () => {
+    const video = videoRef.current;
+    if (!video?.requestPictureInPicture) return;
+    try {
+      if (document.pictureInPictureElement === video) await document.exitPictureInPicture();
+      else await video.requestPictureInPicture();
+    } catch {
+      // Browser support can change after playback starts; leave the player usable.
+    }
+  };
+
+  const openFullscreen = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (video.requestFullscreen) await video.requestFullscreen();
+      else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+    } catch {
+      // Fullscreen is optional and must never interrupt playback.
+    }
+  };
+
   if (state === "ready" && playback?.playbackUrl) {
     return (
-      <video
-        className="h-full w-full bg-black object-contain"
-        controls
-        playsInline
-        preload="metadata"
-        poster={posterUrl || undefined}
-        aria-label={`${title} Peek video`}
-        onError={onPlaybackError}
+      <div
+        className="relative h-full w-full touch-manipulation bg-black"
+        onClick={toggleControls}
+        role="group"
+        aria-label={`${title} Peek player. Tap to ${controlsVisible ? "hide" : "show"} controls.`}
       >
-        <source src={playback.playbackUrl} type={playback.mimeType || "video/mp4"} />
-        Your browser does not support video playback.
-      </video>
+        <video
+          ref={videoRef}
+          className="h-full w-full bg-black object-contain"
+          playsInline
+          preload="metadata"
+          poster={posterUrl || undefined}
+          aria-label={`${title} Peek video`}
+          onLoadedMetadata={(event) => {
+            setDuration(Number(event.currentTarget.duration) || 0);
+            setCurrentTime(Number(event.currentTarget.currentTime) || 0);
+            setMuted(event.currentTarget.muted);
+            setPipAvailable(Boolean(document.pictureInPictureEnabled && event.currentTarget.requestPictureInPicture));
+          }}
+          onTimeUpdate={(event) => setCurrentTime(Number(event.currentTarget.currentTime) || 0)}
+          onPlay={() => setPaused(false)}
+          onPause={() => {
+            setPaused(true);
+            onControlsVisibleChange(true);
+          }}
+          onEnded={() => {
+            setPaused(true);
+            onControlsVisibleChange(true);
+          }}
+          onError={onPlaybackError}
+        >
+          <source src={playback.playbackUrl} type={playback.mimeType || "video/mp4"} />
+          Your browser does not support video playback.
+        </video>
+
+        {controlsVisible && (
+          <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/55 via-transparent to-black/25" aria-hidden="false">
+            {paused && (
+              <button
+                type="button"
+                aria-label="Play Peek"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  togglePlayback();
+                }}
+                className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white shadow-xl backdrop-blur-md transition hover:scale-105 hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Play className="ml-1 h-7 w-7 fill-current" aria-hidden="true" />
+              </button>
+            )}
+
+            <div className="absolute right-3 top-1/2 flex -translate-y-1/2 flex-col gap-2 sm:right-4">
+              {pipAvailable && (
+                <PlayerIconButton label="Picture in picture" onClick={openPictureInPicture}>
+                  <PictureInPicture2 className="h-4.5 w-4.5" aria-hidden="true" />
+                </PlayerIconButton>
+              )}
+              <PlayerIconButton label={muted ? "Unmute" : "Mute"} onClick={toggleMute}>
+                {muted ? <VolumeX className="h-4.5 w-4.5" aria-hidden="true" /> : <Volume2 className="h-4.5 w-4.5" aria-hidden="true" />}
+              </PlayerIconButton>
+              <PlayerIconButton label="Fullscreen" onClick={openFullscreen}>
+                <Maximize className="h-4.5 w-4.5" aria-hidden="true" />
+              </PlayerIconButton>
+            </div>
+
+            <div
+              className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/60 px-3 py-2.5 text-white shadow-xl backdrop-blur-md sm:bottom-4 sm:left-4 sm:right-4"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <input
+                type="range"
+                min="0"
+                max={Math.max(duration, 0)}
+                step="0.1"
+                value={Math.min(currentTime, duration || 0)}
+                onChange={(event) => {
+                  const video = videoRef.current;
+                  if (!video) return;
+                  const nextTime = Number(event.target.value) || 0;
+                  video.currentTime = nextTime;
+                  setCurrentTime(nextTime);
+                }}
+                aria-label="Peek progress"
+                className="h-1.5 w-full cursor-pointer accent-primary"
+              />
+              <div className="mt-2 flex items-center justify-between gap-3 text-xs font-semibold">
+                <button
+                  type="button"
+                  aria-label={paused ? "Play Peek" : "Pause Peek"}
+                  onClick={togglePlayback}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  {paused ? <Play className="ml-0.5 h-4 w-4 fill-current" aria-hidden="true" /> : <Pause className="h-4 w-4 fill-current" aria-hidden="true" />}
+                </button>
+                <span className="tabular-nums text-white/85">{formatDuration(currentTime)} / {formatDuration(duration)}</span>
+                <span className="text-[10px] font-medium text-white/60">Tap video to hide</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
