@@ -100,6 +100,9 @@ jobs:
       - name: Run public business-profile view security matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_public_business_profile_view_security.sql --local
 
+      - name: Run extension schema security matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_extension_schema_security.sql --local
+
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
 
