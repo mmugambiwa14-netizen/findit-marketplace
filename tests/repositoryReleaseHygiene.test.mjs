@@ -25,6 +25,8 @@ const [
   permissivePolicyRollback,
   privateHelperMigration,
   privateHelperRollback,
+  authorizationHelperMigration,
+  authorizationHelperRollback,
 ] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
@@ -47,6 +49,8 @@ const [
   read('supabase/rollback/0086_rls_permissive_policy_consolidation.rollback.sql'),
   read('supabase/migrations/0087_private_policy_helper_boundary.sql'),
   read('supabase/rollback/0087_private_policy_helper_boundary.rollback.sql'),
+  read('supabase/migrations/0088_private_authorization_helper_implementations.sql'),
+  read('supabase/rollback/0088_private_authorization_helper_implementations.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -79,7 +83,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0087_private_policy_helper_boundary\.sql/);
+  assert.match(sqlBoundary, /0088_private_authorization_helper_implementations\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
@@ -226,6 +230,25 @@ test('policy-only definer helpers move behind a private reversible boundary', ()
   assert.doesNotMatch(privateHelperMigration, /drop table|truncate|delete from/i);
   assert.doesNotMatch(privateHelperRollback, /drop table|truncate|delete from/i);
   assert.match(migrationWorkflow, /v1_private_policy_helper_boundary\.sql/);
+});
+
+test('authorization definers move to private while public compatibility stays invoker-only', () => {
+  for (const helperName of ['is_active_user', 'is_admin', 'is_super_admin']) {
+    assert.match(authorizationHelperMigration, new RegExp(`alter function public\\.${helperName}\\(\\) set schema private`));
+    assert.match(authorizationHelperMigration, new RegExp(`create function public\\.${helperName}\\(\\)`));
+    assert.match(authorizationHelperMigration, new RegExp(`select private\\.${helperName}\\(\\)`));
+    assert.match(authorizationHelperRollback, new RegExp(`alter function private\\.${helperName}\\(\\) set schema public`));
+  }
+
+  assert.match(authorizationHelperMigration, /security invoker/);
+  assert.match(authorizationHelperMigration, /expected exactly 27 active-user policy dependencies/);
+  assert.match(authorizationHelperMigration, /expected exactly 75 admin policy dependencies/);
+  assert.match(authorizationHelperMigration, /preserved only % of 102 private policy dependencies/);
+  assert.match(authorizationHelperMigration, /left a PUBLIC execute grant/);
+  assert.match(authorizationHelperRollback, /restored only % of 102 public policy dependencies/);
+  assert.doesNotMatch(authorizationHelperMigration, /drop table|truncate|delete from/i);
+  assert.doesNotMatch(authorizationHelperRollback, /drop table|truncate|delete from/i);
+  assert.match(migrationWorkflow, /v1_private_authorization_helper_implementations\.sql/);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
