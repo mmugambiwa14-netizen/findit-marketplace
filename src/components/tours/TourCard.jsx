@@ -216,20 +216,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
       <div className="grid grid-cols-[minmax(0,1fr)_7.25rem] gap-2.5 border-t border-border bg-card p-4 text-card-foreground sm:grid-cols-[minmax(0,1fr)_7.5rem] sm:gap-3 sm:p-5">
         <div className="min-w-0 py-0.5">
-          <div className="flex min-w-0 items-center gap-2">
-            <p className="min-w-0 truncate text-sm font-bold text-foreground">{item.sellerDisplayName}</p>
-            {!isOwner && (
-              <button
-                type="button"
-                onClick={openReport}
-                aria-label="Report Peek"
-                title="Report Peek"
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
-              >
-                <Flag className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
+          <p className="line-clamp-2 text-sm font-bold leading-5 text-foreground">{item.sellerDisplayName}</p>
 
           <Link to={detailPath} className="mt-3 block line-clamp-2 text-lg font-black leading-6 text-foreground transition-colors hover:text-primary sm:text-xl">
             {item.title}
@@ -243,6 +230,18 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
           )}
 
           <p className="mt-4 truncate text-xl font-black text-primary sm:text-2xl">{priceLabel(item, format)}</p>
+
+          {!isOwner && (
+            <button
+              type="button"
+              onClick={openReport}
+              aria-label="Report Peek"
+              className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            >
+              <Flag className="h-3.5 w-3.5" />
+              <span>Report</span>
+            </button>
+          )}
         </div>
 
         <div className="flex min-w-0 flex-col justify-center divide-y divide-border border-l border-border pl-2.5">
