@@ -34,7 +34,7 @@ export default function ListingMediaViewer({
   title = "Listing",
   fallbackImage = null,
   tour = null,
-  tourActionLabel = "Watch Peek",
+  tourActionLabel = "Take a Peek",
   tourOwnerId = null,
   parentType = "listing",
   parentId = null,
@@ -189,7 +189,7 @@ export default function ListingMediaViewer({
                 )}
               >
                 <Play className="mr-2 h-4 w-4 fill-current" aria-hidden="true" />
-                {requestedTour ? `Play ${tourActionLabel.toLowerCase()}` : tourActionLabel}
+                {requestedTour ? "Play Peek" : tourActionLabel}
                 {tour?.durationSeconds || tour?.duration_seconds
                   ? ` · ${formatDuration(tour.durationSeconds || tour.duration_seconds)}`
                   : ""}
