@@ -15,6 +15,8 @@ const [
   publicProfileRollback,
   extensionMigration,
   extensionRollback,
+  foreignKeyIndexMigration,
+  foreignKeyIndexRollback,
 ] = await Promise.all([
   read('package.json'),
   read('.github/workflows/release-candidate-gates.yml'),
@@ -27,6 +29,8 @@ const [
   read('supabase/rollback/0081_public_business_profile_view_security.rollback.sql'),
   read('supabase/migrations/0082_pg_trgm_extension_schema_security.sql'),
   read('supabase/rollback/0082_pg_trgm_extension_schema_security.rollback.sql'),
+  read('supabase/migrations/0083_foreign_key_covering_indexes.sql'),
+  read('supabase/rollback/0083_foreign_key_covering_indexes.rollback.sql'),
 ]);
 
 const packageJson = JSON.parse(packageJsonText);
@@ -59,7 +63,7 @@ test('SQL gate requires a contiguous migration sequence and safe recent rollback
   assert.match(sqlBoundary, /missing rollback pair/);
   assert.match(sqlBoundary, /unbalanced/);
   assert.match(sqlBoundary, /destructive table\/data rollback statements/);
-  assert.match(sqlBoundary, /0082_pg_trgm_extension_schema_security\.sql/);
+  assert.match(sqlBoundary, /0083_foreign_key_covering_indexes\.sql/);
 });
 
 test('public business profiles use an invoker view and a non-exposed least-column function', () => {
@@ -81,6 +85,31 @@ test('pg_trgm extension is relocated out of the public API schema with a reversi
   assert.match(extensionRollback, /alter extension pg_trgm set schema public/i);
   assert.doesNotMatch(extensionMigration, /drop extension/i);
   assert.doesNotMatch(extensionRollback, /drop extension/i);
+});
+
+test('advisor-reported foreign keys receive reversible covering indexes', () => {
+  const createCount = (foreignKeyIndexMigration.match(/create index if not exists/gi) ?? []).length;
+  const dropCount = (foreignKeyIndexRollback.match(/drop index if exists/gi) ?? []).length;
+  assert.equal(createCount, 43);
+  assert.equal(dropCount, createCount);
+  for (const activeIndex of [
+    'idx_fk_app_alerts_listing_id',
+    'idx_fk_conversations_last_message_sender_id',
+    'idx_fk_notification_fanout_listing_id',
+    'idx_fk_inquiries_listing_id',
+    'idx_fk_listing_media_owner_id',
+    'idx_fk_listing_private_locations_owner_id',
+    'idx_fk_listing_tour_events_actor_id',
+    'idx_fk_listing_tour_slots_pending_tour_id',
+    'idx_fk_reports_reporter_id',
+    'idx_fk_service_media_owner_id',
+    'idx_fk_services_location_id',
+  ]) {
+    assert.match(foreignKeyIndexMigration, new RegExp(activeIndex));
+    assert.match(foreignKeyIndexRollback, new RegExp(activeIndex));
+  }
+  assert.doesNotMatch(foreignKeyIndexMigration, /drop index|delete from|truncate/i);
+  assert.doesNotMatch(foreignKeyIndexRollback, /drop table|delete from|truncate/i);
 });
 
 test('PR gates typecheck Supabase Edge Functions with Deno', () => {
