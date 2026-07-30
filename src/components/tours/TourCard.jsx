@@ -31,15 +31,8 @@ function priceLabel(item, format) {
   return `${prefix}${format(item.price)}${suffix}`;
 }
 
-function listingTypeLabel(item) {
-  if (item.listingType === 'car') return 'Vehicle';
-  if (item.listingType === 'machinery') return 'Equipment';
-  if (item.listingType === 'service') return 'Service';
-  return 'Property';
-}
-
-const actionClass = 'group flex w-14 flex-col items-center gap-1 text-[10px] font-semibold leading-none text-white/90 transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-60';
-const actionIconClass = 'flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/60 shadow-lg backdrop-blur-md transition-colors group-hover:bg-black/80';
+const actionClass = 'group flex min-h-12 w-full items-center gap-2.5 px-1 py-2 text-left text-[11px] font-semibold text-white/85 transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-wait disabled:opacity-60';
+const actionIconClass = 'flex h-9 w-9 shrink-0 items-center justify-center text-primary transition-transform group-hover:scale-105';
 
 export default function TourCard({ item, active, onActivate, isSaved = false, onSavedChange, onReported }) {
   const { user } = useAuth();
@@ -164,10 +157,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
   return (
     <article data-tour-id={item.tourId} className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
-      <div className={cn(
-        'relative overflow-hidden bg-surface-secondary',
-        showingPlayback ? 'aspect-video' : 'aspect-[4/5] min-h-[32rem] sm:aspect-video sm:min-h-0',
-      )}>
+      <div className="relative aspect-square overflow-hidden bg-surface-secondary sm:aspect-video">
         {showingPlayback ? (
           <video
             ref={videoRef}
@@ -194,8 +184,8 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             ) : (
               <div className="h-full w-full bg-surface-raised" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/10 to-black/20" aria-hidden="true" />
-            <span className="absolute left-1/2 top-[34%] flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/20" aria-hidden="true" />
+            <span className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/60 text-white shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
               {loadingPlayback ? <RotateCcw className="h-6 w-6 animate-spin" /> : <Play className="ml-1 h-7 w-7 fill-current" />}
             </span>
           </button>
@@ -206,78 +196,12 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             <span className="absolute right-3 top-3 z-20 rounded-full border border-white/10 bg-black/65 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
               {formatDuration(item.durationSeconds)}
             </span>
-
-            <div className="absolute inset-x-0 bottom-0 z-10 p-4 text-white sm:p-5">
-              <div className="grid grid-cols-[minmax(0,1fr)_3.5rem] items-end gap-3">
-                <div className="min-w-0">
-                  <div className="flex min-w-0 items-center gap-2 text-xs font-semibold text-white/80">
-                    <span className="min-w-0 truncate">{item.sellerDisplayName}</span>
-                    <span className="shrink-0 rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide backdrop-blur-sm">{listingTypeLabel(item)}</span>
-                    {!isOwner && (
-                      <button type="button" onClick={openReport} aria-label="Report Peek" className="ml-auto inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg px-1.5 text-[10px] text-white/65 hover:bg-white/10 hover:text-white">
-                        <Flag className="h-3 w-3" /> Report
-                      </button>
-                    )}
-                  </div>
-
-                  <Link to={detailPath} className="mt-2 block line-clamp-2 text-xl font-black leading-6 text-white hover:text-blue-200 sm:max-w-xl sm:text-2xl sm:leading-7">
-                    {item.title}
-                  </Link>
-
-                  {item.publicLocation && (
-                    <p className="mt-2 flex items-start gap-1.5 text-sm text-white/75">
-                      <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-                      <span className="line-clamp-2">{item.publicLocation}</span>
-                    </p>
-                  )}
-
-                  {item.summaryAttributes.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {item.summaryAttributes.map((attribute) => (
-                        <span key={attribute} className="rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[10px] font-medium text-white/85 backdrop-blur-sm">{attribute}</span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/10 pt-3">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">Price</p>
-                      <p className="mt-0.5 truncate text-xl font-black text-white sm:text-2xl">{priceLabel(item, format)}</p>
-                    </div>
-                    <Link
-                      to={detailPath}
-                      className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-3.5 text-[11px] font-bold text-primary-foreground shadow-lg transition-colors hover:bg-primary-hover sm:px-4 sm:text-xs"
-                    >
-                      View listing <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center justify-end gap-2.5 pb-0.5">
-                  {listingOnly && (
-                    <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(actionClass, liked && 'text-red-300')}>
-                      <span className={actionIconClass}><Heart className={cn('h-4.5 w-4.5', liked && 'fill-current')} /></span>
-                      <span>{liked ? 'Saved' : 'Save'}</span>
-                    </button>
-                  )}
-                  {canMessage ? (
-                    <button type="button" onClick={openChat} aria-label="Message seller" className={actionClass}>
-                      <span className={actionIconClass}><MessageCircle className="h-4.5 w-4.5" /></span>
-                      <span>Message</span>
-                    </button>
-                  ) : !isOwner ? (
-                    <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={actionClass}>
-                      <span className={actionIconClass}><MessageCircle className="h-4.5 w-4.5" /></span>
-                      <span>Contact</span>
-                    </Link>
-                  ) : null}
-                  <button type="button" onClick={share} aria-label="Share listing" className={actionClass}>
-                    <span className={actionIconClass}><Share2 className="h-4.5 w-4.5" /></span>
-                    <span>Share</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <Link
+              to={detailPath}
+              className="absolute bottom-5 right-3 z-20 inline-flex h-11 items-center justify-center rounded-xl border border-white/30 bg-black/75 px-4 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition-colors hover:bg-black/90 sm:bottom-4 sm:right-4"
+            >
+              View listing <ArrowUpRight className="ml-2 h-4 w-4" />
+            </Link>
           </>
         )}
 
@@ -287,6 +211,62 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-blue-300">Try again</button>
           </div>
         )}
+      </div>
+
+      <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-3 border-t border-border bg-card p-4 text-card-foreground sm:grid-cols-[minmax(0,1fr)_7rem] sm:p-5">
+        <div className="min-w-0 py-0.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="min-w-0 truncate text-sm font-bold text-foreground">{item.sellerDisplayName}</p>
+            {!isOwner && (
+              <button
+                type="button"
+                onClick={openReport}
+                aria-label="Report Peek"
+                title="Report Peek"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground"
+              >
+                <Flag className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          <Link to={detailPath} className="mt-3 block line-clamp-2 text-lg font-black leading-6 text-foreground transition-colors hover:text-primary sm:text-xl">
+            {item.title}
+          </Link>
+
+          {item.publicLocation && (
+            <p className="mt-2 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span className="truncate">{item.publicLocation}</span>
+            </p>
+          )}
+
+          <p className="mt-4 truncate text-xl font-black text-primary sm:text-2xl">{priceLabel(item, format)}</p>
+        </div>
+
+        <div className="flex flex-col justify-center divide-y divide-border border-l border-border pl-3">
+          {listingOnly && (
+            <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(actionClass, liked && 'text-red-300')}>
+              <span className={cn(actionIconClass, liked && 'text-red-300')}><Heart className={cn('h-5 w-5', liked && 'fill-current')} /></span>
+              <span>{liked ? 'Saved' : 'Save'}</span>
+            </button>
+          )}
+          {canMessage ? (
+            <button type="button" onClick={openChat} aria-label="Message seller" className={actionClass}>
+              <span className={actionIconClass}><MessageCircle className="h-5 w-5" /></span>
+              <span>Message</span>
+            </button>
+          ) : !isOwner ? (
+            <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={actionClass}>
+              <span className={actionIconClass}><MessageCircle className="h-5 w-5" /></span>
+              <span>Contact</span>
+            </Link>
+          ) : null}
+          <button type="button" onClick={share} aria-label="Share listing" className={actionClass}>
+            <span className={actionIconClass}><Share2 className="h-5 w-5" /></span>
+            <span>Share</span>
+          </button>
+        </div>
       </div>
 
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} returnTo={detailPath} />
