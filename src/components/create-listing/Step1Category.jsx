@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Building2, Car, Tractor, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -46,15 +47,16 @@ const CATEGORIES = [
 
 function groupOptions(options) {
   const groups = {};
-  options.forEach((opt) => {
-    const group = opt.group || "All";
+  options.forEach((option) => {
+    const group = option.group || "All";
     if (!groups[group]) groups[group] = [];
-    groups[group].push(opt);
+    groups[group].push(option);
   });
   return groups;
 }
 
-export default function Step1Category({ formData, update, onContinue, onSelectService }) {
+export default function Step1Category({ formData, update, onContinue }) {
+  const navigate = useNavigate();
   const [error, setError] = useState("");
   const selected = CATEGORIES.find((category) => category.key === formData.listing_category);
   const grouped = useMemo(() => (selected?.options ? groupOptions(selected.options) : {}), [selected]);
@@ -84,7 +86,7 @@ export default function Step1Category({ formData, update, onContinue, onSelectSe
               onClick={() => {
                 if (category.key === "service") {
                   setError("");
-                  onSelectService?.();
+                  navigate("/create-service");
                   return;
                 }
                 update("listing_category", category.key);
