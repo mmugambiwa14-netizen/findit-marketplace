@@ -47,6 +47,7 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
   for (const [tag, count] of dollarQuoteBalance(content)) failures.push(`${name} has unbalanced ${tag} delimiters (${count})`);
 }
 
+// Previous reviewed release tip: 0088_private_authorization_helper_implementations.sql.
 // Release-tip anchor: bump this deliberately when a migration is added, so an
 // accidental or unreviewed migration cannot ride along silently.
 if (basename(migrationFiles.at(-1) ?? '') !== '0089_private_country_helper_implementations.sql') {
