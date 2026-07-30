@@ -63,33 +63,36 @@ export default function ContactButtons({ listing, type = "property", placement =
     );
   }
 
+  const openWhatsApp = () => window.open(`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`, "_blank", "noopener,noreferrer");
+  const openEmail = () => {
+    toast.success(`Opening your email app to contact ${emailAddress}`);
+    window.location.href = `mailto:${emailAddress}?subject=${emailSubject}&body=${emailBody}`;
+  };
+
   if (browsePlacement) {
-    const actionCount = Number(showCall) + Number(showMessage);
-    if (actionCount === 0) return null;
+    const actions = [
+      showMessage && { key: "message", label: "Message", icon: MessagesSquare, onClick: () => requireAuth("message the seller", () => setMessageOpen(true)) },
+      showCall && { key: "call", label: "Call", icon: Phone, onClick: () => { window.location.href = `tel:${phoneNumber}`; } },
+      showWhatsApp && { key: "whatsapp", label: "WhatsApp", icon: MessageCircle, onClick: openWhatsApp },
+      showEmail && { key: "email", label: "Email", icon: Mail, onClick: openEmail },
+    ].filter(Boolean);
+
+    if (actions.length === 0) return null;
 
     return (
       <>
-        <div className={`grid gap-2 ${actionCount === 2 ? "grid-cols-2" : "grid-cols-1"}`}>
-          {showCall && (
+        <div className={`grid gap-2 ${actions.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+          {actions.map(({ key, label, icon: Icon, onClick }) => (
             <Button
+              key={key}
               type="button"
-              className="h-11 min-w-0 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
-              onClick={() => { window.location.href = `tel:${phoneNumber}`; }}
+              className="h-11 min-w-0 rounded-xl bg-primary px-2 text-xs font-semibold text-primary-foreground hover:bg-primary-hover sm:text-sm"
+              onClick={onClick}
             >
-              <Phone className="mr-2 h-4 w-4 shrink-0" />
-              Call
+              <Icon className="mr-1.5 h-4 w-4 shrink-0" />
+              <span className="truncate">{label}</span>
             </Button>
-          )}
-          {showMessage && (
-            <Button
-              type="button"
-              className="h-11 min-w-0 rounded-xl bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
-              onClick={() => requireAuth("message the seller", () => setMessageOpen(true))}
-            >
-              <MessagesSquare className="mr-2 h-4 w-4 shrink-0" />
-              Message
-            </Button>
-          )}
+          ))}
         </div>
         <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} />
         {showMessage && <MessageDialog open={messageOpen} onClose={() => setMessageOpen(false)} listing={listing} type={type} />}
@@ -98,59 +101,17 @@ export default function ContactButtons({ listing, type = "property", placement =
   }
 
   if (!showMessage && !showWhatsApp && !showCall && !showEmail) {
-    return (
-      <div className="py-2 text-center text-sm text-muted-foreground">
-        Contact details not available. Please check back later.
-      </div>
-    );
+    return <div className="py-2 text-center text-sm text-muted-foreground">Contact details not available. Please check back later.</div>;
   }
 
   return (
     <>
       <div className="flex gap-1.5">
-        {showMessage && (
-          <Button
-            className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm"
-            onClick={() => requireAuth("message the seller", () => setMessageOpen(true))}
-          >
-            <MessagesSquare className="hidden h-4 w-4 sm:mr-2 sm:block" />
-            Message
-          </Button>
-        )}
-        {showWhatsApp && (
-          <Button
-            className="h-12 min-w-0 flex-1 rounded-xl bg-green-600 px-2 text-xs text-white hover:bg-green-700 sm:text-sm"
-            onClick={() => window.open(`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`, "_blank", "noopener,noreferrer")}
-          >
-            <MessageCircle className="hidden h-4 w-4 sm:mr-2 sm:block" />
-            WhatsApp
-          </Button>
-        )}
-        {showCall && (
-          <Button
-            variant="outline"
-            className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm"
-            onClick={() => { window.location.href = `tel:${phoneNumber}`; }}
-          >
-            <Phone className="hidden h-4 w-4 sm:mr-2 sm:block" />
-            Call
-          </Button>
-        )}
-        {showEmail && (
-          <Button
-            variant="outline"
-            className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm"
-            onClick={() => {
-              toast.success(`Opening your email app to contact ${emailAddress}`);
-              window.location.href = `mailto:${emailAddress}?subject=${emailSubject}&body=${emailBody}`;
-            }}
-          >
-            <Mail className="hidden h-4 w-4 sm:mr-2 sm:block" />
-            Email
-          </Button>
-        )}
+        {showMessage && <Button className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => requireAuth("message the seller", () => setMessageOpen(true))}><MessagesSquare className="hidden h-4 w-4 sm:mr-2 sm:block" />Message</Button>}
+        {showWhatsApp && <Button className="h-12 min-w-0 flex-1 rounded-xl bg-green-600 px-2 text-xs text-white hover:bg-green-700 sm:text-sm" onClick={openWhatsApp}><MessageCircle className="hidden h-4 w-4 sm:mr-2 sm:block" />WhatsApp</Button>}
+        {showCall && <Button variant="outline" className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => { window.location.href = `tel:${phoneNumber}`; }}><Phone className="hidden h-4 w-4 sm:mr-2 sm:block" />Call</Button>}
+        {showEmail && <Button variant="outline" className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={openEmail}><Mail className="hidden h-4 w-4 sm:mr-2 sm:block" />Email</Button>}
       </div>
-
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} />
       {showMessage && <MessageDialog open={messageOpen} onClose={() => setMessageOpen(false)} listing={listing} type={type} />}
     </>
