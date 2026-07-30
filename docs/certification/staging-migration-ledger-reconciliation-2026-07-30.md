@@ -58,8 +58,9 @@ The repair transaction completed successfully. A post-repair query returned:
 
 The hosted migration list now maps `real_marketplace_view_counting` through
 `pg_trgm_extension_schema_security` to canonical versions `0077` through `0082`.
-The production project was not queried or changed by the repair and remains at
-`0049`.
+The production project was not queried or changed by the repair. Production must
+remain unchanged at `0049` until the explicit production migration window is
+approved.
 
 All schema behaviour is unchanged because this was migration metadata
 reconciliation, not a production migration or schema change. The repository
