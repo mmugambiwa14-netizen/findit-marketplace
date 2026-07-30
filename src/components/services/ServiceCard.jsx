@@ -1,4 +1,5 @@
 import { Briefcase, Car } from 'lucide-react';
+import ContactButtons from '@/components/listings/ContactButtons';
 import MarketplaceCard from '@/components/marketplace/MarketplaceCard';
 import { getServiceCategory, getSubcategoryLabel } from '@/lib/serviceConstants';
 import { useCurrency } from '@/lib/CurrencyContext';
@@ -24,6 +25,7 @@ export default function ServiceCard({ service, onOpen = null }) {
     subcategory && { icon: Briefcase, label: subcategory },
     service.can_travel && { icon: Car, label: 'Can travel' },
   ].filter(Boolean);
+  const hasDirectContact = Boolean(service.contact_phone || service.contact_whatsapp || service.contact_email);
 
   return (
     <MarketplaceCard
@@ -37,6 +39,10 @@ export default function ServiceCard({ service, onOpen = null }) {
       meta={category?.label || 'Service'}
       tour={serviceTour(service)}
       tourLabel="See their work"
+      sellerName={service.provider_name}
+      views={service.views}
+      actions={hasDirectContact ? <ContactButtons listing={service} type="service" placement="browse" /> : null}
+      layout="browse"
       onOpen={onOpen}
     />
   );
