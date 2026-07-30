@@ -51,10 +51,11 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0089_private_country_helper_implementations.sql
 // - 0090_seller_profile_identifier_privacy.sql
 // - 0091_private_public_tour_summaries_implementation.sql
+// - 0092_zimbabwe_province_hierarchy.sql
 // Release-tip anchor: bump this deliberately when a migration is added, so an
 // accidental or unreviewed migration cannot ride along silently.
-if (basename(migrationFiles.at(-1) ?? '') !== '0092_zimbabwe_province_hierarchy.sql') {
-  failures.push(`latest expected migration is 0092, found ${migrationFiles.at(-1) ?? 'none'}`);
+if (basename(migrationFiles.at(-1) ?? '') !== '0093_private_marketplace_view_implementation.sql') {
+  failures.push(`latest expected migration is 0093, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
 if (failures.length) {
