@@ -43,6 +43,6 @@ test('staging ledger repair changes version metadata only and fails closed on dr
 test('reconciliation evidence names staging and explicitly excludes production', () => {
   assert.match(evidence, /bwgklpxoetrrkutottdb/);
   assert.match(evidence, /Production impact: none/);
-  assert.match(evidence, /production must remain unchanged at `0049`/i);
+  assert.match(evidence, /production project[\s\S]{0,120}remains at\s+`0049`/i);
   assert.match(evidence, /migration metadata reconciliation, not a production migration/i);
 });
