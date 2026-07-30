@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { featureFlags } from '@/lib/featureFlags';
 import { isNavigationItemActive, PRIMARY_NAV_ITEMS } from '@/lib/navigationConfig';
 import { cn } from '@/lib/utils';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 
 function isItemVisible(item) {
   if (!item.feature) return true;
@@ -15,6 +16,7 @@ function isItemVisible(item) {
 export default function BottomNav() {
   const location = useLocation();
   const { user } = useAuth();
+  const unreadMessages = useUnreadMessages();
   const [guestOpen, setGuestOpen] = useState(false);
   const [guestAction, setGuestAction] = useState('continue');
   const [guestReturnTo, setGuestReturnTo] = useState('/');
@@ -40,6 +42,7 @@ export default function BottomNav() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
+            const count = item.path === '/chats' ? unreadMessages : 0;
 
             return (
               <Link
@@ -47,6 +50,7 @@ export default function BottomNav() {
                 to={item.path}
                 onClick={(event) => handleNavClick(event, item)}
                 aria-current={isActive ? 'page' : undefined}
+                aria-label={count > 0 ? `${item.label}, ${count} unread` : item.label}
                 className={cn(
                   'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition-colors focus-visible:z-10',
                   isActive && !item.prominent && 'text-primary',
@@ -58,11 +62,21 @@ export default function BottomNav() {
                     <Icon aria-hidden="true" className="h-5.5 w-5.5" strokeWidth={2.35} />
                   </span>
                 ) : (
-                  <Icon
-                    aria-hidden="true"
-                    className={cn('h-[21px] w-[21px]', isActive && 'fill-primary/10')}
-                    strokeWidth={isActive ? 2.4 : 1.8}
-                  />
+                  <span className="relative">
+                    <Icon
+                      aria-hidden="true"
+                      className={cn('h-[21px] w-[21px]', isActive && 'fill-primary/10')}
+                      strokeWidth={isActive ? 2.4 : 1.8}
+                    />
+                    {count > 0 && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-3 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-primary-foreground ring-2 ring-background"
+                      >
+                        {count > 99 ? '99+' : count}
+                      </span>
+                    )}
+                  </span>
                 )}
                 <span className={cn('max-w-full truncate text-[10px] font-medium leading-none', item.prominent && '-mt-0.5')}>
                   {item.label}
