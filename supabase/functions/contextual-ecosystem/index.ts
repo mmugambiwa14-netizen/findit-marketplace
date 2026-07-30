@@ -3,7 +3,8 @@ import { configuredAdminKey } from "../_shared/tour-runtime.ts";
 import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson } from "../_shared/request-guards.ts";
 
 const JOURNEY_STAGES = new Set(["discover", "evaluate", "prepare", "transact", "own"]);
-const REQUEST_TIMEOUT_MS = 900;
+const PROJECTION_TIMEOUT_MS = 250;
+const PLAN_TIMEOUT_MS = 800;
 const MAXIMUM_REQUEST_BYTES = 2048;
 
 function allowedOrigin(request: Request): string | null {
@@ -18,9 +19,6 @@ function allowedOrigin(request: Request): string | null {
   return null;
 }
 
-// Only a complete, non-degraded plan may be retained by a shared cache. Caching a
-// rejected request or a fail-soft empty plan would amplify a transient outage for
-// the whole cache window after the database has already recovered.
 const CACHEABLE_PLAN = "public, max-age=30, stale-while-revalidate=120";
 
 function headers(request: Request, cacheControl: string = "no-store"): HeadersInit {
@@ -58,6 +56,20 @@ function degraded(correlationId: string, reason: string, subjectListingId: strin
   };
 }
 
+async function ensureProjection(client: ReturnType<typeof createClient>, listingId: string): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), PROJECTION_TIMEOUT_MS);
+  try {
+    await client.rpc("ensure_listing_recommendation_feature_v1", {
+      p_listing_id: listingId,
+    }).abortSignal(controller.signal);
+  } catch {
+    // Projection remains fail-open. The normal worker queue will retry later.
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 Deno.serve(async (request: Request) => {
   const correlationId = crypto.randomUUID();
 
@@ -70,8 +82,7 @@ Deno.serve(async (request: Request) => {
   if (request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase() !== "application/json") {
     return json(request, 415, { code: "unsupported_media_type", correlationId });
   }
-  // Bound what is actually buffered rather than trusting a header a chunked
-  // request can omit.
+
   const parsed = await readBoundedJson(request, MAXIMUM_REQUEST_BYTES);
   if (parsed === BODY_TOO_LARGE) return json(request, 413, { code: "payload_too_large", correlationId });
   if (parsed === BODY_INVALID || !parsed || typeof parsed !== "object") {
@@ -92,8 +103,11 @@ Deno.serve(async (request: Request) => {
     const url = Deno.env.get("SUPABASE_URL");
     if (!url) throw new Error("Missing SUPABASE_URL");
     const client = createClient(url, configuredAdminKey(), { auth: { persistSession: false, autoRefreshToken: false } });
+
+    await ensureProjection(client, body.subjectListingId);
+
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), PLAN_TIMEOUT_MS);
     let data: unknown;
     let error: unknown;
     try {
@@ -105,6 +119,7 @@ Deno.serve(async (request: Request) => {
     } finally {
       clearTimeout(timeout);
     }
+
     if (error || !data || typeof data !== "object" || !Array.isArray((data as Record<string, unknown>).sections)) {
       return json(request, 200, degraded(correlationId, "service_unavailable", body.subjectListingId));
     }
