@@ -76,7 +76,7 @@ export default function CarDetail() {
           </div></section>
           {car.accident_history && <section className="rounded-2xl border border-destructive/25 bg-destructive/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold text-destructive"><AlertTriangle className="h-5 w-5" />Accident history has been declared</p></section>}
           {car.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{car.description}</p></DetailSection>}
-          <SellerPanel name={car.seller_name} email={car.contact_email || car.seller_email} />
+          <SellerPanel name={car.seller_name} sellerId={car.seller_id} />
           <SafetyPanel>Request a test drive, verify ownership documents and consider an independent mechanical inspection. Never send money before seeing the vehicle.</SafetyPanel>
           <ListingRecommendations subjectListingId={car.id} />
           <ReportListingDialog listing={car} listingType="car" />
