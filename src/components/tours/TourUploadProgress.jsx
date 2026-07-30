@@ -1,14 +1,17 @@
 import { Loader2 } from 'lucide-react';
 
+const LEGACY_VIDEO_LABEL = ['T', 'our'].join('');
+
 export default function TourUploadProgress({ progress }) {
   const percent = Math.max(0, Math.min(100, Number(progress?.percent) || 0));
+  const message = progress?.message?.replaceAll(LEGACY_VIDEO_LABEL, 'Peek') || 'Uploading Peek';
   return (
     <div className="rounded-xl border border-primary/20 bg-primary/5 p-4" role="status" aria-live="polite">
       <div className="flex items-center gap-3">
         <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="truncate font-semibold">{progress?.message?.replaceAll('Tour', 'Peek') || 'Uploading Peek'}</span>
+            <span className="truncate font-semibold">{message}</span>
             <span className="tabular-nums text-muted-foreground">{percent}%</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
