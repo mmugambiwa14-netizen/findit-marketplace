@@ -1,5 +1,5 @@
 begin;
-select plan(42);
+select plan(43);
 
 select has_table('public', 'recommendation_contexts', 'context catalogue exists');
 select has_table('public', 'recommendation_context_rules', 'context rule table exists');
@@ -11,8 +11,22 @@ select has_function(
   'audited context rule admin function exists'
 );
 
-select is((select count(*)::integer from public.recommendation_contexts where is_active), 5, 'five initial journey contexts are active');
-select is((select count(*)::integer from public.recommendation_context_rules where is_active), 6, 'six initial orchestration rules are active');
+select is((select count(*)::integer from public.recommendation_contexts where is_active), 6, 'six journey contexts are active');
+select is((select count(*)::integer from public.recommendation_context_rules where is_active), 7, 'seven orchestration rules are active');
+select ok(
+  exists (
+    select 1
+    from public.recommendation_contexts context
+    join public.recommendation_context_rules rule on rule.context_id = context.id
+    where context.stable_key = 'listing_support'
+      and context.journey_stage = 'evaluate'
+      and context.is_active
+      and rule.service_name = 'related_services_service'
+      and rule.reason_code = 'services_for_listing'
+      and rule.is_active
+  ),
+  'listing detail evaluation includes the related-services service'
+);
 select ok((select bool_and(maximum_items between 1 and 24) from public.recommendation_context_rules), 'all section item limits are bounded');
 select ok((select bool_and(reason_code ~ '^[a-z][a-z0-9_]{2,63}$') from public.recommendation_context_rules), 'all contextual reasons are stable machine codes');
 select ok(not exists(select 1 from public.recommendation_context_rules where service_name = 'personalized_recommendation_service'), 'Phase 3 does not introduce personalization');
@@ -152,16 +166,16 @@ select ok(
 );
 select is(
   (public.contextual_ecosystem_health_v1() ->> 'activeContexts'),
-  '5',
-  'contextual health counts the seeded active contexts'
+  '6',
+  'contextual health counts the active contexts'
 );
 
 -- Every seeded rule targets a service that is disabled by default, so a plan can
 -- never advertise a section whose service would refuse to answer.
 select is(
   (public.contextual_ecosystem_health_v1() ->> 'rulesReferencingDisabledServices'),
-  '6',
-  'seeded rules are reported against their disabled services'
+  '7',
+  'rules are reported against their disabled services'
 );
 
 select ok(
