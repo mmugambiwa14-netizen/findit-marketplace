@@ -146,11 +146,16 @@ test('recommendation foreign keys receive parent-aware reversible coverage', () 
 });
 
 test('RLS auth initialization plans are bounded, reversible and independently certified', () => {
+  assert.match(rlsAuthMigration, /expected_count <> 36/);
   assert.match(rlsAuthMigration, /candidate_count <> 36/);
+  assert.match(rlsAuthMigration, /findit_rls_initplan_expected/);
+  assert.match(rlsAuthMigration, /policy\.cmd <> expected\.command_name/);
+  assert.match(rlsAuthMigration, /policy\.roles::text <> expected\.roles_text/);
   assert.match(rlsAuthMigration, /replace\(policy_record\.qual, 'auth\.uid\(\)', '\(select auth\.uid\(\)\)'\)/);
   assert.match(rlsAuthMigration, /alter policy %I on %I\.%I/);
   assert.match(rlsAuthMigration, /residual_count <> 0/);
-  assert.match(rlsAuthRollback, /candidate_count <> 36/);
+  assert.match(rlsAuthRollback, /expected_count <> 36/);
+  assert.match(rlsAuthRollback, /optimized_policy_count <> 36/);
   assert.match(rlsAuthRollback, /regexp_replace/);
   assert.match(rlsAuthRollback, /'auth\.uid\(\)'/);
   assert.doesNotMatch(rlsAuthMigration, /drop policy|drop table|truncate|delete from/i);
