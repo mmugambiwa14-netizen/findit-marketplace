@@ -2,12 +2,12 @@ import { findPublicSellerListings } from '@/repositories/publicListingsRepositor
 import { findPublicSellerProfile } from '@/repositories/sellerProfilesRepository';
 import { mapPublicListing } from '@/services/listingMappers';
 import { hydrateListingImages } from '@/services/listingCreationService';
-import { normalizeSellerListingsPageRequest, normalizeSellerProfileEmail } from '@/services/sellerProfileContracts';
+import { normalizeSellerListingsPageRequest, normalizeSellerProfileId } from '@/services/sellerProfileContracts';
 import { attachPublicTourSummaries } from '@/services/listingToursService';
 import { createKeysetPage } from '@/services/keysetPagination';
 
-export async function getPublicSellerProfile(email) {
-  return findPublicSellerProfile(normalizeSellerProfileEmail(email));
+export async function getPublicSellerProfile(sellerId) {
+  return findPublicSellerProfile(normalizeSellerProfileId(sellerId));
 }
 
 export async function getPublicSellerListingsPage(sellerId, input = {}) {
@@ -20,8 +20,8 @@ export async function getPublicSellerListingsPage(sellerId, input = {}) {
   };
 }
 
-export async function getPublicSellerPage(email) {
-  const profile = await getPublicSellerProfile(email);
+export async function getPublicSellerPage(sellerId) {
+  const profile = await getPublicSellerProfile(sellerId);
   if (!profile) return null;
   const page = await getPublicSellerListingsPage(profile.id);
   return { profile, listings: page.items, nextCursor: page.nextCursor };
