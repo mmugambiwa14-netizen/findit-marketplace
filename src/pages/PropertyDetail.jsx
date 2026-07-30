@@ -60,7 +60,7 @@ export default function PropertyDetail() {
     <div className="min-h-screen bg-background pb-32">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("property", property)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={property.photos} title={property.title} fallbackImage={placeholderProperty} tour={property.tour || null} tourActionLabel="Watch Peek" tourOwnerId={property.seller_id} parentType="listing" parentId={property.id} />
+        <ListingMediaViewer photos={property.photos} title={property.title} fallbackImage={placeholderProperty} tour={property.tour || null} tourActionLabel="Take a Peek" tourOwnerId={property.seller_id} parentType="listing" parentId={property.id} />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5">
             <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{getCategoryLabel(property.category)}</Badge>{property.status !== "available" && <Badge variant="destructive">{statusLabel(property.status)}</Badge>}<ListingCode type="property" id={property.id} /></div>
