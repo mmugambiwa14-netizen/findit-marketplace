@@ -82,7 +82,7 @@ export default function MachineryDetail() {
           {item.attachments?.length > 0 && <DetailSection title="Attachments and implements"><div className="flex flex-wrap gap-2">{item.attachments.map((attachment) => <Badge key={attachment} variant="secondary">{attachment}</Badge>)}</div></DetailSection>}
           {item.operators_licence_required && <section className="rounded-2xl border border-warning/25 bg-warning/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-5 w-5 text-warning" />An operator licence is required for this equipment.</p></section>}
           {item.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{item.description}</p></DetailSection>}
-          <SellerPanel name={item.seller_name} email={item.contact_email || item.seller_email} />
+          <SellerPanel name={item.seller_name} sellerId={item.seller_id} />
           <SafetyPanel>Inspect machinery in person and request maintenance records, serial-number verification and applicable certification before purchasing.</SafetyPanel>
           <ListingRecommendations subjectListingId={item.id} />
           <ReportListingDialog listing={item} listingType="machinery" />
