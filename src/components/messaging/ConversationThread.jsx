@@ -177,7 +177,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 {conversation.listing_price != null && <span className="text-xs font-bold text-primary">{format(conversation.listing_price)}</span>}
-                {conversation.has_tour && <Link to={listingPath(conversation, true)} className="inline-flex min-h-7 items-center gap-1 rounded-full bg-primary/10 px-2 text-[10px] font-semibold text-primary"><Play className="h-3 w-3 fill-current" />Tour{durationLabel(conversation.tour_duration_seconds) ? ` · ${durationLabel(conversation.tour_duration_seconds)}` : ''}</Link>}
+                {conversation.has_tour && <Link to={listingPath(conversation, true)} className="inline-flex min-h-7 items-center gap-1 rounded-full bg-primary/10 px-2 text-[10px] font-semibold text-primary"><Play className="h-3 w-3 fill-current" />Peek{durationLabel(conversation.tour_duration_seconds) ? ` · ${durationLabel(conversation.tour_duration_seconds)}` : ''}</Link>}
               </div>
             </div>
             <Button asChild variant="ghost" size="icon" aria-label="View listing"><Link to={listingPath(conversation)}><ExternalLink className="h-4 w-4" /></Link></Button>
