@@ -246,7 +246,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
                 <span className="truncate">{item.sellerDisplayName}</span>
                 <span className="rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide backdrop-blur-sm">{listingTypeLabel(item)}</span>
                 {!isOwner && (
-                  <button type="button" onClick={openReport} className="inline-flex min-h-8 items-center gap-1 rounded-lg px-1.5 text-[10px] text-white/65 hover:bg-white/10 hover:text-white">
+                  <button type="button" onClick={openReport} aria-label="Report Peek" className="inline-flex min-h-8 items-center gap-1 rounded-lg px-1.5 text-[10px] text-white/65 hover:bg-white/10 hover:text-white">
                     <Flag className="h-3 w-3" /> Report
                   </button>
                 )}
