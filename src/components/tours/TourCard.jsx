@@ -2,7 +2,7 @@ import { readStoredString, removeStoredValue, writeStoredString } from '@/lib/br
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Flag, Heart, MapPin, MessageCircle, Play, RotateCcw, Share2 } from 'lucide-react';
+import { ArrowUpRight, Flag, Heart, MapPin, MessageCircle, Play, RotateCcw, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
 import MessageDialog from '@/components/listings/MessageDialog';
@@ -32,6 +32,15 @@ function priceLabel(item, format) {
   return `${prefix}${format(item.price)}${suffix}`;
 }
 
+function listingTypeLabel(item) {
+  if (item.listingType === 'car') return 'Vehicle';
+  if (item.listingType === 'machinery') return 'Equipment';
+  if (item.listingType === 'service') return 'Service';
+  return 'Property';
+}
+
+const railButtonClass = 'flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-lg backdrop-blur-md transition-transform hover:scale-105 hover:bg-black/75 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-60';
+
 export default function TourCard({ item, active, onActivate, isSaved = false, onSavedChange, onReported }) {
   const { user } = useAuth();
   const { format } = useCurrency();
@@ -50,6 +59,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
   const listingOnly = item.parentType === 'listing';
   const isOwner = Boolean(user?.id && user.id === item.sellerId);
   const canMessage = listingOnly && featureFlags.messaging && !isOwner;
+  const showingPlayback = Boolean(active && playback?.playbackUrl && !playbackError);
 
   useEffect(() => setLiked(isSaved), [isSaved]);
   useEffect(() => {
@@ -128,7 +138,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
   const openChat = () => {
     if (!user) {
-      setGuestAction('chat with this seller');
+      setGuestAction('message this seller');
       setGuestOpen(true);
       return;
     }
@@ -154,8 +164,11 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
   return (
     <article data-tour-id={item.tourId} className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
-      <div className="relative aspect-video overflow-hidden bg-surface-secondary">
-        {active && playback?.playbackUrl && !playbackError ? (
+      <div className={cn(
+        'relative overflow-hidden bg-surface-secondary',
+        showingPlayback ? 'aspect-video' : 'aspect-[4/5] min-h-[32rem] sm:aspect-video sm:min-h-0',
+      )}>
+        {showingPlayback ? (
           <video
             ref={videoRef}
             src={playback.playbackUrl}
@@ -168,67 +181,115 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             className="h-full w-full object-cover"
             onLoadedMetadata={restorePlaybackPosition}
             onTimeUpdate={(event) => writeStoredString('session', playbackKey(item.tourId), event.currentTarget.currentTime)}
-            onEnded={() => removeStoredValue('session', playbackKey(item.tourId))}
+            onEnded={() => {
+              removeStoredValue('session', playbackKey(item.tourId));
+              onActivate(null);
+            }}
             onError={() => { setPlayback(null); setPlaybackError(true); }}
           />
         ) : (
           <button type="button" onClick={loadPlayback} className="group relative block h-full w-full text-left" aria-label={`Play Peek for ${item.title}`} disabled={loadingPlayback}>
             {item.thumbnailUrl || item.coverImageUrl ? (
-              <img src={item.thumbnailUrl || item.coverImageUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+              <img src={item.thumbnailUrl || item.coverImageUrl} alt={item.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
             ) : (
               <div className="h-full w-full bg-surface-raised" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/10" aria-hidden="true" />
-            <span className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur-md transition-transform group-hover:scale-105">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/15 to-black/20" aria-hidden="true" />
+            <span className="absolute left-1/2 top-[40%] flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
               {loadingPlayback ? <RotateCcw className="h-6 w-6 animate-spin" /> : <Play className="ml-1 h-7 w-7 fill-current" />}
             </span>
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-xs font-semibold text-white">{formatDuration(item.durationSeconds)}</span>
           </button>
         )}
+
+        {!showingPlayback && (
+          <>
+            <span className="absolute right-3 top-3 z-20 rounded-full border border-white/10 bg-black/65 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
+              {formatDuration(item.durationSeconds)}
+            </span>
+
+            <div className="absolute right-3 top-[39%] z-20 flex -translate-y-1/2 flex-col items-center gap-3 text-[10px] font-semibold text-white">
+              {listingOnly && (
+                <div className="flex flex-col items-center gap-1">
+                  <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(railButtonClass, liked && 'text-red-400')}>
+                    <Heart className={cn('h-5 w-5', liked && 'fill-current')} />
+                  </button>
+                  <span>{liked ? 'Saved' : 'Save'}</span>
+                </div>
+              )}
+
+              {canMessage ? (
+                <div className="flex flex-col items-center gap-1">
+                  <button type="button" onClick={openChat} aria-label="Message seller" className={railButtonClass}>
+                    <MessageCircle className="h-5 w-5" />
+                  </button>
+                  <span>Message</span>
+                </div>
+              ) : !isOwner ? (
+                <div className="flex flex-col items-center gap-1">
+                  <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={railButtonClass}>
+                    <MessageCircle className="h-5 w-5" />
+                  </Link>
+                  <span>Contact</span>
+                </div>
+              ) : null}
+
+              <div className="flex flex-col items-center gap-1">
+                <button type="button" onClick={share} aria-label="Share listing" className={railButtonClass}>
+                  <Share2 className="h-5 w-5" />
+                </button>
+                <span>Share</span>
+              </div>
+            </div>
+
+            <div className="absolute inset-x-0 bottom-0 z-10 p-4 pr-[5.25rem] text-white sm:p-5 sm:pr-24">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-white/80">
+                <span className="truncate">{item.sellerDisplayName}</span>
+                <span className="rounded-full border border-white/15 bg-black/35 px-2 py-0.5 text-[10px] uppercase tracking-wide backdrop-blur-sm">{listingTypeLabel(item)}</span>
+                {!isOwner && (
+                  <button type="button" onClick={openReport} className="inline-flex min-h-8 items-center gap-1 rounded-lg px-1.5 text-[10px] text-white/65 hover:bg-white/10 hover:text-white">
+                    <Flag className="h-3 w-3" /> Report
+                  </button>
+                )}
+              </div>
+
+              <Link to={detailPath} className="mt-2 block text-xl font-black leading-6 text-white hover:text-blue-200 sm:max-w-xl sm:text-2xl sm:leading-7">
+                {item.title}
+              </Link>
+
+              {item.publicLocation && (
+                <p className="mt-2 flex items-start gap-1.5 text-sm text-white/75">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span className="line-clamp-2">{item.publicLocation}</span>
+                </p>
+              )}
+
+              {item.summaryAttributes.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {item.summaryAttributes.map((attribute) => (
+                    <span key={attribute} className="rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[10px] font-medium text-white/85 backdrop-blur-sm">{attribute}</span>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/55">Price</p>
+                  <p className="mt-0.5 truncate text-xl font-black text-white sm:text-2xl">{priceLabel(item, format)}</p>
+                </div>
+                <Button asChild className="h-12 shrink-0 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-lg hover:bg-primary-hover">
+                  <Link to={detailPath}>View listing <ArrowUpRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
         {playbackError && (
-          <div className="absolute inset-x-3 bottom-3 rounded-xl border border-white/15 bg-black/75 p-3 text-white backdrop-blur-md">
+          <div className="absolute inset-x-3 bottom-3 z-30 rounded-xl border border-white/15 bg-black/80 p-3 text-white backdrop-blur-md">
             <p className="text-sm font-semibold">Peek playback failed</p>
             <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-blue-300">Try again</button>
           </div>
         )}
-      </div>
-
-      <div className="p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xl font-black text-primary">{priceLabel(item, format)}</p>
-            <Link to={detailPath} className="mt-1 block text-lg font-bold leading-6 hover:text-primary">{item.title}</Link>
-            {item.publicLocation && <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">{item.publicLocation}</span></p>}
-          </div>
-          <span className="shrink-0 rounded-full border border-border bg-surface-secondary px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{item.listingType === 'car' ? 'Vehicle' : item.listingType === 'machinery' ? 'Equipment' : item.listingType}</span>
-        </div>
-
-        {item.summaryAttributes.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {item.summaryAttributes.map((attribute) => <span key={attribute} className="rounded-full bg-surface-secondary px-3 py-1.5 text-xs text-muted-foreground">{attribute}</span>)}
-          </div>
-        )}
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="text-xs text-muted-foreground">Listed by {item.sellerDisplayName}</p>
-          {!isOwner && <button type="button" onClick={openReport} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground hover:bg-surface-secondary hover:text-destructive"><Flag className="h-3.5 w-3.5" />Report Peek</button>}
-        </div>
-
-        <div className="mt-3 grid grid-cols-4 gap-2 border-t border-border pt-4">
-          {listingOnly ? (
-            <button type="button" onClick={toggleSave} aria-pressed={liked} disabled={saving} className={cn('flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold hover:bg-surface-secondary disabled:cursor-wait disabled:opacity-60', liked && 'text-destructive')}>
-              <Heart className={cn('h-4 w-4', liked && 'fill-current')} /> Save
-            </button>
-          ) : (
-            <Link to={detailPath} className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold hover:bg-surface-secondary"><Play className="h-4 w-4" /> Work</Link>
-          )}
-          <button type="button" onClick={share} className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold hover:bg-surface-secondary"><Share2 className="h-4 w-4" /> Share</button>
-          {canMessage ? (
-            <button type="button" onClick={openChat} className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold hover:bg-surface-secondary"><MessageCircle className="h-4 w-4" /> Chat</button>
-          ) : (
-            <Link to={publicTourDetailPath(item, { openTour: false })} className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[11px] font-semibold hover:bg-surface-secondary"><MessageCircle className="h-4 w-4" /> Contact</Link>
-          )}
-          <Button asChild size="sm" className="h-auto min-h-11 rounded-xl px-2 text-[11px]"><Link to={detailPath}>View listing</Link></Button>
-        </div>
       </div>
 
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} returnTo={detailPath} />
