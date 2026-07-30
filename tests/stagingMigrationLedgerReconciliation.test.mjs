@@ -20,6 +20,8 @@ const [
   evidence0089,
   repair0090,
   evidence0090,
+  repair0091,
+  evidence0091,
 ] = await Promise.all([
   read('supabase/maintenance/reconcile_staging_migration_history_0077_0082.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-2026-07-30.md'),
@@ -37,6 +39,8 @@ const [
   read('docs/certification/staging-migration-ledger-reconciliation-0089-2026-07-30.md'),
   read('supabase/maintenance/reconcile_staging_migration_history_0090.sql'),
   read('docs/certification/staging-migration-ledger-reconciliation-0090-2026-07-30.md'),
+  read('supabase/maintenance/reconcile_staging_migration_history_0091.sql'),
+  read('docs/certification/staging-migration-ledger-reconciliation-0091-2026-07-30.md'),
 ]);
 
 const mappings = [
@@ -239,4 +243,29 @@ test('0090 evidence records UUID seller profile privacy and no production change
   assert.match(evidence0090, /Legacy email overloads \| 0/);
   assert.match(evidence0090, /clearing two targeted warnings/i);
   assert.match(evidence0090, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
+});
+
+test('0091 reconciliation verifies the exact Peek-summary migration and changes metadata only', () => {
+  assert.match(repair0091, /where version = '0091'/i);
+  assert.match(repair0091, /private_public_tour_summaries_implementation/);
+  assert.match(repair0091, /1ffbe7e117d538c27bb133acd67bd045/);
+  assert.match(repair0091, /length\(array_to_string\(statements, E'\\n'\)\) = 8676/i);
+  assert.match(repair0091, /set version = '0091'/i);
+  assert.match(repair0091, /source_version !~ '\^20260730\[0-9\]\{6\}\$'/i);
+  assert.doesNotMatch(repair0091, /\bcreate\s+(?:table|function|view|index|policy)\b/i);
+  assert.doesNotMatch(repair0091, /\balter\s+(?:table|function|view|extension|policy)\b/i);
+  assert.doesNotMatch(repair0091, /\bdrop\b|\btruncate\b|\bdelete\s+from\b/i);
+});
+
+test('0091 evidence records the private Peek-summary implementation and no production change', () => {
+  assert.match(evidence0091, /bwgklpxoetrrkutottdb/);
+  assert.match(evidence0091, /Canonical migration rows \| 91/);
+  assert.match(evidence0091, /Last version \| `0091`/);
+  assert.match(evidence0091, /Remaining generated versions \| 0/);
+  assert.match(evidence0091, /Private Peek-summary definers \| 1/);
+  assert.match(evidence0091, /Public Peek-summary invoker wrappers \| 1/);
+  assert.match(evidence0091, /Listing parent ceiling \| 100; 101 rejected with `22023`/);
+  assert.match(evidence0091, /Service parent ceiling \| 100; 101 rejected with `22023`/);
+  assert.match(evidence0091, /clearing[\s\S]{0,40}two targeted warnings/i);
+  assert.match(evidence0091, /production[\s\S]{0,180}remains at migration\s+`0049`/i);
 });
