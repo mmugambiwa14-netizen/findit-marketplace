@@ -121,6 +121,9 @@ jobs:
       - name: Run private authorization helper implementation matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authorization_helper_implementations.sql --local
 
+      - name: Run private country helper implementation matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_country_helper_implementations.sql --local
+
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
 
