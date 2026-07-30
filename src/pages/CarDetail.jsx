@@ -16,6 +16,7 @@ import ReportListingDialog from "@/components/listings/ReportListingDialog";
 import VariantSelector from "@/components/listings/VariantSelector";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
+import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { useTimeAgo } from "@/hooks/useTimeAgo";
 import { useAuth } from "@/lib/AuthContext";
 import { useCurrency } from "@/lib/CurrencyContext";
@@ -36,13 +37,9 @@ export default function CarDetail() {
   const [selectedVariant, setSelectedVariant] = useState(0);
 
   const { data: car, isLoading, error, refetch } = useQuery({ queryKey: ["car", id], queryFn: () => getPublicListing("car", id), enabled: Boolean(id), staleTime: 300000 });
+  useMarketplaceView('listing', id, 'car', Boolean(car));
   const listedAgo = useTimeAgo(car?.created_date);
-  const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({
-    userId: user?.id,
-    listingId: id,
-    queryClient,
-    guard,
-  });
+  const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
 
   if (isLoading) return <DetailLoading />;
   if (error) return <DetailError label="Vehicle" onRetry={refetch} />;
@@ -50,7 +47,7 @@ export default function CarDetail() {
 
   const variants = (car.variants || []).filter((variant) => variant && Number(variant.price) > 0);
   const activePrice = variants[selectedVariant]?.price ?? car.price;
-  const location = [car.suburb, car.city, car.province].filter(Boolean).join(", ");
+  const location = car.public_location_label || [car.suburb, car.city, car.province].filter(Boolean).join(", ");
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -59,23 +56,16 @@ export default function CarDetail() {
         <ListingMediaViewer photos={car.photos} title={car.title} fallbackImage={placeholderCar} tour={car.tour || null} tourActionLabel="Watch Peek" tourOwnerId={car.seller_id} parentType="listing" parentId={car.id} />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5">
-            <div className="flex flex-wrap items-center gap-2">
-              {car.condition && <Badge variant="secondary" className="capitalize">{car.condition}</Badge>}
-              {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
-              {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
-              <ListingCode type="car" id={car.id} />
-            </div>
+            <div className="flex flex-wrap items-center gap-2">{car.condition && <Badge variant="secondary" className="capitalize">{car.condition}</Badge>}{car.negotiable && <Badge variant="outline">Negotiable</Badge>}{car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}<ListingCode type="car" id={car.id} /></div>
             <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{car.title}</h1>
             {location && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{location}</p>}
             <p className="mt-4 text-3xl font-bold text-primary">{variants.length > 1 && <span className="mr-2 text-sm font-semibold text-muted-foreground">From</span>}{format(activePrice)}</p>
             <p className="mt-1 text-xs text-muted-foreground">Currency conversions are indicative; final exchange rates may vary.</p>
             {car.accepts_offers && <div className="mt-4"><MakeOfferButton listing={car} /></div>}
-            <p className="mt-3 text-sm text-muted-foreground">Listed {listedAgo}</p>
+            <p className="mt-3 text-sm text-muted-foreground">Listed {listedAgo} · {Number(car.views || 0).toLocaleString()} views</p>
           </section>
-
           <VariantSelector variants={car.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
           <PriceBreakdown listing={car} />
-
           <section aria-labelledby="vehicle-details-heading"><h2 id="vehicle-details-heading" className="mb-3 text-lg font-semibold">Key details</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <ListingFeatureItem icon={Calendar} label="Year" value={car.year} />
             <ListingFeatureItem icon={Gauge} label="Mileage" value={`${(car.mileage || 0).toLocaleString()} km`} />
@@ -84,7 +74,6 @@ export default function CarDetail() {
             <ListingFeatureItem icon={Palette} label="Colour" value={car.color} />
             <ListingFeatureItem icon={car.full_service_history ? CheckCircle : XCircle} label="Service history" value={car.full_service_history ? "Full" : "Not supplied"} />
           </div></section>
-
           {car.accident_history && <section className="rounded-2xl border border-destructive/25 bg-destructive/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold text-destructive"><AlertTriangle className="h-5 w-5" />Accident history has been declared</p></section>}
           {car.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{car.description}</p></DetailSection>}
           <SellerPanel name={car.seller_name} email={car.contact_email || car.seller_email} />
