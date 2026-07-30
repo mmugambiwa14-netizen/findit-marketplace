@@ -5,25 +5,27 @@ import { ArrowLeft, Loader2, MessageCircle, Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DealerListings from "@/components/dealers/DealerListings";
 import { useAuth } from "@/lib/AuthContext";
+import { isSellerProfileId } from "@/services/sellerProfileContracts";
 import { getPublicSellerListingsPage, getPublicSellerProfile } from "@/services/sellerProfilesService";
 
 export default function SellerProfile() {
-  const { email = "" } = useParams();
+  const { sellerId = "" } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const validSellerId = isSellerProfileId(sellerId);
 
   const profileQuery = useQuery({
-    queryKey: ["seller-public-profile", email.toLowerCase()],
-    queryFn: () => getPublicSellerProfile(email),
-    enabled: Boolean(email),
+    queryKey: ["seller-public-profile", sellerId.toLowerCase()],
+    queryFn: () => getPublicSellerProfile(sellerId),
+    enabled: validSellerId,
   });
-  const sellerId = profileQuery.data?.id || null;
+  const profileSellerId = profileQuery.data?.id || null;
   const listingsQuery = useInfiniteQuery({
-    queryKey: ["seller-public-listings", sellerId],
-    queryFn: ({ pageParam }) => getPublicSellerListingsPage(sellerId, { cursor: pageParam || null, limit: 24 }),
+    queryKey: ["seller-public-listings", profileSellerId],
+    queryFn: ({ pageParam }) => getPublicSellerListingsPage(profileSellerId, { cursor: pageParam || null, limit: 24 }),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-    enabled: Boolean(sellerId),
+    enabled: Boolean(profileSellerId),
   });
   const listings = useMemo(() => {
     const byId = new Map();
@@ -32,6 +34,16 @@ export default function SellerProfile() {
     }
     return [...byId.values()];
   }, [listingsQuery.data]);
+
+  if (!validSellerId) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="text-xl font-semibold">Seller not found</h1>
+        <p className="mt-2 text-sm text-muted-foreground">This seller link is unavailable or no longer supported.</p>
+        <Button type="button" variant="outline" className="mt-5" onClick={() => navigate(-1)}>Go back</Button>
+      </div>
+    );
+  }
 
   if (profileQuery.isLoading) {
     return <div className="flex items-center justify-center py-12" role="status"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /><span className="sr-only">Loading seller profile</span></div>;
@@ -52,7 +64,7 @@ export default function SellerProfile() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="text-xl font-semibold">Seller not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">This profile is unavailable or no longer active.</p>
+        <p className="mt-2 text-sm text-muted-foreground">This profile is unavailable or has no active public listings.</p>
         <Button type="button" variant="outline" className="mt-5" onClick={() => navigate(-1)}>Go back</Button>
       </div>
     );
