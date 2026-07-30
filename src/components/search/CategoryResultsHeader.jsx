@@ -1,4 +1,5 @@
 import { Building2, Car, Tractor, Wrench } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import BackButton from '@/components/layout/BackButton';
 import CategoryFilterChips from '@/components/search/CategoryFilterChips';
 import { cn } from '@/lib/utils';
@@ -10,9 +11,31 @@ const TYPE_OPTIONS = [
   { value: 'service', label: 'Services', title: 'Services', icon: Wrench },
 ];
 
+function serviceBrowsePath(search) {
+  const current = new URLSearchParams(search);
+  const next = new URLSearchParams();
+  for (const key of ['q', 'location', 'locationName', 'country', 'province']) {
+    const value = current.get(key);
+    if (value) next.set(key, value);
+  }
+  const query = next.toString();
+  return query ? `/services?${query}` : '/services';
+}
+
 export default function CategoryResultsHeader({ type, category, onTypeChange, onCategorySelect }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const current = TYPE_OPTIONS.find((item) => item.value === type) || TYPE_OPTIONS[0];
   const CurrentIcon = current.icon;
+
+  const changeType = (value) => {
+    if (value === type) return;
+    if (value === 'service') {
+      navigate(serviceBrowsePath(location.search));
+      return;
+    }
+    onTypeChange(value);
+  };
 
   return (
     <div>
@@ -36,7 +59,7 @@ export default function CategoryResultsHeader({ type, category, onTypeChange, on
             type="button"
             role="tab"
             aria-selected={type === value}
-            onClick={() => onTypeChange(value)}
+            onClick={() => changeType(value)}
             className={cn(
               'inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors',
               type === value
