@@ -25,11 +25,11 @@ const MAX_ITEMS_PER_SECTION = 6;
 const MAX_TOTAL_ITEMS = 24;
 
 const SERVICE_DEFINITIONS = Object.freeze({
-  similar_listings_service: { title: 'Similar listings', load: getSimilarListings },
+  similar_listings_service: { title: 'Recommended listings', load: getSimilarListings },
   seller_recommendations_service: { title: 'More from this seller', load: getSellerRecommendations },
   related_services_service: { title: 'Related services', load: getRelatedServices },
-  related_products_service: { title: 'Related products', load: getRelatedProducts },
-  nearby_service: { title: 'Nearby', load: getNearbyListings },
+  related_products_service: { title: 'You may also need', load: getRelatedProducts },
+  nearby_service: { title: 'Nearby listings', load: getNearbyListings },
   recently_listed_service: { title: 'Recently listed', load: getRecentlyListed },
   personalized_recommendation_service: { title: 'Picked for you', load: getPersonalizedRecommendations },
 });
@@ -228,26 +228,25 @@ function RecommendationSection({ section, onRetry }) {
 
   return (
     <section ref={sectionRef} aria-labelledby={headingId}>
-      <h3 id={headingId} className="mb-3 text-base font-semibold">
+      <h3 id={headingId} className="mb-3 text-lg font-bold tracking-tight">
         {section.title}
       </h3>
       {section.unavailable ? (
-        <div className="flex min-h-24 items-center justify-between gap-4 border-y border-border py-4" role="status">
-          <p className="text-sm text-muted-foreground">Suggestions are temporarily unavailable.</p>
+        <div className="flex min-h-20 items-center justify-between gap-4 rounded-xl border border-border bg-card px-3 py-3" role="status">
+          <p className="text-xs text-muted-foreground">Suggestions are temporarily unavailable.</p>
           <Button type="button" size="sm" variant="outline" onClick={onRetry}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Try again
           </Button>
         </div>
-      ) : section.items.length === 0 ? (
-        <p className="border-y border-border py-5 text-sm text-muted-foreground">No suggestions are available right now.</p>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+      ) : section.items.length > 0 ? (
+        <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
           {section.items.map((item, position) => (
             item.entityType === 'service' ? (
               <ServiceCard
                 key={`service:${item.service.id}`}
                 service={item.service}
+                layout="recommendation"
                 onOpen={() => trackClick(item, position)}
               />
             ) : (
@@ -255,25 +254,28 @@ function RecommendationSection({ section, onRetry }) {
                 key={`listing:${item.listing.id}`}
                 listing={item.listing}
                 type={item.listing._type}
+                layout="recommendation"
+                className="w-[13.5rem] shrink-0 sm:w-[15rem]"
                 onOpen={() => trackClick(item, position)}
               />
             )
           ))}
         </div>
-      )}
+      ) : null}
     </section>
   );
 }
 
 function RecommendationLoading() {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3" role="status" aria-label="Loading suggestions">
+    <div className="no-scrollbar -mx-4 flex gap-3 overflow-hidden px-4 pb-2 sm:mx-0 sm:px-0" role="status" aria-label="Loading suggestions">
       {[1, 2, 3].map((item) => (
-        <div key={item} className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div key={item} className="w-[13.5rem] shrink-0 overflow-hidden rounded-2xl border border-border bg-card sm:w-[15rem]">
           <div className="aspect-[4/3] animate-pulse bg-surface-raised" />
           <div className="space-y-2 p-3">
             <div className="h-4 w-4/5 animate-pulse rounded bg-surface-raised" />
             <div className="h-3 w-3/5 animate-pulse rounded bg-surface-raised" />
+            <div className="h-7 w-full animate-pulse rounded bg-surface-raised" />
           </div>
         </div>
       ))}
@@ -298,9 +300,10 @@ export default function ListingRecommendations({ subjectListingId }) {
     staleTime: 30_000,
     retry: false,
   });
+  const visibleSections = (query.data?.sections || []).filter((section) => section.unavailable || section.items.length > 0);
 
   return (
-    <section className="border-y border-border py-6" aria-labelledby="listing-recommendations-heading">
+    <section className="py-5" aria-labelledby="listing-recommendations-heading">
       <div className="mb-4 flex items-center justify-between gap-4">
         <h2 id="listing-recommendations-heading" className="text-lg font-semibold">More to explore</h2>
         {query.isFetching && !query.isLoading && (
@@ -311,18 +314,18 @@ export default function ListingRecommendations({ subjectListingId }) {
       {query.isLoading ? (
         <RecommendationLoading />
       ) : query.isError ? (
-        <div className="flex min-h-24 items-center justify-between gap-4" role="alert">
-          <p className="text-sm text-muted-foreground">Suggestions could not be loaded.</p>
+        <div className="flex min-h-20 items-center justify-between gap-4 rounded-xl border border-border bg-card px-3 py-3" role="alert">
+          <p className="text-xs text-muted-foreground">Suggestions could not be loaded.</p>
           <Button type="button" size="sm" variant="outline" onClick={() => query.refetch()}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             Try again
           </Button>
         </div>
-      ) : query.data.sections.length === 0 ? (
-        <p className="py-3 text-sm text-muted-foreground">No suggestions are available right now.</p>
+      ) : visibleSections.length === 0 ? (
+        <p className="py-2 text-sm text-muted-foreground">No suggestions are available right now.</p>
       ) : (
-        <div className="space-y-7">
-          {query.data.sections.map((section) => (
+        <div className="space-y-6">
+          {visibleSections.map((section) => (
             <RecommendationSection
               key={`${section.contextKey}:${section.service}`}
               section={section}
