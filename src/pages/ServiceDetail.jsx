@@ -60,7 +60,7 @@ export default function ServiceDetail() {
             <p className="mt-3 text-sm text-muted-foreground">{Number(service.views || 0).toLocaleString()} views</p>
           </section>
           {service.description && <DetailSection title="About this service"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{service.description}</p></DetailSection>}
-          <SellerPanel name={service.provider_name || "FindIt service provider"} email={service.contact_email} />
+          <SellerPanel name={service.provider_name || "FindIt service provider"} sellerId={service.provider_id} />
           <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. FindIt does not handle service payments.</SafetyPanel>
         </div>
       </main>
