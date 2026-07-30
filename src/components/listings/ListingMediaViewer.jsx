@@ -17,6 +17,7 @@ import {
 import { useSearchParams } from "react-router-dom";
 import TourReportAction from "@/components/tours/TourReportAction";
 import { Button } from "@/components/ui/button";
+import ImageLightbox from "@/components/ui/image-lightbox";
 import { cn } from "@/lib/utils";
 import { getPublicTourPlayback } from "@/services/listingToursService";
 
@@ -70,6 +71,7 @@ export default function ListingMediaViewer({
   const [current, setCurrent] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const hasTour = !tourReported && tour?.status === "ready" && Boolean(tour?.id || tour?.tourId || tour?.tour_id);
   const requestedTour = searchParams.get("media") === "tour";
@@ -189,14 +191,24 @@ export default function ListingMediaViewer({
             }}
           />
         ) : images.length > 0 && !imageFailed ? (
-          <img
-            src={images[current]}
-            alt={`${title}, photo ${current + 1} of ${images.length}`}
-            className="h-full w-full object-cover"
-            loading={current === 0 ? "eager" : "lazy"}
-            decoding="async"
-            onError={() => setImageFailed(true)}
-          />
+          <button
+            type="button"
+            aria-label={`Expand photo ${current + 1} of ${images.length}`}
+            onClick={() => setLightboxOpen(true)}
+            className="group block h-full w-full cursor-zoom-in focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+          >
+            <img
+              src={images[current]}
+              alt={`${title}, photo ${current + 1} of ${images.length}`}
+              className="h-full w-full object-cover"
+              loading={current === 0 ? "eager" : "lazy"}
+              decoding="async"
+              onError={() => setImageFailed(true)}
+            />
+            <span className="pointer-events-none absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white opacity-90 backdrop-blur-md transition group-hover:bg-black/80 sm:right-4 sm:top-4">
+              <Maximize className="h-4 w-4" aria-hidden="true" />
+            </span>
+          </button>
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-card">
@@ -298,6 +310,18 @@ export default function ListingMediaViewer({
           ))}
         </div>
       )}
+
+      <ImageLightbox
+        images={images}
+        index={current}
+        onIndexChange={(nextIndex) => {
+          setImageFailed(false);
+          setCurrent(nextIndex);
+        }}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
+        title={title}
+      />
     </section>
   );
 }
