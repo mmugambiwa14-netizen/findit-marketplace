@@ -408,7 +408,15 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
       <div
         className="relative h-full w-full touch-manipulation bg-black"
         onClick={toggleControls}
-        role="group"
+        onKeyDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            toggleControls();
+          }
+        }}
+        role="button"
+        tabIndex={0}
         aria-label={`${title} Peek player. Tap to ${controlsVisible ? "hide" : "show"} controls.`}
       >
         <video
@@ -470,16 +478,15 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
               </PlayerIconButton>
             </div>
 
-            <div
-              className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/60 px-3 py-2.5 text-white shadow-xl backdrop-blur-md sm:bottom-4 sm:left-4 sm:right-4"
-              onClick={(event) => event.stopPropagation()}
-            >
+            <div className="absolute bottom-3 left-3 right-3 rounded-2xl border border-white/10 bg-black/60 px-3 py-2.5 text-white shadow-xl backdrop-blur-md sm:bottom-4 sm:left-4 sm:right-4">
               <input
                 type="range"
                 min="0"
                 max={Math.max(duration, 0)}
                 step="0.1"
                 value={Math.min(currentTime, duration || 0)}
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
                 onChange={(event) => {
                   const video = videoRef.current;
                   if (!video) return;
@@ -494,7 +501,10 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
                 <button
                   type="button"
                   aria-label={paused ? "Play Peek" : "Pause Peek"}
-                  onClick={togglePlayback}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    togglePlayback();
+                  }}
                   className="flex h-9 w-9 items-center justify-center rounded-full text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {paused ? <Play className="ml-0.5 h-4 w-4 fill-current" aria-hidden="true" /> : <Pause className="h-4 w-4 fill-current" aria-hidden="true" />}
