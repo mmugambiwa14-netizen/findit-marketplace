@@ -1,0 +1,95 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { evaluateHostedAuthConfig } from '../scripts/lib/auth-config-policy.mjs';
+
+const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
+const script = await read('scripts/verify-hosted-auth-hardening.mjs');
+
+const productionEnvironment = {
+  FINDIT_AUTH_PREFLIGHT_MODE: 'production',
+  FINDIT_EXPECT_AUTH_SITE_URL: 'https://findit.example',
+  FINDIT_EXPECT_AUTH_REDIRECT_URLS: 'https://findit.example/auth/callback,https://findit.example/reset-password',
+  FINDIT_EXPECT_EMAIL_CONFIRMATIONS: 'true',
+  FINDIT_EXPECT_PASSWORD_MIN_LENGTH: '12',
+  FINDIT_EXPECT_PASSWORD_REQUIRED_CHARACTERS: 'a-z,A-Z,0-9,!@#$%^&*',
+  FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION: 'true',
+  FINDIT_EXPECT_TOTP_MFA: 'true',
+  FINDIT_EXPECT_AUTH_CAPTCHA: 'true',
+  FINDIT_EXPECT_CUSTOM_SMTP: 'true',
+  FINDIT_EXPECT_GOOGLE_OAUTH: 'true',
+  FINDIT_EXPECT_APPLE_OAUTH: 'false',
+  FINDIT_EXPECT_ANONYMOUS_AUTH: 'false',
+  FINDIT_EXPECT_PHONE_SIGNUP: 'false',
+};
+
+const hardenedConfiguration = {
+  site_url: 'https://findit.example/',
+  uri_allow_list: 'https://findit.example/reset-password,https://findit.example/auth/callback',
+  mailer_autoconfirm: false,
+  password_min_length: 14,
+  password_required_characters: '!@#$%^&*,0-9,A-Z,a-z',
+  password_hibp_enabled: true,
+  mfa_totp_enroll_enabled: true,
+  mfa_totp_verify_enabled: true,
+  security_captcha_enabled: true,
+  smtp_host: 'smtp.example.test',
+  smtp_admin_email: 'security@example.test',
+  external_google_enabled: true,
+  external_apple_enabled: false,
+  external_anonymous_users_enabled: false,
+  external_phone_enabled: false,
+};
+
+test('production Auth policy accepts a complete hardened configuration', () => {
+  const result = evaluateHostedAuthConfig(hardenedConfiguration, productionEnvironment);
+  assert.equal(result.status, 'passed');
+  assert.deepEqual(result.problems, []);
+  assert.equal(result.summary.passwordMinimumLength, 14);
+  assert.equal(result.summary.redirectUrlCount, 2);
+  assert.equal(result.summary.totpMfa, true);
+  assert.equal(result.summary.customSmtp, true);
+});
+
+test('production Auth policy rejects weak and incomplete provider configuration', () => {
+  const result = evaluateHostedAuthConfig({
+    ...hardenedConfiguration,
+    site_url: 'http://localhost:3000',
+    uri_allow_list: 'http://localhost:3000',
+    mailer_autoconfirm: true,
+    password_min_length: 6,
+    password_hibp_enabled: false,
+    mfa_totp_verify_enabled: false,
+    security_captcha_enabled: false,
+    smtp_host: '',
+    external_google_enabled: false,
+    external_anonymous_users_enabled: true,
+  }, productionEnvironment);
+
+  assert.equal(result.status, 'failed');
+  assert.ok(result.problems.some((problem) => problem.includes('site URL')));
+  assert.ok(result.problems.some((problem) => problem.includes('redirect allow list')));
+  assert.ok(result.problems.some((problem) => problem.includes('minimum length')));
+  assert.ok(result.problems.some((problem) => problem.includes('leakedPasswordProtection')));
+  assert.ok(result.problems.some((problem) => problem.includes('TOTP MFA')));
+  assert.ok(result.problems.some((problem) => problem.includes('custom SMTP')));
+});
+
+test('production Auth policy fails closed when expected values or API fields are absent', () => {
+  const result = evaluateHostedAuthConfig({}, { FINDIT_AUTH_PREFLIGHT_MODE: 'production' });
+  assert.equal(result.status, 'failed');
+  assert.ok(result.problems.length >= 10);
+  assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_AUTH_SITE_URL')));
+  assert.ok(result.problems.some((problem) => problem.includes('password_hibp_enabled')));
+});
+
+test('hosted Auth preflight is read-only, exact-target guarded and never prints the access token', () => {
+  assert.match(script, /GET|fetch\(/);
+  assert.doesNotMatch(script, /method:\s*['"]PATCH['"]/);
+  assert.doesNotMatch(script, /method:\s*['"]POST['"]/);
+  assert.match(script, /FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT/);
+  assert.match(script, /FINDIT_EXPECTED_PROJECT_REF/);
+  assert.match(script, /api\.supabase\.com\/v1\/projects\/\$\{expectedProjectRef\}\/config\/auth/);
+  assert.doesNotMatch(script, /console\.(?:log|error)\([^\n]*accessToken/);
+  assert.doesNotMatch(script, /response\.text\(\)/);
+});
