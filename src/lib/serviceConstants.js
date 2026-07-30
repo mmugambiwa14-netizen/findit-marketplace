@@ -1,4 +1,4 @@
-import { Building2, Wrench, Scale, HardHat, Mountain, Cog } from "lucide-react";
+import { Building2, Wrench, Scale, HardHat, Mountain } from "lucide-react";
 
 export const SERVICE_CATEGORIES = [
   {
@@ -26,17 +26,6 @@ export const SERVICE_CATEGORIES = [
     ],
   },
   {
-    value: "equipment_services",
-    label: "Equipment Services",
-    icon: Cog,
-    color: "bg-slate-600",
-    subcategories: [
-      { value: "machinery_repair", label: "Machinery Maintenance & Repair" },
-      { value: "machinery_transport", label: "Machinery Transport" },
-      { value: "operator_hire", label: "Equipment Operator Hire" },
-    ],
-  },
-  {
     value: "legal",
     label: "Legal",
     icon: Scale,
@@ -50,7 +39,7 @@ export const SERVICE_CATEGORIES = [
   },
   {
     value: "construction",
-    label: "Construction",
+    label: "Construction & Equipment",
     icon: HardHat,
     color: "bg-amber-600",
     subcategories: [
@@ -74,6 +63,9 @@ export const SERVICE_CATEGORIES = [
       { value: "demolition", label: "Demolition & Site Clearance" },
       { value: "project_management", label: "Construction Project Management" },
       { value: "plant_hire", label: "Plant & Equipment Hire" },
+      { value: "machinery_repair", label: "Machinery Maintenance & Repair" },
+      { value: "machinery_transport", label: "Machinery Transport" },
+      { value: "operator_hire", label: "Equipment Operator Hire" },
     ],
   },
   {
@@ -115,7 +107,7 @@ export const PRICING_TYPES = [
 ];
 
 export function getServiceCategory(value) {
-  return SERVICE_CATEGORIES.find((c) => c.value === value) || null;
+  return SERVICE_CATEGORIES.find((category) => category.value === value) || null;
 }
 
 export function getServiceCategoryLabel(value) {
@@ -123,7 +115,7 @@ export function getServiceCategoryLabel(value) {
 }
 
 export function getSubcategoryLabel(categoryValue, subValue) {
-  const cat = getServiceCategory(categoryValue);
-  if (!cat) return subValue;
-  return cat.subcategories.find((s) => s.value === subValue)?.label || subValue;
+  const category = getServiceCategory(categoryValue);
+  if (!category) return subValue;
+  return category.subcategories.find((subcategory) => subcategory.value === subValue)?.label || subValue;
 }
