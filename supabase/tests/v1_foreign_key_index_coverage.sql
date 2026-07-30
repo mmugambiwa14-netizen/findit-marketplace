@@ -26,6 +26,19 @@ with expected(table_name, column_name) as (
     ('practitioner_payouts', 'booking_id'),
     ('practitioner_reviews', 'booking_id'),
     ('practitioner_reviews', 'reviewer_id'),
+    ('recommendation_cache', 'subject_listing_id'),
+    ('recommendation_events', 'seller_id'),
+    ('recommendation_events_202606', 'seller_id'),
+    ('recommendation_events_202607', 'seller_id'),
+    ('recommendation_events_202608', 'seller_id'),
+    ('recommendation_events_202609', 'seller_id'),
+    ('recommendation_events_202610', 'seller_id'),
+    ('recommendation_events_202611', 'seller_id'),
+    ('recommendation_events_202612', 'seller_id'),
+    ('recommendation_events_202701', 'seller_id'),
+    ('recommendation_events_default', 'seller_id'),
+    ('recommendation_service_policies', 'updated_by'),
+    ('recommendation_weight_profiles', 'created_by'),
     ('reports', 'reporter_id'),
     ('reports', 'reviewed_by'),
     ('reviews', 'reviewer_id'),
@@ -82,8 +95,8 @@ select extensions.is(
     where schemaname = 'public'
       and indexname like 'idx_fk_%'
   ),
-  43::bigint,
-  'all 43 dedicated foreign-key indexes are present'
+  47::bigint,
+  'all 47 explicitly named foreign-key indexes are present'
 );
 
 select extensions.finish();
