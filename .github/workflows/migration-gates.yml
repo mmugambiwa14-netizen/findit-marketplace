@@ -115,6 +115,9 @@ jobs:
       - name: Run permissive RLS consolidation matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_rls_permissive_policy_consolidation.sql --local
 
+      - name: Run private policy helper boundary matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_policy_helper_boundary.sql --local
+
       - name: Run recommendation RLS and lifecycle matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
 
