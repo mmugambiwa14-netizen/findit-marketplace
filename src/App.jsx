@@ -104,6 +104,7 @@ function LegacyConversationRedirect() {
 }
 
 function ThemeAwareSonner() {
+  /** @returns {'dark' | 'light'} */
   const readTheme = () => document.documentElement.classList.contains('dark') ? 'dark' : 'light';
   const [theme, setTheme] = useState(readTheme);
 
