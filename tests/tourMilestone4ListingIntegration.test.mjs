@@ -89,7 +89,7 @@ test('cards and details use one canonical identity with explicit Peek deep links
   assert.match(marketplaceCard, /\{tourLabel\}\{tourDuration \? ` · \$\{tourDuration\}`/);
   assert.match(listingCard, /tour=\{tourSummary\(listing\)\}/);
   assert.match(serviceCard, /tourLabel="Peek"/);
-  assert.match(mediaViewer, /requestedTour && "ring-2/);
+  assert.match(mediaViewer, /aria-pressed=\{mode === "tour"\}/);
   assert.match(mediaViewer, /requestedTour \? "Play Peek" : tourActionLabel/);
   assert.match(mediaViewer, /onError=\{onPlaybackError\}/);
   assert.match(mediaViewer, /playback link expired or the video could not be loaded/);
