@@ -6,45 +6,9 @@
     <meta name="description" content="Discover products and services, advertise offers, evaluate details, and contact sellers directly on FindIt." />
     <meta name="theme-color" content="#090b10" />
     <title>FindIt Marketplace</title>
+    <script type="module" src="/src/documentBootstrap.js"></script>
   </head>
   <body>
-    <script>
-      (function() {
-        const routeKey = '__findit_route';
-        const currentUrl = new URL(window.location.href);
-        const restoredRoute = currentUrl.searchParams.get(routeKey);
-        if (restoredRoute) {
-          currentUrl.searchParams.delete(routeKey);
-          const baseUrl = new URL('%BASE_URL%', window.location.origin);
-          const targetUrl = new URL(restoredRoute.replace(/^\/+/, ''), baseUrl);
-          if (
-            targetUrl.origin === window.location.origin
-            && targetUrl.pathname.startsWith(baseUrl.pathname)
-          ) {
-            window.history.replaceState(
-              null,
-              '',
-              `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`,
-            );
-          } else {
-            window.history.replaceState(
-              null,
-              '',
-              `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`,
-            );
-          }
-        }
-
-        const stored = localStorage.getItem('theme');
-        const theme = stored === 'light' ? 'light' : 'dark';
-        document.documentElement.classList.toggle('dark', theme === 'dark');
-        document.documentElement.style.colorScheme = theme;
-        document.querySelector('meta[name="theme-color"]')?.setAttribute(
-          'content',
-          theme === 'dark' ? '#090b10' : '#f7f8fb',
-        );
-      })();
-    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
