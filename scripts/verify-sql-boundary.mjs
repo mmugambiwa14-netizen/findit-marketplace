@@ -40,16 +40,12 @@ for (const name of migrationFiles) {
 
 for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) >= 40).sort()) {
   const content = await readFile(join(rollbackDirectory, name), 'utf8');
-  if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(content)) {
-    failures.push(`${name} contains destructive table/data rollback statements`);
-  }
+  if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(content)) failures.push(`${name} contains destructive table/data rollback statements`);
   if (/^(?:<<<<<<<|=======|>>>>>>>)(?:\s|$)/m.test(content)) failures.push(`${name} contains a merge-conflict marker`);
   for (const [tag, count] of dollarQuoteBalance(content)) failures.push(`${name} has unbalanced ${tag} delimiters (${count})`);
 }
 
 // Previous reviewed release tips:
-// - 0089_private_country_helper_implementations.sql
-// - 0090_seller_profile_identifier_privacy.sql
 // - 0091_private_public_tour_summaries_implementation.sql
 // - 0092_zimbabwe_province_hierarchy.sql
 // - 0093_private_marketplace_view_implementation.sql
@@ -58,10 +54,10 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0096_private_recommendation_event_implementation.sql
 // - 0097_private_public_listing_search_implementation.sql
 // - 0098_private_notification_read_implementations.sql
-// Release-tip anchor: bump this deliberately when a migration is added, so an
-// accidental or unreviewed migration cannot ride along silently.
-if (basename(migrationFiles.at(-1) ?? '') !== '0099_private_personalization_preference_implementations.sql') {
-  failures.push(`latest expected migration is 0099, found ${migrationFiles.at(-1) ?? 'none'}`);
+// - 0099_private_personalization_preference_implementations.sql
+// Release-tip anchor: bump this deliberately when a migration is added.
+if (basename(migrationFiles.at(-1) ?? '') !== '0100_release_control_consistency.sql') {
+  failures.push(`latest expected migration is 0100, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
 if (failures.length) {
