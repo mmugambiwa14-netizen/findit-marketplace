@@ -55,30 +55,41 @@ const migrations = (await readdir(resolve(root, 'supabase/migrations')))
 const commit = process.env.GITHUB_SHA
   || commandOutput('git', ['rev-parse', 'HEAD'])
   || 'unavailable';
+const gitStatus = commandOutput('git', ['status', '--porcelain']);
 
 const gates = [
-  ['verify:hygiene'],
-  ['verify:source-graph'],
-  ['verify:sql-boundary'],
-  ['verify:deployment-security'],
-  ['audit:production'],
-  ['lint'],
-  ['typecheck:migration'],
-  ['typecheck:active'],
-  ['typecheck:edge-functions'],
-  ['test:contracts'],
-  ['verify:base44-elimination'],
-  ['build'],
+  {
+    name: 'verify:workflow-pinning',
+    command: process.execPath,
+    args: ['./scripts/verify-workflow-pinning.mjs'],
+  },
+  ...[
+    'verify:hygiene',
+    'verify:source-graph',
+    'verify:sql-boundary',
+    'verify:deployment-security',
+    'audit:production',
+    'lint',
+    'typecheck:migration',
+    'typecheck:active',
+    'typecheck:edge-functions',
+    'test:contracts',
+    'verify:base44-elimination',
+    'build',
+  ].map((script) => ({
+    name: script,
+    command: npmCommand,
+    args: ['run', script],
+  })),
 ];
 
-const results = [];
-for (const [script] of gates) {
-  const result = run(npmCommand, ['run', script]);
-  results.push({ script, ...result });
-}
+const results = gates.map((gate) => ({
+  gate: gate.name,
+  ...run(gate.command, gate.args),
+}));
 
 const report = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   generatedAt: new Date().toISOString(),
   repository: 'mmugambiwa14-netizen/findit-marketplace',
   branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || null,
@@ -88,12 +99,16 @@ const report = {
     npm: commandOutput(npmCommand, ['--version']),
     operatingSystem: `${platform()} ${release()}`,
     continuousIntegration: process.env.CI === '1' || process.env.CI === 'true',
+    cleanCheckout: gitStatus === '',
+    gitStatusAvailable: gitStatus !== null,
   },
   sourceBoundary: {
     migrationCount: migrations.length,
     migrationTip: migrations.at(-1) || null,
     packageSha256: await sha256(resolve(root, 'package.json')),
     packageLockSha256: await sha256(resolve(root, 'package-lock.json')),
+    deploymentConfigurationSha256: await sha256(resolve(root, 'vercel.json')),
+    mapProviderSha256: await sha256(resolve(root, 'src/lib/mapProvider.js')),
   },
   summary: {
     gateCount: results.length,
