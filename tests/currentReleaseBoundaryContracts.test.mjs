@@ -14,9 +14,9 @@ test('the reviewed SQL release tip is migration 0100', () => {
 });
 
 test('repository hygiene deterministically rejects unfinished source markers', () => {
-  for (const marker of ['TODO', 'FIXME', 'HACK', 'XXX']) assert.match(hygiene, new RegExp(`\\b${marker}\\\\b`));
-  assert.match(hygiene, /not implemented/);
-  assert.match(hygiene, /placeholder implementation/);
+  for (const marker of ['TODO marker', 'FIXME marker', 'HACK marker', 'XXX marker']) assert.match(hygiene, new RegExp(marker));
+  assert.match(hygiene, /not-implemented marker/);
+  assert.match(hygiene, /placeholder implementation marker/);
   assert.match(hygiene, /supabase\/functions\//);
   assert.match(hygiene, /markerScannedFiles/);
 });
