@@ -18,7 +18,7 @@ jobs:
   frontend:
     name: Frontend and source contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       NODE_ENV: test
       VITE_SUPABASE_URL: http://127.0.0.1:54321
@@ -35,37 +35,57 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Normalize locked dependency metadata
+        run: node ./scripts/normalize-package-lock.mjs --write
+
       - name: Use Node.js 24
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
           cache: npm
+
       - name: Use Deno for Edge Function checks
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
         with:
           deno-version: v2.x
+
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
+
       - name: Audit production dependencies
         run: npm run audit:production
+
       - name: Validate browser environment
         run: npm run validate:env
+
       - name: Verify deployment security boundary
         run: npm run verify:deployment-security
+
       - name: Verify SQL migration boundary
         run: npm run verify:sql-boundary
+
+      - name: Verify immutable workflow actions
+        run: node ./scripts/verify-workflow-pinning.mjs
+
       - name: Lint
         run: npm run lint
+
       - name: Typecheck migrated boundaries
         run: npm run typecheck:migration
+
       - name: Typecheck active V1 graph
         run: npm run typecheck:active
+
       - name: Typecheck Supabase Edge Functions
         run: npm run typecheck:edge-functions
+
       - name: Run source contracts
         run: npm run test:contracts
+
       - name: Verify Base44 elimination
         run: npm run verify:base44-elimination
+
       - name: Build and scan generated output
         env:
           NODE_ENV: production
@@ -74,86 +94,15 @@ jobs:
   database:
     name: Database reset, RLS and recommendation certification
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
       - name: Use Node.js 24
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
-      - name: Start a clean Supabase stack and apply all migrations
-        run: npx --yes supabase@2.84.2 start
-      - name: Lint database schema
-        run: npx --yes supabase@2.84.2 db lint --local --level error
-      - name: Run public business-profile view security matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_public_business_profile_view_security.sql --local
-      - name: Run extension schema security matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_extension_schema_security.sql --local
-      - name: Run foreign key index coverage matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_foreign_key_index_coverage.sql --local
-      - name: Run recommendation foreign key index coverage matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foreign_key_index_coverage.sql --local
-      - name: Run RLS auth initialization plan matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_rls_auth_initialization_plans.sql --local
-      - name: Run permissive RLS consolidation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_rls_permissive_policy_consolidation.sql --local
-      - name: Run private policy helper boundary matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_policy_helper_boundary.sql --local
-      - name: Run private authorization helper implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authorization_helper_implementations.sql --local
-      - name: Run private country helper implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_country_helper_implementations.sql --local
-      - name: Run private public seller-profile implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_public_seller_profile_implementation.sql --local
-      - name: Run private public Tour-summary implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_public_tour_summaries_implementation.sql --local
-      - name: Run private marketplace view implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_marketplace_view_implementation.sql --local
-      - name: Run private recommended-service event implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_recommended_service_event_implementation.sql --local
-      - name: Run private support request implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_support_request_implementation.sql --local
-      - name: Run complete contact-support privacy and rate-limit matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contact_support.sql --local
-      - name: Run private recommendation event implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_recommendation_event_implementation.sql --local
-      - name: Run private public listing search implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_public_listing_search_implementation.sql --local
-      - name: Run private notification read implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_notification_read_implementations.sql --local
-      - name: Run complete essential-notification matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_essential_notifications.sql --local
-      - name: Run recommendation RLS and lifecycle matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
-      - name: Run fail-open projection queue matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_projection_queue.sql --local
-      - name: Run eligibility, geography and deletion matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_eligibility_geospatial.sql --local
-      - name: Run publication boundary matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_publication_boundary.sql --local
-      - name: Run independent recommendation service matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_services.sql --local
-      - name: Run service operations and audit matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_service_operations.sql --local
-      - name: Run recommendation query-plan and cursor scale suite
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
-      - name: Run contextual ecosystem intelligence matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
-      - name: Run private personalization preference implementation matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_personalization_preference_implementations.sql --local
-      - name: Run release-control consistency matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_release_control_consistency.sql --local
-      - name: Run authenticated RPC private-boundary matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authenticated_rpc_implementations.sql --local
-      - name: Run security advisor regression baseline
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_security_advisor_baseline.sql --local
-      - name: Run recommendation personalization privacy matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
-      - name: Run aggregate recommendation analytics matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_analytics.sql --local
-      - name: Run executable related-services matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_related_services.sql --local
-      - name: Stop local Supabase stack
-        if: always()
-        run: npx --yes supabase@2.84.2 stop --no-backup
+
+      - name: Run clean-database certification matrix
+        run: bash ./scripts/run-migration-database-certification.sh
