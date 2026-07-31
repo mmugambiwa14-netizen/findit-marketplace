@@ -8,6 +8,7 @@ on:
       - "supabase/rollback/**"
       - "supabase/tests/v1_recommendation_*.sql"
       - "supabase/tests/v1_contextual_ecosystem_intelligence.sql"
+      - "supabase/tests/v1_private_authenticated_rpc_implementations.sql"
       - "scripts/verify-sql-boundary.mjs"
       - ".github/workflows/recommendation-database-gates.yml"
 
@@ -22,7 +23,7 @@ jobs:
   database:
     name: Reset, lint and recommendation pgTAP
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
 
     steps:
       - name: Check out repository
@@ -45,6 +46,9 @@ jobs:
 
       - name: Lint database schema
         run: npx --yes supabase@2.84.2 db lint --local --level error
+
+      - name: Run authenticated RPC private-boundary matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authenticated_rpc_implementations.sql --local
 
       - name: Run complete recommendation database certification
         run: |
