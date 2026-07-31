@@ -1,104 +1,136 @@
-# Feature Inventory
+# Current Feature Inventory
 
-Derived from the route table, service layer and migrations. "Flag" is the code
-default in `src/lib/featureFlags.js`; several differ from `.env.example` (F-11).
+Reviewed: 2026-07-31  
+Branch: `feature/listing-intelligence-foundation`  
+Staging SQL boundary: `0100`
 
-## User-facing features
+This inventory describes the active route and service contracts. Environment
+flags remain separate from database readiness controls; a capability is release
+ready only when both layers and their provider configuration agree.
 
-| Feature | Routes | Services / repositories | Flag | State |
-|---|---|---|---|---|
-| Authentication | `/login`, `/register`, `/forgot-password`, `/reset-password` | `authService` | always on | Complete — email/password, Google OAuth configured, Apple scaffolded but disabled |
-| Home / Discover | `/` | `publicListingsService` | always on | Complete |
-| Search | `/search` | `publicListingsService`, `searchContracts` | always on | Complete — keyset pagination, debounced input, suggestions, combobox a11y |
-| Listing detail | `/property/:id`, `/car/:id`, `/machinery/:id` | `publicListingsService` | always on | Complete — three `kind` variants share one media viewer |
-| Services marketplace | `/services`, `/service/:id` | `servicesService`, `serviceContracts` | always on | Complete — `legal` category deliberately excluded from browse/create |
-| Create listing | `/post` | `listingCreationService`, `listingSubmissionContracts` | protected | Complete — multi-step wizard, 9 components |
-| Create service | `/create-service` | `servicesService` | protected | Complete |
-| My listings | `/my-listings` | `ownerListingsService` | protected | Complete — keyset paginated |
-| My services | `/my-services` | `servicesService` | protected | Complete |
-| Favourites | `/saved` | `favouritesService` | protected | Complete |
-| Profile | `/profile` | `profileService`, `profileContracts` | protected | Complete |
-| Settings | `/settings` | `profileService` | protected | Complete |
-| Seller profile | `/seller/:email` | `sellerProfilesService` | always on | Complete — public |
-| Business profiles | `/business-profiles`, `/business/:id`, `/dealer/:id` | `businessProfilesService` | `businessProfiles` **on** | Complete |
-| Chat / messaging | `/chats`, `/chats/:conversationId` | `messagingService`, `messagingContracts` | `messaging` **off** | Complete but flag-off by default |
-| Notifications | `/notifications` | `notificationsService` | `essentialNotifications` **off** | Complete but flag-off by default |
-| Peek | `/peek` (`/tours` compatibility redirect) | `listingToursService` | enabled in accepted release; rollback-gated | Complete; see TOURS_AUDIT.md |
-| Reporting | dialog on listings | `reportsService` | always on | Complete — 6 reason codes |
-| Help / FAQs | `/help` | static | always on | Complete |
-| Contact support | `/help/contact` | `contactSupportService` | always on | Complete |
-| Legal | `/legal/:document` | `legalContent.js` | always on | Complete — privacy, data-protection, terms |
+## Customer-facing marketplace
 
-## Admin features
+| Feature | Routes | State |
+|---|---|---|
+| Authentication | `/login`, `/register`, `/forgot-password`, `/reset-password` | Email/password implemented; Google OAuth release-gated; Apple disabled |
+| Discover | `/` | Implemented |
+| Search | `/search` | Cursor pagination, suggestions, filters, list and map views |
+| Listing detail | `/property/:id`, `/car/:id`, `/machinery/:id` | Implemented with shared media and optional Peek |
+| Services | `/services`, `/service/:id` | Implemented; legal-commerce flows excluded |
+| Create listing | `/post` | Protected multi-step publishing flow |
+| Create service | `/create-service` | Protected service publishing flow |
+| Owner inventory | `/my-listings`, `/my-services` | Protected and cursor-paginated |
+| Saved listings | `/saved` | Protected |
+| Profile and settings | `/profile`, `/settings` | Protected |
+| Seller profile | `/seller/:sellerId` | Public UUID route; no account-email URL |
+| Business/dealer profile | `/business/:id`, `/dealer/:id`, `/business-profiles` | Feature-gated and implemented |
+| Chats | `/chats`, `/chats/:conversationId` | Feature-gated and implemented |
+| Notifications | `/notifications` | Feature-gated and implemented |
+| Peek | `/peek`; `/tours` redirects to `/peek` | Full upload, processing, playback and moderation lifecycle |
+| Help and support | `/help`, `/help/contact` | Implemented |
+| Legal | `/legal/:document` | Privacy, data-protection and terms content |
 
-All six live behind `ProtectedRoute requiredRole="admin"` **and** a
-database-level `is_admin()` check inside every admin RPC. The UI guard is
-presentation only; removing it would not grant access.
+Compatibility redirects remain for `/create`, `/messages`, `/messages/:id`,
+`/faqs` and `/support`.
 
-| Route | Backing RPCs |
-|---|---|
-| `/admin` | `admin_dashboard_stats`, `admin_notification_fanout_health` |
-| `/admin/listings` | `admin_marketplace_rows_page`, `admin_moderate_marketplace_item` |
-| `/admin/users` | `admin_user_rows`, ban/unban operations |
-| `/admin/reports` | `admin_report_rows`, `admin_tour_queue`, `admin_approve_tour` |
-| `/admin/categories` | `admin_category_rows`, `admin_add_category` |
-| `/admin/audit-log` | `admin_audit_rows_page` |
+## Maps and location
 
-Admin identity is bound by `0030_v1_founder_admin_lock.sql` to a **SHA-256 of
-the founder's normalised email**, not a literal address, and
-`is_founder_identity()` is revoked from `public`, `anon` and `authenticated`.
-The migration also reconciles any pre-existing elevated rows down to `user`
-before enforcing the boundary.
+FindIt now uses:
 
-## Backend capability inventory
+- MapLibre GL JS `5.12.0` as the map renderer
+- MapTiler Cloud for vector styles and reverse geocoding
+- Supabase/PostGIS for marketplace spatial data
+- a protected browser key supplied through `VITE_MAPTILER_PUBLIC_KEY`
+- `VITE_MAPTILER_STYLE_ID` for the approved map style
+
+Device location is opt-in and resolves to an active supported city. The current
+location control does not persist exact device coordinates. Manual country,
+province and city selection remains mandatory as a fallback.
+
+The current release is Zimbabwe-first. `VITE_FEATURE_INTERNATIONAL_LISTING`
+remains false until another country has a complete configuration, publishing
+flow, validation matrix and operational approval.
+
+## Recommendation services
+
+Seven independent staging services are enabled:
+
+1. nearby service
+2. personalized recommendations
+3. recently listed
+4. related products
+5. related services
+6. seller recommendations
+7. similar listings
+
+Canonical listing pages do not depend on recommendation availability. Service
+calls have bounded timeouts, cache behavior, request budgets, circuit state and
+fail-open presentation. Personalization remains default-off and requires
+explicit consent.
+
+## Admin surface
+
+All admin routes require both the UI role guard and database authorization.
+Current routes are:
+
+- `/admin`
+- `/admin/listings`
+- `/admin/users`
+- `/admin/reports`
+- `/admin/categories`
+- `/admin/audit-log`
+
+The UI guard is not the security boundary; every admin RPC verifies admin or
+founder authorization server-side.
+
+## Backend capabilities
 
 | Capability | Implementation |
 |---|---|
-| Listing media | `listing-images` bucket + `listing-image-upload` Edge Function; trusted-path validation in `_shared/trusted-image.ts` |
-| Marketplace/profile media | `marketplace-images` bucket + `marketplace-image-upload` |
-| Tour media | `tour-sources` → processing → `tour-playback` + `tour-thumbnails` |
-| Listing expiry | `listing-expiry-worker`, scheduled |
-| Media cleanup | `media-lifecycle-cleanup`, `tour-lifecycle-cleanup`, `tour_asset_cleanup_queue` |
-| Notification fanout | `essential-notification-fanout` + `essential_notification_fanout_jobs` with lease-based claiming |
-| Observability | `tour-observability-monitor`, `operational_metric_buckets`, `operational_alerts` |
-| Cache invalidation | `tour-cache-invalidation` + `tour_cache_invalidations` |
-| Audit trail | `record_admin_action()` writes `audit_logs` with before/after JSONB and a correlation id |
+| Listing and service images | Private storage with validated upload/attachment functions |
+| Peek media | Private source storage, FFmpeg processing, signed playback and thumbnails |
+| Messaging | `conversations` headers and plain-text message rows in `inquiries` |
+| Notification fanout | Lease-based jobs and bounded worker |
+| Cache invalidation | `tour_cache_invalidations` and trusted worker |
+| Recommendation projection | Asynchronous queue with listing-detail safeguard |
+| Operational metrics | `operational_metric_buckets` and `operational_alerts` |
+| Audit trail | Admin and configuration audit records |
 
-## Domain model notes
+The previously due seven cache invalidations were recovered on staging; the due
+queue is currently zero. Scheduler recovery is still required so future work is
+processed automatically.
 
-- Listings are one table with a `kind` discriminator (`property`, `car`,
-  `machinery`) rather than three tables — routes differ, storage does not.
-- **Chat messages live in `inquiries`, not a `messages` table.** `conversations`
-  (0018) is the thread header; `inquiries` (0006) holds the message rows and is
-  linked by `inquiries_conversation_fk`. Migration 0018 also adds V1 constraints
-  `inquiries_v1_no_attachments` and `inquiries_v1_no_receipts`, so the dormant
-  `attachments` JSONB column is constraint-locked rather than merely unused.
-  This naming mismatch is the single most confusing part of the schema for a
-  newcomer and is worth a comment rather than a rename.
-- Services and listings are separate domains that share the media, tour,
-  reporting and moderation infrastructure.
+## Deliberately fail-closed
 
-## Deliberately dormant
+These capabilities are not unfinished launch defects and must remain disabled
+for the current V1:
 
-Present in schema, disabled in product — retained so re-enabling needs no
-migration:
+- payments, subscriptions and escrow
+- premium listings
+- AI moderation, ban-evasion detection, ticket triage and support chat
+- listing expiry and freshness reminders
+- scheduled reminders and marketing emails
+- currency conversion
+- phone verification
+- service-radius values
+- international publishing
+- Apple OAuth
+- legal booking and payment flows
 
-- Payments, subscriptions, escrow, premium listings —
-  `0029_v1_deferred_commerce_isolation.sql`.
-- AI moderation, ban-evasion detection, ticket triage, support chat.
-- Scheduled reminders, marketing emails.
-- Legal services category — `0028_v1_legal_domain_isolation.sql`.
+Their preserved tables or scaffolding do not constitute an active browser
+contract.
 
-## Tests
+## Security and verification status
 
-45 contract suites in `tests/` (239 tests, all passing after Phase 9) plus 12
-pgTAP suites in `supabase/tests/`.
+- Staging migrations are canonical from `0001` through `0100`.
+- Anonymous-callable public definer functions: zero.
+- Authenticated-callable public definer functions remaining: 57.
+- Redundant browser grants on `recommendation_events_default`: removed.
+- Repository hygiene now rejects TODO, FIXME, HACK, XXX and incomplete-stub
+  markers in production source.
+- Leaflet and `@types/leaflet` are removed from the active package manifest and
+  no active source imports Leaflet.
 
-The contract suites are **static-analysis assertions over source text**, not
-runtime component tests — they assert that files contain particular calls,
-props and guards. That is unusually effective at catching architectural drift
-and is why boundary violations are rare here. It does not, however, exercise
-rendering, user interaction or real database behaviour. Runtime coverage
-therefore depends entirely on the pgTAP suites and the `test:*-local` smoke
-scripts, all of which are currently blocked on Docker/Supabase — see
-EXTERNAL_BLOCKERS.md.
+The last complete conventional three-workflow certification is at migration
+`0091`. Hosted staging evidence covers the later migrations, but clean-database
+CI through `0100` remains required after GitHub Actions runner recovery.
