@@ -1,205 +1,157 @@
 # External Production Blockers
 
-Reviewed: 2026-07-30
+Reviewed: 2026-07-31  
+Staging SQL boundary: `0100`  
+Production SQL boundary: `0049`
 
-This file records only boundaries that still require an external provider,
-credential, owner decision, physical device or production change window. Local,
-CI and hosted staging evidence is no longer listed as blocked.
+This file lists only work that cannot be completed safely through repository or
+staging database changes alone. Repository-owned feature-control and maps drift
+has been corrected. The draft PR remains unmerged.
 
-## Cleared evidence
+## Cleared in repository and staging
 
-The following former blockers are closed on the current implementation branch:
+- Map rendering now uses MapLibre GL JS `5.12.0` with MapTiler Cloud.
+- Current location is implemented as an opt-in city-resolution flow with manual
+  fallback and no persistence of exact device coordinates by the control.
+- Currency conversion, phone verification, service radius and international
+  publishing are fail-closed until complete contracts exist.
+- Recommendation operational metadata matches seven enabled services.
+- Redundant browser grants were removed from
+  `recommendation_events_default`.
+- Staging has 100 canonical migration rows from `0001` through `0100`, zero
+  sequence mismatches and zero generated-version residue.
+- Seven due Peek cache invalidations were recovered; the due queue is zero.
+- Repository hygiene now scans production source for unfinished markers.
+- Leaflet is removed from the active package manifest and source graph.
 
-- all 82 migrations apply to clean PostgreSQL/Supabase stacks in GitHub Actions;
-- both clean-database jobs pass schema lint and the complete pgTAP matrix;
-- release candidate, migration and recommendation database workflows pass on
-  branch head `0b9496c004aec244fb98e2faef44d5eb1d7ba377`;
-- hosted staging is migrated through `0082`;
-- hosted listing, service, messaging, recommendation, analytics, worker and Peek
-  acceptance evidence exists;
-- the staging frontend is deployed on GitHub Pages;
-- the former Security Advisor definer-view ERROR is fixed;
-- `pg_trgm` is no longer installed in the exposed `public` schema;
-- Base44 production dependencies and runtime references are removed.
+## 1. GitHub Actions runner execution
 
-Historical statements that Docker, migrations, GitHub Actions, runtime smoke or
-the staging frontend had never run are superseded by this evidence.
-
-## 1. Production release authorization and cutover window
-
-**Blocks:** every production database, Edge Function, worker and frontend
-change.
-
-Required externally:
-
-- explicit owner approval to promote the frozen implementation commit;
-- named release operator, independent reviewer, rollback decision-maker and
-  incident lead;
-- a maintenance/cutover window covering migrations `0050` through `0082` and
-  all changed Edge Functions;
-- a signed fresh-launch decision. The production project is empty and staging
-  fixtures, users and objects must not be copied by assumption;
-- a release completion record with checksums, migration/function versions,
-  reconciliation totals and final sign-off.
-
-Production `jvbpxnfxkptuexgssplj` remains intentionally untouched at migration
-`0049` until these conditions are met.
-
-## 2. Production domain, host, DNS and TLS
-
-**Blocks:** production redirects, OAuth publication, sender-domain mail links,
-HSTS/CSP certification and real-user traffic.
+Recent workflows fail before runner steps begin. This blocks conventional
+clean-checkout, build and clean-database certification on the final unchanged
+head.
 
 Required externally:
 
-- final application domain and frontend host/CDN;
+- restore GitHub Actions runner/account execution;
+- run release candidate, migration and recommendation database workflows;
+- require all suites to pass on one unchanged final commit;
+- confirm scheduled worker and observability workflows execute automatically.
+
+Hosted rollback-only staging transactions are valid supporting evidence but do
+not replace final conventional CI.
+
+## 2. Production release authorization
+
+Production project `jvbpxnfxkptuexgssplj` remains intentionally unchanged at
+migration `0049`.
+
+Required externally:
+
+- explicit owner approval;
+- named release operator, reviewer, rollback decision-maker and incident lead;
+- a migration and Edge Function cutover window;
+- pre-cutover backup and rollback checkpoints;
+- fresh-launch or legacy-reconciliation decision;
+- signed completion record for the exact promoted commit.
+
+## 3. Domain, hosting, DNS and TLS
+
+Required externally:
+
+- final production domain and host/CDN;
 - DNS ownership and HTTPS certificate;
-- SPA fallback, immutable hashed-asset caching and non-immutable HTML caching;
-- tested HSTS, Content Security Policy and other response headers;
-- exact production origin in Supabase Auth redirects, upload CORS and OAuth
-  provider configuration;
-- deep-link checks for public, protected, admin, recovery and not-found routes.
+- SPA deep-link fallback and cache rules;
+- HSTS, Content Security Policy and response-header certification;
+- exact production origin in Supabase redirects, CORS and OAuth settings;
+- deep-link tests for public, protected, admin, recovery and fallback routes.
 
-The GitHub Pages site remains staging only and is bound to the staging Supabase
-project.
+## 4. MapTiler production configuration
 
-## 3. Hosted Auth hardening
+The code and environment contracts are complete, but each deployed environment
+still requires:
 
-**Blocks:** production signup, account recovery and privileged administration.
+- a MapTiler browser key restricted to the exact allowed web origins;
+- approved `VITE_MAPTILER_STYLE_ID`;
+- key quota, abuse and cost alerts;
+- browser acceptance for vector styles, reverse geocoding and degraded map
+  behavior;
+- Content Security Policy allowances for the pinned MapLibre runtime and
+  MapTiler endpoints, or self-hosting of the pinned runtime assets.
 
-The repository now includes the read-only, exact-target guarded command:
+No unrestricted MapTiler key should be committed or exposed on an unapproved
+origin.
 
-```powershell
-npm.cmd run verify:hosted-auth-hardening
-```
+## 5. Supabase Auth hardening
 
-The provider-side settings still require an authorized owner session and a
-compatible plan. Production certification requires:
+The current connector exposes advisor checks but no supported mutation for
+these provider settings. They therefore remain owner/provider actions:
 
-- canonical HTTPS site URL and exact redirect allowlist;
-- email confirmations enabled;
-- minimum password length of at least 12 and the approved strongest character
-  policy;
-- leaked-password protection enabled;
-- TOTP MFA enabled and enrolled for every founder/admin account;
-- CAPTCHA or equivalent bot protection enabled for Auth entry points;
-- anonymous Auth and direct phone signup disabled for the current release;
-- custom SMTP and verified sender configured;
-- Google OAuth publicly published and callback-tested if its button is enabled;
-- Apple remaining disabled and hidden unless separately approved.
+- enable leaked-password protection;
+- enable TOTP MFA and enroll every founder/admin account;
+- configure CAPTCHA or equivalent bot protection;
+- set the canonical site URL and exact redirect allowlist;
+- keep anonymous Auth and direct phone signup disabled for V1;
+- configure production SMTP and a verified sender domain;
+- publicly publish and callback-test Google OAuth before enabling its production
+  button;
+- keep Apple OAuth disabled unless separately certified.
 
-The Management API access token remains process-only and must never enter
-ordinary PR CI or browser variables.
+Current Supabase Security Advisor warnings remain for leaked-password protection
+and insufficient MFA options.
 
-## 4. Production SMTP and sender domain
+## 6. Monitoring and incident response
 
-**Blocks:** reliable confirmation, recovery, email-change and security mail.
+Database metrics, operational alerts and bounded workers exist, but production
+still needs:
 
-Required externally:
-
-- approved SMTP provider or compatible Supabase plan;
-- verified sender domain, sender address and DNS records;
-- published repository templates;
-- provider link tracking disabled so Auth URLs are not rewritten;
-- delivery, bounce and suppression monitoring;
-- confirmation, recovery, email-change and security-message browser tests.
-
-Supabase's default testing mail service is not accepted for production.
-
-## 5. Monitoring and incident response destinations
-
-**Blocks:** safe production operation even though database-side metrics,
-health functions, bounded workers and operational alerts exist.
-
-Required externally:
-
-- approved frontend and Edge error sink;
-- delivery destination for `operational_alerts` and worker dead-letter alerts;
+- a routed error and alert destination;
 - database, Auth, Storage, latency, saturation and abuse dashboards;
-- alert thresholds, escalation route and incident ownership;
-- log retention and access controls appropriate to user privacy;
-- canary/soak stop conditions and a tested incident procedure.
+- escalation ownership and incident runbook;
+- verified scheduler execution for notification, recommendation, Peek cleanup,
+  cache invalidation and observability workers;
+- log-retention and privacy controls.
 
-An alert table without a routed human destination is not production monitoring.
+An empty queue after manual recovery is not proof that the scheduler is healthy.
 
-## 6. Native backup, PITR and isolated restore
-
-**Blocks:** production migrations and real user data.
-
-Required externally:
-
-- provider-native backup/PITR on a plan that meets the approved objective;
-- numeric RPO and RTO plus a named backup owner;
-- encrypted pre-cutover database backup;
-- Storage bytes and metadata captured at the same recovery point;
-- native restore into a separate isolated project;
-- count, checksum, Auth/profile, foreign-key, RLS and object verification;
-- measured recovery time and data-loss result;
-- credential/session rotation procedure for compromise scenarios.
-
-The verified staging logical export is useful evidence but is not a substitute
-for provider-native recovery.
-
-## 7. Production secrets and worker schedules
-
-**Blocks:** production notifications, cleanup, expiry, recommendation
-maintenance and Peek processing.
+## 7. Backup, PITR and isolated restore
 
 Required externally:
 
-- independent, randomly generated production worker secrets;
-- matching secret placement in Supabase and the approved scheduler only;
-- exact production upload origins;
-- request-budget salt and protected health credentials;
-- enabled schedules for media cleanup, listing expiry, notification fan-out,
-  recommendation maintenance, Peek processing, cleanup, cache invalidation and
-  observability;
-- one bounded smoke invocation per worker with retry/dead-letter evidence;
-- secret rotation owner and schedule.
+- provider-native backup/PITR on an approved plan;
+- numeric RPO and RTO;
+- encrypted pre-cutover database and Storage backup;
+- restore into a separate isolated project;
+- count, checksum, foreign-key, Auth/profile, RLS and object verification;
+- measured recovery result and named recovery owner.
 
-No service-role or worker secret may enter a `VITE_` variable or generated
-frontend asset.
+## 8. Browser, device and accessibility acceptance
 
-## 8. Browser, device and assistive-technology acceptance
-
-**Blocks:** opening the exact production build to broad traffic.
-
-Required physical or hosted-browser evidence:
+Required on the exact production build:
 
 - iPhone Safari and Chrome;
 - Android Chrome;
 - desktop Chrome, Safari and Firefox;
 - keyboard-only and screen-reader navigation;
-- reduced-motion mode;
-- slow and interrupted mobile networks;
-- expired signed media, failed upload, failed processing and failed playback;
-- signup, confirmation, Google callback, refresh, logout, recovery and revoked
-  sessions;
-- responsive layout, safe-area handling, touch targets and deep links.
-
-Static accessibility and route contracts remain necessary but are not a
-replacement for real assistive-technology testing.
+- reduced motion and safe-area behavior;
+- interrupted and slow mobile networks;
+- signup, confirmation, Google callback, logout and recovery;
+- MapLibre rendering, MapTiler failure states and location permission denial;
+- Peek upload, processing, playback and cleanup failures.
 
 ## 9. Capacity and cost acceptance
 
-**Blocks:** claims that the initial production configuration can sustain large
-traffic rather than merely scale architecturally.
-
 Required externally:
 
-- approved initial Supabase, frontend host, Storage/CDN and Actions/provider
-  plans;
-- production-like load tests for public search, listing detail, messaging,
-  notifications, recommendation services and Peek delivery;
-- connection, database, Storage, bandwidth, FFmpeg queue and Actions-minute
-  budgets;
-- alert thresholds and scaling triggers;
-- a documented degraded mode that keeps canonical listing pages available when
-  recommendations, analytics, notifications or Peek infrastructure fails.
+- approved Supabase, host/CDN, Storage, MapTiler and scheduler plans;
+- production-like load tests for search, details, messaging, notifications,
+  recommendations and Peek;
+- connection, bandwidth, Storage, geocoding and FFmpeg budgets;
+- cost alerts and scaling triggers;
+- validated degraded modes that keep canonical listing pages available.
 
-## Current production decision
+## Current decision
 
-The codebase and hosted staging environment are release candidates. Production
-remains blocked by the external items above. Do not merge the draft PR, migrate
-the production project or onboard real users until the owner-approved cutover
-record closes or explicitly accepts each item.
+The branch and staging database are release candidates, not a production
+release. Do not merge the draft PR, migrate production or onboard real users
+until the external gates above and the remaining authenticated-function
+hardening are closed or explicitly accepted in a signed cutover decision.
