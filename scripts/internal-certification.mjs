@@ -91,6 +91,7 @@ const gates = [
     'verify:source-graph',
     'verify:sql-boundary',
     'verify:deployment-security',
+    'verify:maplibre-assets',
     'audit:production',
     'lint',
     'typecheck:migration',
@@ -113,7 +114,7 @@ const results = gates.map((gate) => ({
 const gatesPassed = results.every((result) => result.passed);
 
 const report = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   generatedAt: new Date().toISOString(),
   repository: 'mmugambiwa14-netizen/findit-marketplace',
   branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || null,
@@ -135,6 +136,8 @@ const report = {
     dependencyInventorySha256: await optionalSha256(dependencyInventoryPath),
     deploymentConfigurationSha256: await sha256(resolve(root, 'vercel.json')),
     mapProviderSha256: await sha256(resolve(root, 'src/lib/mapProvider.js')),
+    mapLibreRuntimeSha256: await sha256(resolve(root, 'public/vendor/maplibre/maplibre-gl.js')),
+    mapLibreStylesheetSha256: await sha256(resolve(root, 'public/vendor/maplibre/maplibre-gl.css')),
   },
   summary: {
     gateCount: results.length,
