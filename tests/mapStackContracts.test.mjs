@@ -30,7 +30,7 @@ test('map failures remain isolated from listing navigation', () => {
   assert.match(mapComponent, /detailPath\(listing, type\)/);
 });
 
-test('device location resolves only to a supported public city', () => {
+test('device location resolves and stores only a supported public city', () => {
   assert.match(locationService, /getActiveLocations\('country'\)/);
   assert.match(locationService, /getActiveLocations\('province'\)/);
   assert.match(locationService, /getActiveLocations\('city'\)/);
@@ -42,7 +42,10 @@ test('device location resolves only to a supported public city', () => {
   assert.doesNotMatch(locationService, /localStorage|sessionStorage|insert|update|upsert/i);
   assert.match(locationSelector, /Exact coordinates are not saved/);
   assert.match(locationSelector, /Choose your city manually/);
-  assert.match(homePage, /writeStoredJson\('local', LOCATION_STORAGE_KEY, nextLocation\)/);
+  assert.match(homePage, /function publicLocation\(value\)/);
+  assert.match(homePage, /country:[\s\S]*state:[\s\S]*city:[\s\S]*cityName:[\s\S]*source:/);
+  assert.match(homePage, /writeStoredJson\('local', LOCATION_STORAGE_KEY, safeLocation\)/);
+  assert.doesNotMatch(homePage, /latitude|longitude|coordinates|accuracyMeters/);
 });
 
 test('legacy Leaflet packages and source imports are removed', () => {
