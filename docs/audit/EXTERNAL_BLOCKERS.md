@@ -4,9 +4,12 @@ Reviewed: 2026-07-31
 Staging SQL boundary: `0101`  
 Production SQL boundary: `0049`
 
-This file lists only work that cannot be completed safely through repository or
+This file lists work that cannot be completed safely through repository or
 staging database changes alone. Repository-owned feature, maps and public
-privileged-RPC findings are closed. The draft PR remains unmerged.
+privileged-RPC findings are closed. Exact-source package-lock normalization and
+MapLibre asset vendoring remain documented internal boundaries in
+`docs/certification/internal-release-engineering-2026-07-31.md`. The draft PR
+remains unmerged.
 
 ## Cleared in repository and staging
 
@@ -22,6 +25,8 @@ privileged-RPC findings are closed. The draft PR remains unmerged.
   mismatch or generated-version residue.
 - The due Peek cache-invalidation queue is zero after bounded recovery.
 - Repository hygiene scans production source for unfinished markers.
+- Deployment security, immutable Action pins, dependency inventory, centralized
+  database matrices and exact-source certification are repository-enforced.
 
 ## 1. GitHub Actions runner execution
 
@@ -59,9 +64,9 @@ Required externally:
 
 - final production domain and host/CDN;
 - DNS ownership and HTTPS certificate;
-- SPA deep-link fallback and cache rules;
-- HSTS, Content Security Policy and response-header certification;
+- application of the repository-owned SPA rewrite and response-header policy;
 - exact production origin in Supabase redirects, CORS and OAuth settings;
+- deployed verification of HSTS, CSP, cache rules and deep links;
 - deep-link tests for public, protected, admin, recovery and fallback routes.
 
 ## 4. MapTiler production configuration
@@ -74,8 +79,8 @@ still requires:
 - key quota, abuse and cost alerts;
 - browser acceptance for vector styles, reverse geocoding and degraded map
   behavior;
-- CSP allowances for the pinned MapLibre runtime and MapTiler endpoints, or
-  first-party hosting of the pinned runtime assets.
+- the current CSP allowance for the exactly pinned MapLibre runtime, followed
+  by removal of that allowance when the official assets are vendored.
 
 No unrestricted MapTiler key should be committed or exposed on an unapproved
 origin.
@@ -133,6 +138,7 @@ Required on the exact production build:
 - interrupted and slow mobile networks;
 - signup, confirmation, Google callback, logout and recovery;
 - MapLibre rendering, MapTiler failure states and location permission denial;
+- CSP compatibility for runtime styles without inline script permission;
 - Peek upload, processing, playback and cleanup failures.
 
 ## 9. Capacity and cost acceptance
@@ -148,7 +154,8 @@ Required externally:
 
 ## Current decision
 
-The repository-owned flagged work is closed through migration `0101`, but this
-is still a staging release candidate. Do not merge the draft PR, migrate
-production or onboard real users until the external gates above are closed or
-explicitly accepted in a signed production decision.
+The branch remains a staging release candidate. Before merge or production, the
+internal exact-source lock and runtime-asset boundaries must be closed, and the
+external gates above must pass or be explicitly accepted in a signed production
+decision. Do not migrate production or onboard real users from the current
+state.
