@@ -4,6 +4,8 @@ import { extname, join, relative } from 'node:path';
 const root = process.cwd();
 const ignoredDirectories = new Set(['.git', 'node_modules', 'dist', 'coverage']);
 const ignoredExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.mp4', '.webm', '.pdf', '.zip', '.woff', '.woff2', '.ttf']);
+const markerRoots = ['src/', 'scripts/', 'supabase/functions/'];
+const markerScannerPath = 'scripts/verify-repository-hygiene.mjs';
 const textFiles = [];
 const failures = [];
 
@@ -19,6 +21,16 @@ const secretPatterns = [
   { name: 'AWS access key', expression: /\bAKIA[0-9A-Z]{16}\b/ },
   { name: 'Stripe live secret', expression: /\bsk_live_[A-Za-z0-9]{16,}\b/ },
   { name: 'Supabase secret key', expression: /\bsb_secret_[A-Za-z0-9._-]{16,}\b/ },
+];
+
+const incompleteImplementationPatterns = [
+  { name: 'TODO marker', expression: /\bTODO\b/ },
+  { name: 'FIXME marker', expression: /\bFIXME\b/ },
+  { name: 'HACK marker', expression: /\bHACK\b/ },
+  { name: 'XXX marker', expression: /\bXXX\b/ },
+  { name: 'not-implemented marker', expression: /\bnot implemented\b/i },
+  { name: 'placeholder implementation marker', expression: /\bplaceholder implementation\b/i },
+  { name: 'unfinished stub marker', expression: /\b(?:temporary|dummy) implementation\b/i },
 ];
 
 async function walk(directory) {
@@ -42,8 +54,13 @@ function containsProhibitedSymbol(text) {
   return null;
 }
 
+function isProductionSource(displayPath) {
+  return displayPath !== markerScannerPath && markerRoots.some((prefix) => displayPath.startsWith(prefix));
+}
+
 await walk(root);
 
+let markerScannedFiles = 0;
 for (const path of textFiles) {
   let content;
   try {
@@ -51,7 +68,9 @@ for (const path of textFiles) {
   } catch {
     continue;
   }
-  const displayPath = relative(root, path);
+  const displayPath = relative(root, path).replaceAll('\\', '/');
+  const scanMarkers = isProductionSource(displayPath);
+  if (scanMarkers) markerScannedFiles += 1;
   const lines = content.split(/\r?\n/);
   lines.forEach((line, index) => {
     const lineNumber = index + 1;
@@ -65,6 +84,11 @@ for (const path of textFiles) {
     for (const pattern of secretPatterns) {
       if (pattern.expression.test(line)) failures.push(`${displayPath}:${lineNumber}: possible committed ${pattern.name}`);
     }
+    if (scanMarkers) {
+      for (const pattern of incompleteImplementationPatterns) {
+        if (pattern.expression.test(line)) failures.push(`${displayPath}:${lineNumber}: ${pattern.name}`);
+      }
+    }
   });
 }
 
@@ -74,4 +98,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Repository hygiene verification passed: ${textFiles.length} text files inspected.`);
+console.log(`Repository hygiene verification passed: ${textFiles.length} text files inspected; ${markerScannedFiles} production source files checked for unfinished implementation markers.`);
