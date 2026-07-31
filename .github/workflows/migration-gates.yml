@@ -72,7 +72,7 @@ jobs:
   database:
     name: Database reset, RLS and recommendation certification
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -142,6 +142,8 @@ jobs:
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_personalization_preference_implementations.sql --local
       - name: Run release-control consistency matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_release_control_consistency.sql --local
+      - name: Run authenticated RPC private-boundary matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authenticated_rpc_implementations.sql --local
       - name: Run recommendation personalization privacy matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
       - name: Run aggregate recommendation analytics matrix
