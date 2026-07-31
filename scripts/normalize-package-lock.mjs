@@ -13,10 +13,14 @@ if (lock.lockfileVersion !== 3 || !lock.packages || !lock.packages['']) {
   throw new Error('Unsupported package-lock boundary');
 }
 
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 const rootPackage = lock.packages[''];
 for (const field of ['name', 'version', 'dependencies', 'devDependencies', 'engines']) {
   if (packageJson[field] === undefined) delete rootPackage[field];
-  else rootPackage[field] = structuredClone(packageJson[field]);
+  else rootPackage[field] = cloneJson(packageJson[field]);
 }
 
 const bannedPackages = [
