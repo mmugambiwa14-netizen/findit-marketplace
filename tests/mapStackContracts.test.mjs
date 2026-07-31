@@ -40,7 +40,9 @@ test('device location resolves only to a supported public city', () => {
   assert.match(locationSelector, /Choose your city manually/);
 });
 
-test('legacy Leaflet packages are no longer active source dependencies', () => {
-  assert.equal(packageJson.dependencies.leaflet, '^1.9.4', 'lock-compatible removal is deferred until a normal package install can update package-lock');
+test('legacy Leaflet packages and source imports are removed', () => {
+  assert.equal(packageJson.dependencies.leaflet, undefined);
+  assert.equal(packageJson.devDependencies['@types/leaflet'], undefined);
   assert.doesNotMatch(mapComponent, /from ['"]leaflet['"]/);
+  assert.doesNotMatch(mapComponent, /leaflet\.css/);
 });
