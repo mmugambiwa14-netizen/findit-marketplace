@@ -1,17 +1,20 @@
 {
-  "generatedAt": "2026-07-31T01:55:00.000Z",
+  "generatedAt": "2026-07-31T02:30:00.000Z",
   "status": "current-boundary-record-pending-normal-regeneration",
   "sourceBoundary": {
     "branch": "feature/listing-intelligence-foundation",
-    "stagingMigration": "0100",
+    "stagingMigration": "0101",
     "productionMigration": "0049"
   },
   "verifiedCorrections": {
     "sellerProfileRoute": "/seller/:sellerId",
     "mapRenderer": "maplibre-gl@5.12.0",
     "mapProvider": "maptiler-cloud",
-    "currentLocation": "opt-in-supported-city-resolution",
+    "currentLocation": "opt-in-supported-city-resolution-with-public-field-storage-whitelist",
     "leafletActiveDependency": false,
+    "anonymousPublicSecurityDefiners": 0,
+    "authenticatedPublicSecurityDefiners": 0,
+    "authenticatedInvokerWrappers": 57,
     "routedPatternsExpected": 42
   },
   "failures": [],
@@ -19,7 +22,7 @@
     {
       "severity": "release-gate",
       "code": "NORMAL_AUDIT_REGENERATION_REQUIRED",
-      "message": "Run npm run audit:product-surface on the final unchanged commit after GitHub Actions runner execution is restored. This record intentionally replaces the stale pre-seller-ID artifact and must not be represented as a generated full-surface audit."
+      "message": "Run npm run audit:product-surface on the final unchanged commit after GitHub Actions runner execution is restored. This boundary record is not a generated full-surface audit and is not release evidence."
     }
   ],
   "summary": {
