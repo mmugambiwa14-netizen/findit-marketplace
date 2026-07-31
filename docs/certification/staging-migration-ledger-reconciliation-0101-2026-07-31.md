@@ -38,7 +38,7 @@ The stored migration identity was verified before canonical reconciliation:
 - matching rows: exactly one
 - canonical `0101` rows before repair: zero
 
-The guarded maintenance capsule changes only the migration-ledger version after
+The guarded maintenance capsule changed only the migration-ledger version after
 locking `supabase_migrations.schema_migrations` and verifying all identity
 fields.
 
@@ -52,17 +52,61 @@ fields.
 - authenticated-only recommendation admin functions: 4
 - anonymous execute grants: zero
 - `PUBLIC` execute grants on wrappers: zero
+- canonical migration rows: 101
+- maximum migration: `0101`
+- generated-version residue: zero
 
-## Certification expectations
+## Hosted semantic certification
+
+A disposable transaction exercised representative public wrappers and verified
+state before rolling all fixtures back:
+
+- owner-only listing notes matched the direct private implementation;
+- another account received zero owner-note rows;
+- owner pause and resume transitions completed and preserved the listing;
+- notification rows matched the direct private implementation;
+- a buyer created a listing conversation;
+- the seller replied, marked it seen and loaded the inbox;
+- public and private inbox/thread results matched;
+- a non-participant was denied thread access;
+- the buyer filed a conversation report;
+- an admin loaded category/dashboard/recommendation configuration data;
+- the admin actioned the report and wrote an audit record;
+- null listing submission, unknown-media replacement and unknown-Peek report
+  paths preserved their exact fail-closed errors;
+- a suspended account was denied message sending.
+
+The transaction observed one conversation, two messages, one actioned report,
+one audit record, one notification and one completed owner-transition fixture.
+After rollback, all four Auth fixtures, the listing and the notification were
+confirmed absent.
+
+## Exact rollback certification
+
+The repository rollback capsule executed inside a non-persisted hosted
+transaction and restored:
+
+- 57 authenticated-callable public privileged functions;
+- exact catalog fingerprint `ce6194659e01b758dc20948daf351bea`;
+- zero target implementations left in `private`.
+
+The transaction was then rolled back. The live staging postcondition was
+rechecked and remained:
+
+- zero authenticated-callable public privileged functions;
+- 57 public invoker wrappers;
+- zero semantic fixture residue.
+
+## Repository certification
 
 The migration is covered by:
 
-- rollback-only hosted structural execution
-- exact rollback capsule execution inside a non-persisted transaction
-- pgTAP wrapper, grant and representative-domain matrix
-- existing owner, messaging, notifications, listing submission, media,
-  reporting, admin, support, Peek and recommendation domain suites
-- source contracts and both clean-database workflows
+- pgTAP wrapper, result/default/planner and grant matrices;
+- representative owner, messaging, notification, submission, media, reporting,
+  admin and recommendation assertions;
+- existing domain suites in the clean-database migration workflow;
+- recommendation database workflow coverage;
+- source contracts, migration-tip and guarded-ledger contracts.
 
 Conventional GitHub Actions certification remains pending while runner jobs fail
 before executable steps begin. Production remains locked at migration `0049`.
