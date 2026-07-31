@@ -50,6 +50,8 @@ jobs:
         run: npm run audit:production
       - name: Validate browser environment
         run: npm run validate:env
+      - name: Verify deployment security boundary
+        run: npm run verify:deployment-security
       - name: Verify SQL migration boundary
         run: npm run verify:sql-boundary
       - name: Lint
@@ -144,6 +146,8 @@ jobs:
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_release_control_consistency.sql --local
       - name: Run authenticated RPC private-boundary matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authenticated_rpc_implementations.sql --local
+      - name: Run security advisor regression baseline
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_security_advisor_baseline.sql --local
       - name: Run recommendation personalization privacy matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
       - name: Run aggregate recommendation analytics matrix
