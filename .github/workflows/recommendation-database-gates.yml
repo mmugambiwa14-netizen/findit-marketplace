@@ -10,6 +10,7 @@ on:
       - "supabase/tests/v1_contextual_ecosystem_intelligence.sql"
       - "supabase/tests/v1_private_authenticated_rpc_implementations.sql"
       - "supabase/tests/v1_security_advisor_baseline.sql"
+      - "scripts/run-recommendation-database-certification.sh"
       - "scripts/verify-sql-boundary.mjs"
       - ".github/workflows/recommendation-database-gates.yml"
 
@@ -24,11 +25,14 @@ jobs:
   database:
     name: Reset, lint and recommendation pgTAP
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
 
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Normalize locked dependency metadata
+        run: node ./scripts/normalize-package-lock.mjs --write
 
       - name: Use Node.js 24
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
@@ -42,32 +46,5 @@ jobs:
       - name: Verify migration sequence and rollback pairs
         run: npm run verify:sql-boundary
 
-      - name: Start clean local database and apply every migration
-        run: npx --yes supabase@2.84.2 db start
-
-      - name: Lint database schema
-        run: npx --yes supabase@2.84.2 db lint --local --level error
-
-      - name: Run authenticated RPC private-boundary matrix
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authenticated_rpc_implementations.sql --local
-
-      - name: Run security advisor regression baseline
-        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_security_advisor_baseline.sql --local
-
-      - name: Run complete recommendation database certification
-        run: |
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_projection_queue.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_eligibility_geospatial.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_publication_boundary.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_services.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_service_operations.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_scale.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_analytics.sql --local
-          npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_related_services.sql --local
-
-      - name: Stop local database
-        if: always()
-        run: npx --yes supabase@2.84.2 stop --no-backup
+      - name: Run recommendation clean-database certification
+        run: bash ./scripts/run-recommendation-database-certification.sh
