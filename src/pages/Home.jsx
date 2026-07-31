@@ -8,17 +8,28 @@ import HomePeekRail from '@/components/discover/HomePeekRail';
 
 const LOCATION_STORAGE_KEY = 'findit.discover-location';
 
+function publicLocation(value) {
+  if (!value || typeof value !== 'object' || typeof value.city !== 'string' || !value.city) return null;
+  return {
+    country: typeof value.country === 'string' ? value.country : '',
+    state: typeof value.state === 'string' ? value.state : '',
+    city: value.city,
+    cityName: typeof value.cityName === 'string' ? value.cityName : '',
+    source: value.source === 'device' ? 'device' : 'manual',
+  };
+}
+
 function readSavedLocation() {
-  const value = readStoredJson('local', LOCATION_STORAGE_KEY, null);
-  return value && typeof value === 'object' && value.city ? value : null;
+  return publicLocation(readStoredJson('local', LOCATION_STORAGE_KEY, null));
 }
 
 export default function Home() {
   const [location, setLocation] = useState(readSavedLocation);
 
   const updateLocation = (nextLocation) => {
-    setLocation(nextLocation);
-    if (nextLocation) writeStoredJson('local', LOCATION_STORAGE_KEY, nextLocation);
+    const safeLocation = publicLocation(nextLocation);
+    setLocation(safeLocation);
+    if (safeLocation) writeStoredJson('local', LOCATION_STORAGE_KEY, safeLocation);
     else removeStoredValue('local', LOCATION_STORAGE_KEY);
   };
 
