@@ -115,7 +115,7 @@ export async function reverseGeocodeMapTiler({ latitude, longitude, signal } = {
   const endpoint = new URL(`${MAPTILER_API_ORIGIN}/geocoding/${lng},${lat}.json`);
   endpoint.searchParams.set('key', key);
   endpoint.searchParams.set('language', 'en');
-  endpoint.searchParams.set('limit', '10');
+  endpoint.searchParams.set('limit', '1');
 
   const response = await fetch(endpoint, {
     method: 'GET',
