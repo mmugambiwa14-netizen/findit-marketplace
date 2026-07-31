@@ -26,6 +26,12 @@ jobs:
       VITE_FEATURE_BUSINESS_PROFILES: "true"
       VITE_FEATURE_MESSAGING: "false"
       VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "false"
+      VITE_FEATURE_MAPS: "false"
+      VITE_FEATURE_CURRENT_LOCATION: "false"
+      VITE_FEATURE_INTERNATIONAL_LISTING: "false"
+      VITE_FEATURE_CURRENCY_CONVERSION: "false"
+      VITE_FEATURE_PHONE_VERIFICATION: "false"
+      VITE_FEATURE_SERVICE_RADIUS: "false"
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -134,6 +140,8 @@ jobs:
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_contextual_ecosystem_intelligence.sql --local
       - name: Run private personalization preference implementation matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_personalization_preference_implementations.sql --local
+      - name: Run release-control consistency matrix
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_release_control_consistency.sql --local
       - name: Run recommendation personalization privacy matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_personalization.sql --local
       - name: Run aggregate recommendation analytics matrix
