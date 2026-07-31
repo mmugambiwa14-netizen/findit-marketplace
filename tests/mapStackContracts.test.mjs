@@ -18,6 +18,8 @@ test('production maps use the pinned MapLibre renderer and MapTiler Cloud', () =
   assert.match(provider, /unpkg\.com\/maplibre-gl@\$\{MAPLIBRE_VERSION\}/);
   assert.match(provider, /api\.maptiler\.com/);
   assert.match(provider, /style\.json\?key=/);
+  assert.match(provider, /geocoding\/\$\{lng\},\$\{lat\}\.json/);
+  assert.match(provider, /searchParams\.set\('limit', '1'\)/);
   assert.match(mapComponent, /loadMapLibre/);
   assert.match(mapComponent, /mapTilerStyleUrl/);
   assert.doesNotMatch(mapComponent, /leaflet|tile\.openstreetmap\.org/i);
