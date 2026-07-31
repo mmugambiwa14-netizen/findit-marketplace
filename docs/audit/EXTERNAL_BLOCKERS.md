@@ -1,44 +1,43 @@
 # External Production Blockers
 
 Reviewed: 2026-07-31  
-Staging SQL boundary: `0100`  
+Staging SQL boundary: `0101`  
 Production SQL boundary: `0049`
 
 This file lists only work that cannot be completed safely through repository or
-staging database changes alone. Repository-owned feature-control and maps drift
-has been corrected. The draft PR remains unmerged.
+staging database changes alone. Repository-owned feature, maps and public
+privileged-RPC findings are closed. The draft PR remains unmerged.
 
 ## Cleared in repository and staging
 
-- Map rendering now uses MapLibre GL JS `5.12.0` with MapTiler Cloud.
-- Current location is implemented as an opt-in city-resolution flow with manual
-  fallback and no persistence of exact device coordinates by the control.
-- Currency conversion, phone verification, service radius and international
-  publishing are fail-closed until complete contracts exist.
-- Recommendation operational metadata matches seven enabled services.
-- Redundant browser grants were removed from
-  `recommendation_events_default`.
-- Staging has 100 canonical migration rows from `0001` through `0100`, zero
-  sequence mismatches and zero generated-version residue.
-- Seven due Peek cache invalidations were recovered; the due queue is zero.
-- Repository hygiene now scans production source for unfinished markers.
-- Leaflet is removed from the active package manifest and source graph.
+- MapLibre GL JS `5.12.0` and MapTiler Cloud replace Leaflet/direct public OSM
+  tile use.
+- Current location is opt-in, city-resolving and exact-coordinate non-persistent.
+- Incomplete feature flags are fail-closed for the Zimbabwe-first release.
+- Recommendation metadata matches seven enabled services.
+- Redundant browser grants on `recommendation_events_default` are removed.
+- All anonymous-callable and authenticated-callable public privileged functions
+  are cleared through private implementations and public invoker wrappers.
+- Staging has 101 canonical migrations through `0101`, with zero sequence
+  mismatch or generated-version residue.
+- The due Peek cache-invalidation queue is zero after bounded recovery.
+- Repository hygiene scans production source for unfinished markers.
 
 ## 1. GitHub Actions runner execution
 
-Recent workflows fail before runner steps begin. This blocks conventional
-clean-checkout, build and clean-database certification on the final unchanged
-head.
+Current workflows still fail before runner steps begin. Jobs expose no steps or
+logs, so this is not accepted as either a code pass or a test assertion failure.
 
 Required externally:
 
 - restore GitHub Actions runner/account execution;
 - run release candidate, migration and recommendation database workflows;
 - require all suites to pass on one unchanged final commit;
-- confirm scheduled worker and observability workflows execute automatically.
+- confirm scheduled notification, recommendation, Peek and observability jobs
+  execute automatically.
 
-Hosted rollback-only staging transactions are valid supporting evidence but do
-not replace final conventional CI.
+Hosted staging migrations, semantic matrices and rollback transactions are
+supporting evidence but do not replace final conventional CI.
 
 ## 2. Production release authorization
 
@@ -49,7 +48,7 @@ Required externally:
 
 - explicit owner approval;
 - named release operator, reviewer, rollback decision-maker and incident lead;
-- a migration and Edge Function cutover window;
+- migration and Edge Function cutover window;
 - pre-cutover backup and rollback checkpoints;
 - fresh-launch or legacy-reconciliation decision;
 - signed completion record for the exact promoted commit.
@@ -67,51 +66,49 @@ Required externally:
 
 ## 4. MapTiler production configuration
 
-The code and environment contracts are complete, but each deployed environment
+The code and environment contracts are complete. Each deployed environment
 still requires:
 
-- a MapTiler browser key restricted to the exact allowed web origins;
+- a separate MapTiler browser key restricted to exact allowed origins;
 - approved `VITE_MAPTILER_STYLE_ID`;
 - key quota, abuse and cost alerts;
 - browser acceptance for vector styles, reverse geocoding and degraded map
   behavior;
-- Content Security Policy allowances for the pinned MapLibre runtime and
-  MapTiler endpoints, or self-hosting of the pinned runtime assets.
+- CSP allowances for the pinned MapLibre runtime and MapTiler endpoints, or
+  first-party hosting of the pinned runtime assets.
 
 No unrestricted MapTiler key should be committed or exposed on an unapproved
 origin.
 
 ## 5. Supabase Auth hardening
 
-The current connector exposes advisor checks but no supported mutation for
-these provider settings. They therefore remain owner/provider actions:
+The connector can verify advisor state but exposes no supported mutation for
+these provider settings. Required owner/provider actions are:
 
 - enable leaked-password protection;
 - enable TOTP MFA and enroll every founder/admin account;
 - configure CAPTCHA or equivalent bot protection;
-- set the canonical site URL and exact redirect allowlist;
+- set canonical site URL and exact redirect allowlist;
 - keep anonymous Auth and direct phone signup disabled for V1;
-- configure production SMTP and a verified sender domain;
-- publicly publish and callback-test Google OAuth before enabling its production
-  button;
+- configure production SMTP and verified sender domain;
+- publish and callback-test Google OAuth before enabling its production button;
 - keep Apple OAuth disabled unless separately certified.
 
-Current Supabase Security Advisor warnings remain for leaked-password protection
-and insufficient MFA options.
+Current advisor warnings remain for leaked-password protection and insufficient
+MFA options.
 
 ## 6. Monitoring and incident response
 
-Database metrics, operational alerts and bounded workers exist, but production
-still needs:
+Required externally:
 
-- a routed error and alert destination;
+- routed error and alert destination;
 - database, Auth, Storage, latency, saturation and abuse dashboards;
 - escalation ownership and incident runbook;
 - verified scheduler execution for notification, recommendation, Peek cleanup,
   cache invalidation and observability workers;
 - log-retention and privacy controls.
 
-An empty queue after manual recovery is not proof that the scheduler is healthy.
+An empty queue after manual recovery is not proof that scheduling is healthy.
 
 ## 7. Backup, PITR and isolated restore
 
@@ -151,7 +148,7 @@ Required externally:
 
 ## Current decision
 
-The branch and staging database are release candidates, not a production
-release. Do not merge the draft PR, migrate production or onboard real users
-until the external gates above and the remaining authenticated-function
-hardening are closed or explicitly accepted in a signed cutover decision.
+The repository-owned flagged work is closed through migration `0101`, but this
+is still a staging release candidate. Do not merge the draft PR, migrate
+production or onboard real users until the external gates above are closed or
+explicitly accepted in a signed production decision.
