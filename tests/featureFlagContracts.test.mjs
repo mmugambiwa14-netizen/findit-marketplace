@@ -13,6 +13,10 @@ const [appSource, packageSource] = await Promise.all([
 ]);
 
 const deferredFlags = [
+  'currencyConversion',
+  'phoneVerification',
+  'internationalListing',
+  'serviceRadius',
   'payments',
   'subscriptions',
   'escrow',
@@ -38,9 +42,15 @@ const releaseEnvironment = {
   VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: 'true',
   VITE_FEATURE_GOOGLE_OAUTH: 'true',
   VITE_AUTH_GOOGLE_ENABLED: 'true',
-  VITE_FEATURE_INTERNATIONAL_LISTING: 'true',
+  VITE_FEATURE_MAPS: 'true',
+  VITE_MAPTILER_PUBLIC_KEY: 'release-gate-maptiler-key',
+  VITE_MAPTILER_STYLE_ID: 'streets-v4',
+  VITE_FEATURE_INTERNATIONAL_LISTING: 'false',
   VITE_FEATURE_MANUAL_LOCATION: 'true',
   VITE_FEATURE_CURRENT_LOCATION: 'true',
+  VITE_FEATURE_CURRENCY_CONVERSION: 'false',
+  VITE_FEATURE_PHONE_VERIFICATION: 'false',
+  VITE_FEATURE_SERVICE_RADIUS: 'false',
   VITE_FEATURE_REPORTING: 'true',
   VITE_FEATURE_PAYMENTS: 'false',
   VITE_FEATURE_SUBSCRIPTIONS: 'false',
@@ -88,18 +98,26 @@ test('the active route graph contains no commerce or premium screen', () => {
   assert.equal(packageJson.dependencies['@stripe/stripe-js'], undefined);
 });
 
-test('the production release gate requires MVP flags on and deferred flags off', () => {
+test('the production release gate requires real MVP flags and rejects incomplete contracts', () => {
   assert.equal(validateRelease().status, 0);
 
   const commerceEnabled = validateRelease({ VITE_FEATURE_PAYMENTS: 'true' });
   assert.notEqual(commerceEnabled.status, 0);
   assert.match(commerceEnabled.stderr, /VITE_FEATURE_PAYMENTS must be false/);
 
-  const aiEnabled = validateRelease({ VITE_FEATURE_AI_MODERATION: 'true' });
-  assert.notEqual(aiEnabled.status, 0);
-  assert.match(aiEnabled.stderr, /VITE_FEATURE_AI_MODERATION must be false/);
-
-  const mapsMissingProvider = validateRelease({ VITE_FEATURE_MAPS: 'true' });
+  const mapsMissingProvider = validateRelease({ VITE_MAPTILER_PUBLIC_KEY: '' });
   assert.notEqual(mapsMissingProvider.status, 0);
   assert.match(mapsMissingProvider.stderr, /VITE_MAPTILER_PUBLIC_KEY is required/);
+
+  const fakeInternationalRollout = validateRelease({ VITE_FEATURE_INTERNATIONAL_LISTING: 'true' });
+  assert.notEqual(fakeInternationalRollout.status, 0);
+  assert.match(fakeInternationalRollout.stderr, /complete product contract/);
+
+  const unverifiedPhone = validateRelease({ VITE_FEATURE_PHONE_VERIFICATION: 'true' });
+  assert.notEqual(unverifiedPhone.status, 0);
+  assert.match(unverifiedPhone.stderr, /complete product contract/);
+
+  const missingManualFallback = validateRelease({ VITE_FEATURE_MANUAL_LOCATION: 'false' });
+  assert.notEqual(missingManualFallback.status, 0);
+  assert.match(missingManualFallback.stderr, /privacy-safe fallback/);
 });
