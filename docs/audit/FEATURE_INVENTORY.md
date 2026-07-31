@@ -2,17 +2,16 @@
 
 Reviewed: 2026-07-31  
 Branch: `feature/listing-intelligence-foundation`  
-Staging SQL boundary: `0100`
+Staging SQL boundary: `0101`
 
-This inventory describes the active route and service contracts. Environment
-flags remain separate from database readiness controls; a capability is release
-ready only when both layers and their provider configuration agree.
+This inventory describes the active route, provider and database contracts.
+Environment flags remain separate from database readiness controls.
 
 ## Customer-facing marketplace
 
 | Feature | Routes | State |
 |---|---|---|
-| Authentication | `/login`, `/register`, `/forgot-password`, `/reset-password` | Email/password implemented; Google OAuth release-gated; Apple disabled |
+| Authentication | `/login`, `/register`, `/forgot-password`, `/reset-password` | Email/password implemented; Google OAuth provider-gated; Apple disabled |
 | Discover | `/` | Implemented |
 | Search | `/search` | Cursor pagination, suggestions, filters, list and map views |
 | Listing detail | `/property/:id`, `/car/:id`, `/machinery/:id` | Implemented with shared media and optional Peek |
@@ -35,21 +34,22 @@ Compatibility redirects remain for `/create`, `/messages`, `/messages/:id`,
 
 ## Maps and location
 
-FindIt now uses:
+FindIt uses:
 
-- MapLibre GL JS `5.12.0` as the map renderer
-- MapTiler Cloud for vector styles and reverse geocoding
-- Supabase/PostGIS for marketplace spatial data
-- a protected browser key supplied through `VITE_MAPTILER_PUBLIC_KEY`
+- MapLibre GL JS `5.12.0`
+- MapTiler Cloud vector styles and reverse geocoding
+- Supabase/PostGIS marketplace spatial data
+- `VITE_MAPTILER_PUBLIC_KEY` restricted to approved origins
 - `VITE_MAPTILER_STYLE_ID` for the approved map style
 
-Device location is opt-in and resolves to an active supported city. The current
-location control does not persist exact device coordinates. Manual country,
-province and city selection remains mandatory as a fallback.
+Device location is opt-in. Coordinates are sent to MapTiler only to resolve an
+active supported city. The resolver and browser-storage whitelist retain only
+country, province, city, city name and source. Manual selection remains a
+required fallback.
 
-The current release is Zimbabwe-first. `VITE_FEATURE_INTERNATIONAL_LISTING`
-remains false until another country has a complete configuration, publishing
-flow, validation matrix and operational approval.
+The release remains Zimbabwe-first. International publishing, currency
+conversion, phone verification and service-radius values remain false until
+complete customer and provider contracts exist.
 
 ## Recommendation services
 
@@ -63,15 +63,12 @@ Seven independent staging services are enabled:
 6. seller recommendations
 7. similar listings
 
-Canonical listing pages do not depend on recommendation availability. Service
-calls have bounded timeouts, cache behavior, request budgets, circuit state and
-fail-open presentation. Personalization remains default-off and requires
-explicit consent.
+Canonical listing pages do not depend on recommendation availability.
+Personalization remains default-off and requires explicit consent.
 
-## Admin surface
+## Admin and privileged RPC boundary
 
-All admin routes require both the UI role guard and database authorization.
-Current routes are:
+Admin routes remain:
 
 - `/admin`
 - `/admin/listings`
@@ -80,8 +77,25 @@ Current routes are:
 - `/admin/categories`
 - `/admin/audit-log`
 
-The UI guard is not the security boundary; every admin RPC verifies admin or
-founder authorization server-side.
+Every admin/owner/messaging/media/notification/submission/reporting RPC still
+uses the same public name and signature. Migration `0101` moved all 57 remaining
+privileged implementations into `private` and created public SQL
+`SECURITY INVOKER` wrappers.
+
+Current staging counts:
+
+- anonymous-callable public privileged functions: zero
+- authenticated-callable public privileged functions: zero
+- public invoker wrappers created by `0101`: 57
+- private privileged implementation pairs: 57
+- authenticated grants preserved: 57
+- service-role grants preserved: 53
+- anonymous and `PUBLIC` wrapper grants: zero
+
+Hosted semantics verified owner isolation/transitions, notifications, messaging,
+participant isolation, reporting, admin reads/actions, audit writing,
+fail-closed submission/media/Peek paths and suspended-account denial. The exact
+rollback restored the original 57-function fingerprint in a rolled-back test.
 
 ## Backend capabilities
 
@@ -96,14 +110,10 @@ founder authorization server-side.
 | Operational metrics | `operational_metric_buckets` and `operational_alerts` |
 | Audit trail | Admin and configuration audit records |
 
-The previously due seven cache invalidations were recovered on staging; the due
-queue is currently zero. Scheduler recovery is still required so future work is
-processed automatically.
+The previously due seven cache invalidations were recovered; the due queue is
+zero. Scheduler recovery is still required so future work runs automatically.
 
 ## Deliberately fail-closed
-
-These capabilities are not unfinished launch defects and must remain disabled
-for the current V1:
 
 - payments, subscriptions and escrow
 - premium listings
@@ -112,25 +122,23 @@ for the current V1:
 - scheduled reminders and marketing emails
 - currency conversion
 - phone verification
-- service-radius values
+- service radius
 - international publishing
 - Apple OAuth
 - legal booking and payment flows
 
-Their preserved tables or scaffolding do not constitute an active browser
+Their preserved schema scaffolding does not constitute an active browser
 contract.
 
-## Security and verification status
+## Verification status
 
-- Staging migrations are canonical from `0001` through `0100`.
-- Anonymous-callable public definer functions: zero.
-- Authenticated-callable public definer functions remaining: 57.
+- Staging migrations are canonical from `0001` through `0101`.
+- Sequence mismatches and generated-version residue: zero.
 - Redundant browser grants on `recommendation_events_default`: removed.
-- Repository hygiene now rejects TODO, FIXME, HACK, XXX and incomplete-stub
-  markers in production source.
-- Leaflet and `@types/leaflet` are removed from the active package manifest and
-  no active source imports Leaflet.
+- Repository hygiene rejects unfinished implementation markers.
+- Leaflet is removed from the active manifest and source graph.
+- Last complete conventional three-workflow certification: migration `0091`.
+- Hosted evidence covers migrations `0092` through `0101`.
 
-The last complete conventional three-workflow certification is at migration
-`0091`. Hosted staging evidence covers the later migrations, but clean-database
-CI through `0100` remains required after GitHub Actions runner recovery.
+Clean-database CI through `0101` remains required after GitHub Actions runner
+execution is restored.
