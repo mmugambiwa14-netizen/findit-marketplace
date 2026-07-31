@@ -81,9 +81,7 @@ if ((toursBrowserEnabled || toursPreviewEnabled) && !toursBackendEnabled) {
   problems.push('Tour browser or preview access cannot be enabled unless TOURS_BACKEND_ENABLED is true');
 }
 if (toursBackendEnabled) {
-  if (!toursWorkersEnabled) {
-    problems.push('FINDIT_TOURS_WORKERS_ENABLED must be true when TOURS_BACKEND_ENABLED=true');
-  }
+  if (!toursWorkersEnabled) problems.push('FINDIT_TOURS_WORKERS_ENABLED must be true when TOURS_BACKEND_ENABLED=true');
   if (!['github-actions', 'external'].includes(tourProcessorMode)) {
     problems.push('FINDIT_TOUR_PROCESSOR_MODE must be github-actions or external when TOURS_BACKEND_ENABLED=true');
   }
@@ -107,9 +105,7 @@ if (toursBackendEnabled) {
       if (!env[name]?.trim()) continue;
       try {
         const url = new URL(env[name]);
-        if (mode === 'production' && url.protocol !== 'https:') {
-          problems.push(`${name} must use HTTPS in production`);
-        }
+        if (mode === 'production' && url.protocol !== 'https:') problems.push(`${name} must use HTTPS in production`);
       } catch {
         problems.push(`${name} must be a valid absolute URL`);
       }
@@ -120,7 +116,9 @@ if (toursBackendEnabled) {
   }
 }
 
-if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== undefined && env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== '' && !['true', 'false'].includes(env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED)) {
+if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== undefined
+  && env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== ''
+  && !['true', 'false'].includes(env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED)) {
   problems.push('FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED must be exactly true or false');
 }
 if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED === 'true' && !env.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET?.trim()) {
@@ -135,12 +133,16 @@ const requiredMvpLaunchFlags = [
   'VITE_FEATURE_MESSAGING',
   'VITE_FEATURE_ESSENTIAL_NOTIFICATIONS',
   'VITE_FEATURE_GOOGLE_OAUTH',
-  'VITE_FEATURE_INTERNATIONAL_LISTING',
+  'VITE_FEATURE_MAPS',
   'VITE_FEATURE_MANUAL_LOCATION',
   'VITE_FEATURE_CURRENT_LOCATION',
   'VITE_FEATURE_REPORTING',
 ];
 const deferredV1Flags = [
+  'VITE_FEATURE_CURRENCY_CONVERSION',
+  'VITE_FEATURE_PHONE_VERIFICATION',
+  'VITE_FEATURE_INTERNATIONAL_LISTING',
+  'VITE_FEATURE_SERVICE_RADIUS',
   'VITE_FEATURE_PAYMENTS',
   'VITE_FEATURE_SUBSCRIPTIONS',
   'VITE_FEATURE_ESCROW',
@@ -154,17 +156,27 @@ const deferredV1Flags = [
   'VITE_FEATURE_LISTING_EXPIRY',
   'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
 ];
+const incompleteCapabilities = [
+  'VITE_FEATURE_CURRENCY_CONVERSION',
+  'VITE_FEATURE_PHONE_VERIFICATION',
+  'VITE_FEATURE_INTERNATIONAL_LISTING',
+  'VITE_FEATURE_SERVICE_RADIUS',
+];
+for (const name of incompleteCapabilities) {
+  if (env[name] === 'true') problems.push(`${name} must remain false until its complete product contract is implemented`);
+}
 
-if (env.VITE_FEATURE_MAPS === 'true' && !env.VITE_MAPTILER_PUBLIC_KEY?.trim()) {
-  problems.push('VITE_MAPTILER_PUBLIC_KEY is required when VITE_FEATURE_MAPS=true');
+const mapsEnabled = env.VITE_FEATURE_MAPS === 'true';
+const currentLocationEnabled = env.VITE_FEATURE_CURRENT_LOCATION === 'true';
+if (mapsEnabled || currentLocationEnabled) {
+  const key = env.VITE_MAPTILER_PUBLIC_KEY?.trim();
+  if (!key) problems.push('VITE_MAPTILER_PUBLIC_KEY is required when maps or current location are enabled');
+  else if (/your-|example|placeholder|replace-/i.test(key)) problems.push('VITE_MAPTILER_PUBLIC_KEY still contains a placeholder');
+  const styleId = env.VITE_MAPTILER_STYLE_ID?.trim() || 'streets-v4';
+  if (!/^[a-z0-9][a-z0-9_-]{1,95}$/i.test(styleId)) problems.push('VITE_MAPTILER_STYLE_ID is invalid');
 }
-if (env.VITE_FEATURE_CURRENCY_CONVERSION === 'true' && !env.EXCHANGE_RATE_PROVIDER?.trim()) {
-  problems.push('EXCHANGE_RATE_PROVIDER is required when currency conversion is enabled');
-}
-if (env.VITE_FEATURE_PHONE_VERIFICATION === 'true') {
-  for (const name of ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_VERIFY_SERVICE_SID']) {
-    if (!env[name]?.trim()) problems.push(`${name} is required when phone verification is enabled`);
-  }
+if (currentLocationEnabled && env.VITE_FEATURE_MANUAL_LOCATION !== 'true') {
+  problems.push('VITE_FEATURE_MANUAL_LOCATION must remain true as the privacy-safe fallback for current location');
 }
 if (env.VITE_FEATURE_GOOGLE_OAUTH === 'true' && env.VITE_AUTH_GOOGLE_ENABLED !== 'true') {
   problems.push('VITE_AUTH_GOOGLE_ENABLED must be true when VITE_FEATURE_GOOGLE_OAUTH=true');
@@ -177,15 +189,9 @@ if (mode === 'production') {
   for (const name of deferredV1Flags) {
     if (env[name] !== 'false') problems.push(`${name} must be false for a V1 production release`);
   }
-  if (env.VITE_FEATURE_TOURS_PREVIEW !== 'false') {
-    problems.push('VITE_FEATURE_TOURS_PREVIEW must be false in production');
-  }
-  if (env.VITE_FEATURE_PREVIEW_FIXTURES !== 'false') {
-    problems.push('VITE_FEATURE_PREVIEW_FIXTURES must be false in production');
-  }
-  if (env.VITE_PREVIEW_AUTH_BYPASS !== 'false') {
-    problems.push('VITE_PREVIEW_AUTH_BYPASS must be false in production');
-  }
+  if (env.VITE_FEATURE_TOURS_PREVIEW !== 'false') problems.push('VITE_FEATURE_TOURS_PREVIEW must be false in production');
+  if (env.VITE_FEATURE_PREVIEW_FIXTURES !== 'false') problems.push('VITE_FEATURE_PREVIEW_FIXTURES must be false in production');
+  if (env.VITE_PREVIEW_AUTH_BYPASS !== 'false') problems.push('VITE_PREVIEW_AUTH_BYPASS must be false in production');
 
   if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== 'true') {
     problems.push('FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED must be true for production essential notifications');
