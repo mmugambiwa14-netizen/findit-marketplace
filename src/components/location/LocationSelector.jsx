@@ -143,7 +143,7 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
             {locating ? 'Finding your nearest supported city...' : 'Use my current location'}
           </button>
           <p className="mt-2 text-xs text-muted-foreground">
-            Your device coordinates are used only to select an approximate public city. Exact coordinates are not saved by this control.
+            With your permission, your device coordinates are sent to MapTiler to match a supported public city. FindIt stores only the matched country, province and city from this control, not your exact coordinates.
           </p>
           {currentLocationError && <p className="mt-2 text-xs text-destructive" role="alert">{currentLocationError}</p>}
         </div>
