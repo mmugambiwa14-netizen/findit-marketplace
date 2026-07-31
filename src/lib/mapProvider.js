@@ -1,6 +1,12 @@
 const MAPLIBRE_VERSION = '5.12.0';
-const MAPLIBRE_SCRIPT_URL = `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.js`;
-const MAPLIBRE_STYLESHEET_URL = `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.css`;
+// Served from our own origin rather than a public CDN, so a third party cannot
+// execute script on this domain and the Content-Security-Policy needs no
+// external script-src entry. Assets are vendored in public/vendor/maplibre and
+// are refreshed by scripts/vendor-maplibre-assets.mjs when MAPLIBRE_VERSION
+// changes. BASE_URL keeps this correct under a non-root deployment base.
+const MAPLIBRE_ASSET_BASE = `${String(import.meta.env?.BASE_URL ?? '/').replace(/\/*$/, '/')}vendor/maplibre/`;
+const MAPLIBRE_SCRIPT_URL = `${MAPLIBRE_ASSET_BASE}maplibre-gl.js`;
+const MAPLIBRE_STYLESHEET_URL = `${MAPLIBRE_ASSET_BASE}maplibre-gl.css`;
 const MAPLIBRE_SCRIPT_ID = 'findit-maplibre-runtime';
 const MAPLIBRE_STYLESHEET_ID = 'findit-maplibre-styles';
 const MAPTILER_API_ORIGIN = 'https://api.maptiler.com';
@@ -17,7 +23,6 @@ function ensureMapLibreStylesheet() {
   stylesheet.id = MAPLIBRE_STYLESHEET_ID;
   stylesheet.rel = 'stylesheet';
   stylesheet.href = MAPLIBRE_STYLESHEET_URL;
-  stylesheet.crossOrigin = 'anonymous';
   document.head.append(stylesheet);
 }
 
@@ -88,7 +93,6 @@ export function loadMapLibre() {
       script.id = MAPLIBRE_SCRIPT_ID;
       script.src = MAPLIBRE_SCRIPT_URL;
       script.async = true;
-      script.crossOrigin = 'anonymous';
       document.head.append(script);
     }
   }).catch((error) => {

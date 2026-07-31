@@ -15,7 +15,8 @@ const packageJson = JSON.parse(packageSource);
 
 test('production maps use the pinned MapLibre renderer and MapTiler Cloud', () => {
   assert.match(provider, /MAPLIBRE_VERSION = '5\.12\.0'/);
-  assert.match(provider, /unpkg\.com\/maplibre-gl@\$\{MAPLIBRE_VERSION\}/);
+  assert.doesNotMatch(provider, /unpkg\.com/);
+  assert.match(provider, /vendor\/maplibre\//);
   assert.match(provider, /api\.maptiler\.com/);
   assert.match(provider, /style\.json\?key=/);
   assert.match(provider, /geocoding\/\$\{lng\},\$\{lat\}\.json/);

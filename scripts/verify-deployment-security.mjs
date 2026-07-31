@@ -105,7 +105,10 @@ failUnless(directives.get('default-src')?.includes("'self'"), "CSP default-src m
 failUnless(directives.get('base-uri')?.includes("'self'"), "CSP base-uri must be 'self'");
 failUnless(directives.get('object-src')?.includes("'none'"), "CSP object-src must be 'none'");
 failUnless(directives.get('frame-ancestors')?.includes("'none'"), "CSP frame-ancestors must be 'none'");
-failUnless(directives.get('script-src')?.includes('https://unpkg.com'), 'CSP must allow only the pinned MapLibre runtime origin');
+failUnless(
+  directives.get('script-src')?.every((source) => !source.startsWith('http')),
+  'CSP script-src must not trust any external origin; the MapLibre runtime is vendored and served from self',
+);
 failUnless(!directives.get('script-src')?.includes("'unsafe-inline'"), 'CSP script-src must reject inline scripts');
 failUnless(!directives.get('script-src')?.includes("'unsafe-eval'"), 'CSP script-src must reject eval');
 failUnless(!directives.get('style-src-elem')?.includes("'unsafe-inline'"), 'CSP style-src-elem must reject inline style elements');
@@ -136,7 +139,8 @@ failUnless(bootstrapPosition >= 0, 'index.html must load documentBootstrap.js');
 failUnless(applicationPosition > bootstrapPosition, 'document bootstrap must load before the React application');
 
 failUnless(/MAPLIBRE_VERSION = '5\.12\.0'/.test(mapProvider), 'MapLibre runtime version must remain exactly pinned');
-failUnless(/unpkg\.com\/maplibre-gl@\$\{MAPLIBRE_VERSION\}/.test(mapProvider), 'MapLibre runtime must use the exact pinned package path');
+failUnless(!/unpkg\.com/.test(mapProvider), 'MapLibre runtime must not be loaded from a public CDN');
+failUnless(/vendor\/maplibre\//.test(mapProvider), 'MapLibre runtime must load from the vendored same-origin assets');
 failUnless(!/maplibre-gl@(?:latest|\^|~)/.test(mapProvider), 'MapLibre runtime must not use a floating version');
 
 if (failures.length) {

@@ -24,6 +24,19 @@ for (const migration of migrationFiles.filter((name) => Number(name.slice(0, 4))
   if (!rollbackFiles.has(expectedRollback)) failures.push(`missing rollback pair for ${migration}`);
 }
 
+// The destructive-statement scan matches raw text, so a rollback was rejected
+// for the word TRUNCATE inside a has_table_privilege() argument, and an earlier
+// one for naming the banned statements in its own explanatory comment. Remove
+// only the places SQL cannot execute a statement -- comments and single-quoted
+// literals -- before scanning. Dollar-quoted blocks are deliberately left
+// intact: function bodies can contain genuinely destructive statements.
+function stripNonExecutableSql(content) {
+  return content
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/--[^\n]*/g, ' ')
+    .replace(/'(?:''|[^'])*'/g, "''");
+}
+
 function dollarQuoteBalance(content) {
   const counts = new Map();
   for (const match of content.matchAll(/\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$/g)) {
@@ -40,7 +53,7 @@ for (const name of migrationFiles) {
 
 for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) >= 40).sort()) {
   const content = await readFile(join(rollbackDirectory, name), 'utf8');
-  if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(content)) failures.push(`${name} contains destructive table/data rollback statements`);
+  if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(stripNonExecutableSql(content))) failures.push(`${name} contains destructive table/data rollback statements`);
   if (/^(?:<<<<<<<|=======|>>>>>>>)(?:\s|$)/m.test(content)) failures.push(`${name} contains a merge-conflict marker`);
   for (const [tag, count] of dollarQuoteBalance(content)) failures.push(`${name} has unbalanced ${tag} delimiters (${count})`);
 }

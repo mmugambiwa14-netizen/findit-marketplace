@@ -17,6 +17,7 @@
     "typecheck:edge-functions": "node ./scripts/edge-functions-typecheck.mjs",
     "verify:base44-elimination": "node ./scripts/verify-base44-elimination.mjs",
     "verify:deployment-security": "node ./scripts/verify-deployment-security.mjs",
+    "verify:maplibre-assets": "node ./scripts/vendor-maplibre-assets.mjs --check",
     "audit:production": "node ./scripts/audit-production.mjs",
     "test:contracts": "node --test ./tests/*.test.mjs",
     "test:recommendation-contracts": "node --test ./tests/recommendation*Contracts.test.mjs",

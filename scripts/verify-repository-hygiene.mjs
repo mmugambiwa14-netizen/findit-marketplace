@@ -2,7 +2,12 @@ import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, relative } from 'node:path';
 
 const root = process.cwd();
-const ignoredDirectories = new Set(['.git', 'node_modules', 'dist', 'coverage']);
+// `vendor` holds third-party bundles committed verbatim (public/vendor/maplibre).
+// Authoring conventions such as the emoji ban apply to code we write, not to a
+// dependency's own source -- MapLibre legitimately ships U+2318 for its
+// keyboard-shortcut strings, and rewriting a vendored bundle would defeat the
+// point of pinning it to a verified upstream hash.
+const ignoredDirectories = new Set(['.git', 'node_modules', 'dist', 'coverage', 'vendor']);
 const ignoredExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.mp4', '.webm', '.pdf', '.zip', '.woff', '.woff2', '.ttf']);
 const markerRoots = ['src/', 'scripts/', 'supabase/functions/'];
 const markerScannerPath = 'scripts/verify-repository-hygiene.mjs';
