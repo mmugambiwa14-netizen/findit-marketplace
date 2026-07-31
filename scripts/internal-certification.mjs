@@ -65,6 +65,10 @@ const commit = process.env.GITHUB_SHA
   || commandOutput('git', ['rev-parse', 'HEAD'])
   || 'unavailable';
 const gitStatus = commandOutput('git', ['status', '--porcelain']);
+const gitStatusEntries = gitStatus === null || gitStatus === ''
+  ? []
+  : gitStatus.split('\n').filter(Boolean).slice(0, 100);
+const sourceExact = gitStatus !== null && gitStatusEntries.length === 0;
 
 const gates = [
   {
@@ -106,9 +110,10 @@ const results = gates.map((gate) => ({
   gate: gate.name,
   ...run(gate.command, gate.args),
 }));
+const gatesPassed = results.every((result) => result.passed);
 
 const report = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   generatedAt: new Date().toISOString(),
   repository: 'mmugambiwa14-netizen/findit-marketplace',
   branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || null,
@@ -118,8 +123,9 @@ const report = {
     npm: commandOutput(npmCommand, ['--version']),
     operatingSystem: `${platform()} ${release()}`,
     continuousIntegration: process.env.CI === '1' || process.env.CI === 'true',
-    cleanCheckout: gitStatus === '',
+    sourceExact,
     gitStatusAvailable: gitStatus !== null,
+    gitStatusEntries,
   },
   sourceBoundary: {
     migrationCount: migrations.length,
@@ -134,7 +140,9 @@ const report = {
     gateCount: results.length,
     passed: results.filter((result) => result.passed).length,
     failed: results.filter((result) => !result.passed).length,
-    certified: results.every((result) => result.passed),
+    gatesPassed,
+    sourceExact,
+    certified: gatesPassed && sourceExact,
   },
   gates: results,
 };
@@ -143,5 +151,9 @@ await mkdir(dirname(reportPath), { recursive: true });
 await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
 console.log(`Internal certification report written to ${reportPath}`);
 console.log(`${report.summary.passed}/${report.summary.gateCount} gates passed.`);
+if (!sourceExact) {
+  console.error('Internal certification refused because the working tree differs from the requested commit.');
+  for (const entry of gitStatusEntries) console.error(`- ${entry}`);
+}
 
 if (!report.summary.certified) process.exit(1);
