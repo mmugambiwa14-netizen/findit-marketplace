@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [provider, mapComponent, locationService, locationSelector, packageSource] = await Promise.all([
+const [provider, mapComponent, locationService, locationSelector, homePage, packageSource] = await Promise.all([
   readFile(new URL('../src/lib/mapProvider.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/search/SearchResultsMap.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/services/currentLocationService.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/location/LocationSelector.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/pages/Home.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../package.json', import.meta.url), 'utf8'),
 ]);
 
@@ -35,9 +36,13 @@ test('device location resolves only to a supported public city', () => {
   assert.match(locationService, /getActiveLocations\('city'\)/);
   assert.match(locationService, /reverseGeocodeMapTiler/);
   assert.match(locationService, /CURRENT_LOCATION_OUTSIDE_SUPPORTED_MARKET/);
+  assert.match(locationService, /return Object\.freeze\(\{[\s\S]*country:[\s\S]*state:[\s\S]*city:[\s\S]*cityName:[\s\S]*source: 'device'/);
+  assert.doesNotMatch(locationService, /return \{[\s\S]{0,220}coordinates,/);
+  assert.doesNotMatch(locationService, /accuracyMeters/);
   assert.doesNotMatch(locationService, /localStorage|sessionStorage|insert|update|upsert/i);
   assert.match(locationSelector, /Exact coordinates are not saved/);
   assert.match(locationSelector, /Choose your city manually/);
+  assert.match(homePage, /writeStoredJson\('local', LOCATION_STORAGE_KEY, nextLocation\)/);
 });
 
 test('legacy Leaflet packages and source imports are removed', () => {
