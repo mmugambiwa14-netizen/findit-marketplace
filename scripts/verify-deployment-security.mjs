@@ -90,6 +90,8 @@ for (const directive of [
   'form-action',
   'script-src',
   'style-src',
+  'style-src-elem',
+  'style-src-attr',
   'connect-src',
   'img-src',
   'media-src',
@@ -104,14 +106,20 @@ failUnless(directives.get('base-uri')?.includes("'self'"), "CSP base-uri must be
 failUnless(directives.get('object-src')?.includes("'none'"), "CSP object-src must be 'none'");
 failUnless(directives.get('frame-ancestors')?.includes("'none'"), "CSP frame-ancestors must be 'none'");
 failUnless(directives.get('script-src')?.includes('https://unpkg.com'), 'CSP must allow only the pinned MapLibre runtime origin');
+failUnless(!directives.get('script-src')?.includes("'unsafe-inline'"), 'CSP script-src must reject inline scripts');
+failUnless(!directives.get('script-src')?.includes("'unsafe-eval'"), 'CSP script-src must reject eval');
+failUnless(!directives.get('style-src-elem')?.includes("'unsafe-inline'"), 'CSP style-src-elem must reject inline style elements');
+failUnless(
+  directives.get('style-src-attr')?.length === 1
+    && directives.get('style-src-attr')?.[0] === "'unsafe-inline'",
+  'CSP may allow inline styling only through style-src-attr for runtime geometry and theme state',
+);
 failUnless(directives.get('connect-src')?.includes('https://api.maptiler.com'), 'CSP must allow MapTiler API requests');
 failUnless(directives.get('connect-src')?.includes('https://*.supabase.co'), 'CSP must allow Supabase HTTPS requests');
 failUnless(directives.get('worker-src')?.includes('blob:'), 'current MapLibre runtime requires blob workers');
 failUnless(csp.includes('upgrade-insecure-requests'), 'CSP must upgrade insecure requests');
+failUnless(!csp.includes('http:'), 'CSP must not allow clear-text HTTP sources');
 
-for (const prohibited of ["'unsafe-inline'", "'unsafe-eval'", 'http:']) {
-  failUnless(!csp.includes(prohibited), `CSP contains prohibited source ${prohibited}`);
-}
 for (const [name, values] of directives) {
   failUnless(!values.includes('*'), `CSP ${name} must not contain a standalone wildcard`);
 }
@@ -137,4 +145,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Deployment security verification passed: strict CSP, hardened headers, SPA routing and pinned map runtime inspected.');
+console.log('Deployment security verification passed: script-safe CSP, scoped runtime styles, hardened headers, SPA routing and pinned map runtime inspected.');
