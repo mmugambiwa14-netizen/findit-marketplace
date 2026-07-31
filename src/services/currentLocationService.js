@@ -37,7 +37,7 @@ function positionFromBrowser() {
   }
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(
-      (position) => resolve(position),
+      resolve,
       (error) => {
         const code = error?.code === 1
           ? 'GEOLOCATION_PERMISSION_DENIED'
@@ -84,19 +84,20 @@ function locationByNames(locations, names) {
   }) || null;
 }
 
-async function resolveHierarchy(city, countries, provinces) {
+function resolvePublicHierarchy(city, countries, provinces) {
   const province = provinces.find((candidate) => candidate.id === city.parent_id) || null;
   const country = countries.find((candidate) => candidate.id === province?.parent_id)
     || countries.find((candidate) => String(candidate.country_code || candidate.code || '').toUpperCase() === 'ZW')
     || countries.find((candidate) => normalizeName(candidate.name) === 'zimbabwe')
     || null;
   if (!country || !province) throw new Error('CURRENT_LOCATION_OUTSIDE_SUPPORTED_MARKET');
-  return {
+  return Object.freeze({
     country: country.id,
     state: province.id,
     city: city.id,
     cityName: city.name,
-  };
+    source: 'device',
+  });
 }
 
 export async function resolveCurrentMarketplaceLocation() {
@@ -118,12 +119,7 @@ export async function resolveCurrentMarketplaceLocation() {
     const names = featureNames(features);
     const city = locationByNames(cities, names) || nearestGeocodedCity(cities, coordinates);
     if (!city) throw new Error('CURRENT_LOCATION_NOT_MAPPED');
-    return {
-      ...(await resolveHierarchy(city, countries, provinces)),
-      coordinates,
-      accuracyMeters: Number(position.coords.accuracy) || null,
-      source: 'device',
-    };
+    return resolvePublicHierarchy(city, countries, provinces);
   } catch (error) {
     if (error?.name === 'AbortError') throw new Error('MAP_PROVIDER_TIMEOUT');
     throw error;
