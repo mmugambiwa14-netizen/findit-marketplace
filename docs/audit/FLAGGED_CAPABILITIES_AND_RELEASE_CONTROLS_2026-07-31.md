@@ -1,139 +1,138 @@
 # Flagged Capabilities and Release Controls Audit
 
 Reviewed: 2026-07-31  
-Status: repository-owned findings corrected  
+Status: repository-owned findings closed  
 Branch: `feature/listing-intelligence-foundation`  
 Staging project: `bwgklpxoetrrkutottdb`  
-Staging SQL boundary: canonical `0001` through `0100`  
+Staging SQL boundary: canonical `0001` through `0101`  
 Production SQL boundary: unchanged at `0049`
 
 ## Outcome
 
-The pre-0100 audit identified feature-switch, maps, operational metadata,
-queue, evidence and hygiene defects. Repository-owned findings have now been
-corrected. Remaining items require external provider configuration, GitHub
-Actions recovery or the next authenticated-function hardening sequence.
+The audit identified feature-switch, maps, operational metadata, queue,
+evidence, hygiene and public privileged-function defects. Repository-owned
+findings are now corrected through migrations `0100` and `0101`.
 
-## Corrections completed
+Remaining blockers require external provider configuration, GitHub Actions
+runner recovery or production operational approval; they are not hidden source
+or staging-schema backlog.
 
-### Feature controls
+## Feature and map corrections
 
-- `VITE_FEATURE_CURRENCY_CONVERSION` is forced false until a real rate-provider
-  contract and customer flow exist.
-- `VITE_FEATURE_PHONE_VERIFICATION` is forced false until phone ownership is
-  actually verified.
-- `VITE_FEATURE_SERVICE_RADIUS` is forced false until a radius value, unit,
-  validation and persistence contract exist.
-- `VITE_FEATURE_INTERNATIONAL_LISTING` is forced false for the current
-  Zimbabwe-first release.
-- Current location is now a real opt-in browser flow with manual fallback.
-- Google OAuth defaults false in `.env.example` and remains provider-gated.
+- Currency conversion, phone verification, service radius and international
+  publishing are forced false until complete contracts exist.
 - Payments, subscriptions, escrow, premium listings, AI automation, expiry,
   reminders, Apple OAuth and legal-commerce flows remain deliberately disabled.
+- Current location is a real opt-in flow with mandatory manual fallback.
+- MapLibre GL JS `5.12.0` and MapTiler Cloud replace Leaflet/direct public OSM
+  tiles.
+- Map failure degrades to canonical list results.
+- Coordinates are sent to MapTiler only to resolve a supported city.
+- The resolver and Home whitelist retain only country, province, city, city name
+  and source; exact coordinates and accuracy cannot persist through this flow.
+- Leaflet and `@types/leaflet` are removed from the active manifest and source.
+- Environment templates, release gates and staging workflows use the same
+  MapTiler and fail-closed feature boundary.
 
-### Maps stack
-
-The old Leaflet/direct OpenStreetMap-tile path has been replaced with:
-
-- MapLibre GL JS `5.12.0`
-- MapTiler Cloud vector styles
-- MapTiler reverse geocoding
-- Supabase/PostGIS spatial data
-
-The environment validator now requires a non-placeholder
-`VITE_MAPTILER_PUBLIC_KEY` and valid `VITE_MAPTILER_STYLE_ID` when maps or
-current location are enabled. Map failures degrade to the canonical listing
-view rather than blocking results.
-
-Device coordinates are used only to match an active supported city. The
-location selector does not persist exact coordinates and manual selection
-remains a required fallback.
-
-Leaflet and `@types/leaflet` are removed from the active package manifest and
-no active map source imports Leaflet.
-
-### Migration 0100
+## Migration 0100: release-control consistency
 
 `0100_release_control_consistency.sql`:
 
-- records MapLibre/MapTiler as the certified maps provider boundary;
-- records city-level public precision and no exact-coordinate exposure;
-- aligns recommendation operational metadata with seven enabled independent
-  services;
-- records personalization as available but default-off and consent-gated;
-- removes redundant anonymous and authenticated table grants from
-  `recommendation_events_default` while preserving service-role access.
+- records the MapLibre/MapTiler provider boundary;
+- records city-level public precision, consent and manual fallback;
+- aligns recommendation metadata with seven enabled independent services;
+- records personalization availability while preserving default-off consent;
+- removes redundant browser grants from `recommendation_events_default`.
 
-The migration has an exact rollback capsule, pgTAP coverage, source contracts,
-a guarded staging-ledger reconciliation and hosted evidence.
+The migration, rollback, pgTAP, guarded ledger reconciliation and hosted
+structural evidence passed.
 
-### Staging state
+## Migration 0101: authenticated privileged RPC isolation
 
-- migration rows: 100
+Before migration `0101`, staging had exactly 57 authenticated-callable public
+`SECURITY DEFINER` functions with catalog fingerprint
+`ce6194659e01b758dc20948daf351bea`.
+
+`0101_private_authenticated_rpc_implementations.sql`:
+
+- moves all 57 implementations into non-exposed `private` without recreating
+  their bodies;
+- creates 57 public SQL `SECURITY INVOKER` compatibility wrappers;
+- preserves names, arguments, defaults, results, volatility, strictness,
+  parallel category, cost/rows and role grants;
+- preserves 57 authenticated and 53 service-role execution paths;
+- leaves zero anonymous and zero `PUBLIC` wrapper grants;
+- leaves zero authenticated-callable public privileged functions.
+
+Hosted semantics verified owner notes and transitions, notifications, full
+messaging/report lifecycle, participant isolation, admin reads/actions, audit
+writing, fail-closed submission/media/Peek paths and suspended-account denial.
+All fixtures rolled back.
+
+The exact rollback capsule restored all 57 original functions with the precise
+catalog fingerprint and zero private residue inside a non-persisted transaction.
+The live postcondition was then reconfirmed as zero public authenticated
+definers and 57 public invoker wrappers.
+
+## Staging state
+
+- canonical migration rows: 101
 - minimum version: `0001`
-- maximum version: `0100`
+- maximum version: `0101`
 - sequence mismatches: zero
 - generated-version residue: zero
 - due Peek cache invalidations: zero
+- anonymous-callable public privileged functions: zero
+- authenticated-callable public privileged functions: zero
+- semantic fixture residue: zero
 
-Seven previously due invalidations were boundedly claimed and finalized after
-GitHub Actions scheduling stopped executing.
+Seven due cache invalidations were boundedly recovered after GitHub Actions
+scheduling stopped executing. The empty queue does not prove scheduler health.
 
-### Repository evidence and hygiene
+## Repository evidence and hygiene
 
-- stale consolidated migration report replaced;
-- feature inventory advanced to `/seller/:sellerId`, migration `0100` and the
-  MapLibre/MapTiler stack;
-- external blockers advanced to the current boundary;
-- SQL tip contract advanced to `0100`;
-- repository hygiene now scans production source for TODO, FIXME, HACK, XXX,
+- authoritative reports and inventory are current through `0101`;
+- seller profiles use `/seller/:sellerId`;
+- SQL tip contracts and both database workflows include `0101`;
+- repository hygiene checks production source for TODO, FIXME, HACK, XXX,
   “not implemented,” placeholder, dummy and temporary implementation markers;
-- GitHub searches found no indexed matches for those marker classes, while the
-  new gate provides deterministic full-tree enforcement.
+- stale product-surface output was withdrawn as generated release evidence until
+  a normal final-head regeneration runs.
 
-## Security Advisor status
+## Advisor status
 
 Cleared:
 
 - anonymous-callable public `SECURITY DEFINER` functions: zero
+- authenticated-callable public `SECURITY DEFINER` functions: zero
 - redundant browser grants on `recommendation_events_default`: removed
 
-Remaining:
+Remaining provider/informational notices:
 
-- 57 authenticated-callable public definer functions, to continue through the
-  private implementation/public invoker sequence beginning at migration `0101`;
 - leaked-password protection disabled;
 - insufficient MFA options enabled;
-- informational RLS-without-policy notices on fail-closed internal/deferred
-  tables;
-- informational zero-scan indexes that must not be dropped without
-  production-like query-plan evidence.
+- RLS-without-policy notices on fail-closed internal/deferred tables;
+- zero-scan indexes that must not be dropped without production-like query-plan
+  evidence.
 
-The current connector can read Auth advisor state but does not expose a
-supported mutation for leaked-password or MFA settings. Those remain explicit
-provider-side production gates.
+The available connector can read Auth advisor state but does not expose a
+supported mutation for leaked-password or MFA settings.
 
-## CI and operations
+## CI and remaining order
 
-The last complete three-workflow GitHub Actions certification remains the
-`0091` boundary. Later migrations have hosted staging evidence, but recent
-workflows fail before runner steps begin. Final source, build and clean-database
-certification through `0100` is still required on one unchanged commit.
+The last complete three-workflow GitHub Actions certification remains migration
+`0091`. Current jobs still fail before executable steps begin and expose no
+steps or logs. Hosted evidence covers migrations `0092` through `0101`, but
+conventional final-head certification remains required.
 
-Manual queue recovery closes the existing backlog but does not prove scheduler
-health. Scheduled worker and observability execution must be restored.
+Remaining order:
 
-## Remaining order
-
-1. Restore GitHub Actions execution and run all conventional suites through
-   `0100`.
-2. Configure a protected, origin-restricted MapTiler key and approved style for
-   each deployment environment.
-3. Enable leaked-password protection, TOTP MFA and CAPTCHA/risk controls in
-   Supabase Auth; configure production SMTP and public Google OAuth callbacks.
-4. Continue the 57 authenticated-function hardening backlog at migration
-   `0101`.
-5. Complete production domain, monitoring, backup/PITR, device acceptance,
+1. Restore GitHub Actions execution and run all suites through `0101` on one
+   unchanged commit.
+2. Configure an origin-restricted MapTiler key, approved style and final CSP.
+3. Enable leaked-password protection, founder/admin TOTP MFA and CAPTCHA/risk
+   controls; configure production SMTP and Google OAuth callbacks.
+4. Complete production domain, monitoring, backup/PITR, device/accessibility,
    capacity and owner-approved cutover gates.
 
 No production project was queried or changed during these corrections.
