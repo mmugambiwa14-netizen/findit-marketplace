@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LocateFixed, MapPin } from 'lucide-react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { LocateFixed, MapPin, RefreshCw } from 'lucide-react';
+import { loadMapLibre, mapTilerStyleUrl } from '@/lib/mapProvider';
 
 const CITY_COORDS = {
   harare: { latitude: -17.8216, longitude: 31.0492 },
@@ -57,10 +56,10 @@ function priceLabel(listing) {
 
 function popupContent(listing, point, onOpen) {
   const container = document.createElement('div');
-  container.className = 'min-w-44 space-y-1 font-sans';
+  container.className = 'min-w-44 space-y-1 font-sans text-foreground';
 
   const title = document.createElement('p');
-  title.className = 'font-semibold leading-5 text-foreground';
+  title.className = 'font-semibold leading-5';
   title.textContent = listing.title;
   container.append(title);
 
@@ -88,78 +87,81 @@ function popupContent(listing, point, onOpen) {
 export default function SearchResultsMap({ listings = [], type = 'property' }) {
   const navigate = useNavigate();
   const mapNode = useRef(null);
-  const [tilesUnavailable, setTilesUnavailable] = useState(false);
+  const [mapFailure, setMapFailure] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
   const markers = useMemo(() => listings
     .map((listing) => ({ listing, point: getPoint(listing) }))
     .filter((item) => item.point), [listings]);
 
   useEffect(() => {
     if (!mapNode.current || markers.length === 0) return undefined;
-    setTilesUnavailable(false);
+    let cancelled = false;
+    let map = null;
+    let resizeObserver = null;
+    let resizeTimer = null;
+    setMapFailure('');
 
-    const map = L.map(mapNode.current, {
-      attributionControl: true,
-      center: [-19.0154, 29.1549],
-      scrollWheelZoom: false,
-      zoom: 6,
-      zoomControl: false,
-    });
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    const initialize = async () => {
+      try {
+        const maplibregl = await loadMapLibre();
+        if (cancelled || !mapNode.current) return;
+        map = new maplibregl.Map({
+          container: mapNode.current,
+          style: mapTilerStyleUrl(),
+          center: [29.1549, -19.0154],
+          zoom: 5.5,
+          attributionControl: true,
+          dragRotate: false,
+          pitchWithRotate: false,
+          cooperativeGestures: true,
+        });
+        map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+        map.on('error', () => {
+          if (!cancelled) setMapFailure('Map data is temporarily unavailable. Listings remain available below.');
+        });
 
-    let tileFailures = 0;
-    const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors',
-      maxZoom: 19,
-    })
-      .on('tileerror', () => {
-        tileFailures += 1;
-        if (tileFailures >= 3) setTilesUnavailable(true);
-      })
-      .addTo(map);
+        const bounds = new maplibregl.LngLatBounds();
+        markers.forEach(({ listing, point }) => {
+          const path = detailPath(listing, type);
+          const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '260px', offset: 18 })
+            .setDOMContent(popupContent(listing, point, () => navigate(path)));
+          new maplibregl.Marker({
+            color: point.approximate ? '#b45309' : '#087f5b',
+            scale: 0.82,
+          })
+            .setLngLat([point.longitude, point.latitude])
+            .setPopup(popup)
+            .addTo(map);
+          bounds.extend([point.longitude, point.latitude]);
+        });
 
-    const bounds = L.latLngBounds([]);
-    markers.forEach(({ listing, point }) => {
-      const path = detailPath(listing, type);
-      const marker = L.circleMarker([point.latitude, point.longitude], {
-        bubblingMouseEvents: false,
-        color: '#ffffff',
-        fillColor: point.approximate ? '#b45309' : '#087f5b',
-        fillOpacity: 0.96,
-        radius: 9,
-        weight: 3,
-      }).addTo(map);
-      marker.bindTooltip(priceLabel(listing), {
-        className: 'findit-map-price',
-        direction: 'top',
-        offset: [0, -8],
-      });
-      marker.bindPopup(popupContent(listing, point, () => navigate(path)), {
-        closeButton: true,
-        maxWidth: 260,
-        minWidth: 190,
-      });
-      bounds.extend([point.latitude, point.longitude]);
-    });
+        map.once('load', () => {
+          if (cancelled || !map || bounds.isEmpty()) return;
+          map.fitBounds(bounds, {
+            animate: false,
+            maxZoom: markers.length === 1 ? 13 : 10,
+            padding: 36,
+          });
+        });
 
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, {
-        animate: false,
-        maxZoom: markers.length === 1 ? 13 : 10,
-        padding: [28, 28],
-      });
-    }
-
-    const resizeObserver = new ResizeObserver(() => map.invalidateSize({ animate: false }));
-    resizeObserver.observe(mapNode.current);
-    const resizeTimer = window.setTimeout(() => map.invalidateSize({ animate: false }), 100);
-
-    return () => {
-      window.clearTimeout(resizeTimer);
-      resizeObserver.disconnect();
-      tiles.off();
-      map.remove();
+        if (typeof ResizeObserver !== 'undefined') {
+          resizeObserver = new ResizeObserver(() => map?.resize());
+          resizeObserver.observe(mapNode.current);
+        }
+        resizeTimer = window.setTimeout(() => map?.resize(), 100);
+      } catch {
+        if (!cancelled) setMapFailure('The map could not load. Listings remain fully available in list view.');
+      }
     };
-  }, [markers, navigate, type]);
+
+    void initialize();
+    return () => {
+      cancelled = true;
+      if (resizeTimer !== null) window.clearTimeout(resizeTimer);
+      resizeObserver?.disconnect();
+      map?.remove();
+    };
+  }, [markers, navigate, retryKey, type]);
 
   if (!markers.length) {
     return (
@@ -180,14 +182,17 @@ export default function SearchResultsMap({ listings = [], type = 'property' }) {
           aria-label="Mapped listing results"
           className="h-[min(68vh,520px)] min-h-[390px] w-full"
         />
-        <div className="pointer-events-none absolute left-3 top-3 z-[500] rounded-lg border border-border bg-background/95 px-3 py-2 text-xs shadow-md backdrop-blur">
+        <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg border border-border bg-background/95 px-3 py-2 text-xs shadow-md backdrop-blur">
           <p className="flex items-center gap-1.5 font-semibold"><LocateFixed className="h-3.5 w-3.5 text-primary" />{markers.length} mapped</p>
           <p className="mt-0.5 text-muted-foreground">Drag or pinch to explore</p>
         </div>
-        {tilesUnavailable && (
-          <p className="absolute inset-x-3 bottom-3 z-[500] rounded-lg bg-background/95 p-2 text-center text-xs shadow-md">
-            Map tiles are slow to load. Listing pins remain available.
-          </p>
+        {mapFailure && (
+          <div className="absolute inset-x-3 bottom-3 z-10 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/95 p-3 text-xs shadow-md">
+            <p>{mapFailure}</p>
+            <button type="button" className="inline-flex min-h-9 shrink-0 items-center gap-1 font-semibold text-primary" onClick={() => setRetryKey((value) => value + 1)}>
+              <RefreshCw className="h-3.5 w-3.5" /> Retry
+            </button>
+          </div>
         )}
       </div>
 
