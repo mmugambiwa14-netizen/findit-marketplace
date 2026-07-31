@@ -17,7 +17,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       NODE_ENV: production
       VITE_SUPABASE_URL: https://findit-release-validation.supabase.co
@@ -87,36 +87,11 @@ jobs:
       - name: Validate release environment
         run: npm run validate:env
 
-      - name: Verify source graph
-        run: npm run verify:source-graph
-
-      - name: Verify repository hygiene
-        run: npm run verify:hygiene
-
-      - name: Verify SQL migration boundary
-        run: npm run verify:sql-boundary
-
       - name: Audit routed product surface
         run: npm run audit:product-surface
-
-      - name: Run complete contracts
-        run: npm run test:contracts
 
       - name: Run Tours contracts
         run: npm run test:tours-contracts
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: |
-          npm run typecheck
-          npm run typecheck:migration
-          npm run typecheck:active
-          npm run typecheck:edge-functions
-
-      - name: Build production application
-        run: npm run build
-
-      - name: Audit production dependencies
-        run: npm run audit:production
+      - name: Run reproducible internal certification
+        run: npm run certify:internal
