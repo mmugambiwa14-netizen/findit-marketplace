@@ -9,6 +9,7 @@ on:
       - "supabase/tests/v1_recommendation_*.sql"
       - "supabase/tests/v1_contextual_ecosystem_intelligence.sql"
       - "supabase/tests/v1_private_authenticated_rpc_implementations.sql"
+      - "supabase/tests/v1_security_advisor_baseline.sql"
       - "scripts/verify-sql-boundary.mjs"
       - ".github/workflows/recommendation-database-gates.yml"
 
@@ -27,10 +28,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Use Node.js 24
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
           cache: npm
@@ -49,6 +50,9 @@ jobs:
 
       - name: Run authenticated RPC private-boundary matrix
         run: npx --yes supabase@2.84.2 test db supabase/tests/v1_private_authenticated_rpc_implementations.sql --local
+
+      - name: Run security advisor regression baseline
+        run: npx --yes supabase@2.84.2 test db supabase/tests/v1_security_advisor_baseline.sql --local
 
       - name: Run complete recommendation database certification
         run: |
