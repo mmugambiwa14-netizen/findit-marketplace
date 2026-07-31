@@ -59,6 +59,11 @@ const gitStatus = commandOutput('git', ['status', '--porcelain']);
 
 const gates = [
   {
+    name: 'verify:package-lock-normalized',
+    command: process.execPath,
+    args: ['./scripts/normalize-package-lock.mjs'],
+  },
+  {
     name: 'verify:workflow-pinning',
     command: process.execPath,
     args: ['./scripts/verify-workflow-pinning.mjs'],
@@ -89,7 +94,7 @@ const results = gates.map((gate) => ({
 }));
 
 const report = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   generatedAt: new Date().toISOString(),
   repository: 'mmugambiwa14-netizen/findit-marketplace',
   branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || null,
