@@ -55,9 +55,10 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0097_private_public_listing_search_implementation.sql
 // - 0098_private_notification_read_implementations.sql
 // - 0099_private_personalization_preference_implementations.sql
+// - 0100_release_control_consistency.sql
 // Release-tip anchor: bump this deliberately when a migration is added.
-if (basename(migrationFiles.at(-1) ?? '') !== '0100_release_control_consistency.sql') {
-  failures.push(`latest expected migration is 0100, found ${migrationFiles.at(-1) ?? 'none'}`);
+if (basename(migrationFiles.at(-1) ?? '') !== '0101_private_authenticated_rpc_implementations.sql') {
+  failures.push(`latest expected migration is 0101, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
 if (failures.length) {
