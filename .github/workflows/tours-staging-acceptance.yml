@@ -38,9 +38,15 @@ jobs:
       VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
       VITE_AUTH_GOOGLE_ENABLED: "true"
       VITE_FEATURE_GOOGLE_OAUTH: "true"
-      VITE_FEATURE_INTERNATIONAL_LISTING: "true"
+      VITE_FEATURE_MAPS: "true"
+      VITE_MAPTILER_PUBLIC_KEY: ${{ secrets.FINDIT_MAPTILER_PUBLIC_KEY }}
+      VITE_MAPTILER_STYLE_ID: ${{ vars.FINDIT_MAPTILER_STYLE_ID }}
+      VITE_FEATURE_INTERNATIONAL_LISTING: "false"
       VITE_FEATURE_MANUAL_LOCATION: "true"
       VITE_FEATURE_CURRENT_LOCATION: "true"
+      VITE_FEATURE_CURRENCY_CONVERSION: "false"
+      VITE_FEATURE_PHONE_VERIFICATION: "false"
+      VITE_FEATURE_SERVICE_RADIUS: "false"
       VITE_FEATURE_REPORTING: "true"
       VITE_FEATURE_PAYMENTS: "false"
       VITE_FEATURE_SUBSCRIPTIONS: "false"
@@ -153,7 +159,7 @@ jobs:
             note: process.env.ACCEPTANCE_NOTE,
             result: 'passed',
             gates: [
-              'locked install', 'environment validation', 'source graph', 'repository hygiene', 'SQL boundary', 'product surface audit', 'contracts', 'lint',
+              'locked install', 'environment validation', 'MapLibre and MapTiler configuration', 'source graph', 'repository hygiene', 'SQL boundary', 'product surface audit', 'contracts', 'lint',
               'typechecks', 'production build', 'dependency audit',
               'Tours upload', 'processing', 'seller workflow', 'listing integration',
               'public catalogue', 'moderation', 'Tours scale', 'public search scale', 'messaging scale', 'notification scale', 'observability',
