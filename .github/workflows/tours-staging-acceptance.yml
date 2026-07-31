@@ -155,6 +155,7 @@ jobs:
             result: 'passed',
             internalCertification: internal.summary,
             internalCertificationPackageLockSha256: internal.sourceBoundary.packageLockSha256,
+            internalCertificationDependencyInventorySha256: internal.sourceBoundary.dependencyInventorySha256,
             gates: [
               'locked install', 'environment validation', 'MapLibre and MapTiler configuration',
               'deployment security', 'workflow pinning', 'source graph', 'repository hygiene',
@@ -175,5 +176,6 @@ jobs:
           path: |
             artifacts/tours-staging-acceptance.json
             artifacts/certification/internal-certification.json
+            artifacts/certification/dependency-inventory.json
           if-no-files-found: error
           retention-days: 90
