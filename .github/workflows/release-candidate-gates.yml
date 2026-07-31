@@ -98,3 +98,14 @@ jobs:
 
       - name: Run reproducible internal certification
         run: npm run certify:internal
+
+      - name: Upload internal certification evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: internal-certification-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            artifacts/certification/internal-certification.json
+            artifacts/certification/dependency-inventory.json
+          if-no-files-found: warn
+          retention-days: 90
