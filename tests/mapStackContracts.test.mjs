@@ -40,7 +40,9 @@ test('device location resolves and stores only a supported public city', () => {
   assert.doesNotMatch(locationService, /return \{[\s\S]{0,220}coordinates,/);
   assert.doesNotMatch(locationService, /accuracyMeters/);
   assert.doesNotMatch(locationService, /localStorage|sessionStorage|insert|update|upsert/i);
-  assert.match(locationSelector, /Exact coordinates are not saved/);
+  assert.match(locationSelector, /sent to MapTiler/);
+  assert.match(locationSelector, /stores only the matched country, province and city/);
+  assert.match(locationSelector, /not your exact coordinates/);
   assert.match(locationSelector, /Choose your city manually/);
   assert.match(homePage, /function publicLocation\(value\)/);
   assert.match(homePage, /country:[\s\S]*state:[\s\S]*city:[\s\S]*cityName:[\s\S]*source:/);
