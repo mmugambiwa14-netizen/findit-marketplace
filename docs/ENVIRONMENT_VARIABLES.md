@@ -1,131 +1,151 @@
 # Environment Variables
 
-Reviewed: 2026-07-30
+Reviewed: 2026-07-31
 
-Never commit real values. Only `VITE_` variables may enter browser builds.
+Never commit real credentials. Only variables prefixed with `VITE_` may enter a
+browser build, and public browser keys must still be provider-restricted.
 
-## Browser/build variables
+## Browser and build variables
 
-| Name | Purpose | Required | Secret | Example |
-|---|---|---:|---:|---|
-| `VITE_SUPABASE_URL` | Supabase API/Auth URL | Yes | No | `https://project-ref.supabase.co` |
-| `VITE_SUPABASE_ANON_KEY` | Public publishable/anon key protected by RLS | Yes | No | `sb_publishable_...` |
-| `VITE_BASE_PATH` | Optional Vite/Router deployment subpath | Host-specific | No | `/findit-marketplace/` |
-| `VITE_AUTH_GOOGLE_ENABLED` | Shows Google login only after provider acceptance | No; default `false` | No | `false` |
-| `VITE_AUTH_APPLE_ENABLED` | Shows Apple login only after provider acceptance | No; default `false` | No | `false` |
-| `VITE_FEATURE_BUSINESS_PROFILES` | V1 business/dealer profiles | Production `true` | No | `true` |
-| `VITE_FEATURE_MESSAGING` | V1 text-only messaging | Production `true` | No | `true` |
-| `VITE_FEATURE_ESSENTIAL_NOTIFICATIONS` | V1 operational notifications | Production `true` | No | `true` |
-| `VITE_FEATURE_TOURS` | Peek UI exposure | Accepted release `true` | No | `true` |
-| `VITE_FEATURE_TOURS_PREVIEW` | Staging-only placeholder | Production `false` | No | `false` |
-| `VITE_FEATURE_PAYMENTS` | Deferred payments | Production `false` | No | `false` |
-| `VITE_FEATURE_SUBSCRIPTIONS` | Deferred subscriptions | Production `false` | No | `false` |
-| `VITE_FEATURE_ESCROW` | Deferred escrow | Production `false` | No | `false` |
-| `VITE_FEATURE_PREMIUM_LISTINGS` | Deferred premium listings | Production `false` | No | `false` |
-| `VITE_FEATURE_AI_MODERATION` | Deferred AI moderation | Production `false` | No | `false` |
-| `VITE_FEATURE_AI_BAN_EVASION` | Deferred AI detection | Production `false` | No | `false` |
-| `VITE_FEATURE_AI_TICKET_TRIAGE` | Deferred AI triage | Production `false` | No | `false` |
-| `VITE_FEATURE_AI_SUPPORT_CHAT` | Deferred AI support | Production `false` | No | `false` |
-| `VITE_FEATURE_SCHEDULED_REMINDERS` | Deferred reminders | Production `false` | No | `false` |
-| `VITE_FEATURE_MARKETING_EMAILS` | Deferred marketing | Production `false` | No | `false` |
+| Name | Purpose | Current release expectation |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Supabase API/Auth URL | Required; HTTPS in production |
+| `VITE_SUPABASE_ANON_KEY` | Public publishable key protected by RLS | Required |
+| `VITE_BASE_PATH` | Optional deployment subpath | Host-specific |
+| `VITE_AUTH_GOOGLE_ENABLED` | Supabase Google provider switch | False until exact callback acceptance |
+| `VITE_AUTH_APPLE_ENABLED` | Apple provider switch | False |
+| `VITE_FEATURE_BUSINESS_PROFILES` | Business/dealer profiles | True |
+| `VITE_FEATURE_MESSAGING` | Plain-text conversations | True |
+| `VITE_FEATURE_ESSENTIAL_NOTIFICATIONS` | Essential notifications | True |
+| `VITE_FEATURE_GOOGLE_OAUTH` | Shows Google controls | True only with provider enabled |
+| `VITE_FEATURE_MAPS` | Search-results map | True for the certified production variant |
+| `VITE_FEATURE_MANUAL_LOCATION` | Country/province/city selector | True; required fallback |
+| `VITE_FEATURE_CURRENT_LOCATION` | Opt-in device location to supported city | True only with maps and MapTiler configured |
+| `VITE_MAPTILER_PUBLIC_KEY` | MapTiler browser key | Required when maps/current location are enabled |
+| `VITE_MAPTILER_STYLE_ID` | Approved MapTiler map style | Defaults to `streets-v4` |
+| `VITE_FEATURE_REPORTING` | Marketplace reporting | True |
+| `VITE_FEATURE_TOURS` | Peek UI | True only for an accepted Peek release |
+| `VITE_FEATURE_TOURS_PREVIEW` | Development/staging preview | False in every production build |
+| `VITE_FEATURE_PREVIEW_FIXTURES` | Preview fixtures | False in production |
+| `VITE_PREVIEW_AUTH_BYPASS` | Local private-host preview bypass | False in every deployment |
 
-## Edge/server variables
+The MapTiler key is intentionally a browser-visible public key, not a server
+secret. It must be restricted in MapTiler to the exact approved origins. Use a
+separate key per environment, set quota and cost alerts, and rotate it if an
+unexpected origin is observed.
 
-| Name | Purpose | Required | Secret |
-|---|---|---:|---:|
-| `SUPABASE_URL` | Project URL supplied to Edge Functions | Yes | No |
-| `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_ANON_KEY` | User-context validation | Yes | No |
-| `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | Privileged internal database/storage work | Yes | Yes |
-| `FINDIT_ALLOWED_ORIGINS` | Exact comma-separated upload origins | Hosted | No |
-| `FINDIT_MEDIA_CLEANUP_WORKER_SECRET` | Scheduler bearer for cleanup worker | Hosted | Yes |
-| `FINDIT_LISTING_EXPIRY_WORKER_SECRET` | Scheduler bearer for expiry worker | Hosted | Yes |
-| `FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED` | Enables bounded essential-notification fan-out workers | Production notifications | No |
-| `FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET` | Scheduler bearer for saved-listing notification fan-out | Worker enabled | Yes |
-| `FINDIT_RECOMMENDATION_WORKERS_ENABLED` | Enables recommendation partition, aggregate and retention maintenance | Recommendation maintenance enabled | No |
-| `FINDIT_RECOMMENDATION_WORKER_SECRET` | Dedicated scheduler bearer for recommendation maintenance | Worker enabled | Yes |
-| `FINDIT_REQUEST_BUDGET_SALT` | Salt for opaque recommendation request-budget caller digests | Hosted recommendation services | Yes |
-| `FINDIT_RECOMMENDATION_HEALTH_SECRET` | Dedicated bearer for recommendation service health endpoint | Hosted recommendation health checks | Yes |
-| `FINDIT_CONTEXTUAL_HEALTH_SECRET` | Dedicated bearer for contextual ecosystem health endpoint | Hosted contextual health checks | Yes |
-| `TOURS_BACKEND_ENABLED` | Server-side Tour kill switch | Tours environments | No |
-| `FINDIT_TOURS_WORKERS_ENABLED` | Enables processing, cleanup, cache, and observability schedules | Tours enabled | No |
-| `FINDIT_TOURS_RELEASE_ACCEPTED` | Explicit production acceptance gate | Production Tours | No |
-| `FINDIT_TOURS_ACCEPTANCE_ID` | Named staging acceptance record | Accepted production Tours | No |
-| `FINDIT_TOUR_PROCESSOR_MODE` | `github-actions` first-party worker or `external` callback provider | Tours enabled | No |
-| `FINDIT_TOUR_PROCESSING_WORKER_SECRET` | External processing dispatcher bearer | External processor mode | Yes |
-| `FINDIT_TOUR_CLEANUP_WORKER_SECRET` | Tour cleanup scheduler bearer | Tours enabled | Yes |
-| `FINDIT_TOUR_CACHE_WORKER_SECRET` | Cache invalidation scheduler bearer | Tours enabled | Yes |
-| `FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET` | Operational alert evaluator bearer | Tours enabled | Yes |
-| `TOUR_PROCESSOR_URL` | External transcoding job endpoint | External processor mode | No |
-| `TOUR_PROCESSOR_SECRET` | Dispatch and callback HMAC secret | External processor mode | Yes |
-| `TOUR_PROCESSING_CALLBACK_URL` | FindIt callback endpoint | External processor mode | No |
-| `TOUR_CACHE_PURGE_URL` | Optional CDN purge endpoint | Optional | No |
-| `TOUR_CACHE_PURGE_SECRET` | Optional CDN purge credential | With purge URL | Yes |
+The renderer is pinned to MapLibre GL JS `5.12.0`. The current runtime loads the
+exact versioned JavaScript and CSS from `unpkg.com`; production Content Security
+Policy must allow only that pinned host plus MapTiler endpoints, or the pinned
+assets should be copied to the approved first-party host before launch.
 
-Recommendation maintenance is intentionally independent from listing delivery. The scheduled job remains disabled until `FINDIT_RECOMMENDATION_WORKERS_ENABLED=true` is configured in GitHub Actions and the same randomly generated bearer is stored as `FINDIT_RECOMMENDATION_WORKER_SECRET` in both GitHub Actions and Supabase Edge Function secrets. Failure of this worker may delay projection backfills, partition preparation, popularity refreshes or retention cleanup, but it must never make listing routes unavailable.
+Minimum host policy for the current externally hosted runtime normally needs:
 
-## Operations/test-only variables
+- `script-src` permitting the exact `https://unpkg.com` origin;
+- `style-src` permitting the exact `https://unpkg.com` origin;
+- `connect-src` permitting `https://api.maptiler.com` and Supabase;
+- `img-src` permitting MapTiler data/blob images as required by the selected
+  style;
+- `worker-src blob:` for MapLibre workers.
 
-| Name | Purpose |
-|---|---|
-| `FINDIT_SUPABASE_URL` | Explicit smoke/backup target |
-| `FINDIT_SUPABASE_ANON_KEY` | Public smoke key |
-| `FINDIT_SUPABASE_SECRET_KEY` | Admin fixture key; process-only |
-| `FINDIT_SUPABASE_ACCESS_TOKEN` | Supabase Management API token; process-only and never printed or persisted |
-| `FINDIT_ALLOW_HOSTED_SMOKE=staging` | Required destructive-safety opt-in |
-| `FINDIT_ALLOW_STAGING_FOUNDER_SESSION=staging` | Allows guarded Phase 3 certification to create and immediately sign out a one-time staging founder session for audited policy operations |
-| `FINDIT_ALLOW_STAGING_TIMEOUT_LOCK=staging` | Allows the Phase 3 certification to hold a bounded 15-second projection-table lock on the exact staging target |
-| `FINDIT_ALLOW_HOSTED_BACKUP=staging` | Required hosted-backup opt-in |
-| `FINDIT_EXPECTED_PROJECT_REF` | Exact target guard |
-| `FINDIT_SMOKE_ORIGIN` | Exact hosted upload origin |
-| `FINDIT_BACKUP_DIRECTORY` | Explicit logical-backup output path |
-| `FINDIT_MAILPIT_URL` | Local Auth email test endpoint |
-| `FINDIT_EXPECT_GOOGLE_OAUTH` | Expected hosted Google provider status |
-| `FINDIT_EXPECT_APPLE_OAUTH` | Expected hosted Apple provider status |
-| `FINDIT_RECOMMENDATION_SMOKE_URL` | Explicit Supabase project URL for recommendation hosted smoke |
-| `FINDIT_RECOMMENDATION_SMOKE_ORIGIN` | Browser origin expected in recommendation CORS checks |
-| `FINDIT_RECOMMENDATION_SMOKE_LISTING_ID` | Published listing id used for hosted recommendation and contextual smoke |
+Do not broaden these directives to wildcard internet access. Validate the final
+header against the exact production build and style resources.
+
+## Fail-closed customer capabilities
+
+These variables must remain exactly `false` for the Zimbabwe-first V1 because a
+complete product contract does not yet exist:
+
+- `VITE_FEATURE_CURRENCY_CONVERSION`
+- `VITE_FEATURE_PHONE_VERIFICATION`
+- `VITE_FEATURE_INTERNATIONAL_LISTING`
+- `VITE_FEATURE_SERVICE_RADIUS`
+- `VITE_FEATURE_LISTING_EXPIRY`
+- `VITE_FEATURE_LISTING_FRESHNESS_REMINDERS`
+- `VITE_FEATURE_PAYMENTS`
+- `VITE_FEATURE_SUBSCRIPTIONS`
+- `VITE_FEATURE_ESCROW`
+- `VITE_FEATURE_PREMIUM_LISTINGS`
+- `VITE_FEATURE_AI_MODERATION`
+- `VITE_FEATURE_AI_BAN_EVASION`
+- `VITE_FEATURE_AI_TICKET_TRIAGE`
+- `VITE_FEATURE_AI_SUPPORT_CHAT`
+- `VITE_FEATURE_SCHEDULED_REMINDERS`
+- `VITE_FEATURE_MARKETING_EMAILS`
+
+`npm run validate:env` rejects an attempted production release that enables any
+of these. A browser switch alone can never substitute for implementation,
+provider, database, privacy and acceptance work.
+
+## Edge and server variables
+
+| Name | Purpose | Secret |
+|---|---|---:|
+| `SUPABASE_URL` | Project URL supplied to Edge Functions | No |
+| `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_ANON_KEY` | User-context validation | No |
+| `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | Privileged internal work | Yes |
+| `FINDIT_ALLOWED_ORIGINS` | Exact comma-separated browser origins | No |
+| `FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED` | Notification worker activation | No |
+| `FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET` | Notification scheduler bearer | Yes |
+| `FINDIT_RECOMMENDATION_WORKERS_ENABLED` | Recommendation maintenance activation | No |
+| `FINDIT_RECOMMENDATION_WORKER_SECRET` | Recommendation scheduler bearer | Yes |
+| `FINDIT_REQUEST_BUDGET_SALT` | Opaque request-budget digest salt | Yes |
+| `FINDIT_RECOMMENDATION_HEALTH_SECRET` | Recommendation health bearer | Yes |
+| `FINDIT_CONTEXTUAL_HEALTH_SECRET` | Contextual health bearer | Yes |
+| `TOURS_BACKEND_ENABLED` | Peek backend kill switch | No |
+| `FINDIT_TOURS_WORKERS_ENABLED` | Peek workers activation | No |
+| `FINDIT_TOURS_RELEASE_ACCEPTED` | Explicit release acceptance | No |
+| `FINDIT_TOURS_ACCEPTANCE_ID` | Named acceptance record | No |
+| `FINDIT_TOUR_PROCESSOR_MODE` | `github-actions` or `external` | No |
+| `FINDIT_TOUR_PROCESSING_WORKER_SECRET` | External processor scheduler bearer | Yes |
+| `FINDIT_TOUR_CLEANUP_WORKER_SECRET` | Cleanup scheduler bearer | Yes |
+| `FINDIT_TOUR_CACHE_WORKER_SECRET` | Cache scheduler bearer | Yes |
+| `FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET` | Observability scheduler bearer | Yes |
+| `TOUR_PROCESSOR_URL` | External processor endpoint | No |
+| `TOUR_PROCESSOR_SECRET` | Processor HMAC secret | Yes |
+| `TOUR_PROCESSING_CALLBACK_URL` | Processing callback | No |
+| `TOUR_CACHE_PURGE_URL` | Optional external CDN purge endpoint | No |
+| `TOUR_CACHE_PURGE_SECRET` | Optional purge credential | Yes |
+
+Worker secrets must be independently random and stored only in Supabase and the
+approved scheduler. No service-role or worker credential may use a `VITE_`
+prefix.
 
 ## Hosted Auth hardening preflight
 
-`npm run verify:hosted-auth-hardening` performs a read-only request to the exact
-Supabase project Auth configuration and fails closed when the declared policy is
-not met. It never changes provider configuration and must not run in ordinary PR
-CI because its Management API token is privileged.
+`npm run verify:hosted-auth-hardening` is read-only. It requires an explicit
+project target and a process-only Supabase Management API token. Production
+expectations include:
 
-| Name | Production expectation |
-|---|---|
-| `FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT=production` | Explicit read-only production opt-in; must equal the selected mode |
-| `FINDIT_AUTH_PREFLIGHT_MODE=production` | Enforces the complete production policy |
-| `FINDIT_EXPECTED_PROJECT_REF` | Exact production project reference |
-| `FINDIT_SUPABASE_ACCESS_TOKEN` | Process-only Management API token |
-| `FINDIT_EXPECT_AUTH_SITE_URL` | Final canonical HTTPS frontend origin |
-| `FINDIT_EXPECT_AUTH_REDIRECT_URLS` | Exact comma-separated HTTPS callback and recovery allowlist; no loopback URLs |
-| `FINDIT_EXPECT_EMAIL_CONFIRMATIONS=true` | Sign-up confirmation remains enabled |
-| `FINDIT_EXPECT_PASSWORD_MIN_LENGTH=12` | Minimum accepted password length |
-| `FINDIT_EXPECT_PASSWORD_REQUIRED_CHARACTERS` | Strongest selected character-class policy from hosted Auth settings |
-| `FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION=true` | Compromised-password rejection enabled; requires a compatible Supabase plan |
-| `FINDIT_EXPECT_TOTP_MFA=true` | TOTP enrollment and verification both enabled |
-| `FINDIT_EXPECT_AUTH_CAPTCHA=true` | Auth bot protection enabled with an approved provider |
-| `FINDIT_EXPECT_CUSTOM_SMTP=true` | Custom SMTP host and sender configured |
-| `FINDIT_EXPECT_GOOGLE_OAUTH=true` | Use only after public Google consent and production callback acceptance |
-| `FINDIT_EXPECT_APPLE_OAUTH=false` | Apple remains outside the current release scope |
-| `FINDIT_EXPECT_ANONYMOUS_AUTH=false` | Anonymous Auth disabled |
-| `FINDIT_EXPECT_PHONE_SIGNUP=false` | Direct phone signup disabled until an approved SMS onboarding path exists |
+- canonical HTTPS site URL and exact redirect allowlist;
+- email confirmations enabled;
+- password minimum length at least 12 with the approved character policy;
+- leaked-password protection enabled;
+- TOTP enrollment and verification enabled;
+- CAPTCHA/bot protection enabled;
+- custom SMTP and verified sender configured;
+- Google OAuth published and callback-tested when shown;
+- Apple OAuth false;
+- anonymous Auth false;
+- direct phone signup false.
 
-Audit and staging modes use the same evaluator but require their matching
-`FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT` value. Missing production expectations,
-missing provider fields, weak password settings, redirect drift, default mail,
-disabled MFA, disabled CAPTCHA, or provider-state mismatches fail the command.
+The available repository connector does not modify these provider settings.
+They must be configured by an authorized project owner and then verified with
+the preflight command.
 
-Google and Apple OAuth secrets are server/provider credentials and never use a
-`VITE_` prefix. For local-only Auth containers the documented variables are
-`SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` and
-`SUPABASE_AUTH_EXTERNAL_APPLE_SECRET`; hosted credentials belong in Supabase
-Auth provider settings. See `OAUTH_SETUP.md`.
+## Operations and test-only variables
 
-`OPENAI_API_KEY`, Twilio, experimental S3, payment, AI, scanning, SMTP and
-observability secrets are not application requirements while their
-features/providers are disabled. Add them only with an approved provider,
-owner, rotation policy and corresponding documentation.
+Key safeguards include:
 
-Validation is `npm run validate:env`. A closed production build requires HTTPS, all three existing MVP flags on, the essential-notification fan-out worker enabled, all deferred browser flags off, and both Tour flags off. Recommendation maintenance remains independently opt-in and requires its dedicated secret whenever enabled. A Peek-enabled production build additionally requires `FINDIT_TOURS_RELEASE_ACCEPTED=true`, a valid `FINDIT_TOURS_ACCEPTANCE_ID`, the browser and backend Peek flags enabled, a declared processor mode, and the complete cleanup, cache, observability, and notification fan-out worker configuration above. `github-actions` mode runs the repository-owned FFmpeg processor with a scoped Supabase secret; `external` mode additionally requires the dispatch, callback, and HMAC configuration.
+- `FINDIT_EXPECTED_PROJECT_REF` for exact-target protection;
+- `FINDIT_ALLOW_HOSTED_SMOKE=staging` before destructive staging smoke;
+- `FINDIT_SUPABASE_ACCESS_TOKEN` as a process-only Management API token;
+- `FINDIT_SMOKE_ORIGIN` for exact hosted origin checks;
+- `FINDIT_EXPECT_GOOGLE_OAUTH` and `FINDIT_EXPECT_APPLE_OAUTH` for provider
+  assertions;
+- explicit hosted backup and founder-session opt-ins documented by the related
+  scripts.
+
+Validation is always `npm run validate:env`. Production Peek additionally
+requires the browser/backend/worker switches, processor mode, acceptance ID and
+all relevant worker secrets to agree.
