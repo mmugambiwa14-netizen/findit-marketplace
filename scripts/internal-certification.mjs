@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const reportPath = resolve(root, 'artifacts/certification/internal-certification.json');
+const dependencyInventoryPath = resolve(root, 'artifacts/certification/dependency-inventory.json');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const OUTPUT_LIMIT = 16_000;
 
@@ -39,6 +40,14 @@ async function sha256(path) {
   return createHash('sha256').update(content).digest('hex');
 }
 
+async function optionalSha256(path) {
+  try {
+    return await sha256(path);
+  } catch {
+    return null;
+  }
+}
+
 function commandOutput(command, args) {
   const result = spawnSync(command, args, {
     cwd: root,
@@ -62,6 +71,11 @@ const gates = [
     name: 'verify:package-lock-normalized',
     command: process.execPath,
     args: ['./scripts/normalize-package-lock.mjs'],
+  },
+  {
+    name: 'generate:dependency-inventory',
+    command: process.execPath,
+    args: ['./scripts/generate-dependency-inventory.mjs'],
   },
   {
     name: 'verify:workflow-pinning',
@@ -94,7 +108,7 @@ const results = gates.map((gate) => ({
 }));
 
 const report = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   generatedAt: new Date().toISOString(),
   repository: 'mmugambiwa14-netizen/findit-marketplace',
   branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME || null,
@@ -112,6 +126,7 @@ const report = {
     migrationTip: migrations.at(-1) || null,
     packageSha256: await sha256(resolve(root, 'package.json')),
     packageLockSha256: await sha256(resolve(root, 'package-lock.json')),
+    dependencyInventorySha256: await optionalSha256(dependencyInventoryPath),
     deploymentConfigurationSha256: await sha256(resolve(root, 'vercel.json')),
     mapProviderSha256: await sha256(resolve(root, 'src/lib/mapProvider.js')),
   },
