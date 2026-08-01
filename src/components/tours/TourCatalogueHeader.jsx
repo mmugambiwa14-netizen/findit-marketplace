@@ -14,7 +14,7 @@ export default function TourCatalogueHeader({ query, location, onQueryChange, on
           <label htmlFor="tour-catalogue-search" className="relative block">
             <span className="sr-only">Search Peeks</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="tour-catalogue-search" type="search" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search Peeks, sellers or locations" className="locked-control h-12 rounded-2xl pl-10 pr-10" maxLength={100} />
+            <Input id="tour-catalogue-search" type="search" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search listings, sellers or locations" className="locked-control h-12 rounded-2xl pl-10 pr-10" maxLength={100} />
             {query && <button type="button" aria-label="Clear Peek search" onClick={() => onQueryChange('')} className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>}
           </label>
           <label htmlFor="tour-catalogue-location" className="relative block">
