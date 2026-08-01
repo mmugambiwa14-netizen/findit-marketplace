@@ -96,8 +96,29 @@ jobs:
       - name: Audit routed product surface
         run: npm run audit:product-surface
 
+      - name: Run all contracts
+        run: npm run test:contracts
+
       - name: Run Tours contracts
         run: npm run test:tours-contracts
+
+      - name: Lint application
+        run: npm run lint
+
+      - name: Typecheck application
+        run: npm run typecheck
+
+      - name: Typecheck migration boundary
+        run: npm run typecheck:migration
+
+      - name: Typecheck active release surface
+        run: npm run typecheck:active
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Audit production dependency boundary
+        run: npm run audit:production
 
       - name: Run reproducible internal certification
         run: npm run certify:internal
