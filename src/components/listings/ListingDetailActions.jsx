@@ -48,7 +48,7 @@ function ActionButton({ label, onClick, disabled = false, children }) {
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-card/90 text-foreground shadow-lg shadow-black/30 backdrop-blur-xl transition hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-60"
+      className="clay-icon pointer-events-auto h-11 w-11 border-white/10 bg-card/90 text-foreground backdrop-blur-xl disabled:cursor-wait disabled:opacity-60"
     >
       {children}
     </button>
