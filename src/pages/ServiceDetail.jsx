@@ -50,7 +50,7 @@ export default function ServiceDetail() {
     <div className="findit-screen pb-36">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={shareService} showSave={false} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Watch Tour" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} className="md:mt-4 md:rounded-3xl md:border" />
+        <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Take a Peek" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} className="md:mt-4 md:rounded-3xl md:border" />
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5 sm:p-6">
             <div className="flex flex-wrap items-center gap-2">
