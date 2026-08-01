@@ -10,14 +10,13 @@ export function DetailLoading() {
   );
 }
 
-
 export function DetailError({ label = "Listing", onRetry }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-sm text-center">
+      <div className="clay-card max-w-sm rounded-2xl p-6 text-center">
         <h1 className="text-xl font-bold">We could not load this {label.toLowerCase()}.</h1>
         <p className="mt-2 text-sm text-muted-foreground">Check your connection and try again. The item has not been classified as missing.</p>
-        <Button type="button" variant="outline" className="mt-5" onClick={onRetry}>Try again</Button>
+        <Button type="button" variant="outline" className="clay-control mt-5" onClick={onRetry}>Try again</Button>
       </div>
     </div>
   );
@@ -26,7 +25,7 @@ export function DetailError({ label = "Listing", onRetry }) {
 export function DetailMissing({ label }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center text-muted-foreground">
-      {label} not found
+      <div className="clay-card rounded-2xl px-6 py-10">{label} not found</div>
     </div>
   );
 }
@@ -34,7 +33,7 @@ export function DetailMissing({ label }) {
 export function DetailSection({ title, children }) {
   return (
     <section className="surface-panel p-5">
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="text-lg font-bold">{title}</h2>
       <div className="mt-3">{children}</div>
     </section>
   );
@@ -43,21 +42,23 @@ export function DetailSection({ title, children }) {
 export function SellerPanel({ name, sellerId }) {
   const content = (
     <>
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Seller</p>
-      <p className="mt-1 font-semibold text-foreground">{name || "FindIt seller"}</p>
+      <p className="findit-overline">Seller</p>
+      <p className="mt-1 font-bold text-foreground">{name || "FindIt seller"}</p>
       <p className="mt-1 text-sm text-muted-foreground">View the seller’s listings and contact details.</p>
     </>
   );
   return sellerId
-    ? <Link to={`/seller/${encodeURIComponent(sellerId)}`} className="surface-panel block p-5 transition hover:border-border-strong">{content}</Link>
+    ? <Link to={`/seller/${encodeURIComponent(sellerId)}`} className="surface-panel block p-5 transition hover:border-primary/20">{content}</Link>
     : <div className="surface-panel p-5">{content}</div>;
 }
 
 export function SafetyPanel({ children }) {
   return (
-    <section className="rounded-2xl border border-warning/25 bg-warning/10 p-4">
+    <section className="clay-soft rounded-2xl border-warning/25 bg-warning/10 p-4">
       <div className="flex items-start gap-3">
-        <Shield className="mt-0.5 h-5 w-5 flex-none text-warning" aria-hidden="true" />
+        <span className="clay-icon h-10 w-10 shrink-0 border-warning/20 bg-warning/10 text-warning">
+          <Shield className="h-5 w-5" aria-hidden="true" />
+        </span>
         <div>
           <h2 className="font-semibold">Safety tip</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{children}</p>
@@ -69,8 +70,8 @@ export function SafetyPanel({ children }) {
 
 export function ContactBar({ children }) {
   return (
-    <div className="fixed inset-x-0 bottom-16 z-40 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
-      <div className="mx-auto max-w-4xl">{children}</div>
+    <div className="fixed inset-x-3 bottom-[5.25rem] z-40 md:bottom-4">
+      <div className="clay-nav mx-auto max-w-4xl rounded-2xl p-2.5">{children}</div>
     </div>
   );
 }
