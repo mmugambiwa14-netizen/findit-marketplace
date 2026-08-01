@@ -14,26 +14,29 @@ export default function DiscoverCategoryCard({
     <Link
       to={to}
       aria-label={`Browse ${title}`}
-      className="group relative isolate min-h-[118px] overflow-hidden rounded-2xl border border-border/75 bg-card/90 shadow-card transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-floating focus-visible:ring-offset-4 sm:min-h-[148px]"
+      className="clay-card group relative isolate min-h-[118px] overflow-hidden rounded-2xl border-border/80 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-floating focus-visible:ring-offset-4 sm:min-h-[148px]"
     >
       <img
         src={image}
         alt={imageAlt}
         loading="eager"
         decoding="async"
-        className="absolute inset-y-0 right-0 h-full w-[62%] object-cover transition-transform duration-300 group-hover:scale-[1.025]"
+        className="absolute inset-y-0 right-0 h-full w-[62%] object-cover transition-transform duration-300 group-hover:scale-[1.03]"
       />
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--card))_0%,hsl(var(--card))_43%,hsl(var(--card)/.9)_59%,hsl(var(--card)/.08)_100%)]"
+        className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--card))_0%,hsl(var(--card))_43%,hsl(var(--card)/.91)_59%,hsl(var(--card)/.1)_100%)]"
       />
-      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10" />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-gradient-to-r from-white/[0.025] via-transparent to-black/10"
+      />
 
       <div className="relative z-10 flex min-h-[118px] w-[58%] items-center gap-3 p-4 sm:min-h-[148px] sm:p-5">
         <span
           className={cn(
             'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ring-1 ring-white/15',
-            'shadow-[inset_0_1px_rgba(255,255,255,.24),0_8px_18px_rgba(0,0,0,.3)]',
+            'shadow-[inset_1px_1px_rgba(255,255,255,.28),inset_-2px_-2px_rgba(0,0,0,.14),0_9px_20px_rgba(0,0,0,.34)]',
             accentClassName,
           )}
         >
