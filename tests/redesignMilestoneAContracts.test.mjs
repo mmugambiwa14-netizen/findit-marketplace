@@ -48,7 +48,7 @@ test('Milestone A applies the approved dark design tokens', () => {
   assert.match(theme, /prefers-reduced-motion/);
 });
 
-test('Discover is minimal and performs no listing-feed query', () => {
+test('Discover is minimal and performs no listing-feed query in the page shell', () => {
   assert.doesNotMatch(home, /useQuery|getLatestPublicListings|ListingGrid|featured|auction/i);
   assert.match(home, /DiscoverCategoryGrid/);
   assert.match(discoverGrid, /\/search\?type=property/);
@@ -58,7 +58,7 @@ test('Discover is minimal and performs no listing-feed query', () => {
 });
 
 test('canonical navigation and compatibility routes are present', () => {
-  for (const label of ['Discover', 'Peek', 'Post', 'Chats', 'Profile']) {
+  for (const label of ['Discover', 'Peeks', 'Post', 'Chats', 'Profile']) {
     assert.match(navigation, new RegExp(`label: ['"]${label}['"]`));
   }
   assert.match(bottomNav, /PRIMARY_NAV_ITEMS/);
