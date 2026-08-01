@@ -56,7 +56,7 @@ export default function ContactButtons({ listing, type = "property", placement =
   if (!enquiryEligible) {
     if (browsePlacement) return null;
     return (
-      <div className="rounded-xl border border-border bg-card px-4 py-3 text-center">
+      <div className="clay-soft rounded-xl px-4 py-3 text-center">
         <p className="text-sm font-semibold text-foreground">This {type === "service" ? "service" : "listing"} is unavailable</p>
         <p className="mt-1 text-xs text-muted-foreground">Existing chats remain available, but new enquiries are closed.</p>
       </div>
@@ -86,7 +86,7 @@ export default function ContactButtons({ listing, type = "property", placement =
             <Button
               key={key}
               type="button"
-              className="h-11 min-w-0 rounded-xl bg-primary px-2 text-xs font-semibold text-primary-foreground hover:bg-primary-hover sm:text-sm"
+              className="clay-button h-11 min-w-0 rounded-xl px-2 text-xs font-semibold sm:text-sm"
               onClick={onClick}
             >
               <Icon className="mr-1.5 h-4 w-4 shrink-0" />
@@ -106,11 +106,11 @@ export default function ContactButtons({ listing, type = "property", placement =
 
   return (
     <>
-      <div className="flex gap-1.5">
-        {showMessage && <Button className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => requireAuth("message the seller", () => setMessageOpen(true))}><MessagesSquare className="hidden h-4 w-4 sm:mr-2 sm:block" />Message</Button>}
-        {showWhatsApp && <Button className="h-12 min-w-0 flex-1 rounded-xl bg-green-600 px-2 text-xs text-white hover:bg-green-700 sm:text-sm" onClick={openWhatsApp}><MessageCircle className="hidden h-4 w-4 sm:mr-2 sm:block" />WhatsApp</Button>}
-        {showCall && <Button variant="outline" className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => { window.location.href = `tel:${phoneNumber}`; }}><Phone className="hidden h-4 w-4 sm:mr-2 sm:block" />Call</Button>}
-        {showEmail && <Button variant="outline" className="h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={openEmail}><Mail className="hidden h-4 w-4 sm:mr-2 sm:block" />Email</Button>}
+      <div className="flex gap-2">
+        {showMessage && <Button className="clay-button h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => requireAuth("message the seller", () => setMessageOpen(true))}><MessagesSquare className="mr-1.5 h-4 w-4" />Chat</Button>}
+        {showWhatsApp && <Button className="h-12 min-w-0 flex-1 rounded-xl bg-green-600 px-2 text-xs text-white shadow-lg shadow-green-950/20 hover:bg-green-500 sm:text-sm" onClick={openWhatsApp}><MessageCircle className="mr-1.5 h-4 w-4" />WhatsApp</Button>}
+        {showCall && <Button variant="outline" className="clay-control h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => { window.location.href = `tel:${phoneNumber}`; }}><Phone className="mr-1.5 h-4 w-4" />Call</Button>}
+        {showEmail && <Button variant="outline" className="clay-control h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={openEmail}><Mail className="mr-1.5 h-4 w-4" />Email</Button>}
       </div>
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} />
       {showMessage && <MessageDialog open={messageOpen} onClose={() => setMessageOpen(false)} listing={listing} type={type} />}
