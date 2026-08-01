@@ -48,8 +48,8 @@ export default function Tours() {
     const current = new URLSearchParams(paramsKey);
     const nextQuery = current.get('q') || '';
     const nextLocation = current.get('location') || '';
-    setQuery((current) => current === nextQuery ? current : nextQuery);
-    setLocation((current) => current === nextLocation ? current : nextLocation);
+    setQuery((currentValue) => currentValue === nextQuery ? currentValue : nextQuery);
+    setLocation((currentValue) => currentValue === nextLocation ? currentValue : nextLocation);
   }, [paramsKey]);
 
   useEffect(() => {
@@ -77,6 +77,7 @@ export default function Tours() {
     restored.current = true;
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [filterKey]);
+
   const feed = useInfiniteQuery({
     queryKey: listingTourQueryKeys.publicFeed(filters),
     queryFn: ({ pageParam }) => getPublicTourFeedPage({ ...filters, cursor: pageParam || null }),
@@ -137,47 +138,53 @@ export default function Tours() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="findit-screen pb-28">
       <TourCatalogueHeader query={query} location={location} onQueryChange={setQuery} onLocationChange={setLocation} />
       <main className="mx-auto max-w-3xl">
         <TourCategoryChips value={category} onChange={changeCategory} />
 
         {feed.isLoading ? (
-          <div className="flex min-h-[55vh] items-center justify-center" role="status"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading Peeks</span></div>
+          <div className="flex min-h-[55vh] items-center justify-center" role="status"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading Tours</span></div>
         ) : feed.isError ? (
-          <section className="mx-4 mt-8 rounded-3xl border border-border bg-card px-6 py-14 text-center">
+          <section className="clay-card mx-4 mt-5 rounded-3xl px-6 py-14 text-center">
             <RotateCcw className="mx-auto h-8 w-8 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-bold">Peeks could not be loaded</h2>
+            <h2 className="mt-4 text-lg font-bold">Tours could not be loaded</h2>
             <p className="mt-2 text-sm text-muted-foreground">Your search and filters have been preserved.</p>
-            <Button variant="outline" className="mt-5" onClick={() => feed.refetch()}>Try again</Button>
+            <Button variant="outline" className="clay-control mt-5" onClick={() => feed.refetch()}>Try again</Button>
           </section>
         ) : items.length === 0 ? (
-          <section className="mx-4 mt-8 rounded-3xl border border-border bg-card px-6 py-14 text-center">
+          <section className="clay-card mx-4 mt-5 rounded-3xl px-6 py-14 text-center">
             <Film className="mx-auto h-9 w-9 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-bold">No matching Peeks</h2>
+            <h2 className="mt-4 text-lg font-bold">No matching Tours</h2>
             <p className="mt-2 text-sm text-muted-foreground">Try another category, search or location.</p>
           </section>
         ) : (
-          <section aria-label="Peek catalogue" className="space-y-5 px-4 pb-8">
-            {items.map((item) => (
-              <TourCard
-                key={item.tourId}
-                item={item}
-                active={activeTourId === item.tourId}
-                onActivate={setActiveTourId}
-                isSaved={savedOverrides[item.parentId] ?? savedSet.has(item.parentId)}
-                onSavedChange={(id, saved) => setSavedOverrides((current) => ({ ...current, [id]: saved }))}
-                onReported={(tourId) => setActiveTourId((current) => current === tourId ? null : current)}
-              />
-            ))}
+          <section aria-label="Tour catalogue" className="px-4 pb-8">
+            <div className="mb-3 mt-1 flex items-center justify-between">
+              <h2 className="findit-section-title">Featured Tours</h2>
+              <p className="text-xs text-muted-foreground">{items.length} loaded</p>
+            </div>
+            <div className="space-y-4">
+              {items.map((item) => (
+                <TourCard
+                  key={item.tourId}
+                  item={item}
+                  active={activeTourId === item.tourId}
+                  onActivate={setActiveTourId}
+                  isSaved={savedOverrides[item.parentId] ?? savedSet.has(item.parentId)}
+                  onSavedChange={(id, saved) => setSavedOverrides((current) => ({ ...current, [id]: saved }))}
+                  onReported={(tourId) => setActiveTourId((current) => current === tourId ? null : current)}
+                />
+              ))}
+            </div>
             {feed.hasNextPage && (
-              <div className="flex justify-center py-3">
-                <Button variant="outline" className="min-w-48" disabled={feed.isFetchingNextPage} onClick={() => feed.fetchNextPage()}>
-                  {feed.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more Peeks'}
+              <div className="flex justify-center py-5">
+                <Button variant="outline" className="clay-control min-w-48" disabled={feed.isFetchingNextPage} onClick={() => feed.fetchNextPage()}>
+                  {feed.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more Tours'}
                 </Button>
               </div>
             )}
-            {!feed.hasNextPage && items.length > 0 && <p className="py-3 text-center text-xs text-muted-foreground">You have reached the end of these Peeks.</p>}
+            {!feed.hasNextPage && items.length > 0 && <p className="py-5 text-center text-xs text-muted-foreground">You have reached the end of these Tours.</p>}
           </section>
         )}
       </main>
