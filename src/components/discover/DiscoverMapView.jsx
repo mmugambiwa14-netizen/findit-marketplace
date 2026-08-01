@@ -111,7 +111,7 @@ export default function DiscoverMapView({ location }) {
         map.once('load', () => {
           if (cancelled) return;
           tuneDarkBasemap(map);
-          map.fitBounds(bounds, { animate: false, padding: { top: 45, right: 38, bottom: 145, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
+          map.fitBounds(bounds, { animate: false, padding: { top: 45, right: 38, bottom: selectedId ? 240 : 55, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
         });
         map.on('error', () => !cancelled && setFailure('Map tiles are temporarily unavailable.'));
       } catch { if (!cancelled) setFailure('The map could not load. Switch back to list view to continue.'); }
@@ -125,21 +125,24 @@ export default function DiscoverMapView({ location }) {
   if (!mapped.length) return <div className="locked-map-panel flex min-h-[540px] flex-col items-center justify-center px-6 text-center"><MapPin className="h-9 w-9 text-primary" /><h2 className="mt-4 text-lg font-bold">No mapped results</h2><p className="mt-2 text-sm text-muted-foreground">Listings without public coordinates remain available in list view.</p></div>;
 
   return (
-    <section className="locked-map-panel relative min-h-[540px]" aria-label="Discover marketplace map">
-      <div ref={mapNode} className="h-[calc(100svh-270px)] min-h-[540px] max-h-[720px] w-full" />
-      {failure && <div className="absolute inset-x-3 top-3 z-20 rounded-xl border border-border bg-background/94 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">{failure}</div>}
-      {selected && (
-        <div className="locked-bottom-sheet absolute inset-x-0 bottom-[72px] z-30 p-3.5">
-          <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-muted-foreground/40" />
-          <button type="button" onClick={() => setSelectedId(null)} aria-label="Close preview" className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground"><X className="h-5 w-5" /></button>
-          <button type="button" onClick={() => navigate(path(selected))} className="grid w-full grid-cols-[112px_minmax(0,1fr)] gap-3 pr-8 text-left">
-            <div className="h-28 overflow-hidden rounded-xl border border-border bg-muted">{image(selected) ? <img src={image(selected)} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center"><ImageOff className="h-6 w-6 text-muted-foreground" /></span>}</div>
-            <div className="min-w-0 py-0.5"><p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">{CATEGORY_VISUALS[selected._kind].label}</p><p className="mt-1 text-lg font-extrabold text-primary">{price(selected)}</p><h2 className="line-clamp-1 text-base font-bold">{selected.title}</h2><p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{place(selected)}</p></div>
-          </button>
-          <button type="button" onClick={() => navigate(path(selected))} className="clay-button mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold">View full listing <ChevronRight className="h-4 w-4" /></button>
-        </div>
-      )}
-      <div className="discover-map-rail absolute inset-x-2 bottom-2 z-20 grid grid-cols-4 gap-1.5 rounded-2xl border border-border/80 bg-background/88 p-2 shadow-xl backdrop-blur-2xl" role="group" aria-label="Filter map categories">
+    <section className="space-y-3" aria-label="Discover marketplace map">
+      <div className="locked-map-panel relative min-h-[540px]">
+        <div ref={mapNode} className="h-[calc(100svh-270px)] min-h-[540px] max-h-[720px] w-full" />
+        {failure && <div className="absolute inset-x-3 top-3 z-20 rounded-xl border border-border bg-background/94 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">{failure}</div>}
+        {selected && (
+          <div className="locked-bottom-sheet absolute inset-x-0 bottom-0 z-30 p-3.5">
+            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-muted-foreground/40" />
+            <button type="button" onClick={() => setSelectedId(null)} aria-label="Close preview" className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground"><X className="h-5 w-5" /></button>
+            <button type="button" onClick={() => navigate(path(selected))} className="grid w-full grid-cols-[112px_minmax(0,1fr)] gap-3 pr-8 text-left">
+              <div className="h-28 overflow-hidden rounded-xl border border-border bg-muted">{image(selected) ? <img src={image(selected)} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center"><ImageOff className="h-6 w-6 text-muted-foreground" /></span>}</div>
+              <div className="min-w-0 py-0.5"><p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">{CATEGORY_VISUALS[selected._kind].label}</p><p className="mt-1 text-lg font-extrabold text-primary">{price(selected)}</p><h2 className="line-clamp-1 text-base font-bold">{selected.title}</h2><p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{place(selected)}</p></div>
+            </button>
+            <button type="button" onClick={() => navigate(path(selected))} className="clay-button mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold">View full listing <ChevronRight className="h-4 w-4" /></button>
+          </div>
+        )}
+      </div>
+
+      <div className="discover-map-rail surface-panel grid grid-cols-4 gap-1.5 p-2.5" role="group" aria-label="Filter map categories">
         {CATEGORY_KEYS.map((key) => {
           const visual = CATEGORY_VISUALS[key];
           const Icon = visual.icon;
