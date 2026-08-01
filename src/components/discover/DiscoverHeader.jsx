@@ -12,11 +12,11 @@ export default function DiscoverHeader({ location, onLocationChange }) {
         <SheetTrigger asChild>
           <button
             type="button"
-            className="flex min-h-14 w-full min-w-0 items-center gap-3 rounded-2xl border border-border bg-card px-4 text-left shadow-card transition-colors hover:border-border-strong hover:bg-surface-raised"
+            className="clay-control flex min-h-12 w-full min-w-0 items-center gap-3 rounded-2xl px-3.5 text-left hover:border-primary/25 sm:min-h-14 sm:px-4"
             aria-label={`Change location${location?.cityName ? `, currently ${location.cityName}` : ''}`}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
-              <MapPin className="h-4 w-4" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary sm:h-9 sm:w-9">
+              <MapPin className="h-4 w-4 fill-primary/10" />
             </span>
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
               {location?.cityName || 'All locations'}
@@ -24,7 +24,7 @@ export default function DiscoverHeader({ location, onLocationChange }) {
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
           </button>
         </SheetTrigger>
-        <SheetContent side="bottom" className="overflow-y-auto">
+        <SheetContent side="bottom" className="overflow-y-auto border-border bg-background">
           <SheetHeader className="pr-10 text-left">
             <SheetTitle>Choose a location</SheetTitle>
             <SheetDescription>Use a public city-level location to narrow marketplace results.</SheetDescription>
