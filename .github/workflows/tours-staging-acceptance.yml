@@ -113,6 +113,12 @@ jobs:
       - name: Validate accepted release environment
         run: npm run validate:env
 
+      - name: Verify repository hygiene
+        run: npm run verify:hygiene
+
+      - name: Verify SQL migration boundary
+        run: npm run verify:sql-boundary
+
       - name: Typecheck Edge Functions
         run: npm run typecheck:edge-functions
 
