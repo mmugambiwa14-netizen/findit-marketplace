@@ -21,7 +21,7 @@ export const PRIMARY_NAV_ITEMS = [
     exact: true,
   },
   {
-    label: 'Peek',
+    label: 'Tours',
     icon: Video,
     path: '/peek',
     guestAllowed: true,
