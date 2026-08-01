@@ -157,7 +157,7 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
             type="button"
             onClick={() => setPermissionOpen(true)}
             disabled={locating}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
             {locating ? 'Matching your nearest place…' : 'Use my current location'}

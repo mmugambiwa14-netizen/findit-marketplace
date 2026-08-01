@@ -72,6 +72,9 @@ export function PlaceSearchCombobox({
           autoComplete="off"
           placeholder={parentId ? 'Search every registered place…' : 'Choose a province or state first'}
           className="h-11 rounded-lg pl-9"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={Boolean(parentId && !disabled)}
           aria-controls={`${inputId}-results`}
           aria-describedby={`${inputId}-hint`}
         />
@@ -82,15 +85,16 @@ export function PlaceSearchCombobox({
       </p>
 
       {parentId ? (
-        <div id={`${inputId}-results`} className="max-h-56 overflow-y-auto overscroll-contain rounded-xl border border-border bg-card" aria-label="Place results">
+        <div id={`${inputId}-results`} role="listbox" aria-busy={searching} className="max-h-56 overflow-y-auto overscroll-contain rounded-xl border border-border bg-card" aria-label="Place results">
           {places.map((place) => {
             const selected = place.id === value;
             return (
               <button
                 key={place.id}
                 type="button"
+                role="option"
                 onClick={() => choosePlace(place)}
-                aria-pressed={selected}
+                aria-selected={selected}
                 className={cn(
                   'flex min-h-12 w-full items-center gap-3 border-b border-border/70 px-3 py-2 text-left last:border-b-0 hover:bg-primary/5 focus-visible:bg-primary/5',
                   selected && 'bg-primary/10',

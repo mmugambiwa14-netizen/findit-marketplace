@@ -18,6 +18,7 @@ const [
   service,
   selector,
   permissionDialog,
+  placeSearch,
   featureFlags,
 ] = await Promise.all([
   readFile(new URL('../supabase/migrations/0102_sub_saharan_location_registry.sql', import.meta.url), 'utf8'),
@@ -31,6 +32,7 @@ const [
   readFile(new URL('../src/services/locationsService.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/location/LocationSelector.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/location/LocationPermissionDialog.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/components/location/PlaceSearchCombobox.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/lib/featureFlags.js', import.meta.url), 'utf8'),
 ]);
 
@@ -99,6 +101,9 @@ test('manual browsing is country-independent and populated places are searched b
   assert.match(selector, /PlaceSearchCombobox/);
   assert.match(selector, /Country selection always stays unlocked/);
   assert.doesNotMatch(selector, /onSelectLocation\(null\)/);
+  assert.match(placeSearch, /role="combobox"/);
+  assert.match(placeSearch, /role="listbox"/);
+  assert.match(placeSearch, /role="option"/);
 });
 
 test('browser geolocation follows explicit app consent and promises cross-country override', () => {
