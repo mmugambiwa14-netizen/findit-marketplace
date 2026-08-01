@@ -1,4 +1,4 @@
-import { Building2, Car, Tractor, Wrench } from 'lucide-react';
+import { Building2, CarFront, Construction, Wrench } from 'lucide-react';
 import DiscoverCategoryCard from './DiscoverCategoryCard';
 
 const CATEGORIES = [
@@ -6,33 +6,37 @@ const CATEGORIES = [
     title: 'Property',
     description: 'Homes, flats, land and commercial spaces',
     icon: Building2,
+    image: '/demo/listings/modern-home.svg',
+    imageAlt: 'Modern residential property',
     target: '/search?type=property',
-    className: 'from-blue-500/22 to-blue-700/10',
-    iconClassName: 'bg-blue-500/16 text-blue-400',
+    accentClassName: 'from-violet-600 to-indigo-700',
   },
   {
     title: 'Cars',
-    description: 'Cars, vans, bikes and everyday transport',
-    icon: Car,
+    description: 'Sedans, SUVs, vans and everyday transport',
+    icon: CarFront,
+    image: '/demo/listings/silver-sedan.svg',
+    imageAlt: 'Modern passenger car',
     target: '/search?type=car',
-    className: 'from-indigo-500/20 to-blue-800/10',
-    iconClassName: 'bg-indigo-500/16 text-indigo-300',
+    accentClassName: 'from-blue-600 to-blue-800',
   },
   {
     title: 'Machinery',
-    description: 'Trucks, tractors and working equipment',
-    icon: Tractor,
+    description: 'Heavy equipment, trucks and working tools',
+    icon: Construction,
+    image: '/demo/listings/excavator.svg',
+    imageAlt: 'Excavator and heavy machinery',
     target: '/search?type=machinery',
-    className: 'from-violet-500/22 to-purple-800/10',
-    iconClassName: 'bg-violet-500/16 text-violet-300',
+    accentClassName: 'from-amber-600 to-orange-800',
   },
   {
     title: 'Services',
-    description: 'Repairs, maintenance and specialist help',
+    description: 'Repairs, trades and professional help',
     icon: Wrench,
+    image: '/demo/listings/property-maintenance.svg',
+    imageAlt: 'Professional maintenance service',
     target: '/services',
-    className: 'from-teal-500/22 to-cyan-800/10',
-    iconClassName: 'bg-teal-500/16 text-teal-300',
+    accentClassName: 'from-teal-600 to-cyan-800',
   },
 ];
 
@@ -49,7 +53,7 @@ function withLocation(target, location) {
 
 export default function DiscoverCategoryGrid({ location }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
       {CATEGORIES.map((category) => (
         <DiscoverCategoryCard
           key={category.title}
