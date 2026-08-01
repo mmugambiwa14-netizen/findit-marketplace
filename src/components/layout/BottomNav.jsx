@@ -38,7 +38,7 @@ export default function BottomNav() {
         aria-label="Mobile navigation"
         className="safe-area-bottom fixed inset-x-3 bottom-2 z-[1000] md:hidden"
       >
-        <div className="clay-nav mx-auto flex h-[66px] max-w-[470px] items-stretch rounded-2xl px-1.5">
+        <div className="clay-nav mx-auto flex h-[68px] max-w-[470px] items-stretch rounded-[1.35rem] px-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -58,15 +58,22 @@ export default function BottomNav() {
                 )}
               >
                 {item.prominent ? (
-                  <span className="clay-button -mt-5 flex h-12 w-12 items-center justify-center rounded-full ring-4 ring-background/85">
-                    <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={2.35} />
+                  <span className="clay-button -mt-6 flex h-14 w-14 items-center justify-center rounded-full ring-4 ring-background/90">
+                    <Icon aria-hidden="true" className="h-7 w-7" strokeWidth={2.15} />
                   </span>
                 ) : (
-                  <span className={cn('relative flex h-7 w-8 items-center justify-center rounded-xl', isActive && 'bg-primary/10')}>
+                  <span
+                    className={cn(
+                      'relative flex h-8 w-8 items-center justify-center rounded-full transition-[background-color,color,box-shadow,transform]',
+                      isActive
+                        ? 'bg-primary text-primary-foreground shadow-[0_7px_18px_hsl(var(--primary)/.32),inset_0_1px_rgba(255,255,255,.25)]'
+                        : 'text-muted-foreground',
+                    )}
+                  >
                     <Icon
                       aria-hidden="true"
-                      className={cn('h-[20px] w-[20px]', isActive && 'fill-primary/10')}
-                      strokeWidth={isActive ? 2.4 : 1.8}
+                      className="h-[19px] w-[19px]"
+                      strokeWidth={isActive ? 2.25 : 1.85}
                     />
                     {count > 0 && (
                       <span
@@ -78,7 +85,13 @@ export default function BottomNav() {
                     )}
                   </span>
                 )}
-                <span className={cn('max-w-full truncate text-[10px] font-semibold leading-none', item.prominent && '-mt-0.5')}>
+                <span
+                  className={cn(
+                    'max-w-full truncate text-[10px] font-semibold leading-none',
+                    item.prominent && '-mt-0.5',
+                    isActive && !item.prominent && 'text-primary',
+                  )}
+                >
                   {item.label}
                 </span>
               </Link>
