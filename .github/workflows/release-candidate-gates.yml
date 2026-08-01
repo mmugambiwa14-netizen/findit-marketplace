@@ -90,6 +90,9 @@ jobs:
       - name: Validate release environment
         run: npm run validate:env
 
+      - name: Verify source graph
+        run: npm run verify:source-graph
+
       - name: Audit routed product surface
         run: npm run audit:product-surface
 
