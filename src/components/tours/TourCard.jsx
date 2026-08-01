@@ -31,9 +31,14 @@ function priceLabel(item, format) {
   return `${prefix}${format(item.price)}${suffix}`;
 }
 
-const actionClass = 'group flex min-h-12 w-full min-w-0 items-center gap-2 px-0.5 py-2 text-left text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card disabled:cursor-wait disabled:opacity-60';
-const actionIconClass = 'flex h-8 w-8 shrink-0 items-center justify-center text-primary transition-transform group-hover:scale-105';
-const actionLabelClass = 'min-w-0 whitespace-nowrap';
+function categoryLabel(item) {
+  if (item.parentType === 'service') return 'Services';
+  if (item.category === 'car' || item.parentCategory === 'car') return 'Cars';
+  if (item.category === 'machinery' || item.parentCategory === 'machinery') return 'Machinery';
+  return 'Property';
+}
+
+const actionClass = 'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-[11px] font-semibold text-muted-foreground hover:bg-surface-raised hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-60';
 
 export default function TourCard({ item, active, onActivate, isSaved = false, onSavedChange, onReported }) {
   const { user } = useAuth();
@@ -79,7 +84,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
       });
     } catch {
       setPlaybackError(true);
-      toast.error('This Peek is temporarily unavailable');
+      toast.error('This Tour is temporarily unavailable');
     } finally {
       setLoadingPlayback(false);
     }
@@ -141,7 +146,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
   const openReport = () => {
     if (!user) {
-      setGuestAction('report this Peek');
+      setGuestAction('report this Tour');
       setGuestOpen(true);
       return;
     }
@@ -157,8 +162,8 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
   };
 
   return (
-    <article data-tour-id={item.tourId} className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
-      <div className="relative aspect-square overflow-hidden bg-surface-secondary sm:aspect-video">
+    <article data-tour-id={item.tourId} className="clay-card overflow-hidden rounded-2xl">
+      <div className="relative aspect-[16/10] overflow-hidden bg-surface-secondary sm:aspect-video">
         {showingPlayback ? (
           <video
             ref={videoRef}
@@ -179,94 +184,88 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             onError={() => { setPlayback(null); setPlaybackError(true); }}
           />
         ) : (
-          <button type="button" onClick={loadPlayback} className="group relative block h-full w-full text-left" aria-label={`Play Peek for ${item.title}`} disabled={loadingPlayback}>
+          <button type="button" onClick={loadPlayback} className="group relative block h-full w-full text-left" aria-label={`Play Tour for ${item.title}`} disabled={loadingPlayback}>
             {item.thumbnailUrl || item.coverImageUrl ? (
               <img src={item.thumbnailUrl || item.coverImageUrl} alt={item.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
             ) : (
               <div className="h-full w-full bg-surface-raised" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/20" aria-hidden="true" />
-            <span className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/60 text-white shadow-xl backdrop-blur-md transition-transform group-hover:scale-105">
-              {loadingPlayback ? <RotateCcw className="h-6 w-6 animate-spin" /> : <Play className="ml-1 h-7 w-7 fill-current" />}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/5 to-black/25" aria-hidden="true" />
+            <span className="absolute left-1/2 top-[43%] flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-white/92 text-slate-900 shadow-xl transition-transform group-hover:scale-105">
+              {loadingPlayback ? <RotateCcw className="h-5 w-5 animate-spin" /> : <Play className="ml-1 h-6 w-6 fill-current" />}
             </span>
           </button>
         )}
 
         {!showingPlayback && (
           <>
-            <span className="absolute right-3 top-3 z-20 rounded-full border border-white/10 bg-black/65 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
+            <span className="absolute left-3 top-3 z-20 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold text-white shadow-lg">
+              {categoryLabel(item)}
+            </span>
+            <span className="absolute right-3 top-3 z-20 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
               {formatDuration(item.durationSeconds)}
             </span>
-            <Link
-              to={detailPath}
-              className="absolute bottom-5 right-3 z-20 inline-flex h-11 items-center justify-center rounded-xl border border-white/30 bg-black/75 px-4 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition-colors hover:bg-black/90 sm:bottom-4 sm:right-4"
-            >
-              View listing <ArrowUpRight className="ml-2 h-4 w-4" />
+            {listingOnly && (
+              <button
+                type="button"
+                onClick={toggleSave}
+                aria-label={liked ? 'Remove from saved' : 'Save listing'}
+                aria-pressed={liked}
+                disabled={saving}
+                className={cn('absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md', liked && 'text-red-400')}
+              >
+                <Heart className={cn('h-5 w-5', liked && 'fill-current')} />
+              </button>
+            )}
+            <Link to={detailPath} className="absolute inset-x-0 bottom-0 z-10 block px-3 pb-3 pr-14 text-white" aria-label={`View listing ${item.title}`}>
+              <p className="line-clamp-1 text-base font-extrabold leading-5">{item.title}</p>
+              <div className="mt-1 flex min-w-0 items-center justify-between gap-2">
+                {item.publicLocation ? (
+                  <p className="flex min-w-0 items-center gap-1 text-[11px] text-white/75">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{item.publicLocation}</span>
+                  </p>
+                ) : <span />}
+                <p className="shrink-0 text-xs font-bold text-blue-300">{priceLabel(item, format)}</p>
+              </div>
             </Link>
           </>
         )}
 
         {playbackError && (
           <div className="absolute inset-x-3 bottom-3 z-30 rounded-xl border border-white/15 bg-black/80 p-3 text-white backdrop-blur-md">
-            <p className="text-sm font-semibold">Peek playback failed</p>
+            <p className="text-sm font-semibold">Tour playback failed</p>
             <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-blue-200 hover:text-white">Try again</button>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_7.25rem] gap-2.5 border-t border-border bg-card p-4 text-card-foreground sm:grid-cols-[minmax(0,1fr)_7.5rem] sm:gap-3 sm:p-5">
-        <div className="min-w-0 py-0.5">
-          <p className="line-clamp-2 text-sm font-bold leading-5 text-foreground">{item.sellerDisplayName}</p>
-
-          <Link to={detailPath} className="mt-3 block line-clamp-2 text-lg font-black leading-6 text-foreground transition-colors hover:text-primary sm:text-xl">
-            {item.title}
-          </Link>
-
-          {item.publicLocation && (
-            <p className="mt-2 flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4 shrink-0" />
-              <span className="truncate">{item.publicLocation}</span>
-            </p>
-          )}
-
-          <p className="mt-4 truncate text-xl font-black text-primary sm:text-2xl">{priceLabel(item, format)}</p>
-
-          {!isOwner && (
-            <button
-              type="button"
-              onClick={openReport}
-              aria-label="Report Peek"
-              className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-            >
-              <Flag className="h-3.5 w-3.5" />
-              <span>Report</span>
-            </button>
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-col justify-center divide-y divide-border border-l border-border pl-2.5">
-          {listingOnly && (
-            <button type="button" onClick={toggleSave} aria-label={liked ? 'Remove from saved' : 'Save listing'} aria-pressed={liked} disabled={saving} className={cn(actionClass, liked && 'text-destructive')}>
-              <span className={cn(actionIconClass, liked && 'text-destructive')}><Heart className={cn('h-5 w-5', liked && 'fill-current')} /></span>
-              <span className={actionLabelClass}>{liked ? 'Saved' : 'Save'}</span>
-            </button>
-          )}
-          {canMessage ? (
-            <button type="button" onClick={openChat} aria-label="Message seller" className={actionClass}>
-              <span className={actionIconClass}><MessageCircle className="h-5 w-5" /></span>
-              <span className={actionLabelClass}>Message</span>
-            </button>
-          ) : !isOwner ? (
-            <Link to={publicTourDetailPath(item, { openTour: false })} aria-label="Contact provider" className={actionClass}>
-              <span className={actionIconClass}><MessageCircle className="h-5 w-5" /></span>
-              <span className={actionLabelClass}>Contact</span>
-            </Link>
-          ) : null}
-          <button type="button" onClick={share} aria-label="Share listing" className={actionClass}>
-            <span className={actionIconClass}><Share2 className="h-5 w-5" /></span>
-            <span className={actionLabelClass}>Share</span>
+      <div className="grid grid-cols-4 gap-1 border-t border-border bg-card/80 p-2">
+        <Link to={detailPath} className={actionClass} aria-label="View listing">
+          <ArrowUpRight className="h-4 w-4 text-primary" />
+          <span>Listing</span>
+        </Link>
+        {canMessage ? (
+          <button type="button" onClick={openChat} className={actionClass} aria-label="Message seller">
+            <MessageCircle className="h-4 w-4 text-primary" />
+            <span>Chat</span>
           </button>
-        </div>
+        ) : !isOwner ? (
+          <Link to={publicTourDetailPath(item, { openTour: false })} className={actionClass} aria-label="Contact provider">
+            <MessageCircle className="h-4 w-4 text-primary" />
+            <span>Contact</span>
+          </Link>
+        ) : <span />}
+        <button type="button" onClick={share} className={actionClass} aria-label="Share listing">
+          <Share2 className="h-4 w-4 text-primary" />
+          <span>Share</span>
+        </button>
+        {!isOwner ? (
+          <button type="button" onClick={openReport} className={actionClass} aria-label="Report Tour">
+            <Flag className="h-4 w-4 text-primary" />
+            <span>Report</span>
+          </button>
+        ) : <span />}
       </div>
 
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} returnTo={detailPath} />
