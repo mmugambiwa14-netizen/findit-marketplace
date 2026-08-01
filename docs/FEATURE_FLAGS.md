@@ -15,12 +15,14 @@ contracts. A flag never makes missing architecture safe.
 | `VITE_FEATURE_GOOGLE_OAUTH` | `true` only after provider acceptance | Supabase Google provider and exact callbacks |
 | `VITE_FEATURE_MAPS` | `true` | MapLibre GL JS 5.12.0 and protected MapTiler key |
 | `VITE_FEATURE_MANUAL_LOCATION` | `true` | Active country/province/city hierarchy |
-| `VITE_FEATURE_CURRENT_LOCATION` | `true` with maps | User consent, MapTiler reverse geocoding and manual fallback |
+| `VITE_FEATURE_CURRENT_LOCATION` | `true` after registry certification | Explicit user consent, Supabase/PostGIS registry lookup and manual fallback |
 | `VITE_FEATURE_REPORTING` | `true` | Marketplace report RPC and moderation |
 
-The current-location control resolves device coordinates to a supported public
-city. It does not persist exact coordinates through the selector. Manual
-selection remains required even when device location is enabled.
+The current-location control resolves device coordinates through the
+first-party Supabase/PostGIS registry to a supported public country, first-level
+administrative area and populated place. It does not persist exact coordinates
+through the selector. Manual selection remains available and country choice is
+never locked by the detected result.
 
 ## Peek release boundary
 
@@ -78,8 +80,8 @@ constitute an active feature.
 
 ## Maps activation
 
-Maps use MapLibre GL JS `5.12.0`, MapTiler Cloud styles and MapTiler reverse
-geocoding. Before enabling a deployment:
+Maps use MapLibre GL JS `5.12.0` and MapTiler Cloud styles and tiles. Device
+location does not use MapTiler geocoding. Before enabling a map deployment:
 
 1. Create a separate MapTiler browser key for that environment.
 2. Restrict it to the exact approved origins.
@@ -87,8 +89,8 @@ geocoding. Before enabling a deployment:
    `VITE_MAPTILER_STYLE_ID`.
 4. Configure CSP for the pinned MapLibre runtime and MapTiler endpoints, or
    self-host the pinned runtime files.
-5. Test map loading, reverse geocoding, permission denial, provider failure and
-   list-view fallback.
+5. Test map loading, permission denial, location-registry failure and list-view
+   fallback.
 6. Configure quota, abuse and cost alerts.
 
 ## Activation process

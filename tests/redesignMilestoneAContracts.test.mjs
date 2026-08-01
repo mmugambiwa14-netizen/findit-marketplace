@@ -40,10 +40,12 @@ const [
   read('src/pages/Register.jsx'),
 ]);
 
-test('Milestone A applies the approved dark design tokens', () => {
-  assert.match(theme, /--background:\s*223 28% 5%/);
-  assert.match(theme, /--card:\s*217 22% 12%/);
-  assert.match(theme, /--primary:\s*221 83% 53%/);
+test('Milestone A applies the approved blue light and dark design tokens', () => {
+  assert.match(theme, /:root\s*\{[\s\S]*?color-scheme:\s*light/);
+  assert.match(theme, /--background:\s*216 45% 97%/);
+  assert.match(theme, /--primary:\s*217 91% 54%/);
+  assert.match(theme, /\.dark\s*\{[\s\S]*?--background:\s*223 58% 5%/);
+  assert.match(theme, /\.dark\s*\{[\s\S]*?--primary:\s*214 100% 62%/);
   assert.match(theme, /min-width:\s*320px/);
   assert.match(theme, /prefers-reduced-motion/);
 });

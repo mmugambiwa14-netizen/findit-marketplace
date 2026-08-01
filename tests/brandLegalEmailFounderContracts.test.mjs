@@ -54,7 +54,7 @@ test('desktop top navigation omits the redundant Browse and Services links', () 
 });
 
 test('the polished FindIt identity is present across app shells and install metadata', async () => {
-  assert.match(brandLogo, /findit-mark\.png/);
+  assert.match(brandLogo, /findit-brand-mark/);
   for (const shell of [topNav, footer, authLayout, adminSidebar]) {
     assert.match(shell, /BrandLogo/);
   }

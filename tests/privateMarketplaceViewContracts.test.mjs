@@ -46,7 +46,7 @@ test('active client preserves one-session deduplication and unchanged RPC argume
 });
 
 test('view telemetry remains fail-open and cannot block marketplace detail pages', () => {
-  assert.match(hook, /recordMarketplaceView\(parentType, parentId\)\.catch\(\(\) => \{/);
+  assert.match(hook, /recordMarketplaceView\(parentType, parentId\)[\s\S]*?\.catch\(\(\) => \{/);
   assert.match(hook, /View counting must never prevent the marketplace item from loading/);
   assert.doesNotMatch(hook, /throw|setError|navigate/);
 });

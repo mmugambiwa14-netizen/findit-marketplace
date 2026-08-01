@@ -47,20 +47,21 @@ export function mapTilerStyleUrl() {
 
 export function loadMapLibre() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return Promise.reject(new Error('MAP_BROWSER_REQUIRED'));
-  if (window.maplibregl) {
-    try { return Promise.resolve(assertMapLibreRuntime(window.maplibregl)); }
+  const browserWindow = /** @type {Window & { maplibregl?: any }} */ (window);
+  if (browserWindow.maplibregl) {
+    try { return Promise.resolve(assertMapLibreRuntime(browserWindow.maplibregl)); }
     catch (error) { return Promise.reject(error); }
   }
   if (mapLibrePromise) return mapLibrePromise;
 
   ensureMapLibreStylesheet();
   mapLibrePromise = new Promise((resolve, reject) => {
-    const existing = document.getElementById(MAPLIBRE_SCRIPT_ID);
+    const existing = /** @type {HTMLScriptElement | null} */ (document.getElementById(MAPLIBRE_SCRIPT_ID));
     const script = existing || document.createElement('script');
     const timeout = window.setTimeout(() => reject(new Error('MAP_RUNTIME_TIMEOUT')), 15_000);
     const complete = () => {
       window.clearTimeout(timeout);
-      try { resolve(assertMapLibreRuntime(window.maplibregl)); }
+      try { resolve(assertMapLibreRuntime(browserWindow.maplibregl)); }
       catch (error) { reject(error); }
     };
     const fail = () => { window.clearTimeout(timeout); reject(new Error('MAP_RUNTIME_UNAVAILABLE')); };
@@ -82,6 +83,7 @@ function boundedCoordinate(value, minimum, maximum, code) {
   return numeric;
 }
 
+/** @param {{ latitude?: number, longitude?: number, signal?: AbortSignal }} [options] */
 export async function reverseGeocodeMapTiler({ latitude, longitude, signal } = {}) {
   const key = mapTilerPublicKey();
   if (!key) throw new Error('MAP_PROVIDER_NOT_CONFIGURED');

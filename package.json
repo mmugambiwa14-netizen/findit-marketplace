@@ -100,7 +100,9 @@
     "audit:product-surface": "node ./scripts/audit-product-surface.mjs",
     "test:product-audit": "node --experimental-strip-types --test ./tests/comprehensiveProductAudit.test.mjs",
     "audit:ui-surface": "node ./scripts/audit-ui-surface.mjs",
-    "audit:extensive": "node ./scripts/extensive-product-audit.mjs"
+    "audit:extensive": "node ./scripts/extensive-product-audit.mjs",
+    "registry:locations": "node ./scripts/sync-sub-saharan-location-registry.mjs",
+    "registry:locations:admin1": "node ./scripts/reconcile-sub-saharan-admin1.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.6",

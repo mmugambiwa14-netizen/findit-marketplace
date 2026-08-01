@@ -32,12 +32,13 @@ test('preview catalogue contains 360 paginated listings and a multi-page Peek fe
   assert.match(peekService, /nextCursor: last/);
 });
 
-test('map uses interactive Leaflet tiles and the Peek route keeps Tour compatibility', () => {
-  assert.match(map, /from 'leaflet'/);
-  assert.match(map, /tileLayer\('https:\/\/\{s\}\.tile\.openstreetmap\.org/);
+test('map uses interactive MapLibre tiles and the Peek route keeps Tour compatibility', () => {
+  assert.match(map, /loadMapLibre/);
+  assert.match(map, /new maplibregl\.Map/);
+  assert.match(map, /mapTilerStyleUrl/);
   assert.match(map, /fitBounds/);
-  assert.match(map, /circleMarker/);
-  assert.match(map, /OpenStreetMap contributors/);
+  assert.match(map, /new maplibregl\.Marker/);
+  assert.match(map, /attributionControl: true/);
   assert.match(app, /path="\/peek"/);
   assert.match(app, /LegacyPathRedirect to="\/peek"/);
 });

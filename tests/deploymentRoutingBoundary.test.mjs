@@ -11,6 +11,7 @@ const authSource = readFileSync(
 );
 const registerSource = readFileSync(resolve(projectRoot, 'src/pages/Register.jsx'), 'utf8');
 const indexSource = readFileSync(resolve(projectRoot, 'index.html'), 'utf8');
+const documentBootstrapSource = readFileSync(resolve(projectRoot, 'src/documentBootstrap.js'), 'utf8');
 const pagesWorkflow = readFileSync(
   resolve(projectRoot, '.github/workflows/deploy-staging-pages.yml'),
   'utf8',
@@ -39,7 +40,8 @@ test('Pages deep links redirect through a 200 shell and restore the route safely
   assert.doesNotMatch(pagesWorkflow, /cp dist\/index\.html dist\/404\.html/);
   assert.match(pagesFallback, /window\.location\.replace\(destination\.toString\(\)\)/);
   assert.match(pagesFallback, /currentPath\.startsWith\(basePath\)/);
-  assert.match(indexSource, /currentUrl\.searchParams\.get\(routeKey\)/);
-  assert.match(indexSource, /targetUrl\.origin === window\.location\.origin/);
-  assert.match(indexSource, /targetUrl\.pathname\.startsWith\(baseUrl\.pathname\)/);
+  assert.match(indexSource, /src\/documentBootstrap\.js/);
+  assert.match(documentBootstrapSource, /currentUrl\.searchParams\.get\(ROUTE_KEY\)/);
+  assert.match(documentBootstrapSource, /targetUrl\.origin === window\.location\.origin/);
+  assert.match(documentBootstrapSource, /targetUrl\.pathname\.startsWith\(baseUrl\.pathname\)/);
 });

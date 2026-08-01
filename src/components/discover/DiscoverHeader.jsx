@@ -34,7 +34,7 @@ export default function DiscoverHeader({ location, onLocationChange }) {
         >
           <SheetHeader className="pr-10 text-left">
             <SheetTitle>Choose a location</SheetTitle>
-            <SheetDescription>Use a public city-level location to narrow marketplace results.</SheetDescription>
+            <SheetDescription>Choose any registered city, town, village, suburb, or neighbourhood to narrow results.</SheetDescription>
           </SheetHeader>
           <div className="py-5">
             {open && <HierarchicalLocationSelector value={location} onSelectLocation={handleLocationSelection} />}

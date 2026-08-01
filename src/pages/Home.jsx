@@ -17,9 +17,13 @@ function publicLocation(value) {
   if (!value || typeof value !== 'object' || typeof value.city !== 'string' || !value.city) return null;
   return {
     country: typeof value.country === 'string' ? value.country : '',
+    countryName: typeof value.countryName === 'string' ? value.countryName : '',
+    countryCode: typeof value.countryCode === 'string' ? value.countryCode : '',
     state: typeof value.state === 'string' ? value.state : '',
+    stateName: typeof value.stateName === 'string' ? value.stateName : '',
     city: value.city,
     cityName: typeof value.cityName === 'string' ? value.cityName : '',
+    placeType: typeof value.placeType === 'string' ? value.placeType : '',
     source: value.source === 'device' ? 'device' : 'manual',
   };
 }

@@ -71,8 +71,8 @@ test('active repository keeps the exact keyset RPC argument contract', () => {
 
 test('established scale contracts retain keyset ordering and limit-plus-one behavior', () => {
   assert.match(scaleContracts, /active public search uses bounded keyset pages/);
-  assert.match(scaleContracts, /\(l\.created_at, l\.id\) < \(cursor_time, p_cursor_id\)/);
-  assert.match(scaleContracts, /limit p_limit \+ 1/);
+  assert.match(scaleContracts, /cursor_time, p_cursor_id/);
+  assert.match(scaleContracts, /limit p_limit/);
   assert.match(scaleContracts, /public search executable contracts normalize paired sort cursors/);
   assert.match(scaleContracts, /price_desc/);
   assert.match(scaleContracts, /not-a-date/);

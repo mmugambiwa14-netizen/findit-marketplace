@@ -20,8 +20,8 @@ browser build, and public browser keys must still be provider-restricted.
 | `VITE_FEATURE_GOOGLE_OAUTH` | Shows Google controls | True only with provider enabled |
 | `VITE_FEATURE_MAPS` | Search-results map | True for the certified production variant |
 | `VITE_FEATURE_MANUAL_LOCATION` | Country/province/city selector | True; required fallback |
-| `VITE_FEATURE_CURRENT_LOCATION` | Opt-in device location to supported city | True only with maps and MapTiler configured |
-| `VITE_MAPTILER_PUBLIC_KEY` | MapTiler browser key | Required when maps/current location are enabled |
+| `VITE_FEATURE_CURRENT_LOCATION` | Consent-gated device location to a supported public place | True after the Supabase/PostGIS registry is certified; independent of maps |
+| `VITE_MAPTILER_PUBLIC_KEY` | MapTiler browser key | Required when maps are enabled |
 | `VITE_MAPTILER_STYLE_ID` | Approved MapTiler map style | Defaults to `streets-v4` |
 | `VITE_FEATURE_REPORTING` | Marketplace reporting | True |
 | `VITE_FEATURE_TOURS` | Peek UI | True only for an accepted Peek release |
@@ -116,6 +116,11 @@ prefix.
 `npm run verify:hosted-auth-hardening` is read-only. It requires an explicit
 project target and a process-only Supabase Management API token. Production
 expectations include:
+
+- `FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT` to explicitly authorize the read-only check;
+- `FINDIT_EXPECT_AUTH_SITE_URL` and `FINDIT_EXPECT_AUTH_REDIRECT_URLS` for exact URL checks;
+- `FINDIT_EXPECT_PASSWORD_MIN_LENGTH` and `FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION` for password policy;
+- `FINDIT_EXPECT_TOTP_MFA`, `FINDIT_EXPECT_AUTH_CAPTCHA`, and `FINDIT_EXPECT_CUSTOM_SMTP` for account hardening;
 
 - canonical HTTPS site URL and exact redirect allowlist;
 - email confirmations enabled;

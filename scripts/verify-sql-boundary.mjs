@@ -59,6 +59,8 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 }
 
 // Previous reviewed release tips:
+// - 0089_private_country_helper_implementations.sql
+// - 0090_seller_profile_identifier_privacy.sql
 // - 0091_private_public_tour_summaries_implementation.sql
 // - 0092_zimbabwe_province_hierarchy.sql
 // - 0093_private_marketplace_view_implementation.sql
@@ -69,9 +71,16 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0098_private_notification_read_implementations.sql
 // - 0099_private_personalization_preference_implementations.sql
 // - 0100_release_control_consistency.sql
+// - 0101_private_authenticated_rpc_implementations.sql
+// - 0102_sub_saharan_location_registry.sql
+// - 0103_canonical_sub_saharan_admin1_hierarchy.sql
+// - 0104_consented_location_resolver_hardening.sql
+// - 0105_consented_location_resolver_least_privilege.sql
+// - 0106_active_country_boundary_spatial_index.sql
+// - 0107_location_registry_free_tier_index_budget.sql
 // Release-tip anchor: bump this deliberately when a migration is added.
-if (basename(migrationFiles.at(-1) ?? '') !== '0101_private_authenticated_rpc_implementations.sql') {
-  failures.push(`latest expected migration is 0101, found ${migrationFiles.at(-1) ?? 'none'}`);
+if (basename(migrationFiles.at(-1) ?? '') !== '0108_location_registry_parent_index_deduplication.sql') {
+  failures.push(`latest expected migration is 0108, found ${migrationFiles.at(-1) ?? 'none'}`);
 }
 
 if (failures.length) {

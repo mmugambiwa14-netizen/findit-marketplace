@@ -1,15 +1,15 @@
 # Maps, Location and Release-Control Certification
 
-Date: 2026-07-31  
+Date: 2026-08-01
 Branch: `feature/listing-intelligence-foundation`  
 Staging project: `bwgklpxoetrrkutottdb`  
-SQL boundary: `0100`
+SQL boundary: `0108`
 
 ## Implemented stack
 
 - Renderer: MapLibre GL JS `5.12.0`
 - Map style and tile provider: MapTiler Cloud
-- Reverse geocoding: MapTiler Geocoding API
+- Consented location resolution: first-party Supabase/PostGIS registry RPC
 - Marketplace spatial database: Supabase PostgreSQL/PostGIS
 - Public precision: supported city level
 
@@ -18,20 +18,25 @@ have been removed from the active source and package manifest.
 
 ## Privacy boundary
 
-Device location is optional. Browser coordinates are sent to MapTiler only when
-the user selects “Use my current location.” They are used to match an active
-supported city. The resolver returns only:
+Device location is optional. The browser does not request coordinates until the
+user accepts FindIt’s explicit “Allow once” explanation and the browser’s native
+permission prompt. Coordinates are sent once to FindIt’s Supabase/PostGIS
+resolver, are not persisted by the flow, and are used to match a supported
+country, first-level administrative area and populated place. The resolver
+returns only:
 
 - country id
+- country name and ISO code
 - province id
-- city id
-- city name
+- province/state/region name
+- populated-place id, name and type
 - source (`device`)
 
 Home browser storage applies a second whitelist before persistence. It cannot
 store latitude, longitude, coordinates or accuracy values through this flow.
-Manual location remains available when permission is denied, geocoding fails or
-the user does not want to use device location.
+Manual location remains available when permission is denied, registry lookup
+fails or the user does not want to use device location. A detected country never
+locks the selector; a user in Zambia can immediately browse Botswana.
 
 ## Failure isolation
 

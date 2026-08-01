@@ -33,20 +33,20 @@ test('map failures remain isolated from listing navigation', () => {
   assert.match(mapComponent, /detailPath\(listing, type\)/);
 });
 
-test('device location resolves and stores only a supported public city', () => {
-  assert.match(locationService, /getActiveLocations\('country'\)/);
-  assert.match(locationService, /getActiveLocations\('province'\)/);
-  assert.match(locationService, /getActiveLocations\('city'\)/);
-  assert.match(locationService, /reverseGeocodeMapTiler/);
+test('device location is consent-gated and stores only a supported public place hierarchy', () => {
+  assert.match(locationService, /consentGranted = false/);
+  assert.match(locationService, /GEOLOCATION_CONSENT_REQUIRED/);
+  assert.match(locationService, /getNearestMarketplacePlace/);
   assert.match(locationService, /CURRENT_LOCATION_OUTSIDE_SUPPORTED_MARKET/);
   assert.match(locationService, /return Object\.freeze\(\{[\s\S]*country:[\s\S]*state:[\s\S]*city:[\s\S]*cityName:[\s\S]*source: 'device'/);
   assert.doesNotMatch(locationService, /return \{[\s\S]{0,220}coordinates,/);
   assert.doesNotMatch(locationService, /accuracyMeters/);
   assert.doesNotMatch(locationService, /localStorage|sessionStorage|insert|update|upsert/i);
-  assert.match(locationSelector, /sent to MapTiler/);
-  assert.match(locationSelector, /stores only the matched country, province and city/);
-  assert.match(locationSelector, /not your exact coordinates/);
-  assert.match(locationSelector, /Choose your city manually/);
+  assert.match(locationSelector, /LocationPermissionDialog/);
+  assert.match(locationSelector, /consentGranted: true/);
+  assert.match(locationSelector, /getActiveLocations\('country'\)/);
+  assert.match(locationSelector, /selectedCountryCode/);
+  assert.match(locationSelector, /PlaceSearchCombobox/);
   assert.match(homePage, /function publicLocation\(value\)/);
   assert.match(homePage, /country:[\s\S]*state:[\s\S]*city:[\s\S]*cityName:[\s\S]*source:/);
   assert.match(homePage, /writeStoredJson\('local', LOCATION_STORAGE_KEY, safeLocation\)/);

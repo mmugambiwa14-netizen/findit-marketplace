@@ -1,20 +1,24 @@
-import { useId, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Loader2, LocateFixed } from "lucide-react";
-import { getActiveLocations } from "@/services/locationsService";
-import { currentLocationErrorMessage, resolveCurrentMarketplaceLocation } from "@/services/currentLocationService";
-import { featureFlags } from "@/lib/featureFlags";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { useEffect, useId, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Loader2, LocateFixed, MapPinned } from 'lucide-react';
+import { getActiveLocations } from '@/services/locationsService';
+import { currentLocationErrorMessage, resolveCurrentMarketplaceLocation } from '@/services/currentLocationService';
+import { featureFlags } from '@/lib/featureFlags';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { LocationPermissionDialog } from '@/components/location/LocationPermissionDialog';
+import { PlaceSearchCombobox } from '@/components/location/PlaceSearchCombobox';
 
-export function LocationSelector({ value, onChange, level = "country", parentId = null, disabled = false }) {
+const LOCATION_CACHE_MS = 1000 * 60 * 60;
+
+export function LocationSelector({ value, onChange, level = 'country', parentId = null, disabled = false }) {
   const generatedId = useId();
   const triggerId = `location-${level}-${generatedId}`;
   const { data: locations = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ["locations", level, parentId],
+    queryKey: ['locations', level, parentId],
     queryFn: () => getActiveLocations(level, parentId),
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60 * 24,
+    staleTime: LOCATION_CACHE_MS,
+    gcTime: LOCATION_CACHE_MS * 24,
   });
 
   return (
@@ -22,7 +26,7 @@ export function LocationSelector({ value, onChange, level = "country", parentId 
       <Label htmlFor={triggerId} className="text-sm font-medium">
         {level.charAt(0).toUpperCase() + level.slice(1)}
       </Label>
-      <Select value={value || ""} onValueChange={onChange} disabled={disabled || isLoading || isError}>
+      <Select value={value || ''} onValueChange={onChange} disabled={disabled || isLoading || isError}>
         <SelectTrigger id={triggerId} className="rounded-lg" aria-invalid={isError || undefined}>
           <SelectValue placeholder={isLoading ? `Loading ${level}...` : `Select ${level}...`} />
         </SelectTrigger>
@@ -34,12 +38,12 @@ export function LocationSelector({ value, onChange, level = "country", parentId 
           ))}
         </SelectContent>
       </Select>
-      {isError && (
+      {isError ? (
         <p className="text-xs text-destructive" role="alert">
           Locations could not be loaded.{' '}
           <button type="button" className="font-semibold underline" onClick={() => refetch()}>Retry</button>
         </p>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -48,77 +52,86 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
   const generatedId = useId();
   const countryId = `country-${generatedId}`;
   const stateId = `state-${generatedId}`;
-  const cityId = `city-${generatedId}`;
-  const [country, setCountry] = useState(value?.country || "");
-  const [state, setState] = useState(value?.state || "");
-  const [city, setCity] = useState(value?.city || "");
+  const [country, setCountry] = useState(value?.country || '');
+  const [state, setState] = useState(value?.state || '');
+  const [city, setCity] = useState(value?.city || '');
+  const [cityName, setCityName] = useState(value?.cityName || '');
   const [locating, setLocating] = useState(false);
-  const [currentLocationError, setCurrentLocationError] = useState("");
+  const [permissionOpen, setPermissionOpen] = useState(false);
+  const [currentLocationError, setCurrentLocationError] = useState('');
 
   useEffect(() => {
-    setCountry(value?.country || "");
-    setState(value?.state || "");
-    setCity(value?.city || "");
-  }, [value?.country, value?.state, value?.city]);
+    setCountry(value?.country || '');
+    setState(value?.state || '');
+    setCity(value?.city || '');
+    setCityName(value?.cityName || '');
+  }, [value?.country, value?.state, value?.city, value?.cityName]);
 
   const countriesQuery = useQuery({
-    queryKey: ["locations-countries"],
-    queryFn: () => getActiveLocations("country"),
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60 * 24,
+    queryKey: ['locations-countries', 'sub-saharan'],
+    queryFn: () => getActiveLocations('country'),
+    staleTime: LOCATION_CACHE_MS,
+    gcTime: LOCATION_CACHE_MS * 24,
   });
+  const countries = countriesQuery.data || [];
+  const selectedCountry = useMemo(
+    () => countries.find((candidate) => candidate.id === country) || null,
+    [countries, country],
+  );
+  const selectedCountryCode = selectedCountry?.country_code || value?.countryCode || null;
 
   const statesQuery = useQuery({
-    queryKey: ["locations-states", country],
-    queryFn: () => getActiveLocations("province", country),
-    enabled: Boolean(country),
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60 * 24,
+    queryKey: ['locations-states', country, selectedCountryCode],
+    queryFn: () => getActiveLocations('province', country, selectedCountryCode),
+    enabled: Boolean(country && selectedCountryCode),
+    staleTime: LOCATION_CACHE_MS,
+    gcTime: LOCATION_CACHE_MS * 24,
   });
-
-  const citiesQuery = useQuery({
-    queryKey: ["locations-cities", state],
-    queryFn: () => getActiveLocations("city", state),
-    enabled: Boolean(state),
-    staleTime: 1000 * 60 * 60,
-    gcTime: 1000 * 60 * 60 * 24,
-  });
-
-  const countries = countriesQuery.data || [];
   const states = statesQuery.data || [];
-  const cities = citiesQuery.data || [];
 
   const handleCountrySelect = (countryIdValue) => {
     setCountry(countryIdValue);
-    setState("");
-    setCity("");
-    setCurrentLocationError("");
-    onSelectLocation(null);
+    setState('');
+    setCity('');
+    setCityName('');
+    setCurrentLocationError('');
   };
 
   const handleStateSelect = (stateIdValue) => {
     setState(stateIdValue);
-    setCity("");
-    setCurrentLocationError("");
-    onSelectLocation(null);
+    setCity('');
+    setCityName('');
+    setCurrentLocationError('');
   };
 
-  const handleCitySelect = (cityIdValue) => {
-    setCity(cityIdValue);
-    setCurrentLocationError("");
-    const cityName = cities.find((candidate) => candidate.id === cityIdValue)?.name || "";
-    onSelectLocation({ country, state, city: cityIdValue, cityName, source: 'manual' });
+  const handlePlaceSelect = (place) => {
+    setCity(place.id);
+    setCityName(place.name);
+    setCurrentLocationError('');
+    const stateName = states.find((candidate) => candidate.id === state)?.name || '';
+    onSelectLocation({
+      country,
+      countryName: selectedCountry?.name || '',
+      countryCode: selectedCountryCode || place.country_code,
+      state,
+      stateName,
+      city: place.id,
+      cityName: place.name,
+      placeType: place.type,
+      source: 'manual',
+    });
   };
 
-  const useCurrentLocation = async () => {
+  const handleCurrentLocation = async () => {
     if (locating) return;
     setLocating(true);
-    setCurrentLocationError("");
+    setCurrentLocationError('');
     try {
-      const resolved = await resolveCurrentMarketplaceLocation();
+      const resolved = await resolveCurrentMarketplaceLocation({ consentGranted: true });
       setCountry(resolved.country);
       setState(resolved.state);
       setCity(resolved.city);
+      setCityName(resolved.cityName);
       onSelectLocation(resolved);
     } catch (error) {
       setCurrentLocationError(currentLocationErrorMessage(error));
@@ -127,34 +140,38 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
     }
   };
 
-  const locationListError = countriesQuery.isError || statesQuery.isError || citiesQuery.isError;
+  const locationListError = countriesQuery.isError || statesQuery.isError;
 
   return (
     <div className="space-y-4">
-      {featureFlags.currentLocation && (
-        <div className="rounded-xl border border-border bg-surface-secondary p-3">
+      {featureFlags.currentLocation ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-3.5">
+          <div className="mb-3 flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPinned className="h-4 w-4" aria-hidden="true" /></span>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Start near you—or browse anywhere</p>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Location only suggests a starting point. Country selection always stays unlocked.</p>
+            </div>
+          </div>
           <button
             type="button"
-            onClick={useCurrentLocation}
+            onClick={() => setPermissionOpen(true)}
             disabled={locating}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
             {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
-            {locating ? 'Finding your nearest supported city...' : 'Use my current location'}
+            {locating ? 'Matching your nearest place…' : 'Use my current location'}
           </button>
-          <p className="mt-2 text-xs text-muted-foreground">
-            With your permission, your device coordinates are sent to MapTiler to match a supported public city. FindIt stores only the matched country, province and city from this control, not your exact coordinates.
-          </p>
-          {currentLocationError && <p className="mt-2 text-xs text-destructive" role="alert">{currentLocationError}</p>}
+          {currentLocationError ? <p className="mt-2 text-xs text-destructive" role="alert">{currentLocationError}</p> : null}
         </div>
-      )}
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor={countryId}>Country</Label>
           <Select value={country} onValueChange={handleCountrySelect} disabled={countriesQuery.isLoading || countriesQuery.isError || locating}>
             <SelectTrigger id={countryId} className="rounded-lg">
-              <SelectValue placeholder={countriesQuery.isLoading ? "Loading countries..." : "Select country..."} />
+              <SelectValue placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country...'} />
             </SelectTrigger>
             <SelectContent>
               {countries.map((candidate) => (
@@ -164,11 +181,11 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor={stateId}>State/Province</Label>
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor={stateId}>Province, state or region</Label>
           <Select value={state} onValueChange={handleStateSelect} disabled={!country || statesQuery.isLoading || statesQuery.isError || locating}>
             <SelectTrigger id={stateId} className="rounded-lg">
-              <SelectValue placeholder={!country ? "Select a country first" : statesQuery.isLoading ? "Loading states..." : "Select state..."} />
+              <SelectValue placeholder={!country ? 'Select a country first' : statesQuery.isLoading ? 'Loading regions...' : 'Select a province, state or region...'} />
             </SelectTrigger>
             <SelectContent>
               {states.map((candidate) => (
@@ -178,33 +195,37 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor={cityId}>City</Label>
-          <Select value={city} onValueChange={handleCitySelect} disabled={!state || citiesQuery.isLoading || citiesQuery.isError || locating}>
-            <SelectTrigger id={cityId} className="rounded-lg">
-              <SelectValue placeholder={!state ? "Select a state first" : citiesQuery.isLoading ? "Loading cities..." : "Select city..."} />
-            </SelectTrigger>
-            <SelectContent>
-              {cities.map((candidate) => (
-                <SelectItem key={candidate.id} value={candidate.id}>{candidate.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <PlaceSearchCombobox
+          parentId={state}
+          value={city}
+          selectedName={cityName}
+          onSelect={handlePlaceSelect}
+          disabled={locating}
+        />
       </div>
 
-      {locationListError && (
+      {locationListError ? (
         <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3" role="alert">
           <p className="text-xs text-destructive">One or more location lists could not be loaded.</p>
           <button
             type="button"
             className="text-xs font-semibold text-destructive underline"
-            onClick={() => Promise.all([countriesQuery.refetch(), country ? statesQuery.refetch() : null, state ? citiesQuery.refetch() : null])}
+            onClick={() => Promise.all([countriesQuery.refetch(), country ? statesQuery.refetch() : null])}
           >
             Retry
           </button>
         </div>
-      )}
+      ) : null}
+
+      <p className="text-[11px] leading-5 text-muted-foreground">
+        Place data © <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">GeoNames</a> and administrative boundaries © <a href="https://www.geoboundaries.org/" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground">geoBoundaries</a>, both CC BY 4.0.
+      </p>
+
+      <LocationPermissionDialog
+        open={permissionOpen}
+        onOpenChange={setPermissionOpen}
+        onAllow={() => { setPermissionOpen(false); void handleCurrentLocation(); }}
+      />
     </div>
   );
 }

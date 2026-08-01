@@ -149,11 +149,11 @@ test('guest authentication prompts use a focus-managed dialog and retain the cur
 });
 
 test('location selection clears stale dependent state and exposes loading failure recovery', () => {
-  assert.match(locationSelector, /setState\(\"\"\)/);
-  assert.match(locationSelector, /setCity\(\"\"\)/);
+  assert.match(locationSelector, /setState\(['\"]{2}\)/);
+  assert.match(locationSelector, /setCity\(['\"]{2}\)/);
   assert.match(locationSelector, /Retry/);
   assert.match(locationSelector, /disabled=\{!country/);
-  assert.match(locationSelector, /disabled=\{!state/);
+  assert.match(locationSelector, /parentId=\{state\}/);
 });
 
 test('phone entry uses labelled controls and longest-prefix parsing', () => {

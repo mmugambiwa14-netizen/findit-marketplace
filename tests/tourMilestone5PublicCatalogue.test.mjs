@@ -93,7 +93,7 @@ test('catalogue UI is cinematic but not a social-video feed', () => {
   assert.match(page, /Load more Peeks/);
   assert.match(page, /TourCategoryChips/);
   assert.match(header, /Search listings, sellers or locations/);
-  for (const label of ['All', 'Property', 'Vehicles', 'Equipment', 'Services']) assert.match(chips, new RegExp(label));
+  for (const label of ['All', 'Property', 'Cars', 'Machinery', 'Services']) assert.match(chips, new RegExp(label));
   assert.match(card, /aspect-video/);
   assert.match(card, /View listing/);
   assert.match(card, /Save/);

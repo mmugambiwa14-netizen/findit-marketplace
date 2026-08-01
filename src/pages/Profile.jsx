@@ -77,7 +77,7 @@ function ProfileSection({ title, children }) {
   );
 }
 
-function ProfileLink({ icon: Icon, label, description, to, badge }) {
+function ProfileLink({ icon: Icon, label, description, to, badge = null }) {
   return (
     <Link to={to} className="group flex min-h-[72px] items-center gap-3 px-4 py-3 transition hover:bg-primary/[0.045]">
       <span className="locked-icon-tile h-10 w-10"><Icon className="h-5 w-5" /></span>

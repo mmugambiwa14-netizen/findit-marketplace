@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export default function StepNav({
-  onBack,
+  onBack = undefined,
   onContinue,
   continueLabel = 'Continue',
   backLabel = 'Back',

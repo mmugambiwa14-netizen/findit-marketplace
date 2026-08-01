@@ -10,7 +10,7 @@ const [migration, recommendation, migrationWorkflow, recommendationWorkflow] = a
 ]);
 
 function suiteCount(source) {
-  const block = source.match(/TEST_FILES=\(\n([\s\S]*?)\n\)/)?.[1] || '';
+  const block = source.match(/TEST_FILES=\(\r?\n([\s\S]*?)\r?\n\)/)?.[1] || '';
   return block.split('\n').filter((line) => /supabase\/tests\/.+\.sql/.test(line)).length;
 }
 

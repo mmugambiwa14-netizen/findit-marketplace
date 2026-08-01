@@ -24,8 +24,9 @@ test('0100 removes redundant browser table grants without removing service acces
   assert.match(migration, /revoke all privileges on table public\.recommendation_events_default from anon, authenticated/i);
   assert.match(migration, /has_table_privilege\('service_role'/);
   assert.match(rollback, /grant all privileges on table public\.recommendation_events_default to anon, authenticated/i);
-  assert.doesNotMatch(migration, /drop table|truncate|delete from/i);
-  assert.doesNotMatch(rollback, /drop table|truncate|delete from/i);
+  const destructiveStatement = /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i;
+  assert.doesNotMatch(migration, destructiveStatement);
+  assert.doesNotMatch(rollback, destructiveStatement);
 });
 
 test('release validation and runtime agree on the MapTiler provider', () => {

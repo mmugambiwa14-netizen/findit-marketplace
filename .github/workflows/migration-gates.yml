@@ -108,7 +108,9 @@ jobs:
       # The certification runner executes this complete pgTAP inventory after a
       # clean database reset. Keeping the list here makes the reviewed boundary
       # explicit while the shell runner remains the single execution entrypoint:
+      # v1_contact_support.sql
       # v1_contextual_ecosystem_intelligence.sql
+      # v1_essential_notifications.sql
       # v1_extension_schema_security.sql
       # v1_foreign_key_index_coverage.sql
       # v1_private_authenticated_rpc_implementations.sql

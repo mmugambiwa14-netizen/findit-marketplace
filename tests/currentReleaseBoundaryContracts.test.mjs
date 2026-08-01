@@ -8,9 +8,9 @@ const [sqlBoundary, hygiene, migrationWorkflow] = await Promise.all([
   readFile(new URL('../.github/workflows/migration-gates.yml', import.meta.url), 'utf8'),
 ]);
 
-test('the reviewed SQL release tip is migration 0101', () => {
-  assert.match(sqlBoundary, /0101_private_authenticated_rpc_implementations\.sql/);
-  assert.match(sqlBoundary, /latest expected migration is 0101/);
+test('the reviewed SQL release tip is migration 0108', () => {
+  assert.match(sqlBoundary, /0108_location_registry_parent_index_deduplication\.sql/);
+  assert.match(sqlBoundary, /latest expected migration is 0108/);
 });
 
 test('repository hygiene deterministically rejects unfinished source markers', () => {
