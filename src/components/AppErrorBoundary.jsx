@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import * as authService from '@/services/authService';
+import BrandLogo from '@/components/BrandLogo';
 
 export default class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -23,6 +24,7 @@ export default class AppErrorBoundary extends React.Component {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
         <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-center shadow-lg" aria-labelledby="app-error-title">
+          <BrandLogo className="mb-6" markClassName="h-9 w-9" wordmarkClassName="text-xl" />
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-7 w-7 text-destructive" aria-hidden="true" />
           </div>

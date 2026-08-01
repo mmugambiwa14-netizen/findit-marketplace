@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import * as authService from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { ADMIN_NAV_ITEMS, isNavigationItemActive } from '@/lib/navigationConfig';
+import BrandLogo from '@/components/BrandLogo';
 import {
   LogOut,
   ArrowLeft,
@@ -22,13 +23,15 @@ export default function AdminSidebarCollapsible() {
   return (
     <div className={`h-screen shrink-0 bg-sidebar overflow-y-auto flex flex-col sticky top-0 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-20 sm:w-64'} border-r border-sidebar-border`}>
       {/* Logo & Toggle */}
-      <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
+      <div className={`border-b border-sidebar-border flex items-center justify-between ${isCollapsed ? 'p-2.5' : 'p-4'}`}>
         {!isCollapsed && (
-          <Link to="/admin" className="hidden text-xl font-black text-sidebar-primary sm:block">
-            FINDit
+          <Link to="/admin" className="hidden sm:block" aria-label="FindIt admin overview">
+            <BrandLogo markClassName="h-8 w-8" wordmarkClassName="text-lg" />
           </Link>
         )}
-        <Link to="/admin" className="text-xl font-black text-sidebar-primary sm:hidden" aria-label="FindIt admin overview">F</Link>
+        <Link to="/admin" className={isCollapsed ? 'hidden sm:block' : 'sm:hidden'} aria-label="FindIt admin overview">
+          <BrandLogo showWordmark={false} markClassName="h-7 w-7" />
+        </Link>
         <button type="button"
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="hidden p-1 hover:bg-sidebar-accent rounded-lg transition-colors sm:block"

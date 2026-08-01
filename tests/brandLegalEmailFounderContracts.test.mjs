@@ -8,12 +8,14 @@ const [
   app,
   home,
   hero,
+  brandLogo,
   topNav,
   bottomNav,
   guestPrompt,
   footer,
   legalContent,
   authLayout,
+  adminSidebar,
   adminLayout,
   config,
   founderMigration,
@@ -22,12 +24,14 @@ const [
   read('src/App.jsx'),
   read('src/pages/Home.jsx'),
   read('src/components/home/HeroSection.jsx'),
+  read('src/components/BrandLogo.jsx'),
   read('src/components/layout/TopNav.jsx'),
   read('src/components/layout/BottomNav.jsx'),
   read('src/components/auth/GuestPromptSheet.jsx'),
   read('src/components/layout/SiteFooter.jsx'),
   read('src/lib/legalContent.js'),
   read('src/components/AuthLayout.jsx'),
+  read('src/components/admin/AdminSidebarCollapsible.jsx'),
   read('src/components/layout/AdminLayout.jsx'),
   read('supabase/config.toml'),
   read('supabase/migrations/0030_v1_founder_admin_lock.sql'),
@@ -47,6 +51,28 @@ test('desktop top navigation omits the redundant Browse and Services links', () 
   assert.doesNotMatch(topNav, />Browse</);
   assert.doesNotMatch(topNav, />Services</);
   assert.match(topNav, /\bPost\b/);
+});
+
+test('the polished FindIt identity is present across app shells and install metadata', async () => {
+  assert.match(brandLogo, /findit-mark\.png/);
+  for (const shell of [topNav, footer, authLayout, adminSidebar]) {
+    assert.match(shell, /BrandLogo/);
+  }
+
+  for (const filename of [
+    'findit-mark.png',
+    'findit-icon-32.png',
+    'findit-icon-64.png',
+    'findit-icon-180.png',
+    'findit-icon-192.png',
+    'findit-icon-512.png',
+  ]) {
+    const asset = await readFile(new URL(`../src/assets/brand/${filename}`, import.meta.url));
+    assert.ok(asset.byteLength > 0);
+  }
+
+  assert.match(pageMetadata, /findit-icon-32\.png/);
+  assert.match(pageMetadata, /apple-touch-icon/);
 });
 
 test('guest prompts are compact, contextual, and include Google plus legal notice', () => {

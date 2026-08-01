@@ -34,7 +34,7 @@ export default function MakeOfferButton({ listing }) {
               <ShieldAlert className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
               <p className="text-xs">
                 Any offer is <strong>non-binding</strong> and subject to seller acceptance. Always
-                inspect the item in person before paying. FINDit does not handle payments between
+                inspect the item in person before paying. FindIt does not handle payments between
                 buyers and sellers.
               </p>
             </div>

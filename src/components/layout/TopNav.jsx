@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { MapPin, Plus, UserRound } from 'lucide-react';
+import { Plus, UserRound } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { featureFlags } from '@/lib/featureFlags';
 import { isNavigationItemActive, PRIMARY_NAV_ITEMS } from '@/lib/navigationConfig';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { createLoginPath } from '@/lib/authNavigation';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import ThemeToggle from '@/components/layout/ThemeToggle';
+import BrandLogo from '@/components/BrandLogo';
 
 const NotificationBell = lazy(() => import('@/components/layout/NotificationBell'));
 
@@ -38,14 +39,11 @@ export default function TopNav() {
   return (
     <header className="glass-bar sticky top-0 z-50 hidden border-b px-4 py-3 md:block">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-5">
-        <Link to="/" className="flex shrink-0 items-center gap-2 text-2xl font-black tracking-tight" aria-label="FindIt Discover">
-          <span className="clay-icon h-10 w-10 border-primary/20 bg-primary/10 text-primary">
-            <MapPin className="h-5 w-5 fill-primary/15" strokeWidth={2.5} />
-          </span>
-          <span>
-            <span className="text-foreground">Find</span>
-            <span className="text-primary">It</span>
-          </span>
+        <Link to="/" className="shrink-0" aria-label="FindIt Discover">
+          <BrandLogo
+            markClassName="h-8 w-8 sm:h-9 sm:w-9"
+            wordmarkClassName="text-lg sm:text-xl"
+          />
         </Link>
 
         <nav className="flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Primary navigation">
