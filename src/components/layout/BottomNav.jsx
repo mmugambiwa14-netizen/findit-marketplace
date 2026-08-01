@@ -36,9 +36,9 @@ export default function BottomNav() {
     <>
       <nav
         aria-label="Mobile navigation"
-        className="safe-area-bottom fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-background/95 backdrop-blur-xl md:hidden"
+        className="safe-area-bottom fixed inset-x-3 bottom-2 z-[1000] md:hidden"
       >
-        <div className="mx-auto flex h-16 max-w-lg items-stretch px-1">
+        <div className="clay-nav mx-auto flex h-[66px] max-w-[470px] items-stretch rounded-2xl px-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -52,38 +52,35 @@ export default function BottomNav() {
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={count > 0 ? `${item.label}, ${count} unread` : item.label}
                 className={cn(
-                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground transition-colors focus-visible:z-10',
+                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground focus-visible:z-10',
                   isActive && !item.prominent && 'text-primary',
                   item.prominent && 'text-foreground',
                 )}
               >
                 {item.prominent ? (
-                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition-transform active:scale-95">
-                    <Icon aria-hidden="true" className="h-5.5 w-5.5" strokeWidth={2.35} />
+                  <span className="clay-button -mt-5 flex h-12 w-12 items-center justify-center rounded-full ring-4 ring-background/85">
+                    <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={2.35} />
                   </span>
                 ) : (
-                  <span className="relative">
+                  <span className={cn('relative flex h-7 w-8 items-center justify-center rounded-xl', isActive && 'bg-primary/10')}>
                     <Icon
                       aria-hidden="true"
-                      className={cn('h-[21px] w-[21px]', isActive && 'fill-primary/10')}
+                      className={cn('h-[20px] w-[20px]', isActive && 'fill-primary/10')}
                       strokeWidth={isActive ? 2.4 : 1.8}
                     />
                     {count > 0 && (
                       <span
                         aria-hidden="true"
-                        className="absolute -right-3 -top-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-primary-foreground ring-2 ring-background"
+                        className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-primary-foreground ring-2 ring-card"
                       >
                         {count > 99 ? '99+' : count}
                       </span>
                     )}
                   </span>
                 )}
-                <span className={cn('max-w-full truncate text-[10px] font-medium leading-none', item.prominent && '-mt-0.5')}>
+                <span className={cn('max-w-full truncate text-[10px] font-semibold leading-none', item.prominent && '-mt-0.5')}>
                   {item.label}
                 </span>
-                {isActive && !item.prominent && (
-                  <span aria-hidden="true" className="absolute bottom-0 h-0.5 w-5 rounded-full bg-primary" />
-                )}
               </Link>
             );
           })}
