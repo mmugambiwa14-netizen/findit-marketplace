@@ -2,9 +2,17 @@ import { useState } from 'react';
 import { ChevronDown, MapPin } from 'lucide-react';
 import { HierarchicalLocationSelector } from '@/components/location/LocationSelector';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { shouldCommitDiscoverLocationSelection } from '@/components/discover/discoverLocationSelection';
 
 export default function DiscoverHeader({ location, onLocationChange }) {
   const [open, setOpen] = useState(false);
+
+  const handleLocationSelection = (nextLocation) => {
+    if (!shouldCommitDiscoverLocationSelection(nextLocation)) return;
+
+    onLocationChange(nextLocation);
+    setOpen(false);
+  };
 
   return (
     <div className="min-w-0">
@@ -26,7 +34,7 @@ export default function DiscoverHeader({ location, onLocationChange }) {
             <SheetDescription>Use a public city-level location to narrow marketplace results.</SheetDescription>
           </SheetHeader>
           <div className="py-5">
-            {open && <HierarchicalLocationSelector value={location} onSelectLocation={(nextLocation) => { onLocationChange(nextLocation); setOpen(false); }} />}
+            {open && <HierarchicalLocationSelector value={location} onSelectLocation={handleLocationSelection} />}
             {location?.city && <button type="button" onClick={() => { onLocationChange(null); setOpen(false); }} className="mt-5 min-h-11 text-sm font-semibold text-primary hover:text-primary-hover">Browse all locations</button>}
           </div>
         </SheetContent>
