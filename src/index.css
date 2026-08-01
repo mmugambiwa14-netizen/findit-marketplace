@@ -7,108 +7,107 @@
     color-scheme: light;
     --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-    --background: 220 25% 97%;
-    --foreground: 223 28% 10%;
-
-    --surface-secondary: 220 20% 94%;
+    --background: 220 31% 96%;
+    --foreground: 222 38% 10%;
+    --surface-secondary: 220 25% 92%;
     --surface-raised: 0 0% 100%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 223 28% 10%;
+    --card: 220 24% 98%;
+    --card-foreground: 222 38% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 223 28% 10%;
+    --popover-foreground: 222 38% 10%;
 
-    --primary: 221 83% 53%;
-    --primary-hover: 217 91% 60%;
+    --primary: 217 91% 57%;
+    --primary-hover: 215 96% 62%;
     --primary-foreground: 0 0% 100%;
+    --secondary: 220 25% 92%;
+    --secondary-foreground: 222 38% 10%;
+    --muted: 220 25% 92%;
+    --muted-foreground: 218 13% 42%;
+    --accent: 217 45% 91%;
+    --accent-foreground: 222 38% 10%;
 
-    --secondary: 220 20% 94%;
-    --secondary-foreground: 223 28% 10%;
-    --muted: 220 20% 94%;
-    --muted-foreground: 218 12% 43%;
-    --accent: 217 28% 92%;
-    --accent-foreground: 223 28% 10%;
-
-    --destructive: 0 74% 50%;
+    --destructive: 0 75% 52%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 71% 38%;
+    --success: 156 70% 38%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 45%;
-    --warning-foreground: 223 28% 10%;
+    --warning: 38 93% 48%;
+    --warning-foreground: 222 38% 10%;
 
-    --border: 220 15% 86%;
-    --border-strong: 220 14% 76%;
-    --input: 220 14% 80%;
-    --ring: 221 83% 53%;
+    --border: 219 23% 84%;
+    --border-strong: 219 20% 73%;
+    --input: 219 20% 80%;
+    --ring: 217 91% 57%;
 
-    --chart-1: 221 83% 53%;
-    --chart-2: 142 71% 38%;
-    --chart-3: 38 92% 45%;
-    --chart-4: 271 70% 54%;
-    --chart-5: 190 75% 38%;
+    --chart-1: 217 91% 57%;
+    --chart-2: 156 70% 38%;
+    --chart-3: 38 93% 48%;
+    --chart-4: 269 73% 56%;
+    --chart-5: 184 75% 39%;
 
     --radius: 1rem;
+    --clay-shadow-dark: 222 38% 16%;
+    --clay-shadow-light: 0 0% 100%;
 
-    --sidebar-background: 220 20% 96%;
-    --sidebar-foreground: 220 12% 35%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-background: 220 27% 95%;
+    --sidebar-foreground: 218 16% 34%;
+    --sidebar-primary: 217 91% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 28% 92%;
-    --sidebar-accent-foreground: 223 28% 10%;
-    --sidebar-border: 220 15% 86%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-accent: 217 45% 91%;
+    --sidebar-accent-foreground: 222 38% 10%;
+    --sidebar-border: 219 23% 84%;
+    --sidebar-ring: 217 91% 57%;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 223 28% 5%;
-    --foreground: 0 0% 100%;
+    --background: 222 52% 6%;
+    --foreground: 218 33% 97%;
+    --surface-secondary: 221 43% 10%;
+    --surface-raised: 219 38% 16%;
+    --card: 220 42% 12%;
+    --card-foreground: 218 33% 97%;
+    --popover: 219 38% 15%;
+    --popover-foreground: 218 33% 97%;
 
-    --surface-secondary: 218 24% 9%;
-    --surface-raised: 218 25% 15%;
-
-    --card: 217 22% 12%;
-    --card-foreground: 0 0% 100%;
-    --popover: 218 25% 15%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 221 83% 53%;
-    --primary-hover: 217 91% 60%;
+    --primary: 217 100% 58%;
+    --primary-hover: 214 100% 65%;
     --primary-foreground: 0 0% 100%;
+    --secondary: 221 38% 11%;
+    --secondary-foreground: 218 33% 97%;
+    --muted: 219 34% 16%;
+    --muted-foreground: 217 16% 65%;
+    --accent: 218 42% 18%;
+    --accent-foreground: 218 33% 97%;
 
-    --secondary: 218 24% 9%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 218 25% 15%;
-    --muted-foreground: 216 11% 55%;
-    --accent: 218 25% 15%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
+    --destructive: 0 86% 64%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 223 28% 5%;
+    --success: 156 72% 46%;
+    --success-foreground: 222 52% 6%;
+    --warning: 38 96% 56%;
+    --warning-foreground: 222 52% 6%;
 
-    --border: 220 14% 18%;
-    --border-strong: 220 13% 24%;
-    --input: 220 13% 24%;
-    --ring: 217 91% 60%;
+    --border: 218 31% 20%;
+    --border-strong: 217 30% 28%;
+    --input: 217 30% 25%;
+    --ring: 214 100% 65%;
 
-    --chart-1: 221 83% 53%;
-    --chart-2: 142 71% 45%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 271 81% 66%;
-    --chart-5: 190 80% 45%;
+    --chart-1: 217 100% 58%;
+    --chart-2: 156 72% 46%;
+    --chart-3: 38 96% 56%;
+    --chart-4: 269 85% 69%;
+    --chart-5: 184 82% 48%;
 
-    --sidebar-background: 218 24% 9%;
-    --sidebar-foreground: 216 16% 75%;
-    --sidebar-primary: 221 83% 53%;
+    --clay-shadow-dark: 225 67% 2%;
+    --clay-shadow-light: 215 45% 30%;
+
+    --sidebar-background: 221 43% 9%;
+    --sidebar-foreground: 217 20% 76%;
+    --sidebar-primary: 217 100% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 218 25% 15%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 14% 18%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 219 38% 16%;
+    --sidebar-accent-foreground: 218 33% 97%;
+    --sidebar-border: 218 31% 20%;
+    --sidebar-ring: 214 100% 65%;
   }
 }
 
@@ -127,6 +126,11 @@
     @apply min-h-screen bg-background font-inter text-foreground antialiased;
     min-width: 320px;
     text-rendering: optimizeLegibility;
+    background-image:
+      radial-gradient(circle at 18% -5%, hsl(var(--primary) / 0.11), transparent 28rem),
+      radial-gradient(circle at 95% 12%, hsl(228 84% 54% / 0.08), transparent 24rem),
+      linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
+    background-attachment: fixed;
   }
 
   #root {
@@ -144,6 +148,18 @@
   button,
   [role='button'] {
     touch-action: manipulation;
+  }
+
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    transition-property: transform, color, background-color, border-color, box-shadow, opacity;
+    transition-duration: 160ms;
+    transition-timing-function: ease;
+  }
+
+  button:not(:disabled):active,
+  [role='button']:not([aria-disabled='true']):active {
+    transform: translateY(1px) scale(0.985);
   }
 
   ::selection {
@@ -171,16 +187,71 @@
     @apply mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8;
   }
 
-  .surface-panel {
-    @apply rounded-2xl border border-border bg-card text-card-foreground shadow-card;
+  .surface-panel,
+  .clay-card {
+    @apply rounded-2xl border border-border bg-card text-card-foreground;
+    background-image: linear-gradient(145deg, hsl(var(--surface-raised) / 0.74), hsl(var(--card)) 46%, hsl(var(--card)));
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.055),
+      -6px -6px 18px hsl(var(--clay-shadow-light) / 0.08),
+      10px 14px 28px hsl(var(--clay-shadow-dark) / 0.34);
   }
 
-  .surface-raised {
+  .surface-raised,
+  .clay-control {
     @apply rounded-2xl border border-border-strong bg-surface-raised;
+    background-image: linear-gradient(145deg, hsl(var(--surface-raised)), hsl(var(--card)));
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.065),
+      0 8px 20px hsl(var(--clay-shadow-dark) / 0.24);
+  }
+
+  .clay-soft {
+    background: linear-gradient(145deg, hsl(var(--surface-raised) / 0.72), hsl(var(--surface-secondary) / 0.84));
+    border: 1px solid hsl(var(--border) / 0.8);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.05),
+      0 8px 18px hsl(var(--clay-shadow-dark) / 0.22);
+  }
+
+  .clay-button {
+    @apply rounded-xl bg-primary text-primary-foreground;
+    background-image: linear-gradient(145deg, hsl(var(--primary-hover)), hsl(var(--primary)) 58%, hsl(220 94% 49%));
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.24),
+      0 10px 24px hsl(var(--primary) / 0.28),
+      0 5px 12px hsl(var(--clay-shadow-dark) / 0.28);
+  }
+
+  .clay-icon {
+    @apply flex items-center justify-center rounded-xl border border-border bg-card;
+    background-image: linear-gradient(145deg, hsl(var(--surface-raised)), hsl(var(--card)));
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.06),
+      0 7px 16px hsl(var(--clay-shadow-dark) / 0.28);
+  }
+
+  .clay-media {
+    @apply overflow-hidden rounded-2xl border border-border bg-surface-secondary;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.04),
+      0 12px 26px hsl(var(--clay-shadow-dark) / 0.32);
+  }
+
+  .clay-nav {
+    background: linear-gradient(180deg, hsl(var(--card) / 0.97), hsl(var(--surface-secondary) / 0.98));
+    border: 1px solid hsl(var(--border) / 0.85);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.06),
+      0 -3px 18px hsl(var(--clay-shadow-dark) / 0.26),
+      0 14px 34px hsl(var(--clay-shadow-dark) / 0.38);
+    backdrop-filter: blur(22px);
   }
 
   .glass-bar {
-    @apply border-border bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/75;
+    @apply border-border;
+    background: hsl(var(--background) / 0.88);
+    backdrop-filter: blur(24px);
   }
 
   .safe-area-bottom {
@@ -202,5 +273,21 @@
 
   .interactive-target {
     @apply min-h-11 min-w-11;
+  }
+
+  .findit-screen {
+    @apply min-h-screen bg-transparent;
+  }
+
+  .findit-mobile-shell {
+    @apply mx-auto w-full max-w-[470px] px-4;
+  }
+
+  .findit-section-title {
+    @apply text-base font-extrabold tracking-tight text-foreground sm:text-lg;
+  }
+
+  .findit-overline {
+    @apply text-[10px] font-bold uppercase tracking-[0.18em] text-primary;
   }
 }
