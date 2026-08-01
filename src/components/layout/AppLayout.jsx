@@ -14,6 +14,7 @@ const SELF_CONTAINED_ROUTES = [
   '/service/',
   '/search',
   '/tours',
+  '/peek',
   '/chats',
   '/messages',
   '/notifications',
@@ -40,7 +41,7 @@ export default function AppLayout() {
   const selfContained = SELF_CONTAINED_ROUTES.some((route) => matchesRoute(location.pathname, route));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="findit-screen min-h-screen">
       <a
         href="#main-content"
         className="fixed left-4 top-4 z-[1100] -translate-y-24 rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background shadow-floating transition-transform focus:translate-y-0"
@@ -51,7 +52,7 @@ export default function AppLayout() {
       <main id="main-content" tabIndex={-1} className="min-h-[70vh] pb-28 md:pb-0">
         <Outlet />
       </main>
-      {!selfContained && <SiteFooter />}
+      {!selfContained && <div className="hidden md:block"><SiteFooter /></div>}
       <GuestBanner user={user} />
       <BottomNav />
     </div>
