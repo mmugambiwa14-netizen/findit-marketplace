@@ -4,7 +4,7 @@
 // exposes a real product contract only after its implementation, provider and
 // release evidence are complete in the target environment.
 
-import { mapProviderConfigured } from '@/lib/mapProvider';
+import { mapProviderConfigured } from './mapProvider.js';
 
 const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
 
