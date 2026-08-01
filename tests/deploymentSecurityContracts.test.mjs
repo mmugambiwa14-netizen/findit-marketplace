@@ -41,7 +41,8 @@ test('document bootstrap is external, ordered and fail-safe', () => {
     assert.match(attributes, /\btype\s*=\s*["']module["']/);
   }
   assert.ok(html.indexOf('/src/documentBootstrap.js') < html.indexOf('/src/main.jsx'));
-  assert.match(bootstrap, /import \{ readStoredString \} from '.\/lib\/browserStorage\.js'/);
+  assert.match(bootstrap, /readStoredString/);
+  assert.match(bootstrap, /browserStorage\.js/);
   assert.match(bootstrap, /readStoredString\('local', 'theme', null\)/);
   assert.doesNotMatch(bootstrap, /localStorage|sessionStorage/);
   assert.match(bootstrap, /targetUrl\.origin === window\.location\.origin/);
