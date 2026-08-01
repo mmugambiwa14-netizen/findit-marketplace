@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { Bell, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { readStoredJson, removeStoredValue, writeStoredJson } from '@/lib/browserStorage';
+import { featureFlags } from '@/lib/featureFlags';
 import DiscoverCategoryGrid from '@/components/discover/DiscoverCategoryGrid';
 import DiscoverHeader from '@/components/discover/DiscoverHeader';
 import DiscoverSearch from '@/components/discover/DiscoverSearch';
@@ -34,30 +36,45 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-10">
+    <div className="findit-screen pb-10">
       <div className="page-shell max-w-5xl pt-5 sm:pt-7">
+        <div className="mb-5 flex items-center justify-between md:hidden">
+          <div>
+            <p className="findit-overline">FindIt marketplace</p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight">Discover</h1>
+          </div>
+          {featureFlags.essentialNotifications ? (
+            <Link to="/notifications" aria-label="Open notifications" className="clay-icon h-11 w-11 text-foreground">
+              <Bell className="h-5 w-5" />
+            </Link>
+          ) : (
+            <span className="clay-icon h-11 w-11 text-muted-foreground" aria-hidden="true">
+              <Bell className="h-5 w-5" />
+            </span>
+          )}
+        </div>
+
         <DiscoverSearch location={location} />
         <div className="mt-3">
           <DiscoverHeader location={location} onLocationChange={updateLocation} />
         </div>
 
-        <section className="mt-8" aria-labelledby="discover-categories-title">
-          <div className="mb-3">
-            <h1 id="discover-categories-title" className="text-xl font-black tracking-tight sm:text-2xl">Browse categories</h1>
-            <p className="mt-1 text-xs text-muted-foreground">Choose where you want to start</p>
+        <section className="mt-4" aria-labelledby="discover-categories-title">
+          <div className="sr-only">
+            <h2 id="discover-categories-title">Browse categories</h2>
           </div>
           <DiscoverCategoryGrid location={location} />
         </section>
 
         <HomePeekRail location={location} />
 
-        <section className="mt-8 flex items-center gap-3 rounded-2xl border border-primary/25 bg-primary/[0.06] p-4 sm:p-5" aria-label="FindIt buyer tools">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+        <section className="clay-soft mt-7 flex items-center gap-3 rounded-2xl p-4 sm:p-5" aria-label="FindIt buyer tools">
+          <span className="clay-icon h-11 w-11 shrink-0 border-primary/20 bg-primary/10 text-primary">
             <ShieldCheck className="h-5 w-5" />
           </span>
           <div className="min-w-0">
             <h2 className="text-sm font-bold text-foreground sm:text-base">More context before you enquire</h2>
-            <p className="mt-0.5 text-xs leading-5 text-muted-foreground sm:text-sm">Use Peeks, saved listings and private chats to make better-informed decisions.</p>
+            <p className="mt-0.5 text-xs leading-5 text-muted-foreground sm:text-sm">Use Tours, saved listings and private chats to make better-informed decisions.</p>
           </div>
         </section>
       </div>
