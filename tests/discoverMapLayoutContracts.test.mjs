@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const source = await readFile(new URL('../src/components/discover/DiscoverMapView.jsx', import.meta.url), 'utf8');
+const [source, styles] = await Promise.all([
+  readFile(new URL('../src/components/discover/DiscoverMapView.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/findit-locked-design.css', import.meta.url), 'utf8'),
+]);
 
 test('map category filters live below the map instead of covering it', () => {
   const railClass = source.match(/className="([^"]*discover-map-rail[^"]*)"/)?.[1] || '';
@@ -12,4 +15,14 @@ test('map category filters live below the map instead of covering it', () => {
   assert.match(railClass, /surface-panel/);
   assert.doesNotMatch(railClass, /\babsolute\b|\bbottom-/);
   assert.doesNotMatch(source, /discover-map-rail absolute/);
+});
+
+test('map markers render the icon assigned to each marketplace category', () => {
+  assert.match(source, /const visual = CATEGORY_VISUALS\[item\._kind\]/);
+  assert.match(source, /iconRoot\.render\(<Icon className="h-5 w-5" \/>\)/);
+  assert.match(source, /new maplibregl\.Marker\(\{ element, anchor: 'bottom' \}\)/);
+  assert.doesNotMatch(source, /new maplibregl\.Marker\(\{ color:/);
+  assert.match(styles, /\.findit-map-marker-pin/);
+  assert.match(styles, /background: var\(--marker-color\)/);
+  assert.match(styles, /\.findit-map-marker\[data-selected='true'\]/);
 });

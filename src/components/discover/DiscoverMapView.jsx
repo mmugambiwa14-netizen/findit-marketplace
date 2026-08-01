@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, ImageOff, MapPin, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +40,30 @@ function price(item) {
   if (item._kind === 'service' && (item.pricing_type === 'quote' || item.price == null)) return 'Contact for quote';
   if (item.price == null) return 'Price on request';
   return `${item.currency === 'USD' || !item.currency ? 'US$' : item.currency} ${Number(item.price).toLocaleString()}`;
+}
+
+function createCategoryMarker(item, selected) {
+  const visual = CATEGORY_VISUALS[item._kind];
+  const Icon = visual.icon;
+  const element = document.createElement('button');
+  const pin = document.createElement('span');
+  const iconSlot = document.createElement('span');
+
+  element.type = 'button';
+  element.className = 'findit-map-marker';
+  element.dataset.category = item._kind;
+  element.dataset.selected = selected ? 'true' : 'false';
+  element.style.setProperty('--marker-color', visual.color);
+  element.setAttribute('aria-label', `Open ${visual.label.toLowerCase()} listing: ${item.title}`);
+  element.title = `${visual.label}: ${item.title}`;
+  pin.className = 'findit-map-marker-pin';
+  iconSlot.className = 'findit-map-marker-icon';
+  pin.append(iconSlot);
+  element.append(pin);
+
+  const iconRoot = createRoot(iconSlot);
+  iconRoot.render(<Icon className="h-5 w-5" />);
+  return { element, iconRoot };
 }
 
 function tuneDarkBasemap(map) {
@@ -92,6 +117,7 @@ export default function DiscoverMapView({ location }) {
     let cancelled = false;
     let map;
     const markers = [];
+    const markerIconRoots = [];
     setFailure('');
     (async () => {
       try {
@@ -101,10 +127,11 @@ export default function DiscoverMapView({ location }) {
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         const bounds = new maplibregl.LngLatBounds();
         visible.forEach(({ item, point }) => {
-          const marker = new maplibregl.Marker({ color: CATEGORY_VISUALS[item._kind].color, scale: item.id === selectedId ? 1.05 : 0.86 })
+          const { element, iconRoot } = createCategoryMarker(item, item.id === selectedId);
+          const marker = new maplibregl.Marker({ element, anchor: 'bottom' })
             .setLngLat([point.longitude, point.latitude]).addTo(map);
-          marker.getElement().setAttribute('aria-label', `Open ${item.title}`);
-          marker.getElement().addEventListener('click', () => setSelectedId(item.id));
+          element.addEventListener('click', () => setSelectedId(item.id));
+          markerIconRoots.push(iconRoot);
           markers.push(marker);
           bounds.extend([point.longitude, point.latitude]);
         });
@@ -116,7 +143,7 @@ export default function DiscoverMapView({ location }) {
         map.on('error', () => !cancelled && setFailure('Map tiles are temporarily unavailable.'));
       } catch { if (!cancelled) setFailure('The map could not load. Switch back to list view to continue.'); }
     })();
-    return () => { cancelled = true; markers.forEach((marker) => marker.remove()); map?.remove(); };
+    return () => { cancelled = true; markerIconRoots.forEach((root) => root.unmount()); markers.forEach((marker) => marker.remove()); map?.remove(); };
   }, [selectedId, visible]);
 
   useEffect(() => { if (selectedId && !visible.some(({ item }) => item.id === selectedId)) setSelectedId(null); }, [selectedId, visible]);

@@ -108,6 +108,73 @@
     0 20px 48px hsl(var(--clay-shadow-dark) / 0.2);
 }
 
+.findit-map-marker {
+  display: flex;
+  height: 52px;
+  width: 46px;
+  cursor: pointer;
+  align-items: flex-start;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.findit-map-marker-pin {
+  position: relative;
+  display: flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid hsl(0 0% 100% / 0.9);
+  border-radius: 9999px;
+  color: white;
+  background: var(--marker-color);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.32),
+    0 5px 14px hsl(222 47% 4% / 0.5),
+    0 0 0 4px hsl(0 0% 100% / 0.08);
+  transform-origin: 50% 100%;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.findit-map-marker-pin::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 10px solid var(--marker-color);
+  transform: translateX(-50%);
+  filter: drop-shadow(0 3px 2px hsl(222 47% 4% / 0.3));
+}
+
+.findit-map-marker:hover .findit-map-marker-pin,
+.findit-map-marker:focus-visible .findit-map-marker-pin,
+.findit-map-marker[data-selected='true'] .findit-map-marker-pin {
+  transform: translateY(-2px) scale(1.12);
+  box-shadow:
+    inset 0 1px 0 hsl(0 0% 100% / 0.36),
+    0 8px 20px hsl(222 47% 4% / 0.58),
+    0 0 0 5px hsl(0 0% 100% / 0.14);
+}
+
+.findit-map-marker:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+  border-radius: 9999px;
+}
+
+.findit-map-marker-icon {
+  display: flex;
+  height: 22px;
+  width: 22px;
+  align-items: center;
+  justify-content: center;
+}
+
 .locked-bottom-sheet {
   @apply rounded-t-[1.75rem] border border-border/80 bg-card/95;
   box-shadow:
