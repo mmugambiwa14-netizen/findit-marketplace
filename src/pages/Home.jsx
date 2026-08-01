@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Bell, ShieldCheck } from 'lucide-react';
+import { Bell, List, Map } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { readStoredJson, removeStoredValue, writeStoredJson } from '@/lib/browserStorage';
 import { featureFlags } from '@/lib/featureFlags';
+import { cn } from '@/lib/utils';
 import DiscoverCategoryGrid from '@/components/discover/DiscoverCategoryGrid';
 import DiscoverHeader from '@/components/discover/DiscoverHeader';
+import DiscoverMapView from '@/components/discover/DiscoverMapView';
 import DiscoverSearch from '@/components/discover/DiscoverSearch';
-import HomePeekRail from '@/components/discover/HomePeekRail';
 
 const LOCATION_STORAGE_KEY = 'findit.discover-location';
 
@@ -27,6 +28,7 @@ function readSavedLocation() {
 
 export default function Home() {
   const [location, setLocation] = useState(readSavedLocation);
+  const [view, setView] = useState('list');
 
   const updateLocation = (nextLocation) => {
     const safeLocation = publicLocation(nextLocation);
@@ -36,47 +38,44 @@ export default function Home() {
   };
 
   return (
-    <div className="findit-screen pb-10">
-      <div className="page-shell max-w-5xl pt-5 sm:pt-7">
-        <div className="mb-5 flex items-center justify-between md:hidden">
-          <div>
-            <p className="findit-overline">FindIt marketplace</p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight">Discover</h1>
+    <div className="findit-screen pb-24">
+      <div className="mx-auto w-full max-w-[510px] px-4 pb-5 pt-5 sm:pt-7">
+        <header className="relative mb-5 flex min-h-12 items-center justify-center">
+          <div className="flex items-center gap-2" aria-label="FindIt">
+            <span className="findit-logo-mark" aria-hidden="true" />
+            <span className="text-3xl font-black tracking-[-0.04em] text-foreground">Find<span className="text-primary">It</span></span>
           </div>
           {featureFlags.essentialNotifications ? (
-            <Link to="/notifications" aria-label="Open notifications" className="clay-icon h-11 w-11 text-foreground">
+            <Link to="/notifications" aria-label="Open notifications" className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-xl text-foreground hover:bg-muted/60">
               <Bell className="h-5 w-5" />
             </Link>
           ) : (
-            <span className="clay-icon h-11 w-11 text-muted-foreground" aria-hidden="true">
-              <Bell className="h-5 w-5" />
-            </span>
+            <span className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground" aria-hidden="true"><Bell className="h-5 w-5" /></span>
+          )}
+        </header>
+
+        <DiscoverSearch location={location} />
+
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-3">
+          <DiscoverHeader location={location} onLocationChange={updateLocation} />
+          {featureFlags.maps && (
+            <div className="locked-segmented-control grid h-12 grid-cols-2" role="group" aria-label="Discover view">
+              <button type="button" onClick={() => setView('list')} aria-pressed={view === 'list'} aria-label="Show category list" className={cn('flex h-10 w-12 items-center justify-center rounded-xl text-muted-foreground', view === 'list' && 'locked-segmented-active')}><List className="h-5 w-5" /></button>
+              <button type="button" onClick={() => setView('map')} aria-pressed={view === 'map'} aria-label="Show marketplace map" className={cn('flex h-10 w-12 items-center justify-center rounded-xl text-muted-foreground', view === 'map' && 'locked-segmented-active')}><Map className="h-5 w-5" /></button>
+            </div>
           )}
         </div>
 
-        <DiscoverSearch location={location} />
-        <div className="mt-3">
-          <DiscoverHeader location={location} onLocationChange={updateLocation} />
-        </div>
-
-        <section className="mt-4" aria-labelledby="discover-categories-title">
-          <div className="sr-only">
-            <h2 id="discover-categories-title">Browse categories</h2>
-          </div>
-          <DiscoverCategoryGrid location={location} />
-        </section>
-
-        <HomePeekRail location={location} />
-
-        <section className="clay-soft mt-7 flex items-center gap-3 rounded-2xl p-4 sm:p-5" aria-label="FindIt buyer tools">
-          <span className="clay-icon h-11 w-11 shrink-0 border-primary/20 bg-primary/10 text-primary">
-            <ShieldCheck className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-sm font-bold text-foreground sm:text-base">More context before you enquire</h2>
-            <p className="mt-0.5 text-xs leading-5 text-muted-foreground sm:text-sm">Use Tours, saved listings and private chats to make better-informed decisions.</p>
-          </div>
-        </section>
+        <main className="mt-4">
+          {view === 'map' && featureFlags.maps ? (
+            <DiscoverMapView location={location} />
+          ) : (
+            <section aria-labelledby="discover-categories-title">
+              <h1 id="discover-categories-title" className="sr-only">Browse FindIt categories</h1>
+              <DiscoverCategoryGrid location={location} />
+            </section>
+          )}
+        </main>
       </div>
     </div>
   );
