@@ -1,3 +1,5 @@
+import { readStoredString } from './lib/browserStorage.js';
+
 const ROUTE_KEY = '__findit_route';
 
 function restoreDeepLink() {
@@ -21,13 +23,7 @@ function restoreDeepLink() {
 }
 
 function applyStoredTheme() {
-  let storedTheme = null;
-  try {
-    storedTheme = window.localStorage.getItem('theme');
-  } catch {
-    storedTheme = null;
-  }
-
+  const storedTheme = readStoredString('local', 'theme', null);
   const theme = storedTheme === 'light' ? 'light' : 'dark';
   document.documentElement.classList.toggle('dark', theme === 'dark');
   document.documentElement.style.colorScheme = theme;
