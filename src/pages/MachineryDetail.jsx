@@ -51,24 +51,28 @@ export default function MachineryDetail() {
   const location = item.public_location_label || [item.suburb, item.city, item.province].filter(Boolean).join(", ");
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="findit-screen pb-36">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Take a Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} />
+        <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Watch Tour" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} className="md:mt-4 md:rounded-3xl md:border" />
         <div className="space-y-5 px-4 py-5 sm:px-6">
-          <section className="surface-panel p-5">
-            <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{getMachineryLabel(item.category)}</Badge>{item.listing_number ? <Badge variant="outline" className="font-mono">{item.listing_number}</Badge> : <ListingCode type="machinery" id={item.id} />}{item.status !== "available" && <Badge variant="destructive" className="capitalize">{String(item.status).replaceAll("_", " ")}</Badge>}{item.ce_certification && <Badge variant="outline">CE certified</Badge>}</div>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{item.title}</h1>
-            {location && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{location}</p>}
-            <p className="mt-4 text-3xl font-bold text-primary">{variants.length > 1 && <span className="mr-2 text-sm font-semibold text-muted-foreground">From</span>}{format(activePrice)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Currency conversions are indicative; final exchange rates may vary.</p>
-            {item.negotiable && <p className="mt-2 text-sm text-muted-foreground">Negotiable</p>}
+          <section className="surface-panel p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getMachineryLabel(item.category)}</Badge>
+              {item.listing_number ? <Badge variant="outline" className="font-mono">{item.listing_number}</Badge> : <ListingCode type="machinery" id={item.id} />}
+              {item.status !== "available" && <Badge variant="destructive" className="capitalize">{String(item.status).replaceAll("_", " ")}</Badge>}
+              {item.ce_certification && <Badge variant="outline">CE certified</Badge>}
+            </div>
+            <p className="mt-4 text-2xl font-black tracking-tight text-primary sm:text-3xl">{variants.length > 1 && <span className="mr-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">From</span>}{format(activePrice)}</p>
+            <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{item.title}</h1>
+            {location && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0 text-primary" />{location}</p>}
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground">
+              <span>Listed {listedAgo}</span><span aria-hidden="true">·</span><span>{Number(item.views || 0).toLocaleString()} views</span>{item.negotiable && <><span aria-hidden="true">·</span><span>Negotiable</span></>}
+            </div>
             {item.accepts_offers && <div className="mt-4"><MakeOfferButton listing={item} /></div>}
-            <p className="mt-3 text-sm text-muted-foreground">Listed {listedAgo} · {Number(item.views || 0).toLocaleString()} views</p>
           </section>
-          <VariantSelector variants={item.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
-          <PriceBreakdown listing={item} />
-          <section aria-labelledby="equipment-details-heading"><h2 id="equipment-details-heading" className="mb-3 text-lg font-semibold">Key details</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+
+          <section aria-labelledby="equipment-details-heading"><h2 id="equipment-details-heading" className="mb-3 findit-section-title">Key details</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {item.year && <ListingFeatureItem icon={Zap} label="Year" value={item.year} />}
             {item.equipment_hours > 0 && <ListingFeatureItem icon={Gauge} label="Hours" value={`${item.equipment_hours.toLocaleString()} h`} />}
             {item.mileage_km > 0 && <ListingFeatureItem icon={Gauge} label="Mileage" value={`${item.mileage_km.toLocaleString()} km`} />}
@@ -79,9 +83,12 @@ export default function MachineryDetail() {
             {item.payload_tonnes > 0 && <ListingFeatureItem icon={Weight} label="Payload" value={`${item.payload_tonnes} t`} />}
             {item.condition && <ListingFeatureItem icon={Wrench} label="Condition" value={item.condition} />}
           </div></section>
+
+          {item.description && <DetailSection title="About this equipment"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{item.description}</p></DetailSection>}
           {item.attachments?.length > 0 && <DetailSection title="Attachments and implements"><div className="flex flex-wrap gap-2">{item.attachments.map((attachment) => <Badge key={attachment} variant="secondary">{attachment}</Badge>)}</div></DetailSection>}
-          {item.operators_licence_required && <section className="rounded-2xl border border-warning/25 bg-warning/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-5 w-5 text-warning" />An operator licence is required for this equipment.</p></section>}
-          {item.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{item.description}</p></DetailSection>}
+          {item.operators_licence_required && <section className="clay-soft rounded-2xl border-warning/25 bg-warning/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-5 w-5 text-warning" />An operator licence is required for this equipment.</p></section>}
+          <VariantSelector variants={item.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
+          <PriceBreakdown listing={item} />
           <SellerPanel name={item.seller_name} sellerId={item.seller_id} />
           <SafetyPanel>Inspect machinery in person and request maintenance records, serial-number verification and applicable certification before purchasing.</SafetyPanel>
           <ListingRecommendations subjectListingId={item.id} />
