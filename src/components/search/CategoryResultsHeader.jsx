@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 
 const TYPE_OPTIONS = [
   { value: 'property', label: 'Property', title: 'Property', icon: Building2 },
-  { value: 'car', label: 'Vehicles', title: 'Vehicles', icon: Car },
-  { value: 'machinery', label: 'Equipment', title: 'Heavy Equipment', icon: Tractor },
+  { value: 'car', label: 'Cars', title: 'Cars', icon: Car },
+  { value: 'machinery', label: 'Machinery', title: 'Machinery', icon: Tractor },
   { value: 'service', label: 'Services', title: 'Services', icon: Wrench },
 ];
 
@@ -41,18 +41,18 @@ export default function CategoryResultsHeader({ type, category, onTypeChange, on
     <div>
       <div className="flex items-center gap-3">
         <BackButton className="-ml-2 shrink-0" />
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="clay-icon h-11 w-11 shrink-0 border-primary/20 bg-primary/10 text-primary">
             <CurrentIcon className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Browse</p>
-            <h1 className="truncate text-lg font-bold sm:text-xl">{current.title}</h1>
+            <p className="findit-overline">Browse marketplace</p>
+            <h1 className="mt-0.5 truncate text-xl font-black tracking-tight sm:text-2xl">{current.title}</h1>
           </div>
         </div>
       </div>
 
-      <div className="no-scrollbar mt-4 flex gap-1.5 overflow-x-auto" role="tablist" aria-label="Marketplace category">
+      <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto" role="tablist" aria-label="Marketplace category">
         {TYPE_OPTIONS.map(({ value, label, icon: Icon }) => (
           <button
             key={value}
@@ -61,10 +61,10 @@ export default function CategoryResultsHeader({ type, category, onTypeChange, on
             aria-selected={type === value}
             onClick={() => changeType(value)}
             className={cn(
-              'inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors',
+              'inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold',
               type === value
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
+                ? 'clay-button border-primary text-primary-foreground'
+                : 'clay-soft border-border text-muted-foreground hover:text-foreground',
             )}
           >
             <Icon className="h-4 w-4" />
