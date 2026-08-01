@@ -1,16 +1,16 @@
 import { cn } from '@/lib/utils';
 
 const CATEGORIES = [
-  ['all', 'All'],
+  ['all', 'All Tours'],
   ['property', 'Property'],
-  ['car', 'Vehicles'],
-  ['machinery', 'Equipment'],
+  ['car', 'Cars'],
+  ['machinery', 'Machinery'],
   ['service', 'Services'],
 ];
 
 export default function TourCategoryChips({ value, onChange }) {
   return (
-    <nav aria-label="Peek categories" className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
+    <nav aria-label="Tour categories" className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
       {CATEGORIES.map(([key, label]) => (
         <button
           key={key}
@@ -18,10 +18,10 @@ export default function TourCategoryChips({ value, onChange }) {
           onClick={() => onChange(key)}
           aria-pressed={value === key}
           className={cn(
-            'min-h-11 shrink-0 rounded-full border px-4 text-sm font-semibold transition-colors',
+            'min-h-10 shrink-0 rounded-full border px-3.5 text-xs font-semibold',
             value === key
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground',
+              ? 'clay-button border-primary text-primary-foreground'
+              : 'clay-soft border-border text-muted-foreground hover:text-foreground',
           )}
         >
           {label}
