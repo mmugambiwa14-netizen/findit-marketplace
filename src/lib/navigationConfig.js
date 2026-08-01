@@ -1,28 +1,28 @@
 import {
-  Compass,
+  CircleUserRound,
+  Clapperboard,
   Flag,
   FolderTree,
   LayoutDashboard,
-  MessageCircle,
-  PlusCircle,
+  MapPinned,
+  MessagesSquare,
+  Plus,
   ScrollText,
   Store,
-  UserRound,
   Users,
-  Video,
 } from 'lucide-react';
 
 export const PRIMARY_NAV_ITEMS = [
   {
     label: 'Discover',
-    icon: Compass,
+    icon: MapPinned,
     path: '/',
     guestAllowed: true,
     exact: true,
   },
   {
     label: 'Tours',
-    icon: Video,
+    icon: Clapperboard,
     path: '/peek',
     guestAllowed: true,
     feature: 'tours',
@@ -30,7 +30,7 @@ export const PRIMARY_NAV_ITEMS = [
   },
   {
     label: 'Post',
-    icon: PlusCircle,
+    icon: Plus,
     path: '/post',
     guestAllowed: false,
     guestAction: 'post a listing',
@@ -38,7 +38,7 @@ export const PRIMARY_NAV_ITEMS = [
   },
   {
     label: 'Chats',
-    icon: MessageCircle,
+    icon: MessagesSquare,
     path: '/chats',
     guestAllowed: false,
     guestAction: 'view your marketplace chats',
@@ -46,7 +46,7 @@ export const PRIMARY_NAV_ITEMS = [
   },
   {
     label: 'Profile',
-    icon: UserRound,
+    icon: CircleUserRound,
     path: '/profile',
     guestAllowed: false,
     guestAction: 'manage your profile',
