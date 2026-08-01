@@ -24,6 +24,11 @@ administrative area and populated place. It does not persist exact coordinates
 through the selector. Manual selection remains available and country choice is
 never locked by the detected result.
 
+The dedicated `feature/listing-intelligence-foundation` preview branch defaults
+Messaging, Notifications, Peeks, and consented current location on when Vercel
+does not supply an explicit browser flag. An explicit `false` still wins, and
+this branch-only fallback never applies to `main` or a production branch.
+
 ## Peek release boundary
 
 A released Peek environment aligns all of these layers:

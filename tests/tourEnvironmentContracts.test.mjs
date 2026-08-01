@@ -10,8 +10,9 @@ const [validator, envExample, flags, config, runtime] = await Promise.all([
   readFile(new URL('../supabase/functions/_shared/tour-runtime.ts', import.meta.url), 'utf8'),
 ]);
 
-test('browser and backend Tour switches are separate and default closed', () => {
-  assert.match(flags, /tours: flag\('VITE_FEATURE_TOURS'\)/);
+test('browser and backend Tour switches are separate and production-default closed', () => {
+  assert.match(flags, /const STAGING_BRANCH = 'feature\/listing-intelligence-foundation'/);
+  assert.match(flags, /tours: flag\('VITE_FEATURE_TOURS', isStagingBranch\)/);
   assert.match(envExample, /VITE_FEATURE_TOURS=false/);
   assert.match(envExample, /TOURS_BACKEND_ENABLED=false/);
   assert.match(validator, /Tour browser or preview access cannot be enabled unless TOURS_BACKEND_ENABLED is true/);

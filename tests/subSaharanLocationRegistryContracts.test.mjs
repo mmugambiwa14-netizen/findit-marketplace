@@ -18,6 +18,7 @@ const [
   service,
   selector,
   permissionDialog,
+  featureFlags,
 ] = await Promise.all([
   readFile(new URL('../supabase/migrations/0102_sub_saharan_location_registry.sql', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/rollback/0102_sub_saharan_location_registry.rollback.sql', import.meta.url), 'utf8'),
@@ -30,6 +31,7 @@ const [
   readFile(new URL('../src/services/locationsService.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/location/LocationSelector.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/location/LocationPermissionDialog.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/lib/featureFlags.js', import.meta.url), 'utf8'),
 ]);
 
 const EXPECTED_CODES = [
@@ -106,4 +108,5 @@ test('browser geolocation follows explicit app consent and promises cross-countr
   assert.match(permissionDialog, /Allow once/);
   assert.match(selector, /setPermissionOpen\(true\)/);
   assert.match(selector, /resolveCurrentMarketplaceLocation\(\{ consentGranted: true \}\)/);
+  assert.match(featureFlags, /currentLocation: flag\('VITE_FEATURE_CURRENT_LOCATION', isStagingBranch\)/);
 });
