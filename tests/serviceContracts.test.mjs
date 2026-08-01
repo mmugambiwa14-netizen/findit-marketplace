@@ -60,9 +60,10 @@ test('service edit rejects privileged fields and requires a contact path', () =>
 });
 
 test('normalizes public service search and validates status', () => {
+  const locationId = '22222222-2222-4222-8222-222222222222';
   assert.deepEqual(
-    normalizePublicServiceRequest({ query: ' mechanic,(Harare)%_ ', category: 'mechanic', limit: 500 }),
-    { query: 'mechanic Harare', category: 'mechanic', limit: 48, cursor: null },
+    normalizePublicServiceRequest({ query: ' mechanic,(Harare)%_ ', category: 'mechanic', locationId, limit: 500 }),
+    { query: 'mechanic Harare', category: 'mechanic', locationId, limit: 48, cursor: null },
   );
   assert.deepEqual(normalizePublicServiceRequest({
     category: 'all',
@@ -71,6 +72,7 @@ test('normalizes public service search and validates status', () => {
     createdAt: '2026-07-27T01:02:03.000Z',
     id: '11111111-1111-4111-8111-111111111111',
   });
+  assert.throws(() => normalizePublicServiceRequest({ locationId: 'not-a-location' }), /Location is invalid/);
   assert.equal(normalizeServiceStatus('paused'), 'paused');
   assert.throws(() => normalizeServiceStatus('deleted'), /status is invalid/);
 });

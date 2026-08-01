@@ -13,6 +13,8 @@ export default function Services() {
   const [searchParams, setSearchParams] = useSearchParams();
   const category = searchParams.get('category') || 'all';
   const query = searchParams.get('q') || '';
+  const locationId = searchParams.get('location') || '';
+  const locationName = searchParams.get('locationName') || '';
   const [searchInput, setSearchInput] = useState(query);
 
   useEffect(() => setSearchInput(query), [query]);
@@ -29,8 +31,8 @@ export default function Services() {
   }, [query, searchInput, searchParams, setSearchParams]);
 
   const servicesQuery = useInfiniteQuery({
-    queryKey: ['services', category, query],
-    queryFn: ({ pageParam }) => getPublicServicesPage({ category, query, limit: 24, cursor: pageParam || null }),
+    queryKey: ['services', category, query, locationId],
+    queryFn: ({ pageParam }) => getPublicServicesPage({ category, query, locationId, limit: 24, cursor: pageParam || null }),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 30_000,
@@ -50,6 +52,12 @@ export default function Services() {
     const next = new URLSearchParams(searchParams);
     if (!value) next.delete('category');
     else next.set('category', value);
+    setSearchParams(next);
+  };
+
+  const clearLocation = () => {
+    const next = new URLSearchParams(searchParams);
+    for (const key of ['location', 'locationName', 'country', 'province']) next.delete(key);
     setSearchParams(next);
   };
 
@@ -100,6 +108,19 @@ export default function Services() {
               <Link to="/create-service"><Plus className="mr-2 h-4 w-4" />Offer service</Link>
             </Button>
           </div>
+          {locationId && (
+            <div className="mt-3 flex items-center">
+              <button
+                type="button"
+                onClick={clearLocation}
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 text-xs font-semibold text-primary hover:bg-primary/15"
+                aria-label={`Remove location filter${locationName ? ` for ${locationName}` : ''}`}
+              >
+                Near {locationName || 'selected location'}
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

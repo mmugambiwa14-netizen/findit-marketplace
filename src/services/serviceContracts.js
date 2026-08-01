@@ -14,6 +14,11 @@ function requireUuid(value, label) {
   return value;
 }
 
+function optionalUuid(value, label) {
+  if (value === null || value === undefined || value === '') return '';
+  return requireUuid(String(value).trim().toLowerCase(), label);
+}
+
 function text(value, label, max, { required = false, min = 0 } = {}) {
   const normalized = typeof value === 'string' ? value.trim() : '';
   if (required && normalized.length < min) throw new TypeError(`${label} is required`);
@@ -86,6 +91,7 @@ export function normalizePublicServiceRequest(input = {}) {
   return {
     category,
     query,
+    locationId: optionalUuid(input.locationId, 'Location'),
     limit: normalizePageLimit(input.limit, { fallback: 24, maximum: 48 }),
     cursor: normalizeKeysetCursor(input.cursor),
   };

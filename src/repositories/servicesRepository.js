@@ -40,6 +40,7 @@ export async function findPublicServices(request) {
     .neq('category', 'legal');
 
   if (request.category !== 'all') query = query.eq('category', request.category);
+  if (request.locationId) query = query.eq('location_id', request.locationId);
   if (request.query) {
     const pattern = `%${request.query}%`;
     query = query.or([
