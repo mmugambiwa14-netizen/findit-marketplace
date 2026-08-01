@@ -25,16 +25,16 @@ export default function ListingResults({
 
   return (
     <section aria-labelledby="listing-results-title">
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 id="listing-results-title" className="text-sm font-semibold">Results</h2>
+          <h2 id="listing-results-title" className="findit-section-title">Results</h2>
           <p className="mt-0.5 text-xs text-muted-foreground" aria-live="polite">
             {isLoading ? 'Loading listings...' : loaded === 0 ? 'No listings found' : `${loaded.toLocaleString()} listing${loaded === 1 ? '' : 's'} loaded`}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {mapsEnabled && (
-            <div className="grid h-10 grid-cols-2 rounded-lg border border-border bg-card p-1" role="group" aria-label="Results view">
+            <div className="clay-control grid h-11 grid-cols-2 rounded-xl p-1" role="group" aria-label="Results view">
               {[
                 { value: 'list', label: 'List', icon: List },
                 { value: 'map', label: 'Map', icon: Map },
@@ -45,8 +45,8 @@ export default function ListingResults({
                   onClick={() => onViewModeChange?.(value)}
                   aria-pressed={viewMode === value}
                   className={cn(
-                    'inline-flex min-w-16 items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors',
-                    viewMode === value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+                    'inline-flex min-w-16 items-center justify-center gap-1 rounded-lg px-2 text-xs font-semibold',
+                    viewMode === value ? 'bg-primary text-primary-foreground shadow-md' : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -60,36 +60,28 @@ export default function ListingResults({
       </div>
 
       {isError ? (
-        <div className="rounded-2xl border border-border bg-card py-14 text-center">
+        <div className="clay-card rounded-2xl py-14 text-center">
           <p className="font-medium">Search is temporarily unavailable</p>
           <p className="mt-1 text-sm text-muted-foreground">Your current filters have been preserved.</p>
-          <Button variant="outline" className="mt-4" onClick={onRetry}>Retry</Button>
+          <Button variant="outline" className="clay-control mt-4" onClick={onRetry}>Retry</Button>
         </div>
       ) : (
         <>
-          {showMap && !isLoading ? (
-            <SearchResultsMap listings={listings} type={type} />
-          ) : (
-            <ListingGrid listings={listings} type={type} isLoading={isLoading} />
-          )}
+          {showMap && !isLoading ? <SearchResultsMap listings={listings} type={type} /> : <ListingGrid listings={listings} type={type} isLoading={isLoading} />}
 
           {!isLoading && loaded === 0 && hasFilters && (
-            <div className="pb-10 pt-4 text-center">
-              <Button variant="outline" onClick={onClearFilters}>Clear filters</Button>
-            </div>
+            <div className="pb-10 pt-4 text-center"><Button variant="outline" className="clay-control" onClick={onClearFilters}>Clear filters</Button></div>
           )}
 
           {!isLoading && hasNextPage && (
             <div className="mt-7 flex justify-center">
-              <Button variant="outline" className="min-w-44" disabled={isFetchingNextPage} onClick={onLoadMore}>
+              <Button variant="outline" className="clay-control min-w-44" disabled={isFetchingNextPage} onClick={onLoadMore}>
                 {isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more listings'}
               </Button>
             </div>
           )}
 
-          {!isLoading && !hasNextPage && loaded > 0 && (
-            <p className="mt-7 pb-5 text-center text-xs text-muted-foreground">You have reached the end of these results.</p>
-          )}
+          {!isLoading && !hasNextPage && loaded > 0 && <p className="mt-7 pb-5 text-center text-xs text-muted-foreground">You have reached the end of these results.</p>}
         </>
       )}
     </section>
