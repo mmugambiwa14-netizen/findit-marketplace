@@ -24,14 +24,14 @@ function peekPrice(item, format) {
 
 function PeekSkeleton() {
   return (
-    <div className="no-scrollbar -mx-4 flex gap-3 overflow-hidden px-4 pb-1 sm:mx-0 sm:px-0" role="status" aria-label="Loading Peeks">
-      {[1, 2, 3].map((item) => (
-        <div key={item} className="w-[10.25rem] shrink-0 overflow-hidden rounded-2xl border border-border bg-card sm:w-[11.5rem]">
-          <div className="aspect-[4/3] animate-pulse bg-surface-raised" />
-          <div className="space-y-2 p-3">
-            <div className="h-3.5 w-4/5 animate-pulse rounded bg-surface-raised" />
+    <div className="space-y-3" role="status" aria-label="Loading recommended listings">
+      {[1, 2].map((item) => (
+        <div key={item} className="clay-card grid min-h-[112px] grid-cols-[108px_minmax(0,1fr)] overflow-hidden rounded-2xl sm:grid-cols-[140px_minmax(0,1fr)]">
+          <div className="animate-pulse bg-surface-raised" />
+          <div className="space-y-2 p-3.5">
+            <div className="h-4 w-2/5 animate-pulse rounded bg-surface-raised" />
+            <div className="h-4 w-4/5 animate-pulse rounded bg-surface-raised" />
             <div className="h-3 w-3/5 animate-pulse rounded bg-surface-raised" />
-            <div className="h-4 w-1/2 animate-pulse rounded bg-surface-raised" />
           </div>
         </div>
       ))}
@@ -58,11 +58,11 @@ export default function HomePeekRail({ location }) {
   if (!featureFlags.tours) return null;
   if (feed.isLoading) {
     return (
-      <section className="mt-8" aria-labelledby="home-peeks-title">
+      <section className="mt-7" aria-labelledby="home-recommended-title">
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <h2 id="home-peeks-title" className="text-lg font-bold tracking-tight">Take a Peek</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">See listings before opening the details</p>
+            <h2 id="home-recommended-title" className="findit-section-title">Recommended for you</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Listings with a Tour you can inspect first</p>
           </div>
         </div>
         <PeekSkeleton />
@@ -74,26 +74,26 @@ export default function HomePeekRail({ location }) {
   if (feed.isError || items.length === 0) return null;
 
   return (
-    <section className="mt-8" aria-labelledby="home-peeks-title">
+    <section className="mt-7" aria-labelledby="home-recommended-title">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 id="home-peeks-title" className="text-lg font-bold tracking-tight">Take a Peek</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">See listings before opening the details</p>
+          <h2 id="home-recommended-title" className="findit-section-title">Recommended for you</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Listings with a Tour you can inspect first</p>
         </div>
         <Link to="/peek" className="inline-flex min-h-11 shrink-0 items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover">
-          View all <ArrowRight className="h-4 w-4" />
+          See all <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 
-      <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+      <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
         {items.map((item) => (
           <Link
             key={item.tourId}
             to={publicTourDetailPath(item)}
-            className="group w-[10.25rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-[transform,border-color] hover:-translate-y-0.5 hover:border-border-strong sm:w-[11.5rem]"
-            aria-label={`Take a Peek at ${item.title}`}
+            className="clay-card group grid min-h-[116px] grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-2xl hover:-translate-y-0.5 sm:grid-cols-[148px_minmax(0,1fr)]"
+            aria-label={`Open ${item.title}`}
           >
-            <div className="relative aspect-[4/3] overflow-hidden bg-surface-secondary">
+            <div className="relative overflow-hidden bg-surface-secondary">
               {item.thumbnailUrl || item.coverImageUrl ? (
                 <img
                   src={item.thumbnailUrl || item.coverImageUrl}
@@ -105,23 +105,21 @@ export default function HomePeekRail({ location }) {
               ) : (
                 <div className="h-full w-full bg-surface-raised" />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/20" aria-hidden="true" />
-              <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
-                {formatDuration(item.durationSeconds)}
-              </span>
-              <span className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/65 text-white backdrop-blur-sm">
-                <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" aria-hidden="true" />
+              <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[9px] font-bold text-white shadow-lg">
+                <Play className="h-3 w-3 fill-current" />
+                Tour · {formatDuration(item.durationSeconds)}
               </span>
             </div>
-            <div className="p-3">
-              <p className="line-clamp-2 min-h-10 text-sm font-bold leading-5 text-foreground">{item.title}</p>
+            <div className="min-w-0 p-3.5">
+              <p className="truncate text-sm font-extrabold text-primary">{peekPrice(item, format)}</p>
+              <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-foreground">{item.title}</p>
               {item.publicLocation && (
-                <p className="mt-1.5 flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
+                <p className="mt-2 flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground">
                   <MapPin className="h-3 w-3 shrink-0 text-primary" />
                   <span className="truncate">{item.publicLocation}</span>
                 </p>
               )}
-              <p className="mt-2 truncate text-sm font-extrabold text-primary">{peekPrice(item, format)}</p>
             </div>
           </Link>
         ))}
