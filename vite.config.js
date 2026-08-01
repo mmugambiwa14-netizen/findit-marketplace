@@ -1,35 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
-import { join, relative } from 'node:path'
-
-function copyFirstPartyPublicAssets() {
-  const publicRoot = fileURLToPath(new URL('./public/', import.meta.url));
-  const files = [];
-  const visit = (directory) => {
-    for (const entry of readdirSync(directory)) {
-      const absolutePath = join(directory, entry);
-      if (statSync(absolutePath).isDirectory()) visit(absolutePath);
-      else files.push(absolutePath);
-    }
-  };
-
-  return {
-    name: 'copy-first-party-public-assets',
-    apply: 'build',
-    generateBundle() {
-      visit(publicRoot);
-      files.forEach((absolutePath) => {
-        this.emitFile({
-          type: 'asset',
-          fileName: relative(publicRoot, absolutePath).replaceAll('\\', '/'),
-          source: readFileSync(absolutePath),
-        });
-      });
-    },
-  };
-}
 
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => ({
@@ -37,9 +8,9 @@ export default defineConfig(({ command, mode }) => ({
   // local and custom-domain builds rooted at "/" unless a deploy explicitly
   // supplies VITE_BASE_PATH.
   base: process.env.VITE_BASE_PATH || '/',
-  // Preview-only media stays outside production. The build plugin below copies
-  // only first-party runtime assets from public/ into the hosted artifact.
-  publicDir: command === 'serve' || mode === 'preview' ? 'public' : false,
+  // Mock media is for local/manual preview only. Keeping it outside `public`
+  // prevents Vite from copying the 7 MB fixture set into production output.
+  publicDir: command === 'serve' || mode === 'preview' ? 'preview-assets' : false,
   logLevel: 'error', // Suppress warnings, only show errors
   resolve: {
     alias: {
@@ -59,6 +30,5 @@ export default defineConfig(({ command, mode }) => ({
   // visitor. Reducing what the shell imports is the real fix, not re-chunking.
   plugins: [
     react(),
-    copyFirstPartyPublicAssets(),
   ]
 }));

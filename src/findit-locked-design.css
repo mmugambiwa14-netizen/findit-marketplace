@@ -11,81 +11,67 @@
 }
 
 .dark {
-  --background: 205 58% 3.5%;
-  --foreground: 180 18% 97%;
-  --surface-secondary: 197 40% 8%;
-  --surface-raised: 193 34% 12%;
-  --card: 192 35% 8%;
-  --popover: 193 34% 11%;
-  --primary: 174 88% 47%;
-  --primary-hover: 166 89% 54%;
-  --primary-foreground: 205 58% 3.5%;
-  --secondary: 192 32% 9%;
-  --muted: 195 30% 13%;
-  --muted-foreground: 190 14% 67%;
-  --accent: 173 51% 14%;
-  --accent-foreground: 174 83% 76%;
-  --border: 190 28% 18%;
-  --border-strong: 188 30% 26%;
-  --input: 190 28% 22%;
+  --background: 215 54% 5%;
+  --foreground: 210 25% 96%;
+  --surface-secondary: 213 46% 9%;
+  --surface-raised: 210 39% 14%;
+  --card: 213 46% 10%;
+  --popover: 211 39% 13%;
+  --primary: 177 82% 46%;
+  --primary-hover: 175 87% 53%;
+  --primary-foreground: 215 54% 5%;
+  --secondary: 213 40% 10%;
+  --muted: 211 35% 15%;
+  --muted-foreground: 211 14% 67%;
+  --accent: 178 46% 16%;
+  --accent-foreground: 176 83% 72%;
+  --border: 207 30% 20%;
+  --border-strong: 203 31% 28%;
+  --input: 204 29% 25%;
   --ring: 177 82% 52%;
   --chart-1: 177 82% 46%;
-  --clay-shadow-light: 174 58% 24%;
+  --clay-shadow-light: 183 52% 27%;
   --sidebar-primary: 177 82% 46%;
   --sidebar-ring: 177 82% 52%;
 }
 
 body {
   background-image:
-    radial-gradient(circle at 12% -8%, hsl(174 88% 44% / 0.12), transparent 26rem),
-    radial-gradient(circle at 98% 22%, hsl(192 92% 42% / 0.075), transparent 23rem),
+    radial-gradient(circle at 15% -8%, hsl(var(--primary) / 0.1), transparent 28rem),
+    radial-gradient(circle at 98% 14%, hsl(194 88% 40% / 0.065), transparent 24rem),
     linear-gradient(180deg, hsl(var(--background)), hsl(var(--background)));
 }
 
-.findit-brand-mark {
-  @apply relative inline-flex items-center justify-center text-primary;
+.findit-logo-mark {
+  @apply relative inline-flex h-9 w-8 items-center justify-center text-primary;
 }
 
-.findit-brand-mark::before {
+.findit-logo-mark::before {
   content: '';
   width: 1.55rem;
-  height: 1.55rem;
-  border-radius: 58% 58% 58% 0;
+  height: 1.9rem;
+  border: 0.42rem solid currentColor;
+  border-bottom-color: transparent;
+  border-radius: 999px 999px 999px 0;
   transform: rotate(-45deg);
-  background: linear-gradient(135deg, hsl(174 90% 54%), hsl(132 72% 45%)) border-box;
-  border: 0.34rem solid transparent;
-  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  filter: drop-shadow(0 7px 12px hsl(var(--primary) / 0.28));
-}
-
-.findit-brand-mark::after {
-  content: '';
-  position: absolute;
-  width: 0.38rem;
-  height: 0.38rem;
-  border-radius: 999px;
-  background: hsl(var(--background));
-  transform: translate(-0.02rem, -0.18rem);
+  filter: drop-shadow(0 7px 12px hsl(var(--primary) / 0.24));
 }
 
 .locked-control {
   @apply rounded-2xl border border-border/85 bg-card/80;
-  background-image: linear-gradient(145deg, hsl(var(--surface-raised) / 0.68), hsl(var(--card) / 0.92));
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.07), 0 10px 24px hsl(var(--clay-shadow-dark) / 0.3);
+  background-image: linear-gradient(145deg, hsl(var(--surface-raised) / 0.82), hsl(var(--card) / 0.95));
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.055), 0 10px 24px hsl(var(--clay-shadow-dark) / 0.27);
 }
 
 .locked-category-card {
   @apply relative isolate overflow-hidden rounded-2xl border border-border/90 bg-card;
-  background-image: linear-gradient(145deg, hsl(var(--surface-raised) / 0.62), hsl(var(--card)) 46%, hsl(var(--card)));
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.065), -5px -5px 16px hsl(var(--clay-shadow-light) / 0.07), 10px 14px 28px hsl(var(--clay-shadow-dark) / 0.42);
+  background-image: linear-gradient(145deg, hsl(var(--surface-raised) / 0.68), hsl(var(--card)) 46%, hsl(var(--card)));
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.055), -5px -5px 16px hsl(var(--clay-shadow-light) / 0.065), 10px 14px 28px hsl(var(--clay-shadow-dark) / 0.36);
 }
 
 .locked-icon-tile {
-  @apply flex shrink-0 items-center justify-center rounded-xl border border-primary/40 text-primary;
-  background: linear-gradient(145deg, hsl(158 86% 40% / .44), hsl(174 88% 34% / .18));
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 8px 18px hsl(var(--primary) / 0.2);
+  @apply flex shrink-0 items-center justify-center rounded-xl border border-primary/35 bg-primary/20 text-primary;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 8px 18px hsl(var(--primary) / 0.19);
 }
 
 .locked-segmented-control {
@@ -96,15 +82,6 @@ body {
 .locked-segmented-active {
   @apply bg-primary text-primary-foreground;
   box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.2), 0 7px 18px hsl(var(--primary) / 0.3);
-}
-
-.findit-bottom-icon {
-  color: hsl(var(--muted-foreground));
-}
-
-.findit-bottom-icon[data-active='true'] {
-  color: hsl(var(--primary));
-  filter: drop-shadow(0 0 9px hsl(var(--primary) / 0.55));
 }
 
 .locked-map-panel {

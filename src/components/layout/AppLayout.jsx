@@ -39,7 +39,6 @@ export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const selfContained = SELF_CONTAINED_ROUTES.some((route) => matchesRoute(location.pathname, route));
-  const isDiscoverHome = location.pathname === '/';
 
   return (
     <div className="findit-screen min-h-screen">
@@ -54,7 +53,7 @@ export default function AppLayout() {
         <Outlet />
       </main>
       {!selfContained && <div className="hidden md:block"><SiteFooter /></div>}
-      {!selfContained && !isDiscoverHome && <GuestBanner user={user} />}
+      <GuestBanner user={user} />
       <BottomNav />
     </div>
   );

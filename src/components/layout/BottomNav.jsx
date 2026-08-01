@@ -38,7 +38,7 @@ export default function BottomNav() {
         aria-label="Mobile navigation"
         className="safe-area-bottom fixed inset-x-3 bottom-2 z-[1000] md:hidden"
       >
-        <div className="clay-nav mx-auto flex h-[72px] max-w-[470px] items-stretch rounded-[1.45rem] px-1.5">
+        <div className="clay-nav mx-auto flex h-[68px] max-w-[470px] items-stretch rounded-[1.35rem] px-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -66,7 +66,7 @@ export default function BottomNav() {
                     className={cn(
                       'relative flex h-8 w-8 items-center justify-center rounded-full transition-[background-color,color,box-shadow,transform]',
                       isActive
-                        ? 'text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/.55)]'
+                        ? 'bg-primary text-primary-foreground shadow-[0_7px_18px_hsl(var(--primary)/.32),inset_0_1px_rgba(255,255,255,.25)]'
                         : 'text-muted-foreground',
                     )}
                   >
@@ -87,7 +87,7 @@ export default function BottomNav() {
                 )}
                 <span
                   className={cn(
-                    'max-w-full truncate text-[10px] font-medium leading-none',
+                    'max-w-full truncate text-[10px] font-semibold leading-none',
                     item.prominent && '-mt-0.5',
                     isActive && !item.prominent && 'text-primary',
                   )}

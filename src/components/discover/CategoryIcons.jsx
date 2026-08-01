@@ -47,7 +47,6 @@ export const CATEGORY_VISUALS = {
     color: '#14b8a6',
     image: '/demo/listings/modern-home.svg',
     description: 'Homes, land, rentals',
-    countLabel: '32,450 listings',
   },
   car: {
     label: 'Cars',
@@ -55,7 +54,6 @@ export const CATEGORY_VISUALS = {
     color: '#2563eb',
     image: '/demo/listings/silver-sedan.svg',
     description: 'Sedans, SUVs, trucks',
-    countLabel: '18,930 listings',
   },
   machinery: {
     label: 'Machinery',
@@ -63,14 +61,12 @@ export const CATEGORY_VISUALS = {
     color: '#f59e0b',
     image: '/demo/listings/excavator.svg',
     description: 'Heavy equipment, tools',
-    countLabel: '6,210 listings',
   },
   service: {
     label: 'Services',
     icon: ServicesCategoryIcon,
     color: '#8b5cf6',
-    image: '/demo/listings/mechanic-service.svg',
+    image: '/demo/listings/property-maintenance.svg',
     description: 'Repairs, trades, professional help',
-    countLabel: '14,875 listings',
   },
 };

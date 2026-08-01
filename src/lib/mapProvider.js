@@ -9,9 +9,7 @@ const MAPLIBRE_STYLESHEET_URL = `${APPLICATION_BASE}${MAPLIBRE_STYLESHEET_PATH}`
 const MAPLIBRE_SCRIPT_ID = 'findit-maplibre-runtime';
 const MAPLIBRE_STYLESHEET_ID = 'findit-maplibre-styles';
 const MAPTILER_API_ORIGIN = 'https://api.maptiler.com';
-// The discovery surface is intentionally dark-first. OpenFreeMap's dark
-// basemap keeps the no-key fallback aligned with the product's glass UI.
-const OPENFREEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
+const OPENFREEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
 let mapLibrePromise = null;
 

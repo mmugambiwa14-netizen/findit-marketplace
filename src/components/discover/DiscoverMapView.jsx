@@ -41,26 +41,6 @@ function price(item) {
   return `${item.currency === 'USD' || !item.currency ? 'US$' : item.currency} ${Number(item.price).toLocaleString()}`;
 }
 
-function tuneDarkBasemap(map) {
-  const layers = map.getStyle()?.layers || [];
-  layers.forEach((layer) => {
-    try {
-      if (layer.id === 'background') map.setPaintProperty(layer.id, 'background-color', '#071a2c');
-      if (layer.id === 'water') map.setPaintProperty(layer.id, 'fill-color', '#061d31');
-      if (layer.type === 'line' && /^(highway|boundary|waterway)/.test(layer.id)) {
-        map.setPaintProperty(layer.id, 'line-color', layer.id.includes('casing') ? '#15344b' : '#1e4a63');
-      }
-      if (layer.type === 'symbol' && layer.paint?.['text-color']) {
-        map.setPaintProperty(layer.id, 'text-color', '#9caabd');
-        if (layer.paint?.['text-halo-color']) map.setPaintProperty(layer.id, 'text-halo-color', '#071a2c');
-      }
-    } catch {
-      // A provider layer can expose a paint property that MapLibre does not
-      // allow to be changed at runtime; the base style remains usable.
-    }
-  });
-}
-
 function useItems(location) {
   const locationId = location?.city || '';
   const property = useQuery({ queryKey: ['discover-map', 'property', locationId], queryFn: () => searchPublicListingsPage({ kind: 'property', locationId }), staleTime: 60000 });
@@ -108,11 +88,7 @@ export default function DiscoverMapView({ location }) {
           markers.push(marker);
           bounds.extend([point.longitude, point.latitude]);
         });
-        map.once('load', () => {
-          if (cancelled) return;
-          tuneDarkBasemap(map);
-          map.fitBounds(bounds, { animate: false, padding: { top: 45, right: 38, bottom: 145, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
-        });
+        map.once('load', () => !cancelled && map.fitBounds(bounds, { animate: false, padding: { top: 45, right: 38, bottom: 145, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 }));
         map.on('error', () => !cancelled && setFailure('Map tiles are temporarily unavailable.'));
       } catch { if (!cancelled) setFailure('The map could not load. Switch back to list view to continue.'); }
     })();
@@ -139,27 +115,8 @@ export default function DiscoverMapView({ location }) {
           <button type="button" onClick={() => navigate(path(selected))} className="clay-button mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold">View full listing <ChevronRight className="h-4 w-4" /></button>
         </div>
       )}
-      <div className="discover-map-rail absolute inset-x-2 bottom-2 z-20 grid grid-cols-4 gap-1.5 rounded-2xl border border-border/80 bg-background/88 p-2 shadow-xl backdrop-blur-2xl" role="group" aria-label="Filter map categories">
-        {CATEGORY_KEYS.map((key) => {
-          const visual = CATEGORY_VISUALS[key];
-          const Icon = visual.icon;
-          const active = category === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setCategory(active ? 'all' : key)}
-              aria-pressed={active}
-              className={cn('group min-w-0 rounded-xl border border-transparent p-1 text-left text-muted-foreground transition-colors', active && 'border-primary/45 bg-primary/10 text-primary')}
-            >
-              <span className="relative block aspect-[1.35] overflow-hidden rounded-lg border border-white/10 bg-surface-secondary">
-                <img src={visual.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover opacity-80 transition-transform duration-300 group-hover:scale-105" />
-                <span className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-black/55 text-primary backdrop-blur-sm"><Icon className="h-3.5 w-3.5" /></span>
-              </span>
-              <span className="mt-1 block truncate px-0.5 text-[10px] font-medium">{visual.label}</span>
-            </button>
-          );
-        })}
+      <div className="absolute inset-x-2 bottom-2 z-20 grid grid-cols-4 gap-1.5 rounded-2xl border border-border/80 bg-background/92 p-2 shadow-xl backdrop-blur-2xl" role="group" aria-label="Filter map categories">
+        {CATEGORY_KEYS.map((key) => { const visual = CATEGORY_VISUALS[key]; const Icon = visual.icon; const active = category === key; return <button key={key} type="button" onClick={() => setCategory(active ? 'all' : key)} aria-pressed={active} className={cn('flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-transparent px-1 text-[10px] font-semibold text-muted-foreground', active && 'border-primary/40 bg-primary/8 text-primary')}><Icon className="h-5 w-5" /><span className="truncate">{visual.label}</span></button>; })}
       </div>
     </section>
   );
