@@ -36,7 +36,7 @@ export default function BottomNav() {
     <>
       <nav
         aria-label="Mobile navigation"
-        className="safe-area-bottom fixed inset-x-3 bottom-2.5 z-[1000] md:hidden"
+        className="safe-area-bottom fixed inset-x-3 bottom-2.5 z-40 md:hidden"
       >
         <div className="clay-nav mx-auto flex h-[74px] max-w-[500px] items-stretch rounded-[1.55rem] px-1.5">
           {navItems.map((item) => {

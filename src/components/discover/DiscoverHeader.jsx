@@ -28,7 +28,10 @@ export default function DiscoverHeader({ location, onLocationChange }) {
             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
           </button>
         </SheetTrigger>
-        <SheetContent side="bottom" className="overflow-y-auto border-border bg-background">
+        <SheetContent
+          side="bottom"
+          className="max-h-[calc(100dvh-0.75rem)] touch-pan-y overflow-y-auto overscroll-contain border-border bg-background"
+        >
           <SheetHeader className="pr-10 text-left">
             <SheetTitle>Choose a location</SheetTitle>
             <SheetDescription>Use a public city-level location to narrow marketplace results.</SheetDescription>
