@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ContactButtons from "@/components/listings/ContactButtons";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
+import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import { ContactBar, DetailLoading, DetailSection, SafetyPanel, SellerPanel } from "@/components/listings/ListingDetailLayout";
 import { useMarketplaceView } from "@/hooks/useMarketplaceView";
@@ -27,7 +28,7 @@ export default function ServiceDetail() {
 
   if (isLoading) return <DetailLoading />;
   if (error) return <ServiceError onRetry={refetch} />;
-  if (!service) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background"><p className="text-muted-foreground">Service not found.</p><Link to="/services" className="font-medium text-primary">Back to Services</Link></div>;
+  if (!service) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4"><div className="clay-card rounded-2xl px-6 py-10 text-center"><p className="text-muted-foreground">Service not found.</p><Link to="/services" className="mt-3 inline-block font-medium text-primary">Back to Services</Link></div></div>;
 
   const category = getServiceCategory(service.category);
   const subcategories = service.subcategories?.length ? service.subcategories : (service.subcategory ? [service.subcategory] : []);
@@ -46,19 +47,31 @@ export default function ServiceDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="findit-screen pb-36">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={shareService} showSave={false} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Take a Peek" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} />
+        <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Watch Tour" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} className="md:mt-4 md:rounded-3xl md:border" />
         <div className="space-y-5 px-4 py-5 sm:px-6">
-          <section className="surface-panel p-5">
-            <div className="flex flex-wrap items-center gap-2">{category && <Badge variant="secondary">{category.label}</Badge>}{subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}</div>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{service.title}</h1>
-            <p className="mt-4 text-3xl font-bold text-primary">{priceDisplay}</p>
-            {service.location_name && <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{service.location_name}</p>}
-            {service.can_travel && <p className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary/10 px-4 text-sm font-medium text-primary"><Car className="h-4 w-4" />Can travel to other areas</p>}
-            <p className="mt-3 text-sm text-muted-foreground">{Number(service.views || 0).toLocaleString()} views</p>
+          <section className="surface-panel p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              {category && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{category.label}</Badge>}
+              {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
+            </div>
+            <p className="mt-4 text-2xl font-black tracking-tight text-primary sm:text-3xl">{priceDisplay}</p>
+            <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{service.title}</h1>
+            {service.location_name && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0 text-primary" />{service.location_name}</p>}
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground"><span>{Number(service.views || 0).toLocaleString()} views</span>{service.can_travel && <><span aria-hidden="true">·</span><span>Travels to customers</span></>}</div>
           </section>
+
+          <section aria-labelledby="service-details-heading">
+            <h2 id="service-details-heading" className="mb-3 findit-section-title">Service details</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {category && <ListingFeatureItem icon={category.icon || Car} label="Category" value={category.label} />}
+              <ListingFeatureItem icon={MapPin} label="Area" value={service.location_name || "Location arranged"} />
+              <ListingFeatureItem icon={Car} label="Travel" value={service.can_travel ? "Available" : "Local area"} />
+            </div>
+          </section>
+
           {service.description && <DetailSection title="About this service"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{service.description}</p></DetailSection>}
           <SellerPanel name={service.provider_name || "FindIt service provider"} sellerId={service.provider_id} />
           <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. FindIt does not handle service payments.</SafetyPanel>
@@ -70,5 +83,5 @@ export default function ServiceDetail() {
 }
 
 function ServiceError({ onRetry }) {
-  return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4 text-center"><p className="font-semibold">We could not load this service.</p><p className="text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" onClick={onRetry}>Try again</Button></div>;
+  return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="clay-card rounded-2xl px-6 py-10 text-center"><p className="font-semibold">We could not load this service.</p><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="clay-control mt-5" onClick={onRetry}>Try again</Button></div></div>;
 }
