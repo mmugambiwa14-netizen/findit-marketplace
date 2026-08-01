@@ -4,6 +4,8 @@
 // exposes a real product contract only after its implementation, provider and
 // release evidence are complete in the target environment.
 
+import { mapProviderConfigured } from '@/lib/mapProvider';
+
 const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
 
 const flag = (envVar, fallback = false) => {
@@ -21,9 +23,10 @@ export const featureFlags = {
   toursPreview: flag('VITE_FEATURE_TOURS_PREVIEW', Boolean(viteEnv.DEV)),
   previewFixtures: flag('VITE_FEATURE_PREVIEW_FIXTURES'),
 
-  // Maps use MapLibre GL JS with MapTiler Cloud styles. Device location uses
-  // MapTiler reverse geocoding and resolves only to a supported public city.
-  maps: flag('VITE_FEATURE_MAPS'),
+  // Map rendering is available whenever the provider stack is configured.
+  // Device location remains separately gated because reverse geocoding still
+  // requires the configured MapTiler geocoder key.
+  maps: flag('VITE_FEATURE_MAPS', mapProviderConfigured()),
   manualLocation: flag('VITE_FEATURE_MANUAL_LOCATION', true),
   currentLocation: flag('VITE_FEATURE_CURRENT_LOCATION'),
 
