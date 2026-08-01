@@ -33,6 +33,7 @@ function CountBadge({ count }) {
 export default function TopNav() {
   const { user } = useAuth();
   const location = useLocation();
+  const currentPath = `${location.pathname}${location.search}${location.hash}`;
   const unreadMessages = useUnreadMessages();
   const desktopItems = PRIMARY_NAV_ITEMS.filter((item) => !item.prominent && isItemVisible(item));
 
@@ -82,7 +83,7 @@ export default function TopNav() {
             <span>Post</span>
           </Link>
           <Link
-            to={user ? '/profile' : createLoginPath('/profile')}
+            to={user ? '/profile' : createLoginPath(currentPath)}
             className="clay-control inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:border-primary/25 hover:text-foreground"
             aria-label={user ? 'Open profile' : 'Sign in'}
           >

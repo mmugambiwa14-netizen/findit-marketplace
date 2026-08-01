@@ -5,12 +5,13 @@ import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 const projectRoot = resolve(import.meta.dirname, '..');
-const [providerSource, authSource, loginSource, registerSource] =
+const [providerSource, authSource, loginSource, registerSource, topNavSource] =
   await Promise.all([
     readFile(new URL('../src/lib/oauthProviders.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/services/authService.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/Login.jsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/Register.jsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/layout/TopNav.jsx', import.meta.url), 'utf8'),
   ]);
 
 test('OAuth providers default off and use explicit browser flags', () => {
@@ -41,6 +42,12 @@ test('Login and Register hide unavailable OAuth providers', () => {
     assert.match(source, /oauthProviders\.apple &&/);
     assert.match(source, /hasEnabledOAuthProvider &&/);
   }
+});
+
+test('generic desktop sign-in returns to the current screen after OAuth', () => {
+  assert.match(topNavSource, /const currentPath = `\$\{location\.pathname\}\$\{location\.search\}\$\{location\.hash\}`/);
+  assert.match(topNavSource, /createLoginPath\(currentPath\)/);
+  assert.doesNotMatch(topNavSource, /createLoginPath\('\/profile'\)/);
 });
 
 test('environment validation rejects malformed OAuth availability flags', () => {

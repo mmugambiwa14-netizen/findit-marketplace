@@ -158,13 +158,15 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "https://mmugambiwa14-netizen.github.io/findit-marketplace/"
+site_url = "https://findit-marketplace-staging.vercel.app/"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
   "http://localhost:5173",
   "http://localhost:5173/**",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5173/**",
+  "https://findit-marketplace-staging.vercel.app/",
+  "https://findit-marketplace-staging.vercel.app/**",
   "https://mmugambiwa14-netizen.github.io/findit-marketplace/",
   "https://mmugambiwa14-netizen.github.io/findit-marketplace/**",
 ]

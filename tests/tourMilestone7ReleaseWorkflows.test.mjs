@@ -72,7 +72,8 @@ test('staging deployment can expose preview or public Tours without weakening pr
   assert.match(stagingWorkflow, /VITE_MODE: staging/);
   assert.match(stagingWorkflow, /npm ci --include=dev --ignore-scripts/);
   assert.match(stagingWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
-  assert.match(supabaseConfig, /site_url = "https:\/\/mmugambiwa14-netizen\.github\.io\/findit-marketplace\/"/);
+  assert.match(supabaseConfig, /site_url = "https:\/\/findit-marketplace-staging\.vercel\.app\/"/);
+  assert.match(supabaseConfig, /"https:\/\/findit-marketplace-staging\.vercel\.app\/\*\*"/);
   assert.doesNotMatch(`${stagingWorkflow}\n${supabaseConfig}`, /\/-findit-marketplace\//);
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_ENABLED/);
   assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_PREVIEW/);
