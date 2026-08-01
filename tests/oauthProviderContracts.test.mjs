@@ -18,6 +18,8 @@ test('OAuth providers default off and use explicit browser flags', () => {
     providerSource,
     /enabled\(import\.meta\.env\.VITE_AUTH_GOOGLE_ENABLED\)/,
   );
+  assert.match(providerSource, /VITE_VERCEL_GIT_COMMIT_REF/);
+  assert.match(providerSource, /googleEnabledForStaging/);
   assert.match(
     providerSource,
     /enabled\(import\.meta\.env\.VITE_AUTH_APPLE_ENABLED\)/,

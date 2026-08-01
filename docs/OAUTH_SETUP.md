@@ -14,10 +14,11 @@ passes.
 
 ## Current staging status
 
-- **Google:** enabled in hosted Supabase and enabled for future hosted frontend
-  builds. The Google Cloud web client uses the exact Supabase callback URL. The
-  owner account is registered as a test user, and a real consent/callback run
-  created one Supabase Auth user whose provider is `google`.
+- **Google:** enabled in hosted Supabase and enabled for the hosted staging
+  feature branch. The Google Cloud web client uses the exact Supabase callback
+  URL. The owner account is registered as a test user, and a real
+  consent/callback run created one Supabase Auth user whose provider is
+  `google`.
 - **Apple:** intentionally disabled and hidden at the owner's request. Apple
   Developer Program enrollment and Apple provider credentials have not been
   configured.
@@ -56,7 +57,10 @@ GitHub variable or browser build.
 
 9. Complete new-user, returning-user, cancelled-consent and suspended-account
    browser tests.
-10. Only then set `VITE_AUTH_GOOGLE_ENABLED=true` in the frontend host.
+10. Only then set `VITE_AUTH_GOOGLE_ENABLED=true` in the frontend host. The
+    staging feature branch has a branch-scoped fallback because its Supabase
+    provider has already passed the hosted callback check; production still
+    requires the explicit host flag.
 
 ## Apple
 
