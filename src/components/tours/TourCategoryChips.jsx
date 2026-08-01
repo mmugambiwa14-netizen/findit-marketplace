@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 const CATEGORIES = [
-  ['all', 'All Tours'],
+  ['all', 'All Peeks'],
   ['property', 'Property'],
   ['car', 'Cars'],
   ['machinery', 'Machinery'],
@@ -10,7 +10,7 @@ const CATEGORIES = [
 
 export default function TourCategoryChips({ value, onChange }) {
   return (
-    <nav aria-label="Tour categories" className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
+    <nav aria-label="Peek categories" className="no-scrollbar flex gap-2 overflow-x-auto px-4 py-3">
       {CATEGORIES.map(([key, label]) => (
         <button
           key={key}
