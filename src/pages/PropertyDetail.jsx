@@ -57,31 +57,62 @@ export default function PropertyDetail() {
   const location = property.public_location_label || [property.suburb, property.city, property.province].filter(Boolean).join(", ");
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="findit-screen pb-36">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("property", property)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={property.photos} title={property.title} fallbackImage={placeholderProperty} tour={property.tour || null} tourActionLabel="Take a Peek" tourOwnerId={property.seller_id} parentType="listing" parentId={property.id} />
+        <ListingMediaViewer
+          photos={property.photos}
+          title={property.title}
+          fallbackImage={placeholderProperty}
+          tour={property.tour || null}
+          tourActionLabel="Watch Tour"
+          tourOwnerId={property.seller_id}
+          parentType="listing"
+          parentId={property.id}
+          className="md:mt-4 md:rounded-3xl md:border"
+        />
+
         <div className="space-y-5 px-4 py-5 sm:px-6">
-          <section className="surface-panel p-5">
-            <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{getCategoryLabel(property.category)}</Badge>{property.status !== "available" && <Badge variant="destructive">{statusLabel(property.status)}</Badge>}<ListingCode type="property" id={property.id} /></div>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{property.title}</h1>
-            {location && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{location}</p>}
-            <p className="mt-4 text-3xl font-bold text-primary">{variants.length > 1 && <span className="mr-2 text-sm font-semibold text-muted-foreground">From</span>}{format(activePrice)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Currency conversions are indicative; final exchange rates may vary.</p>
+          <section className="surface-panel p-5 sm:p-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getCategoryLabel(property.category)}</Badge>
+              {property.status !== "available" && <Badge variant="destructive">{statusLabel(property.status)}</Badge>}
+              <ListingCode type="property" id={property.id} />
+            </div>
+
+            <p className="mt-4 text-2xl font-black tracking-tight text-primary sm:text-3xl">
+              {variants.length > 1 && <span className="mr-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">From</span>}
+              {format(activePrice)}
+            </p>
+            <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{property.title}</h1>
+            {location && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0 text-primary" />{location}</p>}
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground">
+              <span>Listed {listedAgo}</span>
+              <span aria-hidden="true">·</span>
+              <span>{Number(property.views || 0).toLocaleString()} views</span>
+              <span aria-hidden="true">·</span>
+              <span>Indicative currency conversion</span>
+            </div>
+
             {property.accepts_offers && <div className="mt-4"><MakeOfferButton listing={property} /></div>}
-            <p className="mt-3 text-sm text-muted-foreground">Listed {listedAgo} · {Number(property.views || 0).toLocaleString()} views</p>
           </section>
+
+          <section aria-labelledby="property-details-heading">
+            <h2 id="property-details-heading" className="mb-3 findit-section-title">Key details</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {property.bedrooms > 0 && <ListingFeatureItem icon={Bed} label="Bedrooms" value={property.bedrooms} />}
+              {property.bathrooms > 0 && <ListingFeatureItem icon={Bath} label="Bathrooms" value={property.bathrooms} />}
+              {property.property_size > 0 && <ListingFeatureItem icon={Maximize} label="Size" value={`${property.property_size}m²`} />}
+              {property.has_garage && <ListingFeatureItem icon={Car} label="Garage" value="Yes" />}
+              {property.has_garden && <ListingFeatureItem icon={Trees} label="Garden" value="Yes" />}
+              {property.has_pool && <ListingFeatureItem icon={Waves} label="Pool" value="Yes" />}
+            </div>
+          </section>
+
+          {property.description && <DetailSection title="About this property"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{property.description}</p></DetailSection>}
           <VariantSelector variants={property.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
           <PriceBreakdown listing={property} />
-          <section aria-labelledby="property-details-heading"><h2 id="property-details-heading" className="mb-3 text-lg font-semibold">Key details</h2><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {property.bedrooms > 0 && <ListingFeatureItem icon={Bed} label="Bedrooms" value={property.bedrooms} />}
-            {property.bathrooms > 0 && <ListingFeatureItem icon={Bath} label="Bathrooms" value={property.bathrooms} />}
-            {property.property_size > 0 && <ListingFeatureItem icon={Maximize} label="Size" value={`${property.property_size}m²`} />}
-            {property.has_garage && <ListingFeatureItem icon={Car} label="Garage" value="Yes" />}
-            {property.has_garden && <ListingFeatureItem icon={Trees} label="Garden" value="Yes" />}
-            {property.has_pool && <ListingFeatureItem icon={Waves} label="Pool" value="Yes" />}
-          </div></section>
-          {property.description && <DetailSection title="Description"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{property.description}</p></DetailSection>}
           <SellerPanel name={property.seller_name} sellerId={property.seller_id} />
           <SafetyPanel>Always view the property in person before making a payment. Never send money to someone you have not met. FindIt does not handle buyer–seller payments.{isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}</SafetyPanel>
           <ListingRecommendations subjectListingId={property.id} />
