@@ -25,7 +25,7 @@ export default function MarketplaceCard({
   badges = [],
   save = null,
   tour = null,
-  tourLabel = 'Tour',
+  tourLabel = 'Peek',
   sellerName = null,
   views = null,
   actions = null,
