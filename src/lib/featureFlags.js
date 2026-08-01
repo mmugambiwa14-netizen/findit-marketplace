@@ -8,6 +8,9 @@ import { mapProviderConfigured } from './mapProvider.js';
 
 const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
 
+const STAGING_BRANCH = 'feature/listing-intelligence-foundation';
+const isStagingBranch = String(viteEnv.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim() === STAGING_BRANCH;
+
 const flag = (envVar, fallback = false) => {
   const raw = viteEnv[envVar];
   if (raw === undefined) return fallback;
@@ -16,10 +19,10 @@ const flag = (envVar, fallback = false) => {
 
 export const featureFlags = {
   businessProfiles: flag('VITE_FEATURE_BUSINESS_PROFILES', true),
-  messaging: flag('VITE_FEATURE_MESSAGING'),
-  essentialNotifications: flag('VITE_FEATURE_ESSENTIAL_NOTIFICATIONS'),
+  messaging: flag('VITE_FEATURE_MESSAGING', isStagingBranch),
+  essentialNotifications: flag('VITE_FEATURE_ESSENTIAL_NOTIFICATIONS', isStagingBranch),
 
-  tours: flag('VITE_FEATURE_TOURS'),
+  tours: flag('VITE_FEATURE_TOURS', isStagingBranch),
   toursPreview: flag('VITE_FEATURE_TOURS_PREVIEW', Boolean(viteEnv.DEV)),
   previewFixtures: flag('VITE_FEATURE_PREVIEW_FIXTURES'),
 
