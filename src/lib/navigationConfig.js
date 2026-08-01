@@ -1,11 +1,11 @@
 import {
+  CirclePlay,
   CircleUserRound,
-  Clapperboard,
+  Compass,
   Flag,
   FolderTree,
   LayoutDashboard,
-  MapPinned,
-  MessagesSquare,
+  MessageCircle,
   Plus,
   ScrollText,
   Store,
@@ -15,14 +15,14 @@ import {
 export const PRIMARY_NAV_ITEMS = [
   {
     label: 'Discover',
-    icon: MapPinned,
+    icon: Compass,
     path: '/',
     guestAllowed: true,
     exact: true,
   },
   {
-    label: 'Tours',
-    icon: Clapperboard,
+    label: 'Peeks',
+    icon: CirclePlay,
     path: '/peek',
     guestAllowed: true,
     feature: 'tours',
@@ -38,7 +38,7 @@ export const PRIMARY_NAV_ITEMS = [
   },
   {
     label: 'Chats',
-    icon: MessagesSquare,
+    icon: MessageCircle,
     path: '/chats',
     guestAllowed: false,
     guestAction: 'view your marketplace chats',
@@ -53,7 +53,6 @@ export const PRIMARY_NAV_ITEMS = [
   },
 ];
 
-// One source for the six implemented V1 admin destinations.
 export const ADMIN_NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, path: '/admin' },
   { label: 'Marketplace', icon: Store, path: '/admin/listings' },
