@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import SellerProfileFields from "@/components/settings/SellerProfileFields";
 import PersonalizationSettings from "@/components/settings/PersonalizationSettings";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -70,11 +71,12 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen pb-24">
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
-        <button type="button" onClick={() => navigate(-1)} className="p-1" aria-label="Go back">
+      <div className="locked-page-header flex items-center gap-3 px-4 py-3">
+        <button type="button" onClick={() => navigate(-1)} className="clay-icon h-10 w-10" aria-label="Go back">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="font-bold text-lg">Settings</h1>
+        <ThemeToggle className="ml-auto" />
       </div>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-4">
@@ -167,7 +169,7 @@ export default function Settings() {
 
 function Section({ icon: Icon, title, children }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4">
+    <section className="clay-card rounded-2xl p-4">
       <div className="mb-4 flex items-center gap-2">
         <Icon className="w-4 h-4 text-primary" />
         <h2 className="font-semibold text-sm">{title}</h2>

@@ -46,7 +46,7 @@ export default function TopNav() {
           />
         </Link>
 
-        <nav className="flex min-w-0 flex-1 items-center justify-center gap-1" aria-label="Primary navigation">
+        <nav className="flex min-w-0 flex-1 items-center justify-center gap-1.5" aria-label="Primary navigation">
           {desktopItems.map((item) => {
             const Icon = item.icon;
             const active = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -57,8 +57,8 @@ export default function TopNav() {
                 to={item.path}
                 aria-label={count > 0 ? `${item.label}, ${count} unread` : item.label}
                 className={cn(
-                  'inline-flex h-11 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground',
-                  active && 'clay-soft text-primary',
+                  'inline-flex h-11 items-center gap-2 rounded-xl border border-transparent px-3.5 text-sm font-semibold text-muted-foreground transition-colors hover:border-border hover:bg-surface-raised/75 hover:text-foreground',
+                  active && 'findit-active-nav-item',
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -76,14 +76,14 @@ export default function TopNav() {
           )}
           <Link
             to="/post"
-            className="clay-button inline-flex h-11 items-center gap-1.5 px-3.5 text-sm font-semibold"
+            className="clay-button inline-flex h-11 items-center gap-1.5 px-4 text-sm font-bold"
           >
             <Plus className="h-4 w-4" strokeWidth={2.5} />
             <span>Post</span>
           </Link>
           <Link
             to={user ? '/profile' : createLoginPath('/profile')}
-            className="clay-control inline-flex h-11 min-w-11 items-center justify-center gap-2 px-3 text-sm font-semibold text-muted-foreground hover:text-foreground"
+            className="clay-control inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:border-primary/25 hover:text-foreground"
             aria-label={user ? 'Open profile' : 'Sign in'}
           >
             <UserRound className="h-[18px] w-[18px]" />

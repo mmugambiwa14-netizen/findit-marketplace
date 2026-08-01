@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import BrandLogo from "@/components/BrandLogo";
+import ThemeToggle from "@/components/layout/ThemeToggle";
 
 /**
  * @param {{
@@ -13,28 +14,29 @@ import BrandLogo from "@/components/BrandLogo";
  */
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <main className="flex flex-1 items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex justify-center" aria-label="FindIt home">
-          <BrandLogo markClassName="h-10 w-10" wordmarkClassName="text-2xl" />
-        </Link>
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary mb-4">
-            <Icon className="w-7 h-7 text-primary-foreground" aria-hidden="true" />
+    <div className="findit-auth-shell relative flex min-h-screen flex-col overflow-hidden bg-background">
+      <ThemeToggle className="absolute right-4 top-4 z-10 border border-border bg-card/65 shadow-sm backdrop-blur-xl sm:right-6 sm:top-6" />
+      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:py-16">
+        <div className="w-full max-w-md">
+          <Link to="/" className="mb-8 flex justify-center" aria-label="FindIt home">
+            <BrandLogo markClassName="h-10 w-10" wordmarkClassName="text-2xl tracking-[-0.04em]" />
+          </Link>
+          <div className="mb-8 text-center">
+            <div className="clay-button mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl">
+              <Icon className="h-7 w-7 text-primary-foreground" aria-hidden="true" />
+            </div>
+            <h1 className="text-3xl font-black tracking-[-0.035em] text-foreground">{title}</h1>
+            {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
-          {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
+          <div className="clay-card rounded-[1.5rem] p-6 sm:p-8">
+            {children}
+          </div>
+          {footer && (
+            <p className="mt-6 text-center text-sm text-muted-foreground">{footer}</p>
+          )}
         </div>
-        <div className="bg-card rounded-2xl shadow-sm border border-border p-8">
-          {children}
-        </div>
-        {footer && (
-          <p className="text-center text-sm text-muted-foreground mt-6">{footer}</p>
-        )}
-      </div>
       </main>
-      <div className="border-t px-4 py-4 text-center text-xs text-muted-foreground">
+      <div className="border-t border-border/70 bg-background/55 px-4 py-4 text-center text-xs text-muted-foreground backdrop-blur-xl">
         <Link to="/legal/privacy" className="mx-2 hover:text-foreground hover:underline">Privacy</Link>
         <Link to="/legal/data-protection" className="mx-2 hover:text-foreground hover:underline">Data protection</Link>
         <Link to="/legal/terms" className="mx-2 hover:text-foreground hover:underline">Terms</Link>

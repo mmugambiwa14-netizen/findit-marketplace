@@ -36,9 +36,9 @@ export default function BottomNav() {
     <>
       <nav
         aria-label="Mobile navigation"
-        className="safe-area-bottom fixed inset-x-3 bottom-2 z-[1000] md:hidden"
+        className="safe-area-bottom fixed inset-x-3 bottom-2.5 z-[1000] md:hidden"
       >
-        <div className="clay-nav mx-auto flex h-[72px] max-w-[470px] items-stretch rounded-[1.45rem] px-1.5">
+        <div className="clay-nav mx-auto flex h-[74px] max-w-[500px] items-stretch rounded-[1.55rem] px-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -52,22 +52,22 @@ export default function BottomNav() {
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={count > 0 ? `${item.label}, ${count} unread` : item.label}
                 className={cn(
-                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 text-muted-foreground focus-visible:z-10',
+                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-muted-foreground focus-visible:z-10',
                   isActive && !item.prominent && 'text-primary',
                   item.prominent && 'text-foreground',
                 )}
               >
                 {item.prominent ? (
-                  <span className="clay-button -mt-6 flex h-14 w-14 items-center justify-center rounded-full ring-4 ring-background/90">
-                    <Icon aria-hidden="true" className="h-7 w-7" strokeWidth={2.15} />
+                  <span className="clay-button -mt-7 flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full ring-4 ring-background/90">
+                    <Icon aria-hidden="true" className="h-7 w-7" strokeWidth={2.1} />
                   </span>
                 ) : (
                   <span
                     className={cn(
-                      'relative flex h-8 w-8 items-center justify-center rounded-full transition-[background-color,color,box-shadow,transform]',
+                      'relative flex h-9 w-9 items-center justify-center rounded-xl transition-[background-color,color,box-shadow,transform]',
                       isActive
-                        ? 'text-primary drop-shadow-[0_0_10px_hsl(var(--primary)/.55)]'
-                        : 'text-muted-foreground',
+                        ? 'findit-active-nav-item scale-[1.04]'
+                        : 'text-muted-foreground hover:bg-surface-raised/70 hover:text-foreground',
                     )}
                   >
                     <Icon
@@ -87,9 +87,9 @@ export default function BottomNav() {
                 )}
                 <span
                   className={cn(
-                    'max-w-full truncate text-[10px] font-medium leading-none',
+                    'max-w-full truncate text-[10px] font-semibold leading-none tracking-[-0.01em]',
                     item.prominent && '-mt-0.5',
-                    isActive && !item.prominent && 'text-primary',
+                    isActive && !item.prominent && 'font-bold text-primary',
                   )}
                 >
                   {item.label}

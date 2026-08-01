@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 export default function DiscoverSearch({ location }) {
@@ -22,8 +22,8 @@ export default function DiscoverSearch({ location }) {
   };
 
   return (
-    <form onSubmit={submit} className="relative">
-      <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+    <form onSubmit={submit} className="group relative">
+      <Search className="pointer-events-none absolute left-4 top-1/2 z-10 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" aria-hidden="true" />
       <Input
         type="search"
         value={query}
@@ -31,8 +31,12 @@ export default function DiscoverSearch({ location }) {
         placeholder="Search properties, cars, services..."
         aria-label="Search FindIt"
         maxLength={100}
-        className="locked-control h-14 rounded-[1.15rem] border-border/85 bg-card/80 pl-11 pr-4 text-sm placeholder:text-muted-foreground/80"
+        className="locked-control h-14 rounded-[1.15rem] border-border/85 bg-card/80 pl-11 pr-4 text-sm placeholder:text-muted-foreground/80 sm:pr-28"
       />
+      <button type="submit" className="clay-button absolute right-2 top-2 hidden h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold sm:flex">
+        Search
+        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
     </form>
   );
 }

@@ -29,7 +29,7 @@ function applyStoredTheme() {
   document.documentElement.style.colorScheme = theme;
   document.querySelector('meta[name="theme-color"]')?.setAttribute(
     'content',
-    theme === 'dark' ? '#090b10' : '#f7f8fb',
+    theme === 'dark' ? '#050914' : '#f5f8fd',
   );
 }
 

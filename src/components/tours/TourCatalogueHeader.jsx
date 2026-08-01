@@ -1,4 +1,5 @@
 import { MapPin, Search, X } from 'lucide-react';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 import { Input } from '@/components/ui/input';
 
 export default function TourCatalogueHeader({ query, location, onQueryChange, onLocationChange }) {
@@ -7,7 +8,7 @@ export default function TourCatalogueHeader({ query, location, onQueryChange, on
       <div className="mx-auto max-w-3xl px-4 pb-3 pt-5">
         <div className="flex items-center justify-between gap-4">
           <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">See it first</p><h1 className="mt-1 text-2xl font-black tracking-tight">Peeks</h1></div>
-          <span className="locked-icon-tile h-11 w-11"><Search className="h-5 w-5" /></span>
+          <ThemeToggle />
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_0.72fr]">

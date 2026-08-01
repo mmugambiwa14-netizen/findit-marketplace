@@ -40,7 +40,7 @@ export default function GoogleAuthButton({
       <Button
         type="button"
         variant={variant}
-        className="h-11 w-full justify-center rounded-lg bg-card font-semibold text-card-foreground shadow-sm"
+        className="h-12 w-full justify-center rounded-xl bg-card/80 font-semibold text-card-foreground shadow-sm"
         onClick={continueWithGoogle}
         disabled={loading}
       >

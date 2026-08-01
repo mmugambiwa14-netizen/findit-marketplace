@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { writeStoredString } from '@/lib/browserStorage';
+import { cn } from '@/lib/utils';
 
 const THEME_STORAGE_KEY = 'theme';
 
@@ -14,10 +15,10 @@ function applyTheme(theme) {
   document.documentElement.classList.toggle('dark', dark);
   document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
   writeStoredString('local', THEME_STORAGE_KEY, theme);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#090b10' : '#f7f8fb');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#050914' : '#f5f8fd');
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className = undefined }) {
   const [theme, setTheme] = useState(currentTheme);
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={() => setTheme(nextTheme)}
-      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-surface-raised hover:text-foreground sm:h-11 sm:w-11"
+      className={cn('findit-header-action shrink-0', className)}
       aria-label={`Switch to ${nextTheme} mode`}
       title={`Switch to ${nextTheme} mode`}
     >

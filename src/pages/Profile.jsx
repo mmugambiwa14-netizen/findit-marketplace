@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import ProfileHeader from '@/components/profile/ProfileHeader';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 import { featureFlags } from '@/lib/featureFlags';
 import { toast } from 'sonner';
 
@@ -36,7 +37,10 @@ export default function Profile() {
     <div className="findit-screen pb-28">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-4 pt-5">
         <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Your FindIt</p><h1 className="mt-1 text-2xl font-black tracking-tight">Profile</h1></div>
-        <Link to="/settings" aria-label="Open settings" className="clay-icon h-11 w-11"><Settings className="h-5 w-5" /></Link>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Link to="/settings" aria-label="Open settings" className="clay-icon h-11 w-11"><Settings className="h-5 w-5" /></Link>
+        </div>
       </header>
 
       <div className="mx-auto max-w-3xl">
