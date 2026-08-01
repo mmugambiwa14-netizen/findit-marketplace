@@ -31,7 +31,7 @@ export default function DiscoverSearch({ location }) {
         placeholder="Search properties, cars, machinery or services"
         aria-label="Search FindIt"
         maxLength={100}
-        className="clay-control h-12 rounded-2xl border-border bg-card pl-11 pr-4 text-sm placeholder:text-muted-foreground/80 sm:h-14 sm:text-base"
+        className="locked-control h-14 rounded-2xl border-border/85 bg-card/80 pl-11 pr-4 text-sm placeholder:text-muted-foreground/80"
       />
     </form>
   );
