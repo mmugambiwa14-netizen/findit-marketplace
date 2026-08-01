@@ -84,7 +84,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
       });
     } catch {
       setPlaybackError(true);
-      toast.error('This Tour is temporarily unavailable');
+      toast.error('This Peek is temporarily unavailable');
     } finally {
       setLoadingPlayback(false);
     }
@@ -146,7 +146,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
   const openReport = () => {
     if (!user) {
-      setGuestAction('report this Tour');
+      setGuestAction('report this Peek');
       setGuestOpen(true);
       return;
     }
@@ -184,7 +184,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
             onError={() => { setPlayback(null); setPlaybackError(true); }}
           />
         ) : (
-          <button type="button" onClick={loadPlayback} className="group relative block h-full w-full text-left" aria-label={`Play Tour for ${item.title}`} disabled={loadingPlayback}>
+          <button type="button" onClick={loadPlayback} className="group relative block h-full w-full text-left" aria-label={`Play Peek for ${item.title}`} disabled={loadingPlayback}>
             {item.thumbnailUrl || item.coverImageUrl ? (
               <img src={item.thumbnailUrl || item.coverImageUrl} alt={item.title} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
             ) : (
@@ -226,7 +226,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
                     <span className="truncate">{item.publicLocation}</span>
                   </p>
                 ) : <span />}
-                <p className="shrink-0 text-xs font-bold text-blue-300">{priceLabel(item, format)}</p>
+                <p className="shrink-0 text-xs font-bold text-primary">{priceLabel(item, format)}</p>
               </div>
             </Link>
           </>
@@ -234,8 +234,8 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
         {playbackError && (
           <div className="absolute inset-x-3 bottom-3 z-30 rounded-xl border border-white/15 bg-black/80 p-3 text-white backdrop-blur-md">
-            <p className="text-sm font-semibold">Tour playback failed</p>
-            <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-blue-200 hover:text-white">Try again</button>
+            <p className="text-sm font-semibold">Peek playback failed</p>
+            <button type="button" onClick={loadPlayback} className="mt-1 min-h-11 text-xs font-semibold text-primary hover:text-white">Try again</button>
           </div>
         )}
       </div>
@@ -261,7 +261,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
           <span>Share</span>
         </button>
         {!isOwner ? (
-          <button type="button" onClick={openReport} className={actionClass} aria-label="Report Tour">
+          <button type="button" onClick={openReport} className={actionClass} aria-label="Report Peek">
             <Flag className="h-4 w-4 text-primary" />
             <span>Report</span>
           </button>
