@@ -13,16 +13,21 @@ import { createClient } from '@supabase/supabase-js';
 
 const STAGING_BRANCH = 'feature/listing-intelligence-foundation';
 const STAGING_SUPABASE_URL = 'https://bwgklpxoetrrkutottdb.supabase.co';
+const STAGING_SUPABASE_PUBLISHABLE_KEY =
+  'sb_publishable_D1bWn2S-Dh4vbrzYVLa3GQ_UQXrMcWb';
 const deploymentBranch = String(import.meta.env.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim();
 const isStagingBranch = deploymentBranch === STAGING_BRANCH;
 
-// The staging branch may use its browser-public project URL as a branch-scoped
-// fallback so a missing Vercel variable cannot prevent React from mounting.
-// Every other deployment still fails closed and must provide its own URL.
+// The staging branch may use its browser-public Supabase URL and publishable
+// key as branch-scoped fallbacks. This keeps staging usable even when its
+// Vercel variables are removed. Every other deployment still fails closed and
+// must provide its own environment-specific values.
 const supabaseUrl =
   String(import.meta.env.VITE_SUPABASE_URL ?? '').trim() ||
   (isStagingBranch ? STAGING_SUPABASE_URL : '');
-const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
+const supabaseAnonKey =
+  String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim() ||
+  (isStagingBranch ? STAGING_SUPABASE_PUBLISHABLE_KEY : '');
 
 const missingVariables = [
   ['VITE_SUPABASE_URL', supabaseUrl],
