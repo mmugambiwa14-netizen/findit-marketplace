@@ -65,7 +65,7 @@ export default function PropertyDetail() {
           title={property.title}
           fallbackImage={placeholderProperty}
           tour={property.tour || null}
-          tourActionLabel="Watch Tour"
+          tourActionLabel="Take a Peek"
           tourOwnerId={property.seller_id}
           parentType="listing"
           parentId={property.id}
