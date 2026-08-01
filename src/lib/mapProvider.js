@@ -1,15 +1,13 @@
 const MAPLIBRE_VERSION = '5.12.0';
-// Served from our own origin rather than a public CDN, so a third party cannot
-// execute script on this domain and the Content-Security-Policy needs no
-// external script-src entry. Assets are vendored in public/vendor/maplibre and
-// are refreshed by scripts/vendor-maplibre-assets.mjs when MAPLIBRE_VERSION
-// changes. BASE_URL keeps this correct under a non-root deployment base.
+// MapLibre is served from our own origin. Basemap styles prefer MapTiler when
+// a browser key is configured and otherwise use the no-key OpenFreeMap style.
 const MAPLIBRE_ASSET_BASE = `${String(import.meta.env?.BASE_URL ?? '/').replace(/\/*$/, '/')}vendor/maplibre/`;
 const MAPLIBRE_SCRIPT_URL = `${MAPLIBRE_ASSET_BASE}maplibre-gl.js`;
 const MAPLIBRE_STYLESHEET_URL = `${MAPLIBRE_ASSET_BASE}maplibre-gl.css`;
 const MAPLIBRE_SCRIPT_ID = 'findit-maplibre-runtime';
 const MAPLIBRE_STYLESHEET_ID = 'findit-maplibre-styles';
 const MAPTILER_API_ORIGIN = 'https://api.maptiler.com';
+const OPENFREEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
 let mapLibrePromise = null;
 
@@ -45,12 +43,12 @@ export function mapTilerStyleId() {
 }
 
 export function mapProviderConfigured() {
-  return Boolean(mapTilerPublicKey());
+  return true;
 }
 
 export function mapTilerStyleUrl() {
   const key = mapTilerPublicKey();
-  if (!key) throw new Error('MAP_PROVIDER_NOT_CONFIGURED');
+  if (!key) return OPENFREEMAP_STYLE_URL;
   const styleId = mapTilerStyleId();
   return `${MAPTILER_API_ORIGIN}/maps/${encodeURIComponent(styleId)}/style.json?key=${encodeURIComponent(key)}`;
 }
@@ -136,6 +134,7 @@ export async function reverseGeocodeMapTiler({ latitude, longitude, signal } = {
 export const mapProviderContract = Object.freeze({
   renderer: 'maplibre-gl',
   rendererVersion: MAPLIBRE_VERSION,
-  tileProvider: 'maptiler-cloud',
+  primaryTileProvider: 'maptiler-cloud',
+  fallbackTileProvider: 'openfreemap',
   geocoder: 'maptiler-geocoding',
 });
