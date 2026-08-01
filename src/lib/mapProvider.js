@@ -1,9 +1,11 @@
 const MAPLIBRE_VERSION = '5.12.0';
 // MapLibre is served from our own origin. Basemap styles prefer MapTiler when
 // a browser key is configured and otherwise use the no-key OpenFreeMap style.
-const MAPLIBRE_ASSET_BASE = `${String(import.meta.env?.BASE_URL ?? '/').replace(/\/*$/, '/')}vendor/maplibre/`;
-const MAPLIBRE_SCRIPT_URL = `${MAPLIBRE_ASSET_BASE}maplibre-gl.js`;
-const MAPLIBRE_STYLESHEET_URL = `${MAPLIBRE_ASSET_BASE}maplibre-gl.css`;
+const MAPLIBRE_SCRIPT_PATH = 'vendor/maplibre/maplibre-gl.js';
+const MAPLIBRE_STYLESHEET_PATH = 'vendor/maplibre/maplibre-gl.css';
+const APPLICATION_BASE = String(import.meta.env?.BASE_URL ?? '/').replace(/\/*$/, '/');
+const MAPLIBRE_SCRIPT_URL = `${APPLICATION_BASE}${MAPLIBRE_SCRIPT_PATH}`;
+const MAPLIBRE_STYLESHEET_URL = `${APPLICATION_BASE}${MAPLIBRE_STYLESHEET_PATH}`;
 const MAPLIBRE_SCRIPT_ID = 'findit-maplibre-runtime';
 const MAPLIBRE_STYLESHEET_ID = 'findit-maplibre-styles';
 const MAPTILER_API_ORIGIN = 'https://api.maptiler.com';
@@ -25,26 +27,14 @@ function ensureMapLibreStylesheet() {
 }
 
 function assertMapLibreRuntime(runtime) {
-  if (!runtime?.Map || !runtime?.Marker || !runtime?.Popup || !runtime?.LngLatBounds) {
-    throw new Error('MAP_RUNTIME_INVALID');
-  }
-  if (runtime.version && runtime.version !== MAPLIBRE_VERSION) {
-    throw new Error('MAP_RUNTIME_VERSION_MISMATCH');
-  }
+  if (!runtime?.Map || !runtime?.Marker || !runtime?.Popup || !runtime?.LngLatBounds) throw new Error('MAP_RUNTIME_INVALID');
+  if (runtime.version && runtime.version !== MAPLIBRE_VERSION) throw new Error('MAP_RUNTIME_VERSION_MISMATCH');
   return runtime;
 }
 
-export function mapTilerPublicKey() {
-  return browserEnv('VITE_MAPTILER_PUBLIC_KEY');
-}
-
-export function mapTilerStyleId() {
-  return browserEnv('VITE_MAPTILER_STYLE_ID') || 'streets-v4';
-}
-
-export function mapProviderConfigured() {
-  return true;
-}
+export function mapTilerPublicKey() { return browserEnv('VITE_MAPTILER_PUBLIC_KEY'); }
+export function mapTilerStyleId() { return browserEnv('VITE_MAPTILER_STYLE_ID') || 'streets-v4'; }
+export function mapProviderConfigured() { return true; }
 
 export function mapTilerStyleUrl() {
   const key = mapTilerPublicKey();
@@ -54,15 +44,10 @@ export function mapTilerStyleUrl() {
 }
 
 export function loadMapLibre() {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return Promise.reject(new Error('MAP_BROWSER_REQUIRED'));
-  }
+  if (typeof window === 'undefined' || typeof document === 'undefined') return Promise.reject(new Error('MAP_BROWSER_REQUIRED'));
   if (window.maplibregl) {
-    try {
-      return Promise.resolve(assertMapLibreRuntime(window.maplibregl));
-    } catch (error) {
-      return Promise.reject(error);
-    }
+    try { return Promise.resolve(assertMapLibreRuntime(window.maplibregl)); }
+    catch (error) { return Promise.reject(error); }
   }
   if (mapLibrePromise) return mapLibrePromise;
 
@@ -71,20 +56,12 @@ export function loadMapLibre() {
     const existing = document.getElementById(MAPLIBRE_SCRIPT_ID);
     const script = existing || document.createElement('script');
     const timeout = window.setTimeout(() => reject(new Error('MAP_RUNTIME_TIMEOUT')), 15_000);
-
     const complete = () => {
       window.clearTimeout(timeout);
-      try {
-        resolve(assertMapLibreRuntime(window.maplibregl));
-      } catch (error) {
-        reject(error);
-      }
+      try { resolve(assertMapLibreRuntime(window.maplibregl)); }
+      catch (error) { reject(error); }
     };
-    const fail = () => {
-      window.clearTimeout(timeout);
-      reject(new Error('MAP_RUNTIME_UNAVAILABLE'));
-    };
-
+    const fail = () => { window.clearTimeout(timeout); reject(new Error('MAP_RUNTIME_UNAVAILABLE')); };
     script.addEventListener('load', complete, { once: true });
     script.addEventListener('error', fail, { once: true });
     if (!existing) {
@@ -93,19 +70,13 @@ export function loadMapLibre() {
       script.async = true;
       document.head.append(script);
     }
-  }).catch((error) => {
-    mapLibrePromise = null;
-    throw error;
-  });
-
+  }).catch((error) => { mapLibrePromise = null; throw error; });
   return mapLibrePromise;
 }
 
 function boundedCoordinate(value, minimum, maximum, code) {
   const numeric = Number(value);
-  if (!Number.isFinite(numeric) || numeric < minimum || numeric > maximum) {
-    throw new TypeError(code);
-  }
+  if (!Number.isFinite(numeric) || numeric < minimum || numeric > maximum) throw new TypeError(code);
   return numeric;
 }
 
@@ -118,13 +89,7 @@ export async function reverseGeocodeMapTiler({ latitude, longitude, signal } = {
   endpoint.searchParams.set('key', key);
   endpoint.searchParams.set('language', 'en');
   endpoint.searchParams.set('limit', '1');
-
-  const response = await fetch(endpoint, {
-    method: 'GET',
-    headers: { accept: 'application/json' },
-    signal,
-    referrerPolicy: 'strict-origin-when-cross-origin',
-  });
+  const response = await fetch(endpoint, { method: 'GET', headers: { accept: 'application/json' }, signal, referrerPolicy: 'strict-origin-when-cross-origin' });
   if (!response.ok) throw new Error(response.status === 403 ? 'MAP_PROVIDER_KEY_REJECTED' : 'MAP_PROVIDER_UNAVAILABLE');
   const payload = await response.json();
   if (!payload || !Array.isArray(payload.features)) throw new Error('MAP_PROVIDER_INVALID_RESPONSE');
