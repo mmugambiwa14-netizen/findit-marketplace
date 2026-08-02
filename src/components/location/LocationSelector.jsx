@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { LocationPermissionDialog } from '@/components/location/LocationPermissionDialog';
 import { PlaceSearchCombobox } from '@/components/location/PlaceSearchCombobox';
+import { buildLocationSelection } from '@/services/locationSelectionContracts';
 
 const LOCATION_CACHE_MS = 1000 * 60 * 60;
 
@@ -109,17 +110,18 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
     setCityName(place.name);
     setCurrentLocationError('');
     const stateName = states.find((candidate) => candidate.id === state)?.name || '';
-    onSelectLocation({
+    // Coordinates travel with the confirmed selection. searchMarketplacePlaces
+    // already maps them through withCoordinates, and dropping them here meant
+    // the canonical place survived a draft restore while its coordinates did
+    // not, leaving the map nothing to centre on. Part III §8 requires both to
+    // be preserved together.
+    onSelectLocation(buildLocationSelection(place, {
       country,
       countryName: selectedCountry?.name || '',
-      countryCode: selectedCountryCode || place.country_code,
+      countryCode: selectedCountryCode,
       state,
       stateName,
-      city: place.id,
-      cityName: place.name,
-      placeType: place.type,
-      source: 'manual',
-    });
+    }));
   };
 
   const handleCurrentLocation = async () => {

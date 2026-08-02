@@ -68,12 +68,34 @@ export default function CreateListing() {
     return () => window.clearTimeout(timer);
   }, [draftKey, formData, loadedDraftKey, media, step, submittedListing]);
 
+  // Resolving the canonical place name is async, so two quick changes leave two
+  // requests in flight. Without the cancelled flag the slower one can land last
+  // and display a place the seller did not choose, while location_id still
+  // holds the newer selection -- the exact stale-response overwrite Part III §8
+  // prohibits. The cleanup runs before the next effect, so only the newest
+  // request is allowed to write.
+  //
+  // A lookup failure also must not erase a confirmed selection: the previous
+  // resolved name is kept rather than blanked, so the seller does not watch
+  // their location disappear because a network call failed.
   useEffect(() => {
     if (!formData.location_id) {
       setLocationName('');
-      return;
+      return undefined;
     }
-    getActiveLocations('city').then((locations) => setLocationName(locations.find((item) => item.id === formData.location_id)?.name || '')).catch(() => setLocationName(''));
+
+    let cancelled = false;
+    getActiveLocations('city')
+      .then((locations) => {
+        if (cancelled) return;
+        const match = locations.find((item) => item.id === formData.location_id);
+        if (match) setLocationName(match.name);
+      })
+      .catch(() => {
+        /* keep the last known good name; the selection itself is unaffected */
+      });
+
+    return () => { cancelled = true; };
   }, [formData.location_id]);
 
   useEffect(() => () => {
