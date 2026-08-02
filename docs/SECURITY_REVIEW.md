@@ -213,3 +213,90 @@ The production database no longer serves `contact_phone`, `contact_whatsapp` or
 `contact_email` to `anon`. A frontend build older than this commit still asks
 for those columns in its public listing projection and will fail that query for
 logged-out visitors. Deploy this commit before opening production to traffic.
+
+---
+
+## Addendum — 2026-08-02: Pass 2, authentication and session lifecycle
+
+Audit of the auth surface. Only one code change was made; the remainder is
+either already correct, a dashboard setting, or a gap recorded below.
+
+### Verified correct (evidence, not assumption)
+
+| Item | Evidence |
+|---|---|
+| Logout revokes refresh tokens globally | `supabase.auth.signOut()` already defaults to `{ scope: 'global' }` (auth-js `GoTrueClient.js:3350`). Now stated explicitly at `src/services/authService.js` so a future default change cannot downgrade it. |
+| Server-side token validation uses `getUser()` | All five server call sites verify against the auth server: the four upload functions and `_shared/recommendation-service.ts:154`. `getSession()` appears only in browser code, where it is correct. |
+| Admin authority is not from `user_metadata` | `private.is_admin()` reads `public.users` (role + super_admin + hashed founder identity). No policy or function reads `raw_user_meta_data`. |
+| Privileged user columns are trigger-protected | `protect_user_managed_fields` rejects self-writes to role, super_admin, verified, status, email and phone fields; `protect_founder_admin_identity` rejects any admin claim not matching the hashed founder email. |
+| Admin audit log is append-only | `audit_logs` has exactly one policy — SELECT gated on `private.is_admin()`. No client INSERT/UPDATE/DELETE policy exists; writes happen only inside SECURITY DEFINER functions. `anon` now holds no write privilege at all (migration 0111). |
+| Open-redirect protection | `sanitizeReturnTo` (`src/lib/authNavigation.js`) requires a leading `/`, and rejects protocol-relative `//` and backslashes. All `returnTo` producers route through it. |
+| Anonymous sign-in disabled | `enable_anonymous_sign_ins = false`. |
+| Email confirmation appears enforced | staging `auth.users`: 4 users, 0 with `email_confirmed_at` null. |
+
+### Open gaps
+
+1. **The client uses the implicit flow, not PKCE.** `createClient` does not set
+   `flowType`, and auth-js defaults to `implicit` (`GoTrueClient.js:24`).
+
+   This is **not** a one-line fix. The recovery and confirmation templates use
+   `{{ .ConfirmationURL }}` and the app relies on `detectSessionInUrl`; there is
+   no `verifyOtp` / `token_hash` handling anywhere in `src/`. Setting
+   `flowType: 'pkce'` alone turns those emails into `?code=` links that require
+   the PKCE verifier from the localStorage of the browser that *requested* the
+   reset — so a user who requests a reset on their phone and opens the email on
+   a laptop would be unable to complete it.
+
+   The complete migration is three coordinated changes:
+   - templates switch from `{{ .ConfirmationURL }}` to `{{ .TokenHash }}`,
+     linking to a route such as `/auth/confirm?token_hash=…&type=recovery`;
+   - a new route calls `supabase.auth.verifyOtp({ token_hash, type })`;
+   - only then set `flowType: 'pkce'`.
+
+   The template half must be applied to the **hosted** project in the dashboard
+   — repo templates under `supabase/templates/` govern local dev only. Because
+   the template change cannot be made from here, PKCE was deliberately left off
+   rather than shipped half-applied.
+
+2. **No admin MFA.** staging `auth.mfa_factors` is empty — 0 enrolled, 0
+   verified. Pass 2 also requires checking the AAL claim server-side on admin
+   actions; no such check exists today.
+
+3. **No account deletion or anonymisation flow.** Nothing in `src/` or the
+   migrations implements it.
+
+4. **No CAPTCHA.** `[auth.captcha]` is commented out in `supabase/config.toml`,
+   and `[auth.rate_limit]` carries no overrides.
+
+5. **No email-change flow exists.** `updateUser` is called only for password
+   changes, so the "confirm at both old and new address" requirement has no
+   surface to apply to yet. `email_change.html` exists but is unused. Worth
+   configuring before the flow is built.
+
+### Dashboard settings to confirm on both projects
+
+`supabase/config.toml` governs **local development only**. The hosted staging
+and production projects are configured in the dashboard, and the values below
+were not verifiable from this environment.
+
+| Setting | Where | Target |
+|---|---|---|
+| Access token (JWT) expiry | Authentication → Sessions | Consider 1800s. `config.toml` has 3600s locally; a marketplace holding identity data benefits from a shorter window, because signOut cannot revoke an already-issued JWT. |
+| Refresh token rotation + reuse interval | Authentication → Sessions | Rotation on. Local config has rotation on with a 10s reuse interval. |
+| Inactivity timeout / time-boxed sessions | Authentication → Sessions | Set one. (Pro plan feature.) |
+| Leaked password protection (HaveIBeenPwned) | Authentication → password policy | Enable. |
+| Minimum password length | Authentication → password policy | ≥10. Local config already sets 10. |
+| Confirm email | Authentication → Providers → Email | Required before transacting. |
+| CAPTCHA (Turnstile or hCaptcha) | Authentication → bot/abuse protection | Enable for signup, login and reset. |
+| MFA / TOTP | Authentication → Multi-Factor Authentication | Enable, enrol every admin, and check AAL server-side. |
+| Redirect URL allowlist | Authentication → URL Configuration | Exact production and preview URLs only. Local config lists localhost, the staging Vercel host and the GitHub Pages host — production is not in that list. |
+| Email templates | Authentication → Emails | Required for the PKCE migration above. |
+
+### Not verified from this environment
+
+The live checks Pass 2 asks for — identical body and timing for reset requests
+against a registered vs unregistered email, single-use and expired reset links,
+and cross-device session revocation — could not be run. This environment's
+network policy denies outbound HTTPS to `*.supabase.co`, so the auth REST
+endpoints are unreachable from here (the Supabase MCP tooling reaches the
+database by a different path). These remain **unverified**, not passing.

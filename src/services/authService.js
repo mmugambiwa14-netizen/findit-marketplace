@@ -147,7 +147,12 @@ export async function signInWithOAuth(provider, redirectPath = '/') {
  * shape (`logout(url)` vs `logout()`).
  */
 export async function signOut(redirectUrl) {
-  const { error } = await supabase.auth.signOut();
+  // Global scope revokes every refresh token for the user, not just this
+  // browser's. supabase-js already defaults to 'global'; stating it here means
+  // a future default change cannot silently downgrade logout to one device.
+  // Note this does NOT invalidate access tokens already issued -- those are
+  // stateless JWTs and stay valid until `jwt_expiry` elapses.
+  const { error } = await supabase.auth.signOut({ scope: 'global' });
   if (error) throw error;
   if (redirectUrl) {
     window.location.href = appUrl(redirectUrl);
