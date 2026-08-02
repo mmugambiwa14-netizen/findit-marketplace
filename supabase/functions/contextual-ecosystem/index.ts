@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.110.7";
-import { configuredAdminKey } from "../_shared/tour-runtime.ts";
+import { allowedRequestOrigin, configuredAdminKey } from "../_shared/tour-runtime.ts";
 import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson } from "../_shared/request-guards.ts";
 
 const JOURNEY_STAGES = new Set(["discover", "evaluate", "prepare", "transact", "own"]);
@@ -15,22 +15,10 @@ type ContextualRpcClient = {
   rpc(name: string, args?: Record<string, unknown>): AbortableRpc;
 };
 
-function allowedOrigin(request: Request): string | null {
-  const origin = request.headers.get("origin");
-  if (!origin) return null;
-  const configured = (Deno.env.get("FINDIT_ALLOWED_ORIGINS") ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-  if (configured.includes(origin)) return origin;
-  if (Deno.env.get("DENO_ENV") !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return origin;
-  return null;
-}
-
 const CACHEABLE_PLAN = "public, max-age=30, stale-while-revalidate=120";
 
 function headers(request: Request, cacheControl: string = "no-store"): HeadersInit {
-  const origin = allowedOrigin(request);
+  const origin = allowedRequestOrigin(request);
   return {
     "Content-Type": "application/json",
     "Cache-Control": cacheControl,
@@ -82,11 +70,11 @@ Deno.serve(async (request: Request) => {
   const correlationId = crypto.randomUUID();
 
   if (request.method === "OPTIONS") {
-    if (!allowedOrigin(request)) return new Response(null, { status: 403, headers: headers(request) });
+    if (!allowedRequestOrigin(request)) return new Response(null, { status: 403, headers: headers(request) });
     return new Response(null, { status: 204, headers: headers(request) });
   }
   if (request.method !== "POST") return json(request, 405, { code: "method_not_allowed", correlationId });
-  if (request.headers.get("origin") && !allowedOrigin(request)) return json(request, 403, { code: "origin_not_allowed", correlationId });
+  if (request.headers.get("origin") && !allowedRequestOrigin(request)) return json(request, 403, { code: "origin_not_allowed", correlationId });
   if (request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase() !== "application/json") {
     return json(request, 415, { code: "unsupported_media_type", correlationId });
   }

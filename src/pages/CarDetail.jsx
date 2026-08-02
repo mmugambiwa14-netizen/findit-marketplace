@@ -50,7 +50,7 @@ export default function CarDetail() {
   const location = car.public_location_label || [car.suburb, car.city, car.province].filter(Boolean).join(", ");
 
   return (
-    <div className="findit-screen pb-36">
+    <div className="findit-screen pb-20">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("car", car)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
         <ListingMediaViewer photos={car.photos} title={car.title} fallbackImage={placeholderCar} tour={car.tour || null} tourActionLabel="Take a Peek" tourOwnerId={car.seller_id} parentType="listing" parentId={car.id} className="md:mt-4 md:rounded-3xl md:border" />

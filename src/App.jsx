@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   BrowserRouter as Router,
@@ -103,19 +103,7 @@ function LegacyConversationRedirect() {
   return <Navigate to={`/chats/${encodeURIComponent(conversationId)}${location.search}${location.hash}`} replace />;
 }
 
-function ThemeAwareSonner() {
-  /** @returns {'dark' | 'light'} */
-  const readTheme = () => document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-  const [theme, setTheme] = useState(readTheme);
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => setTheme(readTheme()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  return <SonnerToaster position="top-center" richColors theme={theme} />;
-}
+const DarkSonner = () => <SonnerToaster position="top-center" richColors theme="dark" />;
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, blockedAccount, checkUserAuth, logout } = useAuth();
@@ -155,6 +143,7 @@ const AuthenticatedApp = () => {
           {(featureFlags.tours || featureFlags.toursPreview) && <Route path="/tours" element={<LegacyPathRedirect to="/peek" />} />}
           <Route path="/help" element={<FAQs />} />
           <Route path="/help/contact" element={<ContactSupport />} />
+          <Route path="/legal" element={<LegalPage />} />
           <Route path="/legal/:document" element={<LegalPage />} />
           <Route path="/faqs" element={<Navigate to="/help" replace />} />
           <Route path="/support" element={<Navigate to="/help" replace />} />
@@ -209,7 +198,7 @@ function App() {
             <AuthenticatedApp />
           </Router>
           <Toaster />
-          <ThemeAwareSonner />
+          <DarkSonner />
         </QueryClientProvider>
       </CurrencyProvider>
     </AuthProvider>

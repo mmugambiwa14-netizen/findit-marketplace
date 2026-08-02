@@ -5,7 +5,7 @@ import { ChevronRight, ImageOff, MapPin, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CATEGORY_VISUALS } from './CategoryIcons';
 import { cn } from '@/lib/utils';
-import { loadMapLibre, mapTilerStyleUrl } from '@/lib/mapProvider';
+import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
 import { searchPublicListingsPage } from '@/services/publicListingsService';
 import { getPublicServicesPage } from '@/services/servicesService';
 
@@ -124,6 +124,7 @@ export default function DiscoverMapView({ location }) {
         const maplibregl = await loadMapLibre();
         if (cancelled || !mapNode.current) return;
         map = new maplibregl.Map({ container: mapNode.current, style: mapTilerStyleUrl(), center: [visible[0].point.longitude, visible[0].point.latitude], zoom: 10, dragRotate: false, pitchWithRotate: false, cooperativeGestures: true });
+        registerOptionalStyleImageFallbacks(map);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         const bounds = new maplibregl.LngLatBounds();
         visible.forEach(({ item, point }) => {

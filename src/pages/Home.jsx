@@ -8,8 +8,8 @@ import DiscoverCategoryGrid from '@/components/discover/DiscoverCategoryGrid';
 import DiscoverHeader from '@/components/discover/DiscoverHeader';
 import DiscoverMapView from '@/components/discover/DiscoverMapView';
 import DiscoverSearch from '@/components/discover/DiscoverSearch';
+import HomePeekRail from '@/components/discover/HomePeekRail';
 import BrandLogo from '@/components/BrandLogo';
-import ThemeToggle from '@/components/layout/ThemeToggle';
 
 const LOCATION_STORAGE_KEY = 'findit.discover-location';
 
@@ -44,11 +44,10 @@ export default function Home() {
   };
 
   return (
-    <div className="findit-screen pb-24">
+    <div className="findit-screen">
       <div className="findit-hero-panel mx-auto w-full max-w-[1180px] px-4 pb-6 pt-4 sm:px-6 sm:pt-6 lg:px-8">
         <h1 className="sr-only md:hidden">Find what you need, right where you are.</h1>
-        <header className="relative mb-4 flex min-h-12 items-center justify-center md:hidden">
-          <ThemeToggle className="absolute left-0" />
+        <header className="relative mb-3 flex min-h-11 items-center justify-center md:hidden">
           <BrandLogo
             className="gap-2"
             markClassName="h-8 w-8"
@@ -102,6 +101,7 @@ export default function Home() {
               <DiscoverCategoryGrid location={location} />
             </section>
           )}
+          <HomePeekRail location={location} />
         </main>
       </div>
     </div>

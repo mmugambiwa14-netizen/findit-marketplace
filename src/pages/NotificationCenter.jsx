@@ -94,7 +94,7 @@ export default function NotificationCenter() {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-[100dvh]">
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">

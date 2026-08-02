@@ -3,7 +3,6 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { ArrowLeft, ImageOff, Loader2, MessageCircle, Play, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationThread from '@/components/messaging/ConversationThread';
-import ThemeToggle from '@/components/layout/ThemeToggle';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,12 +54,11 @@ export default function Inquiries() {
   if (conversationId) return <ConversationThread conversationId={conversationId} currentUser={user} onBack={() => navigate('/chats')} />;
 
   return (
-    <div className="findit-screen pb-24">
+    <div className="findit-screen">
       <header className="locked-page-header">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-2.5">
           <button type="button" onClick={() => navigate('/profile')} aria-label="Back to profile" className="clay-icon h-10 w-10"><ArrowLeft className="h-5 w-5" /></button>
           <div className="min-w-0 flex-1"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">FindIt inbox</p><h1 className="mt-0.5 text-xl font-black tracking-tight">Chats</h1></div>
-          <ThemeToggle />
         </div>
       </header>
 

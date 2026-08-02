@@ -27,7 +27,7 @@ export default function MyServices() {
   const { isLoading, error, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } = servicesQuery;
 
   return (
-    <div className="bg-background pb-10">
+    <div className="min-h-[100dvh] bg-background">
       <div className="max-w-3xl mx-auto px-4 py-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">

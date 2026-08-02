@@ -47,7 +47,7 @@ export default function ServiceDetail() {
   };
 
   return (
-    <div className="findit-screen pb-36">
+    <div className="findit-screen pb-20">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={shareService} showSave={false} />
       <main className="mx-auto max-w-4xl">
         <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Take a Peek" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} className="md:mt-4 md:rounded-3xl md:border" />

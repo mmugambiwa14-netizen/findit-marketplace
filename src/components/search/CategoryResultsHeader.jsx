@@ -1,7 +1,6 @@
 import { Building2, Car, Tractor, Wrench } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import BackButton from '@/components/layout/BackButton';
-import ThemeToggle from '@/components/layout/ThemeToggle';
 import CategoryFilterChips from '@/components/search/CategoryFilterChips';
 import { cn } from '@/lib/utils';
 
@@ -51,7 +50,6 @@ export default function CategoryResultsHeader({ type, category, onTypeChange, on
             <h1 className="mt-0.5 truncate text-xl font-black tracking-tight sm:text-2xl">{current.title}</h1>
           </div>
         </div>
-        <ThemeToggle className="ml-auto" />
       </div>
 
       <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto" role="tablist" aria-label="Marketplace category">

@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 
-const DEFAULT_TIMEOUT_MS = 1600;
+const DEFAULT_TIMEOUT_MS = 4500;
 const MAX_PAGE_SIZE = 100;
 const MAX_CURSOR_LENGTH = 1024;
 

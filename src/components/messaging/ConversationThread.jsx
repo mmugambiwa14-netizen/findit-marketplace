@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Ban, ExternalLink, Flag, ImageOff, Loader2, Play, Send } from 'lucide-react';
+import { ArrowLeft, Ban, EllipsisVertical, ExternalLink, Flag, ImageOff, Loader2, MessageSquareText, Play, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -148,7 +154,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
 
   const loading = conversationQuery.isLoading || messagesQuery.isLoading;
   const failed = conversationQuery.isError || messagesQuery.isError;
-  if (loading) return <div className="flex min-h-screen justify-center py-20" aria-label="Loading conversation"><div className="h-7 w-7 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
+  if (loading) return <div className="fixed inset-0 flex items-center justify-center bg-background" aria-label="Loading conversation"><div className="h-7 w-7 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
   if (failed) return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">We could not load this conversation</h1><p className="mt-2 text-sm text-muted-foreground">It may be unavailable, or you may not be a participant.</p><Button type="button" variant="outline" className="mt-5" onClick={onBack}>Back to messages</Button></div>;
   if (!conversationQuery.data) return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">Conversation not found</h1><Button type="button" variant="outline" className="mt-5" onClick={onBack}>Back to messages</Button></div>;
 
@@ -156,18 +162,28 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   const submitMessage = () => { if (text.trim() && !sendMutation.isPending) sendMutation.mutate(); };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col bg-muted/20">
-      <header className="shrink-0 border-b bg-card/95 px-3 py-3 backdrop-blur-xl">
-        <div className="mx-auto max-w-3xl space-y-3">
+    <section className="fixed inset-0 z-30 flex h-[100dvh] flex-col overflow-hidden bg-background">
+      <header className="safe-area-top shrink-0 border-b border-border/80 bg-card/95 backdrop-blur-xl">
+        <div className="mx-auto max-w-3xl space-y-2 px-3 pb-2 pt-1.5">
           <div className="flex items-center gap-2">
             <Button type="button" variant="ghost" size="icon" onClick={onBack} aria-label="Back to messages"><ArrowLeft className="h-5 w-5" /></Button>
-            <p className="min-w-0 flex-1 truncate text-sm font-semibold">{conversation.other_user_name}</p>
-            <Button type="button" variant="ghost" size="icon" onClick={() => setReportOpen(true)} aria-label="Report conversation"><Flag className="h-4 w-4" /></Button>
-            <Button type="button" variant="ghost" size="icon" onClick={() => setBlockOpen(true)} aria-label={conversation.blocked_by_me ? 'Unblock conversation' : 'Block conversation'}><Ban className="h-4 w-4" /></Button>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold">{conversation.other_user_name}</p>
+              <p className="text-[10px] text-muted-foreground">Listing conversation</p>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" aria-label="Conversation options"><EllipsisVertical className="h-5 w-5" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5">
+                <DropdownMenuItem className="min-h-10 rounded-lg" onSelect={() => setReportOpen(true)}><Flag className="h-4 w-4" />Report conversation</DropdownMenuItem>
+                <DropdownMenuItem className="min-h-10 rounded-lg text-destructive focus:text-destructive" onSelect={() => setBlockOpen(true)}><Ban className="h-4 w-4" />{conversation.blocked_by_me ? 'Unblock conversation' : 'Block conversation'}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-background/70 p-2.5">
-            <Link to={listingPath(conversation)} className="h-14 w-16 shrink-0 overflow-hidden rounded-xl border bg-muted" aria-label={`View ${conversation.listing_title}`}>
+          <div className="flex items-center gap-2.5 rounded-xl border border-border bg-background/70 p-2">
+            <Link to={listingPath(conversation)} className="h-12 w-14 shrink-0 overflow-hidden rounded-lg border bg-muted" aria-label={`View ${conversation.listing_title}`}>
               {conversation.listing_photo ? <img src={conversation.listing_photo} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center"><ImageOff className="h-5 w-5 text-muted-foreground" /></span>}
             </Link>
             <div className="min-w-0 flex-1">
@@ -185,7 +201,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
         </div>
       </header>
 
-      <main ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5">
+      <main ref={scrollRef} className="findit-scroll-region min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <div className="mx-auto max-w-3xl space-y-3">
           {messagesQuery.hasNextPage && (
             <div className="flex justify-center pb-2">
@@ -194,16 +210,23 @@ export default function ConversationThread({ conversationId, currentUser, onBack
               </Button>
             </div>
           )}
+          {messages.length === 0 && (
+            <div className="mx-auto max-w-sm py-10 text-center">
+              <MessageSquareText className="mx-auto h-8 w-8 text-primary" />
+              <p className="mt-3 text-sm font-bold">Start the conversation</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">Ask about availability, condition, viewing, or collection. Keep payment details out of chat.</p>
+            </div>
+          )}
           {messages.map((message) => <MessageBubble key={message.message_id} message={message} mine={message.sender_id === currentUser.id} />)}
         </div>
       </main>
 
-      <footer className="shrink-0 border-t bg-card p-3">
+      <footer className="shrink-0 border-t border-border/80 bg-card px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
         <div className="mx-auto max-w-3xl">
           {conversation.can_send ? (
             <div className="flex items-end gap-2">
               <label htmlFor="conversation-message" className="sr-only">Message</label>
-              <Textarea id="conversation-message" value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); submitMessage(); } }} rows={1} maxLength={2000} placeholder="Write a message" className="min-h-11 max-h-32 flex-1 resize-none" />
+              <Textarea id="conversation-message" value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); submitMessage(); } }} rows={1} maxLength={2000} enterKeyHint="send" placeholder="Write a message" className="min-h-11 max-h-28 flex-1 resize-none rounded-2xl" />
               <Button type="button" size="icon" className="h-11 w-11 shrink-0" disabled={!text.trim() || sendMutation.isPending} onClick={submitMessage} aria-label="Send message">{sendMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Send className="h-4 w-4" />}</Button>
             </div>
           ) : <p className="rounded-lg bg-muted p-3 text-center text-sm text-muted-foreground">{conversation.is_blocked ? 'This conversation is blocked. Message history remains available.' : 'This conversation is closed.'}</p>}
@@ -213,7 +236,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
       <Dialog open={blockOpen} onOpenChange={setBlockOpen}><DialogContent><DialogHeader><DialogTitle>{conversation.blocked_by_me ? 'Unblock conversation?' : 'Block conversation?'}</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">{conversation.blocked_by_me ? 'Both participants can send again unless the other participant has also blocked the conversation.' : 'Neither participant can send while either side has a block in place. Existing messages remain visible.'}</p><Button type="button" variant={conversation.blocked_by_me ? 'default' : 'destructive'} disabled={blockMutation.isPending} onClick={() => blockMutation.mutate(!conversation.blocked_by_me)}>{blockMutation.isPending ? 'Saving…' : conversation.blocked_by_me ? 'Unblock' : 'Block'}</Button></DialogContent></Dialog>
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}><DialogContent><DialogHeader><DialogTitle>Report conversation</DialogTitle></DialogHeader><div className="space-y-2"><Label htmlFor="conversation-report-reason">Reason</Label><Select value={reportReason} onValueChange={setReportReason}><SelectTrigger id="conversation-report-reason"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="spam">Spam</SelectItem><SelectItem value="scam">Scam or fraud</SelectItem><SelectItem value="harassment">Harassment</SelectItem><SelectItem value="unsafe">Unsafe behaviour</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent></Select></div><div className="space-y-2"><Label htmlFor="conversation-report-details">Details (optional)</Label><Textarea id="conversation-report-details" value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} maxLength={500} rows={4} /></div><Button type="button" disabled={reportMutation.isPending} onClick={() => reportMutation.mutate()}>{reportMutation.isPending ? 'Submitting…' : 'Submit report'}</Button></DialogContent></Dialog>
-    </div>
+    </section>
   );
 }
 

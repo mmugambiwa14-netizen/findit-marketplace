@@ -120,7 +120,7 @@ export default function MyListings() {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-[100dvh]">
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => navigate(-1)} className="p-1" aria-label="Go back"><ArrowLeft className="w-5 h-5" /></button>

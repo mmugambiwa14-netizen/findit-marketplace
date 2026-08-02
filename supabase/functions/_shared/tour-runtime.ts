@@ -1,6 +1,11 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.110.7";
 
-const DEFAULT_ORIGINS = "http://127.0.0.1:5173,http://localhost:5173";
+const DEFAULT_ORIGINS = [
+  "http://127.0.0.1:5173",
+  "http://localhost:5173",
+  "https://findit-marketplace-staging.vercel.app",
+  "https://mmugambiwa14-netizen.github.io",
+] as const;
 
 export const TOUR_LIMITS = Object.freeze({
   maxDurationSeconds: 120,
@@ -72,9 +77,9 @@ export function publicClient(): SupabaseClient {
 }
 
 export function allowedOrigins(): Set<string> {
+  const configured = (Deno.env.get("FINDIT_ALLOWED_ORIGINS") ?? "").split(",");
   return new Set(
-    (Deno.env.get("FINDIT_ALLOWED_ORIGINS") ?? DEFAULT_ORIGINS)
-      .split(",")
+    [...DEFAULT_ORIGINS, ...configured]
       .map((origin) => origin.trim().replace(/\/$/, ""))
       .filter(Boolean),
   );
@@ -99,10 +104,15 @@ function originAllowed(origin: string): boolean {
   return allowedOrigins().has(origin) || isLocalPreviewOrigin(origin);
 }
 
+export function allowedRequestOrigin(req: Request): string | null {
+  const origin = req.headers.get("origin")?.trim().replace(/\/$/, "") ?? "";
+  return origin && originAllowed(origin) ? origin : null;
+}
+
 export function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("origin") ?? "";
+  const origin = allowedRequestOrigin(req);
   return {
-    ...(originAllowed(origin) ? { "Access-Control-Allow-Origin": origin } : {}),
+    ...(origin ? { "Access-Control-Allow-Origin": origin } : {}),
     "Access-Control-Allow-Headers":
       "authorization, apikey, content-type, x-client-info, x-findit-signature, x-findit-timestamp",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -123,7 +133,7 @@ export function json(
 
 export function requestOriginAllowed(req: Request): boolean {
   const origin = req.headers.get("origin");
-  return !origin || originAllowed(origin);
+  return !origin || allowedRequestOrigin(req) !== null;
 }
 
 export function requireJsonRequest(req: Request): Response | null {

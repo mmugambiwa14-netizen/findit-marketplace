@@ -251,7 +251,7 @@ export default function CreateService() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-28">
+    <div className="min-h-[100dvh] bg-background pb-8">
       <div className="max-w-2xl mx-auto px-4 py-5">
         <div className="flex items-center gap-3 mb-5">
           <button

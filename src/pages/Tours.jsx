@@ -2,7 +2,7 @@ import { readStoredJson, writeStoredJson } from '@/lib/browserStorage';
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Film, Loader2, RotateCcw } from 'lucide-react';
+import { CheckCircle2, Clapperboard, Loader2, RefreshCw, SearchX, WifiOff } from 'lucide-react';
 import TourCard from '@/components/tours/TourCard';
 import TourCatalogueHeader from '@/components/tours/TourCatalogueHeader';
 import TourCategoryChips from '@/components/tours/TourCategoryChips';
@@ -137,32 +137,40 @@ export default function Tours() {
     setParams(next, { replace: true });
   };
 
+  const resetFilters = () => {
+    setQuery('');
+    setLocation('');
+    setActiveTourId(null);
+    setParams(new URLSearchParams(), { replace: true });
+  };
+
   return (
-    <div className="findit-screen pb-28">
+    <div className="findit-screen">
       <TourCatalogueHeader query={query} location={location} onQueryChange={setQuery} onLocationChange={setLocation} />
       <main className="mx-auto max-w-3xl">
         <TourCategoryChips value={category} onChange={changeCategory} />
 
         {feed.isLoading ? (
-          <div className="flex min-h-[55vh] items-center justify-center" role="status"><Loader2 className="h-8 w-8 animate-spin text-primary" /><span className="sr-only">Loading Peeks</span></div>
+          <PeekLoading />
         ) : feed.isError ? (
-          <section className="clay-card mx-4 mt-5 rounded-3xl px-6 py-14 text-center">
-            <RotateCcw className="mx-auto h-8 w-8 text-muted-foreground" />
-            <h2 className="mt-4 text-lg font-bold">Peeks could not be loaded</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Your search and filters have been preserved.</p>
-            <Button variant="outline" className="clay-control mt-5" onClick={() => feed.refetch()}>Try again</Button>
+          <section className="clay-card mx-4 mt-4 rounded-3xl px-6 py-12 text-center">
+            <span className="locked-icon-tile mx-auto h-12 w-12"><WifiOff className="h-5 w-5" /></span>
+            <h2 className="mt-4 text-lg font-bold">Peeks are temporarily offline</h2>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">We kept your search and filters. Reconnect and try again—your place will not be lost.</p>
+            <Button variant="outline" className="clay-control mt-5" onClick={() => feed.refetch()}><RefreshCw className="h-4 w-4" />Try again</Button>
           </section>
         ) : items.length === 0 ? (
-          <section className="clay-card mx-4 mt-5 rounded-3xl px-6 py-14 text-center">
-            <Film className="mx-auto h-9 w-9 text-muted-foreground" />
+          <section className="clay-card mx-4 mt-4 rounded-3xl px-6 py-12 text-center">
+            <span className="locked-icon-tile mx-auto h-12 w-12"><SearchX className="h-5 w-5" /></span>
             <h2 className="mt-4 text-lg font-bold">No matching Peeks</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Try another category, search or location.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Clear the filters or try a nearby place.</p>
+            {(query || location || category !== 'all') && <Button variant="outline" className="clay-control mt-5" onClick={resetFilters}>Show all Peeks</Button>}
           </section>
         ) : (
           <section aria-label="Peek catalogue" className="px-4 pb-8">
-            <div className="mb-3 mt-1 flex items-center justify-between">
-              <h2 className="findit-section-title">Featured Peeks</h2>
-              <p className="text-xs text-muted-foreground">{items.length} loaded</p>
+            <div className="mb-3 mt-2 flex items-end justify-between gap-3">
+              <div><p className="findit-overline">Watch and decide</p><h2 className="findit-section-title mt-0.5">{deferredLocation ? `Peeks in ${deferredLocation}` : 'Latest Peeks'}</h2></div>
+              <p className="shrink-0 text-xs text-muted-foreground">{items.length} shown</p>
             </div>
             <div className="space-y-4">
               {items.map((item) => (
@@ -184,10 +192,26 @@ export default function Tours() {
                 </Button>
               </div>
             )}
-            {!feed.hasNextPage && items.length > 0 && <p className="py-5 text-center text-xs text-muted-foreground">You have reached the end of these Peeks.</p>}
+            {!feed.hasNextPage && items.length > 0 && <p className="flex items-center justify-center gap-1.5 py-5 text-center text-xs text-muted-foreground"><CheckCircle2 className="h-4 w-4 text-primary" />You have seen every matching Peek.</p>}
           </section>
         )}
       </main>
+    </div>
+  );
+}
+
+function PeekLoading() {
+  return (
+    <div className="space-y-4 px-4 pb-8 pt-2" role="status" aria-label="Loading Peeks">
+      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"><Clapperboard className="h-4 w-4 animate-pulse text-primary" />Finding the best Peeks…</div>
+      {[1, 2].map((item) => (
+        <div key={item} className="clay-card overflow-hidden rounded-2xl">
+          <div className="aspect-[16/10] animate-pulse bg-surface-raised" />
+          <div className="grid grid-cols-4 gap-2 p-3">
+            {[1, 2, 3, 4].map((part) => <div key={part} className="h-9 animate-pulse rounded-xl bg-surface-raised" />)}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

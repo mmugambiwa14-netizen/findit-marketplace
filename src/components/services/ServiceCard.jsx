@@ -31,7 +31,7 @@ export default function ServiceCard({ service, onOpen = null, layout = 'browse',
 
   if (layout === 'recommendation') {
     return (
-      <article className={cn('w-[18rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-border bg-card shadow-none transition-colors hover:border-border-strong sm:w-[20rem]', className)}>
+      <article className={cn('w-[16.5rem] shrink-0 snap-start overflow-hidden rounded-2xl border border-border bg-card shadow-none transition-colors hover:border-border-strong sm:w-[18rem]', className)}>
         <Link to={`/service/${service.id}`} onClick={onOpen} className="grid min-h-[8.75rem] grid-cols-[6.25rem_minmax(0,1fr)] focus-visible:ring-inset sm:grid-cols-[7rem_minmax(0,1fr)]">
           <div className="relative overflow-hidden bg-surface-secondary">
             {service.photos?.[0] ? (

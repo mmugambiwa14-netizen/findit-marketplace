@@ -2,7 +2,20 @@ import { readStoredString, removeStoredValue, writeStoredString } from '@/lib/br
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowUpRight, Flag, Heart, MapPin, MessageCircle, Play, RotateCcw, Share2 } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Building2,
+  CarFront,
+  Flag,
+  Heart,
+  MapPin,
+  MessageCircle,
+  Play,
+  RotateCcw,
+  Share2,
+  Tractor,
+  Wrench,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
 import MessageDialog from '@/components/listings/MessageDialog';
@@ -31,11 +44,11 @@ function priceLabel(item, format) {
   return `${prefix}${format(item.price)}${suffix}`;
 }
 
-function categoryLabel(item) {
-  if (item.parentType === 'service') return 'Services';
-  if (item.category === 'car' || item.parentCategory === 'car') return 'Cars';
-  if (item.category === 'machinery' || item.parentCategory === 'machinery') return 'Machinery';
-  return 'Property';
+function categoryMeta(item) {
+  if (item.parentType === 'service') return { label: 'Services', icon: Wrench };
+  if (item.category === 'car' || item.parentCategory === 'car') return { label: 'Cars', icon: CarFront };
+  if (item.category === 'machinery' || item.parentCategory === 'machinery') return { label: 'Machinery', icon: Tractor };
+  return { label: 'Property', icon: Building2 };
 }
 
 const actionClass = 'flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-[11px] font-semibold text-muted-foreground hover:bg-surface-raised hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-wait disabled:opacity-60';
@@ -55,6 +68,8 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
   const [messageOpen, setMessageOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const detailPath = publicTourDetailPath(item);
+  const category = categoryMeta(item);
+  const CategoryIcon = category.icon;
   const listingOnly = item.parentType === 'listing';
   const isOwner = Boolean(user?.id && user.id === item.sellerId);
   const canMessage = listingOnly && featureFlags.messaging && !isOwner;
@@ -199,8 +214,9 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
 
         {!showingPlayback && (
           <>
-            <span className="absolute left-3 top-3 z-20 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold text-white shadow-lg">
-              {categoryLabel(item)}
+            <span className="absolute left-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[10px] font-bold text-white shadow-lg">
+              <CategoryIcon className="h-3.5 w-3.5" />
+              {category.label}
             </span>
             <span className="absolute right-3 top-3 z-20 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
               {formatDuration(item.durationSeconds)}

@@ -12,6 +12,8 @@ const MAPTILER_API_ORIGIN = 'https://api.maptiler.com';
 // The discovery surface is intentionally dark-first. OpenFreeMap's dark
 // basemap keeps the no-key fallback aligned with the product's glass UI.
 const OPENFREEMAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark';
+const OPTIONAL_OPENFREEMAP_IMAGES = new Set(['circle-11', 'wood-pattern']);
+const TRANSPARENT_STYLE_PIXEL = { width: 1, height: 1, data: new Uint8Array([0, 0, 0, 0]) };
 
 let mapLibrePromise = null;
 
@@ -43,6 +45,13 @@ export function mapTilerStyleUrl() {
   if (!key) return OPENFREEMAP_STYLE_URL;
   const styleId = mapTilerStyleId();
   return `${MAPTILER_API_ORIGIN}/maps/${encodeURIComponent(styleId)}/style.json?key=${encodeURIComponent(key)}`;
+}
+
+export function registerOptionalStyleImageFallbacks(map) {
+  map.on('styleimagemissing', ({ id }) => {
+    if (!OPTIONAL_OPENFREEMAP_IMAGES.has(id) || map.hasImage(id)) return;
+    map.addImage(id, TRANSPARENT_STYLE_PIXEL);
+  });
 }
 
 export function loadMapLibre() {

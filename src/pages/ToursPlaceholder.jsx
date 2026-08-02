@@ -11,7 +11,7 @@ const PREVIEW_CATEGORIES = [
 
 export default function ToursPlaceholder() {
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-[100dvh] bg-background">
       <header className="glass-bar sticky top-0 z-40 border-b px-4 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <div>

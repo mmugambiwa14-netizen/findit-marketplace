@@ -3,6 +3,7 @@ param(
   [string]$ProjectRef = 'bwgklpxoetrrkutottdb',
   [string]$Repository = 'mmugambiwa14-netizen/findit-marketplace',
   [string]$PagesOrigin = 'https://mmugambiwa14-netizen.github.io',
+  [string]$VercelOrigin = 'https://findit-marketplace-staging.vercel.app',
   [switch]$RunWorkerAcceptance
 )
 
@@ -133,7 +134,7 @@ supabase secrets set `
   --project-ref $ProjectRef `
   "FINDIT_MEDIA_CLEANUP_WORKER_SECRET=$mediaSecret" `
   "FINDIT_LISTING_EXPIRY_WORKER_SECRET=$expirySecret" `
-  "FINDIT_ALLOWED_ORIGINS=http://127.0.0.1:5173,http://localhost:5173,$PagesOrigin" |
+  "FINDIT_ALLOWED_ORIGINS=http://127.0.0.1:5173,http://localhost:5173,$PagesOrigin,$VercelOrigin" |
   Out-Null
 
 if ($LASTEXITCODE -ne 0) {

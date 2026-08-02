@@ -69,9 +69,10 @@ export function SafetyPanel({ children }) {
 }
 
 export function ContactBar({ children }) {
+  if (!children) return null;
   return (
-    <div className="fixed inset-x-3 bottom-[5.25rem] z-40 md:bottom-4">
-      <div className="clay-nav mx-auto max-w-4xl rounded-2xl p-2.5">{children}</div>
+    <div className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-40 md:bottom-5 md:right-5">
+      <div className="pointer-events-auto">{children}</div>
     </div>
   );
 }

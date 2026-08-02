@@ -1,117 +1,187 @@
-import { useState } from "react";
-import { Phone, MessageCircle, Mail, MessagesSquare } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
-import { useAuth } from "@/lib/AuthContext";
-import { toast } from "sonner";
-import MessageDialog from "@/components/listings/MessageDialog";
-import { featureFlags } from "@/lib/featureFlags";
+import { useState } from 'react';
+import {
+  ChevronUp,
+  Mail,
+  MessageCircle,
+  MessageSquareText,
+  PhoneCall,
+  ShieldCheck,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
+import MessageDialog from '@/components/listings/MessageDialog';
+import { useAuth } from '@/lib/AuthContext';
+import { featureFlags } from '@/lib/featureFlags';
+import { cn } from '@/lib/utils';
 
-export default function ContactButtons({ listing, type = "property", placement = "detail" }) {
+const actionClass = 'flex min-h-14 w-full items-center gap-3 rounded-2xl border border-border bg-surface-secondary/45 px-4 text-left transition hover:border-primary/35 hover:bg-primary/8';
+
+export default function ContactButtons({ listing, type = 'property', placement = 'detail' }) {
+  const [contactOpen, setContactOpen] = useState(false);
   const [guestOpen, setGuestOpen] = useState(false);
-  const [guestAction, setGuestAction] = useState("contact this seller");
+  const [guestAction, setGuestAction] = useState('contact this seller');
   const [messageOpen, setMessageOpen] = useState(false);
   const { user } = useAuth();
-  const browsePlacement = placement === "browse";
+  const browsePlacement = placement === 'browse';
 
-  const typeLabel = type === "property" ? "Property" : type === "car" ? "Car" : type === "service" ? "Service" : "Machinery";
-  const whatsappMsg = encodeURIComponent(
-    type === "service"
-      ? `Hi, I'm interested in your service: ${listing.title}`
-      : `Hi, I'm interested in your listing: ${listing.title} (${typeLabel}) listed at $${listing.price?.toLocaleString()}`
-  );
+  const typeLabel = type === 'property' ? 'Property' : type === 'car' ? 'Car' : type === 'service' ? 'Service' : 'Machinery';
+  const recipientLabel = type === 'service' ? 'provider' : 'seller';
+  const listingPrice = Number(listing.price);
+  const priceText = Number.isFinite(listingPrice) ? ` listed at $${listingPrice.toLocaleString()}` : '';
+  const enquiryText = type === 'service'
+    ? `Hi, I'm interested in your service: ${listing.title}`
+    : `Hi, I'm interested in your listing: ${listing.title} (${typeLabel})${priceText}`;
+  const encodedMessage = encodeURIComponent(enquiryText);
+  const whatsappNumber = listing.contact_whatsapp?.replace(/[^0-9]/g, '') || '';
+  const phoneNumber = listing.contact_phone || '';
+  const emailAddress = listing.contact_email || listing.seller_email || listing.provider_email || '';
+  const emailSubject = encodeURIComponent(`Enquiry about ${type === 'service' ? 'your service' : 'your listing'}: ${listing.title}`);
 
-  const whatsappNumber = listing.contact_whatsapp?.replace(/[^0-9]/g, "") || "";
-  const phoneNumber = listing.contact_phone || "";
-  const emailAddress = listing.contact_email || listing.seller_email || listing.provider_email || "";
-
-  const emailSubject = encodeURIComponent(
-    type === "service"
-      ? `Enquiry about your service: ${listing.title}`
-      : `Enquiry about your listing: ${listing.title}`
-  );
-  const emailBody = encodeURIComponent(
-    type === "service"
-      ? `Hi, I'm interested in your service: ${listing.title}`
-      : `Hi, I'm interested in your listing: ${listing.title} (${typeLabel}) listed at $${listing.price?.toLocaleString()}`
-  );
-
-  const requireAuth = (action, fn) => {
-    if (!user) {
-      setGuestAction(action);
-      setGuestOpen(true);
-      return;
-    }
-    fn();
-  };
-
-  const showWhatsApp = Boolean(whatsappNumber);
-  const showCall = Boolean(phoneNumber);
-  const showEmail = Boolean(emailAddress);
-  const enquiryEligible = type === "service"
-    ? listing.status === "active"
-    : ["available", "under_offer"].includes(listing.status);
-  const showMessage = enquiryEligible && featureFlags.messaging && type !== "service" && user?.id !== listing.seller_id;
+  const enquiryEligible = type === 'service'
+    ? listing.status === 'active'
+    : ['available', 'under_offer'].includes(listing.status);
+  const showMessage = enquiryEligible
+    && featureFlags.messaging
+    && type !== 'service'
+    && user?.id !== listing.seller_id;
 
   if (!enquiryEligible) {
     if (browsePlacement) return null;
     return (
-      <div className="clay-soft rounded-xl px-4 py-3 text-center">
-        <p className="text-sm font-semibold text-foreground">This {type === "service" ? "service" : "listing"} is unavailable</p>
-        <p className="mt-1 text-xs text-muted-foreground">Existing chats remain available, but new enquiries are closed.</p>
-      </div>
+      <Button
+        type="button"
+        variant="outline"
+        disabled
+        title="Existing chats remain available, but new enquiries are closed."
+        className="h-11 rounded-full px-4 shadow-floating"
+      >
+        <MessageSquareText className="h-4 w-4" />
+        Enquiries closed
+        <span className="sr-only">Existing chats remain available, but new enquiries are closed.</span>
+      </Button>
     );
   }
 
-  const openWhatsApp = () => window.open(`https://wa.me/${whatsappNumber}?text=${whatsappMsg}`, "_blank", "noopener,noreferrer");
-  const openEmail = () => {
-    toast.success(`Opening your email app to contact ${emailAddress}`);
-    window.location.href = `mailto:${emailAddress}?subject=${emailSubject}&body=${emailBody}`;
+  const closeThen = (action) => {
+    setContactOpen(false);
+    window.setTimeout(action, 0);
   };
 
-  if (browsePlacement) {
-    const actions = [
-      showMessage && { key: "message", label: "Message", icon: MessagesSquare, onClick: () => requireAuth("message the seller", () => setMessageOpen(true)) },
-      showCall && { key: "call", label: "Call", icon: Phone, onClick: () => { window.location.href = `tel:${phoneNumber}`; } },
-      showWhatsApp && { key: "whatsapp", label: "WhatsApp", icon: MessageCircle, onClick: openWhatsApp },
-      showEmail && { key: "email", label: "Email", icon: Mail, onClick: openEmail },
-    ].filter(Boolean);
+  const openChat = () => {
+    if (!user) {
+      setContactOpen(false);
+      setGuestAction('message the seller');
+      setGuestOpen(true);
+      return;
+    }
+    closeThen(() => setMessageOpen(true));
+  };
 
-    if (actions.length === 0) return null;
+  const openWhatsApp = () => closeThen(() => {
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+  });
 
+  const openCall = () => closeThen(() => {
+    window.location.href = `tel:${phoneNumber}`;
+  });
+
+  const openEmail = () => closeThen(() => {
+    toast.success(`Opening your email app to contact ${emailAddress}`);
+    window.location.href = `mailto:${emailAddress}?subject=${emailSubject}&body=${encodedMessage}`;
+  });
+
+  const actions = [
+    showMessage && {
+      key: 'message',
+      label: 'Chat in FindIt',
+      description: 'Keep the listing and conversation together.',
+      icon: MessageSquareText,
+      onClick: openChat,
+    },
+    phoneNumber && {
+      key: 'call',
+      label: 'Call',
+      description: phoneNumber,
+      icon: PhoneCall,
+      onClick: openCall,
+    },
+    whatsappNumber && {
+      key: 'whatsapp',
+      label: 'WhatsApp',
+      description: 'Continue in WhatsApp.',
+      icon: MessageCircle,
+      onClick: openWhatsApp,
+      iconClassName: 'bg-emerald-500/15 text-emerald-400',
+    },
+    emailAddress && {
+      key: 'email',
+      label: 'Email',
+      description: emailAddress,
+      icon: Mail,
+      onClick: openEmail,
+    },
+  ].filter(Boolean);
+
+  if (actions.length === 0) {
+    if (browsePlacement) return null;
     return (
-      <>
-        <div className={`grid gap-2 ${actions.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {actions.map(({ key, label, icon: Icon, onClick }) => (
-            <Button
-              key={key}
-              type="button"
-              className="clay-button h-11 min-w-0 rounded-xl px-2 text-xs font-semibold sm:text-sm"
-              onClick={onClick}
-            >
-              <Icon className="mr-1.5 h-4 w-4 shrink-0" />
-              <span className="truncate">{label}</span>
-            </Button>
-          ))}
-        </div>
-        <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} />
-        {showMessage && <MessageDialog open={messageOpen} onClose={() => setMessageOpen(false)} listing={listing} type={type} />}
-      </>
+      <Button type="button" variant="outline" disabled className="h-11 rounded-full px-4 shadow-floating">
+        Contact unavailable
+      </Button>
     );
-  }
-
-  if (!showMessage && !showWhatsApp && !showCall && !showEmail) {
-    return <div className="py-2 text-center text-sm text-muted-foreground">Contact details not available. Please check back later.</div>;
   }
 
   return (
     <>
-      <div className="flex gap-2">
-        {showMessage && <Button className="clay-button h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => requireAuth("message the seller", () => setMessageOpen(true))}><MessagesSquare className="mr-1.5 h-4 w-4" />Chat</Button>}
-        {showWhatsApp && <Button className="h-12 min-w-0 flex-1 rounded-xl bg-green-600 px-2 text-xs text-white shadow-lg shadow-green-950/20 hover:bg-green-500 sm:text-sm" onClick={openWhatsApp}><MessageCircle className="mr-1.5 h-4 w-4" />WhatsApp</Button>}
-        {showCall && <Button variant="outline" className="clay-control h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={() => { window.location.href = `tel:${phoneNumber}`; }}><Phone className="mr-1.5 h-4 w-4" />Call</Button>}
-        {showEmail && <Button variant="outline" className="clay-control h-12 min-w-0 flex-1 rounded-xl px-2 text-xs sm:text-sm" onClick={openEmail}><Mail className="mr-1.5 h-4 w-4" />Email</Button>}
-      </div>
+      <Sheet open={contactOpen} onOpenChange={setContactOpen}>
+        <SheetTrigger asChild>
+          <Button
+            type="button"
+            className={cn(
+              'clay-button h-11 rounded-full px-4 shadow-floating',
+              browsePlacement ? 'w-full rounded-xl shadow-none' : 'min-w-[7.25rem]',
+            )}
+            aria-label={`Contact ${recipientLabel} about ${listing.title}`}
+          >
+            <MessageSquareText className="h-4 w-4" />
+            <span>Contact</span>
+            {!browsePlacement && <ChevronUp className="h-4 w-4 opacity-75" />}
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="mx-auto max-h-[88dvh] max-w-xl overflow-y-auto rounded-t-[1.75rem] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-5">
+          <SheetHeader className="pr-12 text-left">
+            <SheetTitle>Contact the {recipientLabel}</SheetTitle>
+            <SheetDescription className="line-clamp-2">Choose how to ask about {listing.title}.</SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-5 space-y-2">
+            {actions.map(({ key, label, description, icon: Icon, iconClassName, onClick }) => (
+              <button key={key} type="button" onClick={onClick} className={actionClass}>
+                <span className={cn('locked-icon-tile h-10 w-10', iconClassName)}><Icon className="h-5 w-5" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold text-foreground">{label}</span>
+                  <span className="mt-0.5 block truncate text-xs text-muted-foreground">{description}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-start gap-2 rounded-xl bg-primary/8 p-3 text-xs leading-5 text-muted-foreground">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p>Never send payment before verifying the item, provider, and terms. FindIt does not hold buyer funds.</p>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} />
       {showMessage && <MessageDialog open={messageOpen} onClose={() => setMessageOpen(false)} listing={listing} type={type} />}
     </>

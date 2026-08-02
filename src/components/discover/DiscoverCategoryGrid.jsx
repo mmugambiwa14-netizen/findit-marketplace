@@ -22,11 +22,11 @@ function withLocation(target, location) {
 export default function DiscoverCategoryGrid({ location }) {
   return (
     <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4">
-      {CATEGORIES.map((category) => (
+      {CATEGORIES.map(({ key, target, ...card }) => (
         <DiscoverCategoryCard
-          key={category.key}
-          {...category}
-          to={withLocation(category.target, location)}
+          key={key}
+          {...card}
+          to={withLocation(target, location)}
         />
       ))}
     </div>

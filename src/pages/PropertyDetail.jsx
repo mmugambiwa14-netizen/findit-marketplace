@@ -57,7 +57,7 @@ export default function PropertyDetail() {
   const location = property.public_location_label || [property.suburb, property.city, property.province].filter(Boolean).join(", ");
 
   return (
-    <div className="findit-screen pb-36">
+    <div className="findit-screen pb-20">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("property", property)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
         <ListingMediaViewer

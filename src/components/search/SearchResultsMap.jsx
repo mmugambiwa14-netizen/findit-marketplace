@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LocateFixed, MapPin, RefreshCw } from 'lucide-react';
-import { loadMapLibre, mapTilerStyleUrl } from '@/lib/mapProvider';
+import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
 
 const CITY_COORDS = {
   harare: { latitude: -17.8216, longitude: 31.0492 },
@@ -115,6 +115,7 @@ export default function SearchResultsMap({ listings = [], type = 'property' }) {
           pitchWithRotate: false,
           cooperativeGestures: true,
         });
+        registerOptionalStyleImageFallbacks(map);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         map.on('error', () => {
           if (!cancelled) setMapFailure('Map data is temporarily unavailable. Listings remain available below.');

@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import SellerProfileFields from "@/components/settings/SellerProfileFields";
 import PersonalizationSettings from "@/components/settings/PersonalizationSettings";
-import ThemeToggle from "@/components/layout/ThemeToggle";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -70,13 +69,12 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-[100dvh]">
       <div className="locked-page-header flex items-center gap-3 px-4 py-3">
         <button type="button" onClick={() => navigate(-1)} className="clay-icon h-10 w-10" aria-label="Go back">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="font-bold text-lg">Settings</h1>
-        <ThemeToggle className="ml-auto" />
       </div>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-4">

@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import BrandLogo from "@/components/BrandLogo";
-import ThemeToggle from "@/components/layout/ThemeToggle";
 
 /**
  * @param {{
@@ -14,14 +13,13 @@ import ThemeToggle from "@/components/layout/ThemeToggle";
  */
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
   return (
-    <div className="findit-auth-shell relative flex min-h-screen flex-col overflow-hidden bg-background">
-      <ThemeToggle className="absolute right-4 top-4 z-10 border border-border bg-card/65 shadow-sm backdrop-blur-xl sm:right-6 sm:top-6" />
-      <main className="flex flex-1 items-center justify-center px-4 py-12 sm:py-16">
+    <div className="findit-auth-shell relative flex min-h-[100dvh] flex-col overflow-hidden bg-background">
+      <main className="flex flex-1 items-center justify-center px-4 py-8 sm:py-12">
         <div className="w-full max-w-md">
-          <Link to="/" className="mb-8 flex justify-center" aria-label="FindIt home">
+          <Link to="/" className="mb-6 flex justify-center" aria-label="FindIt home">
             <BrandLogo markClassName="h-10 w-10" wordmarkClassName="text-2xl tracking-[-0.04em]" />
           </Link>
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center">
             <div className="clay-button mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl">
               <Icon className="h-7 w-7 text-primary-foreground" aria-hidden="true" />
             </div>

@@ -11,9 +11,9 @@ const listingRepository = await readFile('src/repositories/publicListingsReposit
 const serviceRepository = await readFile('src/repositories/servicesRepository.js', 'utf8');
 
 test('Phase 4 recommendation hydration is bounded, ordered and public-only', () => {
-  assert.match(component, /MAX_SECTIONS = 6/);
+  assert.match(component, /MAX_SECTIONS = 4/);
   assert.match(component, /MAX_ITEMS_PER_SECTION = 6/);
-  assert.match(component, /MAX_TOTAL_ITEMS = 24/);
+  assert.match(component, /MAX_TOTAL_ITEMS = 18/);
   assert.match(listingService, /MAX_RECOMMENDATION_RESULTS = 24/);
   assert.match(listingService, /return ids\.map\(\(id\) => byId\.get\(id\)\)\.filter\(Boolean\)/);
   assert.match(listingRepository, /\.in\('status', \['available', 'under_offer'\]\)/);
@@ -28,9 +28,9 @@ test('Phase 4 sections fail independently and expose complete accessible states'
   assert.match(component, /reason: 'transport_unavailable'/);
   assert.match(component, /result\.degraded && result\.items\.length === 0/);
   assert.match(component, /RecommendationLoading/);
-  assert.match(component, /Suggestions could not be loaded/);
-  assert.match(component, /No suggestions are available right now/);
-  assert.match(component, /Try again/);
+  assert.match(component, /Suggestions are taking a break/);
+  assert.match(component, /Fresh matches are still being added/);
+  assert.match(component, /Retry/);
   assert.match(component, /role="alert"/);
   assert.match(component, /role="status"/);
   assert.match(component, /aria-labelledby="listing-recommendations-heading"/);
@@ -41,7 +41,7 @@ test('Phase 4 recommendations use compact horizontally scrollable cards', () => 
   assert.match(component, /snap-x snap-mandatory/);
   assert.match(component, /overflow-x-auto/);
   assert.match(component, /layout="recommendation"/);
-  assert.match(component, /w-\[13\.5rem\]/);
+  assert.match(component, /w-\[12\.75rem\]/);
   assert.match(marketplaceCard, /recommendationLayout/);
   assert.match(marketplaceCard, /layout === 'recommendation'/);
   assert.match(serviceCard, /layout === 'recommendation'/);

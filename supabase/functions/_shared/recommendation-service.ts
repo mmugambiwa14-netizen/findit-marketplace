@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.110.7";
-import { configuredPublishableKey } from "./tour-runtime.ts";
+import { allowedRequestOrigin, configuredPublishableKey } from "./tour-runtime.ts";
 import { BODY_INVALID, BODY_TOO_LARGE, readBoundedJson } from "./request-guards.ts";
 
 const MAXIMUM_REQUEST_BYTES = 4096;
@@ -91,24 +91,8 @@ function publicKey(): string {
   return configuredPublishableKey();
 }
 
-function allowedOrigin(request: Request): string | null {
-  const origin = request.headers.get("origin");
-  if (!origin) return null;
-
-  const configured = (Deno.env.get("FINDIT_ALLOWED_ORIGINS") ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-
-  if (configured.includes(origin)) return origin;
-  if (Deno.env.get("DENO_ENV") !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
-    return origin;
-  }
-  return null;
-}
-
 function responseHeaders(request: Request, cacheControl = "no-store"): HeadersInit {
-  const origin = allowedOrigin(request);
+  const origin = allowedRequestOrigin(request);
   return {
     "Content-Type": "application/json",
     "Cache-Control": cacheControl,
@@ -429,13 +413,13 @@ export function serveRecommendationService(service: RecommendationServiceName): 
     const correlationId = crypto.randomUUID();
 
     if (request.method === "OPTIONS") {
-      if (!allowedOrigin(request)) return new Response(null, { status: 403, headers: responseHeaders(request) });
+      if (!allowedRequestOrigin(request)) return new Response(null, { status: 403, headers: responseHeaders(request) });
       return new Response(null, { status: 204, headers: responseHeaders(request) });
     }
     if (request.method !== "POST") {
       return json(request, 405, { correlationId, code: "method_not_allowed", message: "POST is required." });
     }
-    if (request.headers.get("origin") && !allowedOrigin(request)) {
+    if (request.headers.get("origin") && !allowedRequestOrigin(request)) {
       return json(request, 403, { correlationId, code: "origin_not_allowed", message: "This origin is not allowed." });
     }
 

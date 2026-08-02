@@ -51,7 +51,7 @@ export default function MachineryDetail() {
   const location = item.public_location_label || [item.suburb, item.city, item.province].filter(Boolean).join(", ");
 
   return (
-    <div className="findit-screen pb-36">
+    <div className="findit-screen pb-20">
       <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
       <main className="mx-auto max-w-4xl">
         <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Take a Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} className="md:mt-4 md:rounded-3xl md:border" />

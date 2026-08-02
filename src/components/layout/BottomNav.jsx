@@ -36,9 +36,9 @@ export default function BottomNav() {
     <>
       <nav
         aria-label="Mobile navigation"
-        className="safe-area-bottom fixed inset-x-3 bottom-2.5 z-40 md:hidden"
+        className="safe-area-bottom fixed inset-x-2.5 bottom-2.5 z-40 md:hidden"
       >
-        <div className="clay-nav mx-auto flex h-[74px] max-w-[500px] items-stretch rounded-[1.55rem] px-1.5">
+        <div className="clay-nav mx-auto flex h-16 max-w-[500px] items-stretch rounded-[1.35rem] px-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -58,8 +58,8 @@ export default function BottomNav() {
                 )}
               >
                 {item.prominent ? (
-                  <span className="clay-button -mt-7 flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full ring-4 ring-background/90">
-                    <Icon aria-hidden="true" className="h-7 w-7" strokeWidth={2.1} />
+                  <span className="clay-button -mt-5 flex h-14 w-14 items-center justify-center rounded-full ring-[3px] ring-background/90">
+                    <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={2.2} />
                   </span>
                 ) : (
                   <span
@@ -87,7 +87,7 @@ export default function BottomNav() {
                 )}
                 <span
                   className={cn(
-                    'max-w-full truncate text-[10px] font-semibold leading-none tracking-[-0.01em]',
+                    'max-w-full truncate text-[9px] font-semibold leading-none tracking-[-0.01em]',
                     item.prominent && '-mt-0.5',
                     isActive && !item.prominent && 'font-bold text-primary',
                   )}

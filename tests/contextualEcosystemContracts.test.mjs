@@ -5,6 +5,7 @@ import test from 'node:test';
 const foundation = await readFile('supabase/migrations/0063_contextual_ecosystem_intelligence.sql', 'utf8');
 const hardening = await readFile('supabase/migrations/0064_contextual_rule_identity_and_admin.sql', 'utf8');
 const edge = await readFile('supabase/functions/contextual-ecosystem/index.ts', 'utf8');
+const sharedRuntime = await readFile('supabase/functions/_shared/tour-runtime.ts', 'utf8');
 const client = await readFile('src/services/contextualEcosystemService.js', 'utf8');
 
 test('contextual intelligence orchestrates existing services without executing them', () => {
@@ -41,9 +42,10 @@ test('edge service validates bounded public input and fails softly', () => {
 
 test('contextual browser CORS accepts Supabase client headers and opaque publishable keys', async () => {
   const config = await readFile('supabase/config.toml', 'utf8');
-  assert.match(edge, /authorization, apikey, content-type, x-client-info/);
-  assert.match(edge, /Access-Control-Allow-Methods": "POST, OPTIONS"/);
-  assert.match(edge, /Vary": "Origin"/);
+  const corsBoundary = `${edge}\n${sharedRuntime}`;
+  assert.match(corsBoundary, /authorization, apikey, content-type, x-client-info/);
+  assert.match(corsBoundary, /Access-Control-Allow-Methods": "POST, OPTIONS"/);
+  assert.match(corsBoundary, /Vary": "Origin"/);
   assert.match(config, /\[functions\.contextual-ecosystem\][\s\S]*?verify_jwt = false/);
 });
 

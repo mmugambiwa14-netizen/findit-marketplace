@@ -22,16 +22,14 @@ function restoreDeepLink() {
   );
 }
 
-function applyStoredTheme() {
-  const storedTheme = readStoredString('local', 'theme', null);
-  const theme = storedTheme === 'light' ? 'light' : 'dark';
-  document.documentElement.classList.toggle('dark', theme === 'dark');
-  document.documentElement.style.colorScheme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute(
-    'content',
-    theme === 'dark' ? '#050914' : '#f5f8fd',
-  );
+function applyDarkTheme() {
+  // Light mode is intentionally suspended while the visual system is rebuilt.
+  // Keep the light tokens in CSS so it can return without another palette migration.
+  readStoredString('local', 'theme', null);
+  document.documentElement.classList.add('dark');
+  document.documentElement.style.colorScheme = 'dark';
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#050914');
 }
 
 restoreDeepLink();
-applyStoredTheme();
+applyDarkTheme();

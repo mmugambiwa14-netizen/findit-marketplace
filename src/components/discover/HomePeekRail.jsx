@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, MapPin, Play } from 'lucide-react';
+import { ArrowRight, MapPin, Play, RefreshCw, VideoOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { featureFlags } from '@/lib/featureFlags';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { getPublicTourFeedPage, publicTourDetailPath } from '@/services/listingToursService';
@@ -24,7 +25,7 @@ function peekPrice(item, format) {
 
 function PeekSkeleton() {
   return (
-    <div className="space-y-3" role="status" aria-label="Loading recommended listings">
+    <div className="space-y-3" role="status" aria-label="Loading Peeks">
       {[1, 2].map((item) => (
         <div key={item} className="clay-card grid min-h-[112px] grid-cols-[108px_minmax(0,1fr)] overflow-hidden rounded-2xl sm:grid-cols-[140px_minmax(0,1fr)]">
           <div className="animate-pulse bg-surface-raised" />
@@ -61,8 +62,8 @@ export default function HomePeekRail({ location }) {
       <section className="mt-7" aria-labelledby="home-recommended-title">
         <div className="mb-3 flex items-end justify-between gap-3">
           <div>
-            <h2 id="home-recommended-title" className="findit-section-title">Recommended for you</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">Listings with a Tour you can inspect first</p>
+            <h2 id="home-recommended-title" className="findit-section-title">Peeks near you</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">Watch the listing before you arrange a visit</p>
           </div>
         </div>
         <PeekSkeleton />
@@ -71,14 +72,38 @@ export default function HomePeekRail({ location }) {
   }
 
   const items = feed.data?.items || [];
-  if (feed.isError || items.length === 0) return null;
+  if (feed.isError) {
+    return (
+      <section className="mt-7" aria-labelledby="home-recommended-title">
+        <h2 id="home-recommended-title" className="findit-section-title">Peeks near you</h2>
+        <div className="locked-list-row mt-3 flex items-center gap-3 p-3.5">
+          <span className="locked-icon-tile h-10 w-10"><VideoOff className="h-4 w-4" /></span>
+          <div className="min-w-0 flex-1"><p className="text-sm font-bold">Peeks did not load</p><p className="mt-0.5 text-xs text-muted-foreground">Your location is still selected.</p></div>
+          <Button type="button" size="sm" variant="outline" onClick={() => feed.refetch()}><RefreshCw className="h-3.5 w-3.5" />Retry</Button>
+        </div>
+      </section>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <section className="mt-7" aria-labelledby="home-recommended-title">
+        <h2 id="home-recommended-title" className="findit-section-title">Peeks near you</h2>
+        <Link to="/peek" className="locked-list-row mt-3 flex min-h-20 items-center gap-3 p-3.5 hover:border-primary/30">
+          <span className="locked-icon-tile h-10 w-10"><Play className="h-4 w-4 fill-current" /></span>
+          <span className="min-w-0 flex-1"><span className="block text-sm font-bold">No local Peeks yet</span><span className="mt-0.5 block text-xs text-muted-foreground">Browse every available Peek.</span></span>
+          <ArrowRight className="h-4 w-4 text-primary" />
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-7" aria-labelledby="home-recommended-title">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
-          <h2 id="home-recommended-title" className="findit-section-title">Recommended for you</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">Listings with a Tour you can inspect first</p>
+          <h2 id="home-recommended-title" className="findit-section-title">Peeks near you</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">Watch the listing before you arrange a visit</p>
         </div>
         <Link to="/peek" className="inline-flex min-h-11 shrink-0 items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover">
           See all <ArrowRight className="h-4 w-4" />
@@ -108,7 +133,7 @@ export default function HomePeekRail({ location }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/10" aria-hidden="true" />
               <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-[9px] font-bold text-white shadow-lg">
                 <Play className="h-3 w-3 fill-current" />
-                Tour · {formatDuration(item.durationSeconds)}
+                Peek · {formatDuration(item.durationSeconds)}
               </span>
             </div>
             <div className="min-w-0 p-3.5">

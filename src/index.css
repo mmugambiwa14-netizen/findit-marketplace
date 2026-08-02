@@ -121,11 +121,14 @@
     background: hsl(var(--background));
     scroll-behavior: smooth;
     scrollbar-color: hsl(var(--border-strong)) transparent;
+    overscroll-behavior-y: none;
   }
 
   body {
-    @apply min-h-screen bg-background font-inter text-foreground antialiased;
+    @apply bg-background font-inter text-foreground antialiased;
+    min-height: 100dvh;
     min-width: 320px;
+    overscroll-behavior-y: none;
     text-rendering: optimizeLegibility;
     background-image:
       radial-gradient(circle at 12% -8%, hsl(var(--primary) / 0.13), transparent 30rem),
@@ -135,7 +138,7 @@
   }
 
   #root {
-    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   button,
@@ -280,7 +283,18 @@
   }
 
   .findit-screen {
-    @apply min-h-screen bg-transparent;
+    @apply bg-transparent;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+
+  .findit-mobile-nav-clearance {
+    padding-bottom: calc(4.75rem + max(0.75rem, env(safe-area-inset-bottom)));
+  }
+
+  .findit-scroll-region {
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
   }
 
   .findit-mobile-shell {

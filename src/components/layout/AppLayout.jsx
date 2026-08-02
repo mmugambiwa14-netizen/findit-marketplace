@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { GuestBanner } from '@/components/auth/GuestPromptSheet';
 import { useAuth } from '@/lib/AuthContext';
+import { cn } from '@/lib/utils';
 import BottomNav from './BottomNav';
 import SiteFooter from './SiteFooter';
 import TopNav from './TopNav';
@@ -27,7 +28,21 @@ const SELF_CONTAINED_ROUTES = [
   '/business/',
   '/dealer/',
   '/help',
+  '/legal',
 ];
+
+const MOBILE_NAV_ROUTES = new Set([
+  '/',
+  '/search',
+  '/services',
+  '/peek',
+  '/chats',
+  '/profile',
+  '/saved',
+  '/notifications',
+  '/my-listings',
+  '/my-services',
+]);
 
 function matchesRoute(pathname, route) {
   return route.endsWith('/')
@@ -40,9 +55,10 @@ export default function AppLayout() {
   const { user } = useAuth();
   const selfContained = SELF_CONTAINED_ROUTES.some((route) => matchesRoute(location.pathname, route));
   const isDiscoverHome = location.pathname === '/';
+  const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
 
   return (
-    <div className="findit-screen min-h-screen">
+    <div className="findit-screen min-h-[100dvh]">
       <a
         href="#main-content"
         className="fixed left-4 top-4 z-[1100] -translate-y-24 rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background shadow-floating transition-transform focus:translate-y-0"
@@ -50,12 +66,17 @@ export default function AppLayout() {
         Skip to main content
       </a>
       {!selfContained && <TopNav />}
-      <main id="main-content" tabIndex={-1} className="min-h-[70vh] pb-28 md:pb-0">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={cn('min-h-[70vh]', showMobileNav && 'findit-mobile-nav-clearance')}
+      >
         <Outlet />
+        {isDiscoverHome && <div className="md:hidden"><SiteFooter compact /></div>}
       </main>
       {!selfContained && <div className="hidden md:block"><SiteFooter /></div>}
       {!selfContained && !isDiscoverHome && <GuestBanner user={user} />}
-      <BottomNav />
+      {showMobileNav && <BottomNav />}
     </div>
   );
 }

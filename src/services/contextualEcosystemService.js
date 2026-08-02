@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 
 const VALID_STAGES = new Set(['discover', 'evaluate', 'prepare', 'transact', 'own']);
-const REQUEST_TIMEOUT_MS = 1200;
+const REQUEST_TIMEOUT_MS = 2200;
 
 function emptyResult(subjectListingId, reason = 'service_unavailable') {
   return {
