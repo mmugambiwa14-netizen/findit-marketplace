@@ -83,6 +83,13 @@ grant select on public.contact_reveal_events to authenticated;
 
 -- 4. Reveal RPCs ------------------------------------------------------------
 
+-- The `private` schema holds helpers that must never be reachable over
+-- PostgREST. Staging already has it; production does not, so create it
+-- idempotently rather than assuming. No USAGE is granted to anon or
+-- authenticated -- the SECURITY DEFINER callers below run as owner.
+create schema if not exists private;
+revoke all on schema private from anon, authenticated;
+
 -- Rolling 24h cap per account. Generous for a genuine buyer, restrictive for
 -- an automated harvester, and every reveal is attributable.
 create or replace function private.assert_contact_reveal_budget(p_user_id uuid)

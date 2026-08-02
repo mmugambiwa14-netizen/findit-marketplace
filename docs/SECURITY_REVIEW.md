@@ -182,9 +182,34 @@ truncated successfully while acting as `anon`. Row count went 1 → 0.
 confirm the privilege grants as well as the policies — `has_table_privilege`,
 not just `pg_policies`.
 
-### Not yet applied to production
+### Applied to production
 
-Production (`jvbpxnfxkptuexgssplj`) has **not** been changed. It is a distinct
-and older schema (64 tables vs 88 on staging, and an `is_admin()` that lacks
-the `private` schema indirection). Both issues above should be assumed present
-there until verified, and these migrations need a deliberate promotion.
+Both issues were confirmed present on production (`jvbpxnfxkptuexgssplj`) and
+have been fixed there as well:
+
+- 40 tables granted TRUNCATE to `anon` and to `authenticated`.
+- `anon` held SELECT on the contact columns of `listings`, and a table-level
+  SELECT grant on `services`.
+
+Production was empty at the time of the fix (0 users, 0 listings, 0 services),
+so no live data was ever exposed through these defects and no migration
+carried a data risk. Production is pre-launch; fixing before onboarding is the
+correct order.
+
+Production differs from staging (63 tables vs 88, and a `public.is_admin()`
+without the `private` schema indirection), so migration `0109` creates the
+`private` schema idempotently rather than assuming it exists. No USAGE on that
+schema is granted to `anon` or `authenticated`.
+
+Verified on production after the change: `anon` denied on all contact columns
+and both reveal RPCs; `authenticated` retains EXECUTE; TRUNCATE 40 → 0 for both
+browser roles; `anon` INSERT/UPDATE/DELETE → 0; all public tables still have
+RLS; `service_role` TRUNCATE preserved; a newly created table inherits SELECT
+but neither TRUNCATE nor INSERT.
+
+### Deployment ordering
+
+The production database no longer serves `contact_phone`, `contact_whatsapp` or
+`contact_email` to `anon`. A frontend build older than this commit still asks
+for those columns in its public listing projection and will fail that query for
+logged-out visitors. Deploy this commit before opening production to traffic.
