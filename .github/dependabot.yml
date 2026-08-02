@@ -1,0 +1,31 @@
+# Dependency update automation (Pass 4 §16).
+#
+# The lockfile is committed, so Dependabot can raise reproducible updates.
+# Grouping keeps the PR volume manageable on a solo-maintained repository:
+# patch and minor bumps arrive as one PR per ecosystem per week, while major
+# bumps stay separate because they need a human read.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    labels:
+      - dependencies
+
+  # Workflow actions are pinned to immutable commit SHAs and verified by
+  # tests/ -- Dependabot keeps those pins current instead of letting them rot.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies

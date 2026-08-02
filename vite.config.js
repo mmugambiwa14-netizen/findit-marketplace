@@ -41,6 +41,24 @@ export default defineConfig(({ command, mode }) => ({
   // only first-party runtime assets from public/ into the hosted artifact.
   publicDir: command === 'serve' || mode === 'preview' ? 'public' : false,
   logLevel: 'error', // Suppress warnings, only show errors
+  // Source maps reconstruct original source from the shipped bundle. Vite
+  // already defaults this to false; it is stated explicitly so the intent
+  // survives a config edit, and scripts/verify-bundle-secrets.mjs fails the
+  // build if a .map ever reaches dist/.
+  build: { sourcemap: false },
+  esbuild: {
+    // `debugger` is dropped outright. console.log/info/debug are marked pure so
+    // they are eliminated when their result is unused -- there are currently
+    // none in src/, so this is a forward guard rather than a cleanup.
+    //
+    // console.error and console.warn are deliberately NOT dropped: the four
+    // console.error call sites (AppErrorBoundary, main bootstrap, AuthContext)
+    // are the only production error visibility this app has, and each logs an
+    // Error object rather than a token, session or request body.
+    drop: ['debugger'],
+    pure: ['console.log', 'console.info', 'console.debug'],
+    legalComments: 'none',
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

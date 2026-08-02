@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node ./scripts/verify-base44-elimination.mjs && node ./scripts/verify-built-boundary.mjs && node ./scripts/verify-build-budget.mjs",
+    "build": "vite build && node ./scripts/verify-base44-elimination.mjs && node ./scripts/verify-built-boundary.mjs && node ./scripts/verify-bundle-secrets.mjs && node ./scripts/verify-build-budget.mjs",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
@@ -102,7 +102,8 @@
     "audit:ui-surface": "node ./scripts/audit-ui-surface.mjs",
     "audit:extensive": "node ./scripts/extensive-product-audit.mjs",
     "registry:locations": "node ./scripts/sync-sub-saharan-location-registry.mjs",
-    "registry:locations:admin1": "node ./scripts/reconcile-sub-saharan-admin1.mjs"
+    "registry:locations:admin1": "node ./scripts/reconcile-sub-saharan-admin1.mjs",
+    "verify:bundle-secrets": "node ./scripts/verify-bundle-secrets.mjs"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.6",

@@ -5,6 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import DealerListings from '@/components/dealers/DealerListings';
 import ServiceCard from '@/components/services/ServiceCard';
 import { Button } from '@/components/ui/button';
+import { safeExternalUrl } from '@/lib/safeUrl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -71,6 +72,14 @@ export default function PublicBusinessProfile() {
   }
 
   const whatsapp = contactNumber(profile.phone);
+  // Scheme-checked at render. Write-time validation in
+  // businessProfileContracts.js runs in the browser and can be bypassed by
+  // calling PostgREST directly, so anything that fails the http(s) check here
+  // is dropped rather than rendered as a clickable link.
+  const websiteUrl = safeExternalUrl(profile.website);
+  const socialLinks = Object.entries(profile.social_links ?? {})
+    .map(([network, url]) => [network, safeExternalUrl(url)])
+    .filter(([, url]) => url !== null);
   return (
     <div className="min-h-screen bg-muted/20">
       <section className="border-b bg-card px-4 py-8">
@@ -91,11 +100,11 @@ export default function PublicBusinessProfile() {
             {whatsapp && <Button className="min-h-11" variant="outline" onClick={() => window.open(`https://wa.me/${whatsapp}`, '_blank', 'noopener,noreferrer')}><MessageCircle className="mr-2 h-4 w-4" />WhatsApp</Button>}
             {profile.email && <Button className="min-h-11" variant="outline" onClick={() => { window.location.href = `mailto:${profile.email}`; }}><Mail className="mr-2 h-4 w-4" />Email</Button>}
           </div>
-          {(profile.address || profile.website || Object.keys(profile.social_links).length > 0) && (
+          {(profile.address || websiteUrl || socialLinks.length > 0) && (
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
               {profile.address && <span className="text-muted-foreground">{profile.address}</span>}
-              {profile.website && <a href={profile.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Website <ExternalLink className="h-3.5 w-3.5" /></a>}
-              {Object.entries(profile.social_links).map(([network, url]) => <a key={network} href={url} target="_blank" rel="noopener noreferrer" className="capitalize text-primary hover:underline">{network}</a>)}
+              {websiteUrl && <a href={websiteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Website <ExternalLink className="h-3.5 w-3.5" /></a>}
+              {socialLinks.map(([network, url]) => <a key={network} href={url} target="_blank" rel="noopener noreferrer" className="capitalize text-primary hover:underline">{network}</a>)}
             </div>
           )}
         </div>

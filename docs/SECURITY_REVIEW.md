@@ -482,3 +482,124 @@ constant ETag across unrelated paths. There is no code path capable of branching
 on User-Agent. That is strong evidence, but it is inference from architecture
 rather than the direct five-UA diff, and it is recorded as such. The direct test
 should be run from an unrestricted network before launch.
+
+---
+
+## Addendum — 2026-08-02: Pass 4 and Pass 4B, client hardening and build guardrails
+
+### Stored XSS in business profile links (fixed)
+
+`src/pages/PublicBusinessProfile.jsx` rendered `profile.website` and every value
+in `profile.social_links` — a user-controlled `jsonb` column — straight into an
+anchor `href` with no scheme check.
+
+`rel="noopener noreferrer"` was already present on both, and
+`src/services/businessProfileContracts.js` does validate the scheme via
+`httpUrl()`. But that validation **runs in the browser**, so it is UX rather
+than enforcement: a user calling PostgREST directly with their own key could
+store `javascript:alert(document.cookie)` in either column. React 18 warns about
+a `javascript:` href and still renders it, leaving the link clickable — a stored
+XSS reachable by any visitor to that profile.
+
+Two layers were added:
+
+1. **`src/lib/safeUrl.js`** — `safeExternalUrl()` parses the value with `URL`
+   and returns it only when the protocol is `http:` or `https:`. Parsing rather
+   than string-matching means `java\tscript:`, leading control characters and
+   mixed case cannot slip past. This is the reliable boundary because it also
+   covers rows written before the constraint existed.
+2. **Migration `0112`** — CHECK constraints on `business_profiles.website` and
+   `.social_links`. A CHECK may not contain a subquery, so the jsonb values are
+   validated through an IMMUTABLE helper, `public.jsonb_values_are_http_urls`.
+
+Proven on staging:
+
+```
+insert … social_links '{"x":"javascript:alert(document.cookie)"}'
+  ERROR: 23514: new row for relation "business_profiles"
+         violates check constraint "business_profiles_social_links_scheme"
+
+insert … website 'https://example.co.zw',
+         social_links '{"facebook":"https://facebook.com/legit"}'
+  -> inserted
+```
+
+Applied to staging and production. Test rows removed.
+
+### Build hardening (Pass 4B Task 1)
+
+`vite.config.js` now states `build.sourcemap = false` explicitly (Vite already
+defaulted to it; the point is that the intent survives a config edit) and adds
+`esbuild: { drop: ['debugger'], pure: ['console.log','console.info','console.debug'],
+legalComments: 'none' }`.
+
+**esbuild (option A) was chosen over terser (option B)** because terser is a new
+dependency and the global constraints require flagging those first. esbuild is
+already Vite's default minifier, so option A costs nothing.
+
+**No `src/lib/logger.ts` was created, deliberately.** Pass 4B asks for one to
+no-op `debug`/`info`/`log` in production while keeping `error`/`warn`. A count of
+the actual surface found **zero** `console.log`/`info`/`debug` calls in `src/`
+and exactly **four** `console.error` calls — `AppErrorBoundary`, the `main.jsx`
+bootstrap, and two in `AuthContext`. Those four are precisely what Pass 4B says
+to preserve, and each logs an `Error` object rather than a token, session or
+request body. A logger module here would be indirection wrapping four calls that
+must not change behaviour. The `pure` list above is the forward guard: a
+`console.log` added later is eliminated from production without anyone having to
+remember a convention.
+
+### Build guardrail (Pass 4B Task 6)
+
+`scripts/verify-bundle-secrets.mjs` is new and wired into `npm run build`, so a
+leak fails the build rather than shipping. It scans every
+`.html/.js/.css/.json/.txt/.map` artefact in `dist/` for `service_role`,
+`sb_secret_`, Stripe live/test keys, PEM private keys, AWS key ids, secrets
+assigned a quoted literal, and any JWT — and fails if a `.map` file exists at all.
+
+The Supabase publishable key is expected in the bundle and is not flagged. A
+JWT is accepted **only** when its decoded payload says `role: "anon"`, so a
+`service_role` JWT can never pass as "just the anon key".
+
+Both directions were verified rather than assumed:
+
+```
+# planted a fake service_role JWT into dist/
+Bundle secret scan: FAIL
+  - dist/assets/index-B2JkXt2K.js: JWT with role="service_role"
+exit code: 1
+
+# after a clean rebuild
+Bundle secret scan: PASS (155 build artefacts inspected, no source maps, no secret material)
+```
+
+One tuning note: the first version of the generic-secret pattern produced a
+false positive on minified supabase-js
+(`regenerateClientSecret:this._regenerateOAuthClientSecret.bind(this)` — a method
+name, not a secret). The pattern now requires the value to be a quoted string
+literal. A gate that cries wolf gets switched off, so this mattered.
+
+### Dependabot (Pass 4 §16)
+
+`.github/dependabot.yml` added — weekly npm and github-actions updates, with
+minor/patch grouped into one PR and majors left separate. The lockfile is
+already committed. The outstanding `react-router` advisory is unchanged and
+still requires a decision: the fix is a breaking downgrade and the advisory is
+scoped to RSC mode, which this Vite SPA does not expose.
+
+### Already satisfied, re-confirmed
+
+- Zero `dangerouslySetInnerHTML`, `innerHTML`, `outerHTML`, `document.write`,
+  `eval` or `new Function` anywhere in `src/` (Pass 4 §9, §12).
+- No markdown or rich-text renderer exists, so there is no raw-HTML passthrough
+  to audit (Pass 4 §11).
+- No `.map` files ship, now enforced by the build gate rather than by default
+  (Pass 4 §13).
+- Security headers verified live in the deployed response (Pass 4 §1–8), recorded
+  in the Pass 0B addendum above.
+
+### Still open from Pass 4
+
+- **Vercel deployment protection** on preview/staging deployments (§14). Staging
+  returned 200 unauthenticated while pointing at a database holding real seller
+  contact records.
+- **`security.txt`** (§17), pending a production domain.
