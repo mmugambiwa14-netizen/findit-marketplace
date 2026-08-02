@@ -300,3 +300,75 @@ and cross-device session revocation — could not be run. This environment's
 network policy denies outbound HTTPS to `*.supabase.co`, so the auth REST
 endpoints are unreachable from here (the Supabase MCP tooling reaches the
 database by a different path). These remain **unverified**, not passing.
+
+---
+
+## Addendum — 2026-08-02: Pass 3, API surface, secrets and server-side trust
+
+No code changes were required. The server-side layer is sound; the findings are
+one correction to an earlier report and one genuine gap.
+
+### Verified correct
+
+| Item | Evidence |
+|---|---|
+| No `service_role` reachable from the browser | Zero hits in `src/`. Production build scanned for `service_role`, `sk_live`, `sk_test`, `BEGIN PRIVATE KEY`, `sb_secret_` and JWT-shaped strings — zero hits. The only key in the bundle is `sb_publishable_…`, which is public by design. |
+| No secrets in git history | `git log --all -p` scanned for service-role assignments, `sb_secret_`, `sk_live_` — zero hits. Only `.env.example` was ever committed; no real `.env` appears in any commit. |
+| Webhook signature verification | `tour-processing-callback` computes HMAC-SHA256 over `{timestamp}.{rawBody}` and compares with `constantTimeEqual`, returning 401 on mismatch. |
+| Webhook replay protection | The same handler rejects any callback whose `x-findit-timestamp` is more than 300s from now. |
+| Webhook idempotency | Duplicate `processor_job_id` + terminal status returns `{ duplicate: true }` without re-applying. |
+| CORS is allowlisted, not reflected | `allowedRequestOrigin()` matches against `FINDIT_ALLOWED_ORIGINS` plus defaults and omits `Access-Control-Allow-Origin` entirely when unmatched. `Vary: Origin` is set. Local preview origins are permitted only when the Supabase URL is the local kong address. |
+| No mass assignment | Zero `.insert({...spread})` / `.update({...spread})` patterns. `normalizeServiceEdit` rejects unknown keys with a thrown error; `normalizeOwnerListingUpdate` assigns each field explicitly. |
+| No SSRF surface | The only outbound `fetch` calls target `TOUR_PROCESSOR_URL` and `TOUR_CACHE_PURGE_URL` — environment-derived and HMAC-signed. No user-supplied URL is ever fetched. |
+| Logging hygiene | No `console.*` call in any Edge Function logs an authorization header, token, session, password or request body. |
+| Error shape | Handlers return a generic message plus a `requestId` / `correlationId`. No stack traces, SQL text or table names are returned. |
+| Elevated privilege is scoped | `service_role` clients are used only after authorization has already been established, or behind an RPC that enforces its own predicate. |
+
+### Correction to the Pass 0 report
+
+Pass 0 listed `tour-playback-access` as HIGH — "uses `service_role` with no caller
+auth". That was **overstated**, and reading the code and the RPC corrected it:
+
+- The function calls `public.public_tour_metadata`, which is `SECURITY DEFINER`
+  and filters on `public.is_tour_public_eligible(t.id)` plus the tours backend
+  feature flag. It returns only publicly eligible tours, so the endpoint serves
+  public data by design — comparable to a public listing photo.
+- `public_tour_metadata` is not executable by `anon` or `authenticated`, which is
+  why the function needs an elevated client at all.
+- `tour-admin-review-access` was also mis-flagged by the same grep. It requires a
+  bearer token, calls `admin_tour_review_metadata` through a **user** client so
+  the caller's JWT and RLS apply, and uses the elevated client only to sign URLs
+  for paths the RPC already authorized. `private.admin_tour_review_metadata`
+  opens with `if not public.is_admin() then raise exception … 42501`.
+
+The `getUser` grep used in Pass 0 does not detect authorization performed via
+RPC + RLS, which is the dominant pattern here. Residual note: `tour-playback-access`
+mints signed URLs without authentication, so it is a rate-limiting and
+enumeration concern rather than an authorization defect.
+
+### Open gap
+
+**Rate limiting is thin.** Only `tour-upload-intent` and the shared
+recommendation service implement request budgets. Contact reveal is now capped
+at the database level (40 per account per rolling 24h, migration 0109). Listing
+creation, messaging and search reach PostgREST directly from the browser, so
+they have no application-level limit — any control has to live in the database
+or at a gateway.
+
+Deliberate numbers were **not** invented for these. This repository supports
+dealer/bulk-seller accounts, so an arbitrary listing-creation cap risks breaking
+a legitimate use case. The limits are a product decision and are left for a
+decision rather than guessed at.
+
+### Note on schema validation
+
+`zod` is not a dependency. Validation is hand-rolled in `src/services/*Contracts.js`.
+For the mass-assignment property that matters, the hand-rolled version is
+*stricter* than a default zod schema: `normalizeServiceEdit` throws on unknown
+keys rather than stripping them. Adding zod would be a consistency improvement,
+not a security fix, and would be a new dependency.
+
+### Deferred to Pass 6
+
+Pass 3 §17–23 (file uploads) are intentionally not covered here. The overlap map
+makes Pass 6 Part A authoritative for uploads, EXIF stripping and re-encoding.
