@@ -109,3 +109,82 @@ The repository and hosted staging backend meet the approved V1 engineering
 security bar. Do not onboard real users until every residual production risk
 above is accepted or closed and the checklist in
 `PRODUCTION_READINESS_REPORT.md` is signed.
+
+---
+
+## Addendum — 2026-08-02: seller contact boundary and RLS-bypassing grants
+
+Two issues were found on staging (`bwgklpxoetrrkutottdb`) during an
+authorization audit and fixed in migrations `0109`–`0111`.
+
+### 1. Seller contact details were readable by `anon` (Critical)
+
+`public.listings` and `public.services` carry `contact_phone`,
+`contact_whatsapp` and `contact_email`. RLS is row-level, so the
+`listings_public_read_available` / `services_public_read_active` policies
+combined with SELECT grants exposed every published seller's contact record to
+anyone holding the public anon key.
+
+Verified before the fix, acting as `anon`: 11 listings visible, 10 with phone,
+11 with email, 10 with WhatsApp; 5 services, all 5 with phone.
+
+**Rules now in force**
+
+- `anon` holds **no** column grant on `contact_phone`, `contact_whatsapp` or
+  `contact_email` on either table.
+- `public.listings` and `public.services` expose generated
+  `has_contact_phone` / `has_contact_whatsapp` / `has_contact_email` booleans
+  instead, so cards can render Call/WhatsApp/Email affordances without the
+  values.
+- Actual values are returned **only** by `public.reveal_listing_contact(uuid)`
+  and `public.reveal_service_contact(uuid)`. Both are `SECURITY DEFINER` with
+  `search_path = ''`, require an authenticated active account, verify the
+  subject is publicly visible or owned by the caller, enforce a rolling 24h
+  budget of 40 reveals per account, and append to
+  `public.contact_reveal_events`. Neither is executable by `anon`.
+- `services` uses an explicit column allowlist rather than a table-level SELECT
+  grant, matching how `listings` was already configured. The allowlist is
+  generated from the live column list, so a column added later is **not**
+  exposed until it is deliberately granted.
+- `authenticated` retains the contact column grant because the owner edit flow
+  reads a seller's own values directly. Every such query is scoped to
+  `seller_id` / `provider_id`. Closing this too requires routing owner reads
+  through an RPC and remains open.
+
+### 2. `anon` and `authenticated` held TRUNCATE on every public table (Critical)
+
+TRUNCATE is **not** governed by row level security. Postgres checks the
+table-level privilege and empties the table; policies are never consulted. The
+stock Supabase default privilege set (`grant all on tables to anon,
+authenticated, service_role`) therefore gave every browser client an
+irreversible data-destruction primitive on all 43 granted tables, including
+`users`, `listings`, `services` and `audit_logs`.
+
+Demonstrated on staging before the fix: a table with RLS **enabled** and
+**zero policies** — the most restrictive configuration available — was
+truncated successfully while acting as `anon`. Row count went 1 → 0.
+
+**Rules now in force**
+
+- `TRUNCATE`, `TRIGGER` and `REFERENCES` are revoked from `anon` and
+  `authenticated` on every table in `public`, and removed from the default
+  privileges for role `postgres` so new tables do not inherit them.
+- `INSERT` / `UPDATE` / `DELETE` are revoked from `anon` entirely. Every write
+  policy in this schema requires `is_active_user()` or a non-null
+  `auth.uid()`, so anonymous writes were dead privilege; removing them means a
+  future policy mistake cannot become an anonymous write.
+- `SELECT` / `INSERT` / `UPDATE` / `DELETE` for `authenticated` are unchanged —
+  those are the operations RLS does govern.
+- `service_role` is deliberately untouched; it is the trusted server-side role
+  and bypasses RLS by design.
+
+**Standing rule:** RLS is necessary but not sufficient. When adding a table,
+confirm the privilege grants as well as the policies — `has_table_privilege`,
+not just `pg_policies`.
+
+### Not yet applied to production
+
+Production (`jvbpxnfxkptuexgssplj`) has **not** been changed. It is a distinct
+and older schema (64 tables vs 88 on staging, and an `is_admin()` that lacks
+the `private` schema indirection). Both issues above should be assumed present
+there until verified, and these migrations need a deliberate promotion.

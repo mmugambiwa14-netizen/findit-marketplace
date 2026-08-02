@@ -2,7 +2,16 @@ import { supabase } from '@/lib/supabaseClient';
 import { PUBLIC_LISTING_SELECT } from '@/repositories/publicListingsRepository';
 import { applyDescendingCreatedAtCursor } from '@/services/keysetPagination';
 
-const OWNER_LISTING_SELECT = PUBLIC_LISTING_SELECT;
+// Owners read their own contact values directly so the edit form can prefill
+// without an extra round trip. Every query below is scoped to seller_id, and
+// the `listings_owner_*` policies enforce the same ownership at the row level.
+// `authenticated` retains the column grant that `anon` lost in migration 0109.
+const OWNER_LISTING_SELECT = `
+  ${PUBLIC_LISTING_SELECT},
+  contact_phone,
+  contact_whatsapp,
+  contact_email
+`;
 
 function repositoryFailure(message, error) {
   const failure = new Error(message);

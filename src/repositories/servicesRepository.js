@@ -1,13 +1,17 @@
 import { supabase } from '@/lib/supabaseClient';
 import { applyDescendingCreatedAtCursor } from '@/services/keysetPagination';
 
+// Provider contact values are deliberately absent -- `anon` holds no column
+// grant on them. Cards render availability from the has_contact_* flags and
+// the values come from the reveal_service_contact RPC once the viewer is
+// authenticated. See migration 0109/0111.
 export const PUBLIC_SERVICE_SELECT = `
   id,
   provider_id,
   provider_name,
-  contact_phone,
-  contact_whatsapp,
-  contact_email,
+  has_contact_phone,
+  has_contact_whatsapp,
+  has_contact_email,
   title,
   description,
   category,
@@ -24,6 +28,16 @@ export const PUBLIC_SERVICE_SELECT = `
   views,
   created_at,
   updated_at
+`;
+
+// Providers read their own contact values so the edit form can prefill. Every
+// query using this projection is scoped to provider_id, and the
+// `services_owner_*` policies enforce the same ownership at the row level.
+export const OWNER_SERVICE_SELECT = `
+  ${PUBLIC_SERVICE_SELECT},
+  contact_phone,
+  contact_whatsapp,
+  contact_email
 `;
 
 function toRepositoryError(message, error) {
@@ -96,7 +110,7 @@ export async function findPublicServicesByIds(ids, { signal } = {}) {
 export async function findOwnerServices(request) {
   let query = supabase
     .from('services')
-    .select(PUBLIC_SERVICE_SELECT)
+    .select(OWNER_SERVICE_SELECT)
     .eq('provider_id', request.providerId)
     .neq('category', 'legal');
   query = applyDescendingCreatedAtCursor(query, request.cursor);
@@ -112,7 +126,7 @@ export async function insertOwnerService(input) {
   const { data, error } = await supabase
     .from('services')
     .insert(input)
-    .select(PUBLIC_SERVICE_SELECT)
+    .select(OWNER_SERVICE_SELECT)
     .single();
   if (error) throw toRepositoryError('Unable to create the service', error);
   return data;
@@ -124,7 +138,7 @@ export async function updateOwnerServiceRow(providerId, id, input) {
     .update(input)
     .eq('provider_id', providerId)
     .eq('id', id)
-    .select(PUBLIC_SERVICE_SELECT)
+    .select(OWNER_SERVICE_SELECT)
     .single();
   if (error) throw toRepositoryError('Unable to update the service', error);
   return data;
@@ -136,7 +150,7 @@ export async function deleteOwnerServiceRow(providerId, id) {
     .delete()
     .eq('provider_id', providerId)
     .eq('id', id)
-    .select(PUBLIC_SERVICE_SELECT)
+    .select(OWNER_SERVICE_SELECT)
     .single();
   if (error) throw toRepositoryError('Unable to delete the service', error);
   return data;

@@ -7,6 +7,7 @@ import DealerListings from "@/components/dealers/DealerListings";
 import { useAuth } from "@/lib/AuthContext";
 import { isSellerProfileId } from "@/services/sellerProfileContracts";
 import { getPublicSellerListingsPage, getPublicSellerProfile } from "@/services/sellerProfilesService";
+import { revealContactDetails } from "@/repositories/contactRevealRepository";
 
 export default function SellerProfile() {
   const { sellerId = "" } = useParams();
@@ -34,6 +35,24 @@ export default function SellerProfile() {
     }
     return [...byId.values()];
   }, [listingsQuery.data]);
+
+  // Seller phone numbers are no longer part of the public listing payload.
+  // Signed-in, non-owner viewers resolve them through the audited reveal RPC;
+  // logged-out visitors simply do not get the direct-contact buttons.
+  // Declared before the early returns below so hook order stays stable.
+  const contactSource = listings.find(
+    (listing) => listing.contact_whatsapp || listing.contact_phone
+      || listing.has_contact_whatsapp || listing.has_contact_phone,
+  );
+  const viewerOwnsProfile = Boolean(user) && user.id === profileSellerId;
+  const revealQuery = useQuery({
+    queryKey: ["seller-contact-reveal", contactSource?.id ?? null],
+    queryFn: () => revealContactDetails(contactSource._type || "property", contactSource.id),
+    enabled: Boolean(contactSource) && Boolean(user) && !viewerOwnsProfile
+      && !contactSource?.contact_phone && !contactSource?.contact_whatsapp,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 
   if (!validSellerId) {
     return (
@@ -73,10 +92,12 @@ export default function SellerProfile() {
   const sellerName = profile.full_name || listings[0]?.seller_name || "FindIt seller";
   const sellerBio = profile.bio || "";
   const avatarUrl = profile.avatar_url || "";
-  const sellerPhone = listings.find((listing) => listing.contact_whatsapp || listing.contact_phone);
-  const whatsapp = sellerPhone?.contact_whatsapp || sellerPhone?.contact_phone || "";
-  const phone = sellerPhone?.contact_phone || sellerPhone?.contact_whatsapp || "";
   const isOwnProfile = user?.id === profile.id;
+  const revealed = revealQuery.data ?? null;
+  const whatsapp = contactSource?.contact_whatsapp || revealed?.contact_whatsapp
+    || contactSource?.contact_phone || revealed?.contact_phone || "";
+  const phone = contactSource?.contact_phone || revealed?.contact_phone
+    || contactSource?.contact_whatsapp || revealed?.contact_whatsapp || "";
 
   return (
     <div className="min-h-screen">

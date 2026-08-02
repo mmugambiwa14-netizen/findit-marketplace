@@ -27,7 +27,12 @@ export default function ServiceCard({ service, onOpen = null, layout = 'browse',
     subcategory && { icon: Briefcase, label: subcategory },
     service.can_travel && { icon: Car, label: 'Can travel' },
   ].filter(Boolean);
-  const hasDirectContact = Boolean(service.contact_phone || service.contact_whatsapp || service.contact_email);
+  // Public rows carry only the has_contact_* flags; owner rows also carry the
+  // values. Either is enough to know the affordance should render.
+  const hasDirectContact = Boolean(
+    service.contact_phone || service.contact_whatsapp || service.contact_email
+    || service.has_contact_phone || service.has_contact_whatsapp || service.has_contact_email
+  );
 
   if (layout === 'recommendation') {
     return (

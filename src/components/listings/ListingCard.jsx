@@ -120,9 +120,11 @@ export default function ListingCard({
     availability && { label: availability, variant: 'destructive' },
   ].filter(Boolean);
   const enquiryEligible = ['available', 'under_offer'].includes(listing.status);
-  const canCall = Boolean(listing.contact_phone);
-  const canWhatsApp = Boolean(listing.contact_whatsapp);
-  const canEmail = Boolean(listing.contact_email || listing.seller_email);
+  // Public rows carry only the has_contact_* flags; owner rows also carry the
+  // values. Either is enough to know the affordance should render.
+  const canCall = Boolean(listing.contact_phone || listing.has_contact_phone);
+  const canWhatsApp = Boolean(listing.contact_whatsapp || listing.has_contact_whatsapp);
+  const canEmail = Boolean(listing.contact_email || listing.seller_email || listing.has_contact_email);
   const canMessage = enquiryEligible && featureFlags.messaging && user?.id !== listing.seller_id;
   const actions = layout === 'browse' && (canCall || canWhatsApp || canEmail || canMessage)
     ? <ContactButtons listing={listing} type={type} placement="browse" />

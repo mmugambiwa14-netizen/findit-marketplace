@@ -12,14 +12,20 @@ const DETAIL_SELECT_BY_KIND = {
 // Keep this projection explicit. It is the public marketplace contract, not
 // an unrestricted `select *`, and prevents future private columns from being
 // exposed accidentally when the listings table evolves.
+//
+// Seller contact values are deliberately absent. `anon` has no column grant on
+// contact_phone / contact_whatsapp / contact_email, so requesting them here
+// would fail the whole query for logged-out visitors. Cards only need to know
+// whether a channel exists; the values come from the reveal_listing_contact
+// RPC once the viewer is authenticated. See migration 0109.
 export const PUBLIC_LISTING_SELECT = `
   id,
   kind,
   seller_id,
   seller_name,
-  contact_phone,
-  contact_whatsapp,
-  contact_email,
+  has_contact_phone,
+  has_contact_whatsapp,
+  has_contact_email,
   title,
   description,
   price,
@@ -211,9 +217,9 @@ export async function findPublicListingById(kind, id) {
       kind,
       seller_id,
       seller_name,
-      contact_phone,
-      contact_whatsapp,
-      contact_email,
+      has_contact_phone,
+      has_contact_whatsapp,
+      has_contact_email,
       title,
       description,
       price,

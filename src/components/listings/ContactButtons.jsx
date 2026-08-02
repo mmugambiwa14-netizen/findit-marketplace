@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sheet';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
 import MessageDialog from '@/components/listings/MessageDialog';
+import { revealContactDetails } from '@/repositories/contactRevealRepository';
 import { useAuth } from '@/lib/AuthContext';
 import { featureFlags } from '@/lib/featureFlags';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
   const [guestOpen, setGuestOpen] = useState(false);
   const [guestAction, setGuestAction] = useState('contact this seller');
   const [messageOpen, setMessageOpen] = useState(false);
+  const [revealed, setRevealed] = useState(null);
   const { user } = useAuth();
   const browsePlacement = placement === 'browse';
 
@@ -41,9 +43,23 @@ export default function ContactButtons({ listing, type = 'property', placement =
     ? `Hi, I'm interested in your service: ${listing.title}`
     : `Hi, I'm interested in your listing: ${listing.title} (${typeLabel})${priceText}`;
   const encodedMessage = encodeURIComponent(enquiryText);
-  const whatsappNumber = listing.contact_whatsapp?.replace(/[^0-9]/g, '') || '';
-  const phoneNumber = listing.contact_phone || '';
-  const emailAddress = listing.contact_email || listing.seller_email || listing.provider_email || '';
+
+  // Owner rows still carry the raw values. Public rows carry only the
+  // has_contact_* flags, and the values arrive from the reveal RPC once the
+  // sheet is opened by an authenticated viewer. See migration 0109.
+  const rawWhatsapp = listing.contact_whatsapp || '';
+  const rawPhone = listing.contact_phone || '';
+  const rawEmail = listing.contact_email || listing.seller_email || listing.provider_email || '';
+
+  const whatsappNumber = (revealed?.contact_whatsapp || rawWhatsapp).replace(/[^0-9]/g, '');
+  const phoneNumber = revealed?.contact_phone || rawPhone;
+  const emailAddress = revealed?.contact_email || rawEmail;
+
+  const canCall = Boolean(rawPhone || listing.has_contact_phone);
+  const canWhatsApp = Boolean(rawWhatsapp || listing.has_contact_whatsapp);
+  const canEmail = Boolean(rawEmail || listing.has_contact_email);
+  const needsReveal = !revealed && !rawPhone && !rawWhatsapp && !rawEmail
+    && (canCall || canWhatsApp || canEmail);
   const emailSubject = encodeURIComponent(`Enquiry about ${type === 'service' ? 'your service' : 'your listing'}: ${listing.title}`);
 
   const enquiryEligible = type === 'service'
@@ -74,6 +90,23 @@ export default function ContactButtons({ listing, type = 'property', placement =
   const closeThen = (action) => {
     setContactOpen(false);
     window.setTimeout(action, 0);
+  };
+
+  // Contact values are resolved when the sheet opens rather than on each
+  // action, so the tel:/mailto:/window.open handlers stay inside the original
+  // user gesture and are not treated as popups.
+  const handleContactOpenChange = (next) => {
+    if (next && !user) {
+      setGuestAction(`contact this ${recipientLabel}`);
+      setGuestOpen(true);
+      return;
+    }
+    setContactOpen(next);
+    if (next && needsReveal) {
+      revealContactDetails(type, listing.id)
+        .then(setRevealed)
+        .catch((failure) => toast.error(failure.message));
+    }
   };
 
   const openChat = () => {
@@ -107,14 +140,14 @@ export default function ContactButtons({ listing, type = 'property', placement =
       icon: MessageSquareText,
       onClick: openChat,
     },
-    phoneNumber && {
+    canCall && {
       key: 'call',
       label: 'Call',
       description: phoneNumber,
       icon: PhoneCall,
       onClick: openCall,
     },
-    whatsappNumber && {
+    canWhatsApp && {
       key: 'whatsapp',
       label: 'WhatsApp',
       description: 'Continue in WhatsApp.',
@@ -122,7 +155,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
       onClick: openWhatsApp,
       iconClassName: 'bg-emerald-500/15 text-emerald-400',
     },
-    emailAddress && {
+    canEmail && {
       key: 'email',
       label: 'Email',
       description: emailAddress,
@@ -142,7 +175,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
 
   return (
     <>
-      <Sheet open={contactOpen} onOpenChange={setContactOpen}>
+      <Sheet open={contactOpen} onOpenChange={handleContactOpenChange}>
         <SheetTrigger asChild>
           <Button
             type="button"
