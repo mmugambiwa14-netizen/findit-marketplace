@@ -1,0 +1,36 @@
+# FindIt Marketplace
+#
+# Public marketplace pages are crawlable. Authenticated, user-specific and
+# moderation surfaces are excluded -- they hold no server-rendered content
+# (the deployment is a static SPA shell), but indexing them wastes crawl
+# budget and can surface per-user URLs in search results.
+#
+# NOTE: this is not an access control. Every path below is enforced
+# server-side by Supabase RLS and by authorization checks in the Edge
+# Functions. Nothing here is protected by being listed, and the route table
+# is already readable in the published JavaScript bundle.
+
+User-agent: *
+
+# Authenticated and user-specific areas
+Disallow: /admin
+Disallow: /chats
+Disallow: /messages
+Disallow: /my-listings
+Disallow: /my-services
+Disallow: /notifications
+Disallow: /profile
+Disallow: /saved
+Disallow: /create
+Disallow: /create-service
+Disallow: /post
+
+# Auth flows -- never useful in an index, and reset URLs are single-use
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# Public marketplace surfaces remain crawlable:
+#   /  /search  /services  /property/*  /car/*  /machinery/*  /service/*
+#   /seller/*  /dealer/*  /business/*  /faqs  /help  /legal

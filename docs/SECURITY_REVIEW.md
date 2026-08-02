@@ -372,3 +372,113 @@ not a security fix, and would be a new dependency.
 
 Pass 3 §17–23 (file uploads) are intentionally not covered here. The overlap map
 makes Pass 6 Part A authoritative for uploads, EXIF stripping and re-encoding.
+
+---
+
+## Addendum — 2026-08-02: Pass 0B (external), Pass 3B (SSR), and live header verification
+
+Target: `https://findit-marketplace-staging.vercel.app`.
+
+### The decisive result: there is no server-rendered content at all
+
+Every path tested returns a **byte-identical** static SPA shell — same ETag
+`W/"cf8540d315662273f8a62c88792a581c"`, served from edge cache
+(`x-vercel-cache: HIT`):
+
+| Path | Status | Body |
+|---|---|---|
+| `/search?type=property` | 200 | identical shell |
+| `/admin/users` | 200 | identical shell |
+| `/robots.txt` | 200 | identical shell (before this change) |
+| `/sitemap.xml` | 200 | identical shell |
+| `/.well-known/security.txt` | 200 | identical shell |
+
+The entire body is:
+
+```html
+<body>
+  <div id="root"></div>
+</body>
+```
+
+This settles several Pass 0B questions at once:
+
+- **No JSON-LD / schema.org block exists anywhere.** Pass 0B calls
+  Product/Offer/RealEstateListing markup carrying `telephone` or `email` "the
+  most commonly missed contact leak on classifieds sites". This deployment has
+  no structured-data block at all, so that leak is absent by construction.
+- **No seller name, phone number or email appears in any HTML response.**
+- **No prerender or dynamic-rendering path exists**, so there is no mechanism by
+  which a crawler User-Agent could receive different content from a browser.
+- The absence of `Vary: User-Agent` is therefore **not** a cache-poisoning
+  vector here: nothing varies by User-Agent, because one cached static artifact
+  answers every request.
+
+### Pass 3B is not applicable — confirmed, not assumed
+
+Pass 3B is conditional on SSR or prerendering existing. It does not. There is no
+serialized state blob, no hydration payload, no inline JSON, and no server-side
+Supabase client. All data loading happens in the browser against PostgREST,
+where RLS is the boundary. Pass 3B is closed as N/A.
+
+### Live header verification (Pass 4 §1–8)
+
+The headers in `vercel.json` are confirmed live in the deployed response, not
+merely configured:
+
+`content-security-policy` with `script-src 'self'` and **no `unsafe-inline` in
+script-src** · `strict-transport-security: max-age=63072000; includeSubDomains;
+preload` · `x-frame-options: DENY` and `frame-ancestors 'none'` ·
+`x-content-type-options: nosniff` · `referrer-policy: strict-origin-when-cross-origin` ·
+`permissions-policy: geolocation=(self), camera=(), microphone=(), payment=(), usb=()` ·
+`cross-origin-opener-policy: same-origin-allow-popups` ·
+`cross-origin-resource-policy: same-site` · `cache-control: no-store, max-age=0`.
+
+### Findings
+
+1. **No `robots.txt`, `sitemap.xml` or `security.txt` existed.** The `vercel.json`
+   catch-all rewrite `"/(.*)" → "/index.html"` swallowed all three, returning
+   HTML with `content-type: text/html`. A `robots.txt` has been added at
+   `public/robots.txt`; the Vite plugin copies `public/` to the dist root and
+   Vercel's filesystem check precedes rewrites, so it is served correctly.
+   Verified present at `dist/robots.txt` after a build.
+
+2. **`security.txt` was deliberately not added.** RFC 9116 wants absolute URLs,
+   and the production web domain is not known here — a `security.txt` pointing
+   at the wrong host is worse than none. The app has a suitable PII-free contact
+   route at `/help/contact`. Add once the production domain is settled.
+
+3. **Everything returns HTTP 200, including nonexistent paths** (soft-404). This
+   is an SEO problem rather than a security one; for path enumeration it is
+   mildly *helpful*, since status codes reveal nothing about which routes exist.
+
+4. **`access-control-allow-origin: *` is present on every response.** This is a
+   Vercel static-serving default, not something `vercel.json` sets. Severity is
+   **low**: the responses are static HTML with no credentials and no
+   `Access-Control-Allow-Credentials`. It is worth knowing that any JSON
+   endpoint later added to this same origin would inherit it.
+
+5. **The HTML is edge-cached (`age: 8676`) despite `cache-control: no-store`.**
+   Safe as it stands, because the cached artifact contains no user data. Worth
+   remembering that `no-store` here constrains the browser, not the Vercel edge.
+
+6. **Staging is publicly reachable and returned 200 unauthenticated.** Vercel
+   deployment protection appears to be off for this deployment. Pass 4 §14 wants
+   it on for previews. Staging currently points at the staging Supabase project,
+   which holds real seller contact records — worth enabling.
+
+### Method limitation — stated rather than glossed
+
+Pass 0B prescribes requesting each URL five times with different User-Agent
+headers and diffing the responses. **That exact test was not run.** This
+environment's network policy denies outbound HTTPS to `*.vercel.app` and
+`*.supabase.co`, so `curl` cannot reach the deployment, and the two reachable
+fetch paths (WebFetch and the Vercel MCP) do not permit setting a custom
+User-Agent.
+
+What was verified instead is the *mechanism*: the deployment is a single static
+artifact with no server-side rendering, delivered from edge cache with a
+constant ETag across unrelated paths. There is no code path capable of branching
+on User-Agent. That is strong evidence, but it is inference from architecture
+rather than the direct five-UA diff, and it is recorded as such. The direct test
+should be run from an unrestricted network before launch.
