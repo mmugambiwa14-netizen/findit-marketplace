@@ -765,3 +765,161 @@ as a `RangeError` rather than a crash; mixed-script detection.
 | Text matrix (null/zero-width/RTL/emoji/200k) | `tests/textSanitization.test.mjs`, 9 tests passing |
 | Anon write to a Storage bucket | **Not executed as a live curl** — this environment's network policy denies outbound HTTPS to `*.supabase.co`. Verified structurally instead: no anon INSERT policy exists on any bucket and every INSERT policy requires a non-null `auth.uid()` |
 | Homoglyph registration blocked | **Not implemented.** `hasMixedScript()` exists and is tested, but it is not yet wired into registration or seller-name updates, and full confusable matching is not implemented |
+
+---
+
+## Addendum — 2026-08-02: Pass 5, marketplace abuse and operations (REPORT ONLY)
+
+Pass 5 is report-first by instruction. **Nothing in this section has been
+implemented.** Each item states what was found, and what is proposed for a
+decision.
+
+### Evidence gathered (staging)
+
+| Table | Rows | Meaning |
+|---|---|---|
+| `verification_requests` | **0** | Identity-document capture has never been used |
+| `reviews` | 0 | Review feature not live |
+| `seller_ratings` | 0 | Seller rating not live |
+| `reports` | 0 | No listing reports filed yet |
+| `conversation_reports` | 0 | No message reports filed yet |
+| `operational_alerts` | 10 | Monitoring is running |
+| `audit_logs` | **757** | Admin audit logging genuinely works |
+| `contact_reveal_events` | 0 | New in 0109; no reveals yet |
+
+### Already closed or not applicable
+
+- **§1 Contact scraping** — closed in migration 0109. `anon` holds no column
+  grant on contact fields; reveals require an authenticated active account, are
+  capped at 40 per rolling 24h, and every reveal is logged with user, subject
+  and timestamp.
+- **§3 Corpus enumeration** — `listings.id` and `services.id` are `uuid`, not
+  sequential integers, so the id space cannot be walked. Public list endpoints
+  still have no rate limit (carried over from Pass 3).
+- **§4 Message rendering** — messages cannot render raw HTML. There is no
+  `dangerouslySetInnerHTML` anywhere in `src/`, so React escaping applies.
+- **§7 Image hotlinking** — all five buckets are private and served by
+  short-lived signed URLs (1 hour), not public object URLs.
+
+### Findings, with proposals
+
+**1. Identity documents: designed but never collected (§8) — the opportunity.**
+
+`verification_requests` has `document_type`, `document_url`,
+`trade_document_url`, `selfie_url`, plus extracted name, email and phone. RLS is
+admin-only, which is correct. The table is empty and the only reference in
+`src/` is a markdown design note — the feature is **schema-only and not wired
+into the application**.
+
+This is the best possible position: Pass 5 calls national-ID scans "the single
+most damaging thing this platform could leak", and none have been collected yet.
+The decisions are still free.
+
+*Proposed, before the feature is built:* a defined retention period with
+automatic deletion rather than indefinite storage; a dedicated private bucket
+separate from listing media; storing only a verification verdict plus the
+extracted fields actually needed, and deleting the document and selfie once a
+request is approved or rejected; and access to that bucket restricted beyond
+ordinary admin, since `is_admin()` currently gates the whole admin surface
+uniformly.
+
+**2. Monitoring watches infrastructure, not abuse (§12).**
+
+All ten alert keys are operational: `message_send_latency`,
+`notification_fanout_backlog`, `notification_fanout_dead_letters`,
+`notification_fanout_stale_claims`, `tour_abandoned_uploads`,
+`tour_cache_dead_letters`, `tour_cleanup_dead_letters`, `tour_feed_failures`,
+`tour_feed_latency`, `tour_processing_failure_rate`.
+
+**None of the abuse signals Pass 5 asks for are covered**: failed logins,
+contact reveals, signup spikes, 4xx/5xx rates, admin actions, or `service_role`
+usage.
+
+The alerting machinery already exists and works, so this is configuration rather
+than new infrastructure. `contact_reveal_events` now records every reveal with a
+timestamp, which makes a reveal-rate alert straightforward — but nothing watches
+it today. *Proposed:* alert keys for reveal rate per account and in aggregate,
+failed-login rate, signup rate, and admin action volume, using the existing
+`operational_alerts` mechanism.
+
+**3. Messaging has reporting but no detection (§4).**
+
+Users can report a conversation with a reason (`spam`, `scam`, `harassment`,
+`unsafe`, `other`) and free-text detail. There is **no automated scanning** of
+message content for payment-redirect or phishing patterns, no in-product warning
+when a message contains an off-platform payment request, and **no defined SLA**
+for acting on a report — `conversation_reports` has `status`, `admin_notes`,
+`reviewed_by` and `reviewed_at`, so the fields exist but no target does.
+
+*Proposed:* a conservative pattern scan flagging for review rather than
+blocking, an in-thread warning about off-platform payment, and a written triage
+SLA.
+
+**4. Review manipulation is unguarded, but not yet live (§5).**
+
+`seller_ratings` carries `listing_id` and `buyer_id`, so the shape for linking a
+rating to a real interaction exists — but there is no constraint or policy
+requiring that a conversation or transaction actually occurred, and both rating
+tables are currently admin-read-only with zero rows.
+
+*Proposed:* before the feature is exposed, require a prior conversation between
+`buyer_id` and the seller on that `listing_id`, enforced in the insert policy
+rather than the client. Cheap now, expensive after launch.
+
+**5. Fake and fraudulent listings (§2).**
+
+No duplicate-listing detection, no reverse-image checking, and no seller
+verification tier. The report flow exists (`reports`, with reason and
+moderation columns) and content suspension is implemented
+(`content_suspended_at`, `content_suspension_reason` on `listings`).
+
+*Proposed:* perceptual-hash duplicate detection on upload, since the stolen
+photo set at a below-market price is the dominant property and vehicle fraud.
+This is a substantial feature, not a hardening tweak — flagged for the roadmap.
+
+**6. Backup and restore (§10) — unverified.**
+
+`docs/BACKUP_AND_DISASTER_RECOVERY.md` describes the native-dump limitation and
+states that a production PITR policy and isolated restore are *required*. The
+existing residual-risk list in this document already records that PITR evidence
+and approved RPO/RTO are **absent**. Nothing found here changes that, and
+whether PITR is enabled on either hosted project was **not verifiable from this
+environment**. An untested backup is a hypothesis.
+
+**7. Account and platform access (§11) — not verifiable from here.**
+
+Whether MFA is enabled on the Supabase, Vercel, GitHub and domain-registrar
+accounts themselves cannot be checked from this environment. This matters more
+than most items in this document: compromise of the registrar or the Vercel
+account bypasses every control described anywhere in this review. Staging also
+still has no Vercel deployment protection while pointing at a database holding
+real seller contact records.
+
+**8. Zimbabwe Data Protection Act 2021 (§9) — flagged, not assessed.**
+
+Personal data currently held: names, emails, phone numbers, WhatsApp numbers,
+approximate and exact listing coordinates, message content, and — if the
+verification feature is ever enabled — identity documents and selfies. There is
+no privacy notice, no stated lawful basis, no retention schedule, no subject
+access or erasure mechanism, and no breach-notification procedure in the
+repository. Pass 5 asks for gaps to be flagged rather than for legal
+conclusions, so these are listed as gaps only.
+
+Related and concrete: **there is still no account deletion or anonymisation
+flow** (also recorded under Pass 2 §11). Erasure rights cannot be honoured
+without one, and that is an engineering task rather than a legal question.
+
+**9. Incident runbook (§13) — absent.**
+
+No document covers revoking all sessions, rotating keys, taking the site
+read-only, or notifying users. *Proposed:* a one-page runbook. Two facts already
+established in this review belong in it: `signOut` cannot invalidate an
+already-issued access token, so the true revocation window is `jwt_expiry`; and
+`service_role` bypasses RLS entirely, so its rotation is the first move in a
+suspected key compromise.
+
+### Nothing above is implemented
+
+These are proposals. Several — duplicate detection, verification retention
+design, DPA compliance — are product and policy decisions rather than security
+fixes, and picking defaults unilaterally would be the wrong call.
