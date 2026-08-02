@@ -603,3 +603,165 @@ scoped to RSC mode, which this Vite SPA does not expose.
   returned 200 unauthenticated while pointing at a database holding real seller
   contact records.
 - **`security.txt`** (§17), pending a production domain.
+
+---
+
+## Addendum — 2026-08-02: Pass 6, uploads and text input
+
+### Correction: the TRUNCATE finding was overstated
+
+The 0110 addendum above says the stock default privileges gave "every browser
+client holding the public anon key an irreversible data-destruction primitive".
+**That overstates reachability and is corrected here.**
+
+The grant was real, and TRUNCATE genuinely is not governed by RLS — the
+demonstration (RLS enabled, zero policies, table truncated while acting as
+`anon`) is accurate. But it was performed over a direct database connection.
+An anon-key holder does not have one. Reaching `TRUNCATE` requires a path that
+executes arbitrary SQL as `anon`, and none exists:
+
+- PostgREST maps HTTP verbs to SELECT / INSERT / UPDATE / DELETE and RPC calls
+  only. It has **no TRUNCATE verb at all**.
+- The Storage REST API exposes no truncate operation.
+- Of the 17 anon-executable functions in `public`, **zero** are SECURITY DEFINER
+  and **zero** use dynamic SQL, so no RPC offers a SQL-execution path.
+- The anon key is a PostgREST/Storage token, not database credentials.
+
+So the accurate severity is **low-to-medium: unnecessary standing privilege
+that violates least privilege and would become critical the moment any
+arbitrary-SQL path appeared** — not "anyone can wipe your database today".
+Revoking it in 0110/0111 remains correct hardening and cost nothing, but the
+original framing was wrong and should not be relied on for prioritisation.
+
+### Storage schema: same grants, cannot be revoked from here
+
+Migration 0110 covered schema `public` only. The `storage` schema carries the
+same default privilege set, and it is still in place:
+
+```
+storage.objects            anon TRUNCATE=true  INSERT=true  DELETE=true
+storage.buckets            anon TRUNCATE=true  INSERT=true  DELETE=true
+storage.buckets_analytics  anon TRUNCATE=true  INSERT=true  DELETE=true
+```
+
+A migration to revoke these was written, applied, and **had no effect** — the
+apply reported success while the privileges were unchanged. The cause:
+
+```
+storage.objects owner: supabase_storage_admin
+acl:  anon=arwdDxtm/supabase_storage_admin
+current_user: postgres        pg_has_role(postgres, owner, USAGE): false
+SET ROLE supabase_storage_admin -> 42501 permission denied
+```
+
+Postgres only lets the original grantor revoke a grant. These were granted by
+`supabase_storage_admin`, `postgres` is not a member of that role, and REVOKE
+issued by a non-grantor silently does nothing rather than erroring. The
+migration was deleted rather than shipped as a no-op.
+
+**Action required:** this needs Supabase support, or a connection as
+`supabase_storage_admin`. By the reachability analysis above it is low severity
+today — the Storage API has no truncate operation — but it is an open item and
+should not be quietly forgotten.
+
+### Part A — uploads: already in good shape
+
+`supabase/functions/_shared/trusted-image.ts` was audited rather than replaced.
+It parses magic bytes for PNG/JPEG/WebP, extracts real dimensions, enforces
+`MAX_DIMENSION` 8000 and `MAX_PIXELS` 40,000,000 (decompression-bomb cover),
+strips metadata, and re-inspects the sanitized bytes to confirm the format and
+dimensions did not change.
+
+Metadata actually removed: PNG `tEXt/zTXt/iTXt/eXIf/tIME`; JPEG APP1 (`0xE1`
+— **where EXIF GPS lives**), APP13, COM, APP3–APP12, APP15; WebP `EXIF`/`XMP`
+chunks with the feature flags cleared and the RIFF length repaired. Trailing
+bytes after `IEND` / `EOI` are truncated, which is the polyglot case.
+
+Storage paths are `${auth.uid()}/staging/${crypto.randomUUID()}.${ext}` —
+server-generated from the verified user, never from the supplied filename. That
+closes path traversal and right-to-left-override filename spoofing by
+construction. Storage RLS requires `owner_id = auth.uid()` **and**
+`storage.foldername(name)[1] = auth.uid()` on every INSERT, and no anon INSERT
+policy exists on any bucket.
+
+**One honest distinction: this is structural sanitisation, not re-encoding.**
+Pass 6 A3 asks for a full pixel re-encode via sharp or equivalent. The
+implementation rewrites container structure and drops metadata chunks; it does
+not decode and re-encode pixels. That is a reasonable choice — the functions run
+on Deno, where sharp is not available — and it does satisfy the privacy
+requirement, since GPS EXIF is removed. The residual is narrower: a malformed
+but structurally valid image that targets a decoder bug would survive, where a
+re-encode would not. Recorded rather than papered over.
+
+Existing tests already cover EXIF stripping for all three formats, trailing
+payloads, server-generated owner-scoped keys, and byte/pixel bounds
+(`tests/trustedImageSanitization.test.mjs`, `tests/storageUploadBoundary.test.mjs`).
+
+### Part B — text input: this is where the gaps were
+
+Sanitisation was **partial and inconsistent**. `messagingContracts.js` rejected
+control characters, `tour-runtime.ts` stripped them server-side, and
+`serviceContracts` did an NFKC pass on search queries — but `boundedText` for
+listing titles and descriptions only trimmed and length-checked. Nothing
+handled zero-width or bidi characters anywhere, and length was measured in
+UTF-16 code units, so an emoji counted as two.
+
+**`src/lib/sanitizeText.js`** is new and now backs both `ownerListingContracts`
+and `serviceContracts`. It strips control characters (preserving tab, newline
+and carriage return), zero-width characters (U+200B–U+200D, U+FEFF), and bidi
+overrides (U+202A–U+202E, U+2066–U+2069); normalises to NFC *after* stripping,
+so removing a control character cannot leave a base character separated from
+its combining mark; collapses whitespace; and bounds length in codepoints.
+
+**Codepoints, not grapheme clusters, is deliberate.** Postgres `char_length()`
+counts codepoints, so the client bound and the CHECK constraints agree exactly.
+Counting graphemes via `Intl.Segmenter` would score a skin-tone emoji as 1 and
+let through a value the database then rejects.
+
+`hasMixedScript()` covers the B2 impersonation vector that matters in practice —
+a Cyrillic or Greek lookalike inside an otherwise Latin name. It does **not**
+implement the full UTS #39 confusable skeleton, so same-script confusables
+("rn" for "m") are not caught; that needs a confusables table and is a separate
+decision about blocking versus flagging.
+
+**Migration 0113** is the enforcement half: `char_length` bounds on
+`listings.title` (1–160), `description` (≤5000), `seller_name` (≤120) and the
+`services` equivalents. Proven against direct writes that bypass all client
+validation:
+
+```
+title 200k chars           -> 23514 violates check constraint "listings_title_length"
+title all-whitespace       -> 23514 violates check constraint "listings_title_length"
+description 6000 chars     -> 23514 violates check constraint "listings_description_length"
+service title 200k chars   -> 23514 violates check constraint "services_title_length"
+legitimate title (control) -> accepted
+```
+
+Applied to staging and production.
+
+Note on the price bound: `price` is `numeric(14,2)`, so the column type already
+caps it below 10^12. The added `price < 1000000000000` constraint is therefore
+redundant with the type rather than new protection — kept for explicitness, but
+it is not the thing doing the work.
+
+Null bytes are handled in the sanitizer rather than by a constraint, because
+Postgres cannot store U+0000 in a text column at all and raises before any
+CHECK runs — so a single one pasted into a form would surface as a 500 rather
+than a validation message.
+
+`tests/textSanitization.test.mjs` covers the Part C item-3 matrix: null byte,
+zero-width space, RTL override and BOM stripped; emoji preserved; truncation
+never splitting a surrogate pair; NFC equivalence; 200,000 characters rejected
+as a `RangeError` rather than a crash; mixed-script detection.
+
+### Part C status
+
+| Check | Result |
+|---|---|
+| SVG / HTML-renamed-to-.jpg rejected | Covered by magic-byte parsing — no PNG/JPEG/WebP signature means `inspectImage` throws |
+| Oversized file rejected | `MAX_BYTES` 5 MB checked against both `content-length` and `file.size` |
+| Path-traversal filename | Impossible by construction — the path is `uid/staging/uuid.ext` |
+| GPS EXIF removed | Covered by existing tests for all three formats |
+| Text matrix (null/zero-width/RTL/emoji/200k) | `tests/textSanitization.test.mjs`, 9 tests passing |
+| Anon write to a Storage bucket | **Not executed as a live curl** — this environment's network policy denies outbound HTTPS to `*.supabase.co`. Verified structurally instead: no anon INSERT policy exists on any bucket and every INSERT policy requires a non-null `auth.uid()` |
+| Homoglyph registration blocked | **Not implemented.** `hasMixedScript()` exists and is tested, but it is not yet wired into registration or seller-name updates, and full confusable matching is not implemented |

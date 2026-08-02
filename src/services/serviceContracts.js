@@ -1,3 +1,4 @@
+import { characterLength, sanitizeText } from '../lib/sanitizeText.js';
 import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -19,10 +20,13 @@ function optionalUuid(value, label) {
   return requireUuid(String(value).trim().toLowerCase(), label);
 }
 
+// See ownerListingContracts.js: sanitize before measuring, and measure in
+// characters rather than UTF-16 code units.
 function text(value, label, max, { required = false, min = 0 } = {}) {
-  const normalized = typeof value === 'string' ? value.trim() : '';
-  if (required && normalized.length < min) throw new TypeError(`${label} is required`);
-  if (normalized.length > max) throw new TypeError(`${label} is too long`);
+  const normalized = sanitizeText(value);
+  const length = characterLength(normalized);
+  if (required && length < min) throw new TypeError(`${label} is required`);
+  if (length > max) throw new TypeError(`${label} is too long`);
   return normalized;
 }
 

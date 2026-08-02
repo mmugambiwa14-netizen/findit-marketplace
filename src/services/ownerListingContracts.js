@@ -1,3 +1,4 @@
+import { characterLength, sanitizeText } from '../lib/sanitizeText.js';
 import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js';
 
 const SUPPORTED_KINDS = new Set(['property', 'car', 'machinery']);
@@ -9,11 +10,16 @@ function requiredIdentifier(value, label) {
   return value.trim();
 }
 
+// Sanitizing before the length check means a null byte, zero-width character
+// or bidi override is removed rather than counted or forwarded to Postgres --
+// a null byte in a text column raises before any CHECK constraint runs and
+// would surface as a 500. Length is measured in characters, so an emoji counts
+// as one and cannot be split into a broken surrogate pair.
 function boundedText(value, label, maximum, { allowEmpty = true } = {}) {
   if (typeof value !== 'string') throw new TypeError(`${label} must be text`);
-  const normalized = value.trim();
+  const normalized = sanitizeText(value);
   if (!allowEmpty && !normalized) throw new TypeError(`${label} is required`);
-  if (normalized.length > maximum) throw new RangeError(`${label} is too long`);
+  if (characterLength(normalized) > maximum) throw new RangeError(`${label} is too long`);
   return normalized;
 }
 
