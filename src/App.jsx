@@ -15,6 +15,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { PwaProvider } from '@/components/pwa/PwaProvider';
 import PwaStatusBar from '@/components/pwa/PwaStatusBar';
+import InstallPrompt from '@/components/pwa/InstallPrompt';
 import { createLoginPath } from '@/lib/authNavigation';
 import { featureFlags } from '@/lib/featureFlags';
 import { queryClientInstance } from '@/lib/query-client';
@@ -203,6 +204,7 @@ function App() {
               <AuthenticatedApp />
             </Router>
             <PwaStatusBar />
+            <InstallPrompt />
           </PwaProvider>
           <Toaster />
           <DarkSonner />

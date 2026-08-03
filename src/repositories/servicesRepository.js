@@ -9,6 +9,7 @@ export const PUBLIC_SERVICE_SELECT = `
   id,
   provider_id,
   provider_name,
+  attributes,
   has_contact_phone,
   has_contact_whatsapp,
   has_contact_email,
