@@ -1,0 +1,20 @@
+-- 0110_revoke_rls_bypassing_grants.rollback.sql
+--
+-- Intentionally a no-op. There is nothing safe to reverse here.
+--
+-- 0110 removed TRUNCATE, TRIGGER and REFERENCES from `anon` and
+-- `authenticated`. Those privileges were never used by any client:
+--
+--   * TRUNCATE is not governed by row level security. Postgres checks the
+--     table privilege and empties the table without consulting a policy, so
+--     no RLS work could ever constrain it.
+--   * TRIGGER and REFERENCES have no browser use case at all.
+--
+-- Restoring them would reintroduce an RLS-bypassing primitive to unblock
+-- nothing, which is why the SQL boundary check refuses a rollback containing
+-- TRUNCATE and why this file does not attempt one.
+--
+-- No application behaviour depends on 0110, so no forward flow needs it
+-- reversed. If a genuine need appears, grant the single privilege on the
+-- single table it requires, with a written justification -- not the blanket
+-- restore this file would otherwise contain.

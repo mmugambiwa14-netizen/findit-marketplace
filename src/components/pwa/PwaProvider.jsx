@@ -34,9 +34,15 @@ function installRecentlyDismissed() {
 /** True when the app is already running as an installed PWA. */
 function runningStandalone() {
   if (typeof window === 'undefined') return false;
-  return window.matchMedia?.('(display-mode: standalone)')?.matches
+  // `navigator.standalone` is Safari-only and absent from the DOM lib, but it
+  // is the sole way to detect an installed PWA on iOS -- display-mode media
+  // queries do not report standalone there.
+  const nav = /** @type {Navigator & { standalone?: boolean }} */ (window.navigator);
+  return Boolean(
+    window.matchMedia?.('(display-mode: standalone)')?.matches
     || window.matchMedia?.('(display-mode: minimal-ui)')?.matches
-    || window.navigator.standalone === true; // iOS
+    || nav.standalone === true,
+  );
 }
 
 export function PwaProvider({ children }) {

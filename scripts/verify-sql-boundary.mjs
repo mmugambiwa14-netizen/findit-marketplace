@@ -78,9 +78,18 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0105_consented_location_resolver_least_privilege.sql
 // - 0106_active_country_boundary_spatial_index.sql
 // - 0107_location_registry_free_tier_index_budget.sql
+// - 0108_location_registry_parent_index_deduplication.sql
+// - 0109_seller_contact_reveal_boundary.sql
+// - 0110_revoke_rls_bypassing_grants.sql
+// - 0111_services_contact_column_allowlist.sql
+// - 0112_business_profile_url_scheme_constraint.sql
+// - 0113_listing_text_and_price_bounds.sql
 // Release-tip anchor: bump this deliberately when a migration is added.
-if (basename(migrationFiles.at(-1) ?? '') !== '0108_location_registry_parent_index_deduplication.sql') {
-  failures.push(`latest expected migration is 0108, found ${migrationFiles.at(-1) ?? 'none'}`);
+const RELEASE_TIP_MIGRATION = '0114_listing_category_attributes.sql';
+if (basename(migrationFiles.at(-1) ?? '') !== RELEASE_TIP_MIGRATION) {
+  failures.push(
+    `latest expected migration is ${RELEASE_TIP_MIGRATION}, found ${migrationFiles.at(-1) ?? 'none'}`,
+  );
 }
 
 if (failures.length) {

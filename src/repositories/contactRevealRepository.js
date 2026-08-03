@@ -7,7 +7,11 @@ import { supabase } from '@/lib/supabaseClient';
  * visible (or owned by the caller), enforce a rolling 24h reveal budget, and
  * append to public.contact_reveal_events. See migration 0109.
  *
- * @param {'service' | 'property' | 'car' | 'machinery'} type
+ * The only distinction that matters is service versus listing -- the two RPCs
+ * take differently named parameters. Declaring a narrower union would be false
+ * precision, since every other value behaves identically.
+ *
+ * @param {string} type  'service', or any listing kind
  * @param {string} id
  * @returns {Promise<{ contact_phone: string | null, contact_whatsapp: string | null, contact_email: string | null }>}
  */

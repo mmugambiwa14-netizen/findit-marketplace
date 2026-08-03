@@ -17,10 +17,32 @@ import { useCallback, useEffect, useState } from 'react';
 const PROBE_URL = '/manifest.webmanifest';
 const SLOW_TYPES = new Set(['slow-2g', '2g']);
 
+/**
+ * The Network Information API is real but not in TypeScript's DOM lib, because
+ * it is not a finished standard. Describing its shape here is honest about
+ * what is actually being read; a broad cast would hide a genuine typo.
+ *
+ * @typedef {Object} NetworkInformationLike
+ * @property {string} [effectiveType]
+ * @property {boolean} [saveData]
+ * @property {string} [type]
+ * @property {(type: string, listener: () => void) => void} [addEventListener]
+ * @property {(type: string, listener: () => void) => void} [removeEventListener]
+ */
+
+/** @returns {NetworkInformationLike | null} */
+function networkInformation() {
+  if (typeof navigator === 'undefined') return null;
+  const nav = /** @type {Navigator & {
+    connection?: NetworkInformationLike,
+    mozConnection?: NetworkInformationLike,
+    webkitConnection?: NetworkInformationLike,
+  }} */ (navigator);
+  return nav.connection || nav.mozConnection || nav.webkitConnection || null;
+}
+
 function readConnection() {
-  const connection = typeof navigator !== 'undefined'
-    ? (navigator.connection || navigator.mozConnection || navigator.webkitConnection)
-    : null;
+  const connection = networkInformation();
 
   if (!connection) {
     return { effectiveType: null, saveData: false, slow: false, metered: false };
@@ -98,7 +120,7 @@ export function useConnectivity() {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    const raw = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const raw = networkInformation();
     raw?.addEventListener?.('change', handleConnectionChange);
 
     // Confirm on return to the tab: a phone that slept through a network change
