@@ -13,6 +13,8 @@ import { Toaster as SonnerToaster } from 'sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
+import { PwaProvider } from '@/components/pwa/PwaProvider';
+import PwaStatusBar from '@/components/pwa/PwaStatusBar';
 import { createLoginPath } from '@/lib/authNavigation';
 import { featureFlags } from '@/lib/featureFlags';
 import { queryClientInstance } from '@/lib/query-client';
@@ -194,9 +196,14 @@ function App() {
     <AuthProvider>
       <CurrencyProvider>
         <QueryClientProvider client={queryClientInstance}>
-          <Router basename={routerBaseName}>
-            <AuthenticatedApp />
-          </Router>
+          {/* Outside the Router on purpose: connectivity and update state are
+              route-independent, and the status bar must survive navigation. */}
+          <PwaProvider>
+            <Router basename={routerBaseName}>
+              <AuthenticatedApp />
+            </Router>
+            <PwaStatusBar />
+          </PwaProvider>
           <Toaster />
           <DarkSonner />
         </QueryClientProvider>

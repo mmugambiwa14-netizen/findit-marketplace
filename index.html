@@ -2,11 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) resolve to real
+         values on notched and rounded displays; without it the app renders in
+         the safe rectangle and standalone mode looks letterboxed. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="description" content="Discover products and services, advertise offers, evaluate details, and contact sellers directly on FindIt." />
     <meta name="theme-color" content="#050914" />
     <meta name="application-name" content="FindIt" />
     <meta name="color-scheme" content="dark" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- iOS ignores the manifest for standalone mode and window chrome, so the
+         Apple-specific tags are required rather than redundant.
+         `mobile-web-app-capable` is the standardised name; the `apple-` variant
+         is kept for iOS versions that still only honour the original. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="FindIt" />
+    <!-- black-translucent lets content run under the status bar, which is what
+         the safe-area insets above then compensate for. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="icon" type="image/png" sizes="32x32" href="/src/assets/brand/findit-icon-32.png" />
     <link rel="icon" type="image/png" sizes="64x64" href="/src/assets/brand/findit-icon-64.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/src/assets/brand/findit-icon-192.png" />
