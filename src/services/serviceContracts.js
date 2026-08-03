@@ -1,4 +1,4 @@
-import { characterLength, sanitizeText } from '../lib/sanitizeText.js';
+import { characterLength, sanitizeSingleLine, sanitizeText } from '../lib/sanitizeText.js';
 import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -22,8 +22,10 @@ function optionalUuid(value, label) {
 
 // See ownerListingContracts.js: sanitize before measuring, and measure in
 // characters rather than UTF-16 code units.
-function text(value, label, max, { required = false, min = 0 } = {}) {
-  const normalized = sanitizeText(value);
+function text(value, label, max, { required = false, min = 0, singleLine = false } = {}) {
+  // See ownerListingContracts: a newline in a title or a name is a display
+  // spoofing vector, so those collapse to a space.
+  const normalized = singleLine ? sanitizeSingleLine(value) : sanitizeText(value);
   const length = characterLength(normalized);
   if (required && length < min) throw new TypeError(`${label} is required`);
   if (length > max) throw new TypeError(`${label} is too long`);
@@ -116,9 +118,9 @@ export function normalizeServiceCreate(input, provider) {
   const selectedPricingType = pricingType(input.pricing_type ?? 'starting_from');
   return {
     provider_id: normalizeProviderId(provider.id),
-    provider_name: text(provider.full_name, 'Provider name', 120) || null,
+    provider_name: text(provider.full_name, 'Provider name', 120, { singleLine: true }) || null,
     ...contacts(input),
-    title: text(input.title, 'Title', 120, { required: true, min: 3 }),
+    title: text(input.title, 'Title', 120, { required: true, min: 3, singleLine: true }),
     description: text(input.description, 'Description', 5000) || null,
     category,
     subcategory: subcategories[0],
@@ -127,7 +129,7 @@ export function normalizeServiceCreate(input, provider) {
     currency: currency(input.currency),
     pricing_type: selectedPricingType,
     photos: [],
-    location_name: text(input.location_name, 'Location', 120) || null,
+    location_name: text(input.location_name, 'Location', 120, { singleLine: true }) || null,
     can_travel: Boolean(input.can_travel),
     status: 'active',
   };
@@ -144,7 +146,7 @@ export function normalizeServiceEdit(input) {
   const selectedPricingType = pricingType(input.pricing_type ?? 'starting_from');
   return {
     ...contacts(input),
-    title: text(input.title, 'Title', 120, { required: true, min: 3 }),
+    title: text(input.title, 'Title', 120, { required: true, min: 3, singleLine: true }),
     description: text(input.description, 'Description', 5000) || null,
     pricing_type: selectedPricingType,
     price: price(input.price, selectedPricingType),

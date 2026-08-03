@@ -1,4 +1,4 @@
-import { characterLength, sanitizeText } from '../lib/sanitizeText.js';
+import { characterLength, sanitizeSingleLine, sanitizeText } from '../lib/sanitizeText.js';
 import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js';
 
 const SUPPORTED_KINDS = new Set(['property', 'car', 'machinery']);
@@ -15,9 +15,13 @@ function requiredIdentifier(value, label) {
 // a null byte in a text column raises before any CHECK constraint runs and
 // would surface as a 500. Length is measured in characters, so an emoji counts
 // as one and cannot be split into a broken surrogate pair.
-function boundedText(value, label, maximum, { allowEmpty = true } = {}) {
+function boundedText(value, label, maximum, { allowEmpty = true, singleLine = false } = {}) {
   if (typeof value !== 'string') throw new TypeError(`${label} must be text`);
-  const normalized = sanitizeText(value);
+  // Titles and names are single-line by nature. A newline in one is a display
+  // spoofing vector -- it lets a listing title occupy space it should not, or
+  // push text out of a card -- so it collapses to a space rather than being
+  // preserved the way a description's line breaks are.
+  const normalized = singleLine ? sanitizeSingleLine(value) : sanitizeText(value);
   if (!allowEmpty && !normalized) throw new TypeError(`${label} is required`);
   if (characterLength(normalized) > maximum) throw new RangeError(`${label} is too long`);
   return normalized;
@@ -64,7 +68,7 @@ export function normalizeOwnerListingUpdate(input) {
 
   const update = {};
   if (input.title !== undefined) {
-    update.title = boundedText(input.title, 'Title', 160, { allowEmpty: false });
+    update.title = boundedText(input.title, 'Title', 160, { allowEmpty: false, singleLine: true });
   }
   if (input.description !== undefined) {
     update.description = boundedText(input.description, 'Description', 5000);

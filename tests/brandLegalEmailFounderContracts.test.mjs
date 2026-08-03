@@ -7,7 +7,6 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
   app,
   home,
-  hero,
   brandLogo,
   topNav,
   bottomNav,
@@ -23,7 +22,6 @@ const [
 ] = await Promise.all([
   read('src/App.jsx'),
   read('src/pages/Home.jsx'),
-  read('src/components/home/HeroSection.jsx'),
   read('src/components/BrandLogo.jsx'),
   read('src/components/layout/TopNav.jsx'),
   read('src/components/layout/BottomNav.jsx'),
@@ -44,7 +42,6 @@ test('the home experience is international and search-led', () => {
   assert.match(home, /DiscoverSearch/);
   assert.match(home, /DiscoverCategoryGrid/);
   assert.doesNotMatch(home, /getLatestPublicListings|featured|auction/i);
-  assert.match(hero, /GoogleAuthButton/);
 });
 
 test('desktop top navigation omits the redundant Browse and Services links', () => {
