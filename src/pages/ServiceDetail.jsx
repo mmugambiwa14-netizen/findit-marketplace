@@ -11,7 +11,14 @@ import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaActions from "@/components/listings/ListingMediaActions";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
-import { ContactBar, DetailLoading, DetailSection, SafetyPanel, SellerPanel } from "@/components/listings/ListingDetailLayout";
+import {
+  ListingDescription,
+  ListingDetailTabs,
+  ListingLocation,
+  ListingSeller,
+  ListingTabSection,
+} from "@/components/listings/ListingDetailTabs";
+import { ContactBar, DetailLoading, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { getServiceCategory, getSubcategoryLabel } from "@/lib/serviceConstants";
@@ -52,39 +59,50 @@ export default function ServiceDetail() {
   };
 
   return (
-    <div className="findit-screen pb-20">
+    <div className="findit-screen pb-24">
       <ListingDetailActions onBack={() => navigate(-1)} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Take a Peek" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} className="md:mt-4 md:rounded-3xl md:border" />
           <ListingMediaActions onShare={shareService} showSave={false} />
         </div>
-        <div className="space-y-5 px-4 py-5 sm:px-6">
-          <section className="surface-panel p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              {category && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{category.label}</Badge>}
-              {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
-            </div>
-            <p className="mt-4 text-2xl font-black tracking-tight text-primary sm:text-3xl">{priceDisplay}</p>
-            <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{service.title}</h1>
-            {service.location_name && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0 text-primary" />{service.location_name}</p>}
-            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-muted-foreground"><span>{Number(service.views || 0).toLocaleString()} views</span>{service.can_travel && <><span aria-hidden="true">·</span><span>Travels to customers</span></>}</div>
-          </section>
 
-          <section aria-labelledby="service-details-heading">
-            <h2 id="service-details-heading" className="mb-3 findit-section-title">Service details</h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="px-4 pb-5 pt-5 sm:px-6">
+          <div className="flex flex-wrap items-center gap-2">
+            {category && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{category.label}</Badge>}
+            {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
+          </div>
+          <p className="mt-4 text-3xl font-black tracking-tight text-primary sm:text-4xl">{priceDisplay}</p>
+          <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{service.title}</h1>
+          {service.location_name && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" />{service.location_name}</p>}
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"><span>{Number(service.views || 0).toLocaleString()} views</span>{service.can_travel && <><span aria-hidden="true">·</span><span>Travels to customers</span></>}</div>
+        </div>
+
+        <ListingDetailTabs>
+          <ListingTabSection id="listing-info" title="Listing info">
+            <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-3">
               {category && <ListingFeatureItem icon={category.icon || Car} label="Category" value={category.label} />}
               <ListingFeatureItem icon={MapPin} label="Area" value={service.location_name || "Location arranged"} />
               <ListingFeatureItem icon={Car} label="Travel" value={service.can_travel ? "Available" : "Local area"} />
             </div>
-          </section>
+            <div className="mt-6 space-y-5">
+              <PeekThreadsSection parentType="service" parentId={service.id} listingKind="service" ownerId={service.provider_id} guard={guard} />
+              <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. FindIt does not handle service payments.</SafetyPanel>
+            </div>
+          </ListingTabSection>
 
-          {service.description && <DetailSection title="About this service"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{service.description}</p></DetailSection>}
-          <PeekThreadsSection parentType="service" parentId={service.id} listingKind="service" ownerId={service.provider_id} guard={guard} />
-          <SellerPanel name={service.provider_name || "FindIt service provider"} sellerId={service.provider_id} />
-          <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. FindIt does not handle service payments.</SafetyPanel>
-        </div>
+          <ListingTabSection id="description" title="Description">
+            <ListingDescription value={service.description} />
+          </ListingTabSection>
+
+          <ListingTabSection id="location" title="Location">
+            <ListingLocation label={service.location_name} latitude={service.latitude} longitude={service.longitude} />
+          </ListingTabSection>
+
+          <ListingTabSection id="seller" title="Seller">
+            <ListingSeller name={service.provider_name || "FindIt service provider"} sellerId={service.provider_id} joinedAt={service.provider_joined_at} activeListingCount={service.provider_active_listing_count} actions={<ContactButtons listing={service} type="service" placement="browse" />} />
+          </ListingTabSection>
+        </ListingDetailTabs>
       </main>
       <ContactBar><ContactButtons listing={service} type="service" /></ContactBar>
       <GuestPromptSheet open={guestOpen} onClose={closeGuest} action={guestAction} />
