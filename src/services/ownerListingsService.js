@@ -16,17 +16,53 @@ import {
 } from '@/services/ownerListingContracts';
 import { createKeysetPage } from '@/services/keysetPagination';
 
-export async function getOwnerListingsPage(ownerId, input = {}) {
-  const request = normalizeOwnerListingsPageRequest(ownerId, input);
-  const page = createKeysetPage(await findOwnerListings(request), request.limit);
-  const notes = await findOwnerListingNotes(page.items.map((listing) => listing.id));
+function safeLegacyPhotos(values) {
+  return (Array.isArray(values) ? values : []).filter((value) => {
+    if (typeof value !== 'string') return false;
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+    } catch {
+      return false;
+    }
+  });
+}
+
+async function enrichOwnerRows(rows) {
+  let notes = [];
+  try {
+    notes = await findOwnerListingNotes(rows.map((listing) => listing.id));
+  } catch {
+    // Review notes are optional display metadata. A temporary RPC failure must
+    // not hide the seller's canonical listing rows.
+  }
+
   const notesById = new Map(notes.map((note) => [note.id, note]));
-  const ownerRows = page.items.map((listing) => ({
+  const ownerRows = rows.map((listing) => ({
     ...listing,
     ...notesById.get(listing.id),
   }));
+
+  try {
+    return await hydrateListingImages(ownerRows);
+  } catch {
+    // Private image signing is also optional for the list view. Preserve only
+    // already-safe public URLs and let the UI use its normal placeholders for
+    // private paths that could not be signed.
+    return ownerRows.map((row) => ({
+      ...row,
+      photo_paths: Array.isArray(row.photos) ? row.photos.filter((value) => typeof value === 'string' && !/^https?:\/\//i.test(value)) : [],
+      has_legacy_media: safeLegacyPhotos(row.photos).length > 0,
+      photos: safeLegacyPhotos(row.photos),
+    }));
+  }
+}
+
+export async function getOwnerListingsPage(ownerId, input = {}) {
+  const request = normalizeOwnerListingsPageRequest(ownerId, input);
+  const page = createKeysetPage(await findOwnerListings(request), request.limit);
   return {
-    items: (await hydrateListingImages(ownerRows)).map(mapPublicListing),
+    items: (await enrichOwnerRows(page.items)).map(mapPublicListing),
     nextCursor: page.nextCursor,
   };
 }
