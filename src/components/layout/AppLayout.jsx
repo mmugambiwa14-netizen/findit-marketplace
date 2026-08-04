@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { GuestBanner } from '@/components/auth/GuestPromptSheet';
 import ActiveConversationAutoScroll from '@/components/messaging/ActiveConversationAutoScroll';
+import PeekRequestIntentHandler from '@/components/peekThreads/PeekRequestIntentHandler';
 import { useAuth } from '@/lib/AuthContext';
 import { cn } from '@/lib/utils';
 import BottomNav from './BottomNav';
@@ -84,6 +85,7 @@ export default function AppLayout() {
           showMobileNav && 'findit-mobile-nav-clearance',
         )}
       >
+        <PeekRequestIntentHandler />
         <Outlet />
         {isDiscoverHome && <div className="md:hidden"><SiteFooter compact /></div>}
       </main>
