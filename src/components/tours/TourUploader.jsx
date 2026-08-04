@@ -4,6 +4,7 @@ import CameraPermissionDialog from '@/components/permissions/CameraPermissionDia
 import { Button } from '@/components/ui/button';
 import { readStoredString, writeStoredString } from '@/lib/browserStorage';
 import { featureFlags } from '@/lib/featureFlags';
+import { userFacingError } from '@/lib/userFacingErrors';
 import {
   TOUR_ALLOWED_MIME_TYPES,
   TOUR_MAX_DURATION_SECONDS,
@@ -32,7 +33,7 @@ function inspectVideo(file) {
     const video = document.createElement('video');
     const timer = window.setTimeout(() => {
       URL.revokeObjectURL(url);
-      reject(new Error('The video metadata could not be read. Choose another video.'));
+      reject(new Error('Choose another video.'));
     }, 15000);
     video.preload = 'metadata';
     video.onloadedmetadata = () => {
@@ -40,7 +41,7 @@ function inspectVideo(file) {
       const duration = video.duration;
       if (!Number.isFinite(duration) || duration <= 0) {
         URL.revokeObjectURL(url);
-        reject(new Error('The video duration could not be verified.'));
+        reject(new Error('Choose another video.'));
         return;
       }
       resolve({ durationSeconds: duration, previewUrl: url });
@@ -48,7 +49,7 @@ function inspectVideo(file) {
     video.onerror = () => {
       window.clearTimeout(timer);
       URL.revokeObjectURL(url);
-      reject(new Error('This video cannot be opened by your browser.'));
+      reject(new Error('This video cannot be opened. Choose another one.'));
     };
     video.src = url;
   });
@@ -91,12 +92,12 @@ export default function TourUploader({
     onBusyChange?.(true);
     setError('');
     try {
-      if (!TOUR_ALLOWED_MIME_TYPES.includes(file.type)) throw new TypeError('Use an MP4, MOV, or WebM video.');
-      if (file.size < 1 || file.size > TOUR_MAX_SOURCE_BYTES) throw new RangeError('Peek videos must be 250 MB or smaller.');
+      if (!TOUR_ALLOWED_MIME_TYPES.includes(file.type)) throw new TypeError('Choose an MP4, MOV, or WebM video.');
+      if (file.size < 1 || file.size > TOUR_MAX_SOURCE_BYTES) throw new RangeError('Choose a video under 250 MB.');
       const inspected = await inspectVideo(file);
       if (inspected.durationSeconds > TOUR_MAX_DURATION_SECONDS) {
         URL.revokeObjectURL(inspected.previewUrl);
-        throw new RangeError(`Peek videos must be ${TOUR_MAX_DURATION_SECONDS} seconds or shorter.`);
+        throw new RangeError('Choose a video that is 2 minutes or shorter.');
       }
       normalizeTourVideoFile(file, inspected.durationSeconds);
       if (draft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(draft.previewUrl);
@@ -111,7 +112,7 @@ export default function TourUploader({
         error: '',
       });
     } catch (failure) {
-      setError(failure.message || 'The Peek video could not be selected.');
+      setError(userFacingError(failure, 'We could not use this video. Choose another one.'));
     } finally {
       setSelecting(false);
       onBusyChange?.(false);
@@ -164,20 +165,21 @@ export default function TourUploader({
         status: 'uploaded',
         tourId: result.tourId,
         peekKind: isResponse ? 'response' : 'main',
-        progress: { percent: 100, message: isResponse ? 'Response Peek queued for processing' : 'Peek queued for processing' },
+        progress: { percent: 100, message: isResponse ? 'Preparing Response Peek' : 'Preparing Peek' },
         resumeUpload: null,
       };
       onChange?.(completed);
       onUploaded?.(result);
     } catch (failure) {
+      const message = userFacingError(failure, 'The upload did not finish. Check your connection and try again.');
       const failed = {
         ...draft,
         status: 'error',
-        error: failure.message || 'The Peek upload was interrupted.',
-        resumeUpload: failure.resumeUpload || draft.resumeUpload || null,
+        error: message,
+        resumeUpload: failure?.resumeUpload || draft.resumeUpload || null,
       };
       onChange?.(failed);
-      setError(failed.error);
+      setError(message);
       onUploadFailed?.(failure);
     } finally {
       setUploading(false);
@@ -224,15 +226,15 @@ export default function TourUploader({
       )}
 
       {(uploading || draft?.status === 'uploading') && <TourUploadProgress progress={progress || draft?.progress} />}
-      {draft?.status === 'uploaded' && <p className="rounded-xl bg-success/10 p-3 text-sm font-medium text-success">{isResponse ? 'Response Peek uploaded. Processing and moderation must finish before it can answer requests.' : `Peek uploaded. Processing and moderation continue separately from the ${parentLabel}.`}</p>}
+      {draft?.status === 'uploaded' && <p className="rounded-xl bg-success/10 p-3 text-sm font-medium text-success">{isResponse ? 'Response Peek uploaded. It will appear when it is ready.' : `Peek uploaded. It will appear on the ${parentLabel} when it is ready.`}</p>}
       {error && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
 
       {draft && parentId && draft.status !== 'uploaded' && !uploading && (
         <Button type="button" className="h-11 w-full rounded-xl" onClick={upload} disabled={disabled || selecting}>
-          {draft.status === 'error' ? <><RotateCcw />Resume upload</> : <><Upload />{isResponse ? 'Upload Response Peek' : 'Upload Peek'}</>}
+          {draft.status === 'error' ? <><RotateCcw />Try upload again</> : <><Upload />{isResponse ? 'Upload Response Peek' : 'Upload Peek'}</>}
         </Button>
       )}
-      {draft && !parentId && <p className="text-xs text-muted-foreground">The video will upload after the {parentLabel} record is created. Publishing does not wait for video processing.</p>}
+      {draft && !parentId && <p className="text-xs text-muted-foreground">The video will upload after the {parentLabel} is created.</p>}
       {!draft && !isResponse && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Peek later from {managementLabel}.</p>}
 
       <CameraPermissionDialog
