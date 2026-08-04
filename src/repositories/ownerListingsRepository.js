@@ -2,16 +2,47 @@ import { supabase } from '@/lib/supabaseClient';
 import { PUBLIC_LISTING_SELECT } from '@/repositories/publicListingsRepository';
 import { applyDescendingCreatedAtCursor } from '@/services/keysetPagination';
 
-// Owners read their own contact values directly so the edit form can prefill
-// without an extra round trip. Every query below is scoped to seller_id, and
-// the `listings_owner_*` policies enforce the same ownership at the row level.
-// `authenticated` retains the column grant that `anon` lost in migration 0109.
-const OWNER_LISTING_SELECT = `
-  ${PUBLIC_LISTING_SELECT},
-  contact_phone,
-  contact_whatsapp,
-  contact_email
-`;
+// Contact columns are no longer selectable by `authenticated` either -- see
+// migration 0115. Column privileges are not row-scoped, so granting them to
+// every signed-in user let any account bulk-read other sellers' details and
+// bypass the reveal cap entirely. Owners now read their own values through
+// `owner_listing_contacts`, which filters on seller_id = auth.uid() inside the
+// database.
+//
+// The merge happens here rather than in the components, so everything
+// downstream still sees `listing.contact_phone` exactly as before.
+const OWNER_LISTING_SELECT = PUBLIC_LISTING_SELECT;
+
+/**
+ * Attaches the caller's own contact values to owner listing rows.
+ * Returns the rows unchanged if the lookup fails -- a missing prefill is a
+ * degraded edit form, not a reason to fail the whole listings page.
+ *
+ * @template {{ id: string }} T
+ * @param {T[]} rows
+ * @returns {Promise<T[]>}
+ */
+async function withOwnerContacts(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+
+  const { data, error } = await supabase.rpc('owner_listing_contacts', {
+    p_listing_ids: rows.map((row) => row.id),
+  });
+  if (error || !Array.isArray(data)) return rows;
+
+  const byListing = new Map(data.map((entry) => [entry.listing_id, entry]));
+  return rows.map((row) => {
+    const contact = byListing.get(row.id);
+    return contact
+      ? {
+        ...row,
+        contact_phone: contact.contact_phone,
+        contact_whatsapp: contact.contact_whatsapp,
+        contact_email: contact.contact_email,
+      }
+      : row;
+  });
+}
 
 function repositoryFailure(message, error) {
   const failure = new Error(message);
@@ -32,7 +63,7 @@ export async function findOwnerListings(request) {
     .limit(request.limit + 1);
 
   if (error) throw repositoryFailure('Unable to load your listings', error);
-  return data ?? [];
+  return withOwnerContacts(data ?? []);
 }
 
 export async function findOwnerListingNotes(listingIds) {
@@ -67,7 +98,8 @@ export async function updateOwnerListingRow(ownerId, kind, listingId, updates) {
 
   if (error) throw repositoryFailure('Unable to update the listing', error);
   if (!data) throw new Error('Listing not found or you no longer have access');
-  return data;
+  const [withContacts] = await withOwnerContacts([data]);
+  return withContacts;
 }
 
 export async function deleteOwnerListingRow(ownerId, kind, listingId) {

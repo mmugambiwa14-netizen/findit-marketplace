@@ -31,15 +31,45 @@ export const PUBLIC_SERVICE_SELECT = `
   updated_at
 `;
 
-// Providers read their own contact values so the edit form can prefill. Every
-// query using this projection is scoped to provider_id, and the
-// `services_owner_*` policies enforce the same ownership at the row level.
-export const OWNER_SERVICE_SELECT = `
-  ${PUBLIC_SERVICE_SELECT},
-  contact_phone,
-  contact_whatsapp,
-  contact_email
-`;
+// Contact columns are no longer selectable by `authenticated` -- see migration
+// 0115. Column privileges are not row-scoped, so the grant let any signed-in
+// account bulk-read other providers' details and bypass the reveal cap.
+// Providers read their own values through `owner_service_contacts`, which
+// filters on provider_id = auth.uid() inside the database.
+//
+// Merging here keeps `service.contact_phone` working for every consumer.
+export const OWNER_SERVICE_SELECT = PUBLIC_SERVICE_SELECT;
+
+/**
+ * Attaches the caller's own contact values to owner service rows. Returns the
+ * rows unchanged on failure: a missing prefill is a degraded edit form, not a
+ * reason to fail the page.
+ *
+ * @template {{ id: string }} T
+ * @param {T[]} rows
+ * @returns {Promise<T[]>}
+ */
+async function withOwnerContacts(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return rows;
+
+  const { data, error } = await supabase.rpc('owner_service_contacts', {
+    p_service_ids: rows.map((row) => row.id),
+  });
+  if (error || !Array.isArray(data)) return rows;
+
+  const byService = new Map(data.map((entry) => [entry.service_id, entry]));
+  return rows.map((row) => {
+    const contact = byService.get(row.id);
+    return contact
+      ? {
+        ...row,
+        contact_phone: contact.contact_phone,
+        contact_whatsapp: contact.contact_whatsapp,
+        contact_email: contact.contact_email,
+      }
+      : row;
+  });
+}
 
 function toRepositoryError(message, error) {
   const failure = new Error(message);
@@ -120,7 +150,7 @@ export async function findOwnerServices(request) {
     .order('id', { ascending: false })
     .limit(request.limit + 1);
   if (error) throw toRepositoryError('Unable to load your services', error);
-  return data ?? [];
+  return withOwnerContacts(data ?? []);
 }
 
 export async function insertOwnerService(input) {
@@ -130,7 +160,8 @@ export async function insertOwnerService(input) {
     .select(OWNER_SERVICE_SELECT)
     .single();
   if (error) throw toRepositoryError('Unable to create the service', error);
-  return data;
+  const [withContacts] = await withOwnerContacts([data]);
+  return withContacts;
 }
 
 export async function updateOwnerServiceRow(providerId, id, input) {
@@ -142,7 +173,8 @@ export async function updateOwnerServiceRow(providerId, id, input) {
     .select(OWNER_SERVICE_SELECT)
     .single();
   if (error) throw toRepositoryError('Unable to update the service', error);
-  return data;
+  const [withContacts] = await withOwnerContacts([data]);
+  return withContacts;
 }
 
 export async function deleteOwnerServiceRow(providerId, id) {
@@ -154,5 +186,6 @@ export async function deleteOwnerServiceRow(providerId, id) {
     .select(OWNER_SERVICE_SELECT)
     .single();
   if (error) throw toRepositoryError('Unable to delete the service', error);
-  return data;
+  const [withContacts] = await withOwnerContacts([data]);
+  return withContacts;
 }
