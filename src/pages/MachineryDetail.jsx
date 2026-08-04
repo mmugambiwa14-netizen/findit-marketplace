@@ -10,6 +10,7 @@ import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
+import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -89,6 +90,7 @@ export default function MachineryDetail() {
           {item.operators_licence_required && <section className="clay-soft rounded-2xl border-warning/25 bg-warning/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-5 w-5 text-warning" />An operator licence is required for this equipment.</p></section>}
           <VariantSelector variants={item.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
           <PriceBreakdown listing={item} />
+          <PeekThreadsSection parentType="listing" parentId={item.id} listingKind="machinery" ownerId={item.seller_id} guard={guard} />
           <SellerPanel name={item.seller_name} sellerId={item.seller_id} />
           <SafetyPanel>Inspect machinery in person and request maintenance records, serial-number verification and applicable certification before purchasing.</SafetyPanel>
           <ListingRecommendations subjectListingId={item.id} />
