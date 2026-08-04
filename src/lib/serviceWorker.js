@@ -1,24 +1,25 @@
 /**
  * Service worker registration and update lifecycle (PWA §2, §12, §17).
  *
- * Two deliberate choices shape this module.
- *
- * 1. The worker never activates itself. `public/sw.js` omits `skipWaiting()`,
- *    so a new build waits until the page explicitly allows it. A marketplace
- *    where sellers fill in long listing forms cannot afford a worker swapping
- *    the app out mid-draft -- §17 asks for updates that avoid data loss, and
- *    the only way to guarantee that is to let the user choose the moment.
- *
- * 2. Registration is deferred until after load and gated on secure context.
- *    Service workers require HTTPS (localhost excepted), and registering during
- *    startup competes with the first paint for bandwidth on exactly the slow
- *    connections this is meant to help.
+ * Production deliberately keeps updates waiting until the user accepts them,
+ * protecting long listing drafts from an application swap mid-edit. Vercel
+ * preview deployments are different: their branch aliases are reused for many
+ * builds, so a waiting worker can make a fresh preview appear to run an older
+ * shell. Preview origins therefore never retain FindIt service-worker state.
  */
 
 const SERVICE_WORKER_URL = '/sw.js';
+const FINDIT_CACHE_PREFIX = 'findit-';
 
 let registration = null;
 let refreshing = false;
+
+const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
+
+export function previewDeployment() {
+  return String(viteEnv.VITE_VERCEL_ENV || '').trim() === 'preview'
+    || String(viteEnv.VITE_VERCEL_TARGET_ENV || '').trim() === 'preview';
+}
 
 export function serviceWorkerSupported() {
   return typeof navigator !== 'undefined'
@@ -28,6 +29,39 @@ export function serviceWorkerSupported() {
     && (window.isSecureContext || window.location.hostname === 'localhost');
 }
 
+async function deleteFindItCaches() {
+  if (typeof caches === 'undefined') return false;
+  const names = await caches.keys();
+  const owned = names.filter((name) => name.startsWith(FINDIT_CACHE_PREFIX));
+  const results = await Promise.all(owned.map((name) => caches.delete(name)));
+  return results.some(Boolean);
+}
+
+/**
+ * Removes stale preview-only delivery state without touching unrelated caches.
+ *
+ * @returns {Promise<boolean>} whether a controller, registration, or FindIt
+ * cache existed and a one-time reload is therefore useful.
+ */
+export async function resetPreviewServiceWorkerState() {
+  if (!previewDeployment() || !serviceWorkerSupported()) return false;
+
+  try {
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    const unregisterResults = await Promise.all(
+      registrations.map((entry) => entry.unregister()),
+    );
+    const deletedCache = await deleteFindItCaches();
+    registration = null;
+    return hadController || unregisterResults.some(Boolean) || deletedCache;
+  } catch {
+    // Preview recovery is best effort and must never prevent the application
+    // from rendering.
+    return false;
+  }
+}
+
 /**
  * Registers the worker and reports when an update is waiting.
  *
@@ -35,7 +69,7 @@ export function serviceWorkerSupported() {
  * @returns {Promise<ServiceWorkerRegistration | null>}
  */
 export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
-  if (!serviceWorkerSupported()) return null;
+  if (!serviceWorkerSupported() || previewDeployment()) return null;
 
   try {
     registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: '/' });
@@ -92,7 +126,7 @@ export function applyPendingUpdate() {
  * may not navigate for days.
  */
 export async function checkForUpdate() {
-  if (!registration) return false;
+  if (!registration || previewDeployment()) return false;
   try {
     await registration.update();
     return Boolean(registration.waiting);
@@ -103,7 +137,7 @@ export async function checkForUpdate() {
 
 /** The running worker's build fingerprint, for support and diagnostics. */
 export async function getActiveVersion() {
-  if (!navigator.serviceWorker?.controller) return null;
+  if (!navigator.serviceWorker?.controller || previewDeployment()) return null;
   return new Promise((resolve) => {
     const channel = new MessageChannel();
     const timer = window.setTimeout(() => resolve(null), 1500);
@@ -127,12 +161,8 @@ export async function unregisterServiceWorker() {
   try {
     const registrations = await navigator.serviceWorker.getRegistrations();
     await Promise.all(registrations.map((entry) => entry.unregister()));
-    if (typeof caches !== 'undefined') {
-      const names = await caches.keys();
-      await Promise.all(
-        names.filter((name) => name.startsWith('findit-')).map((name) => caches.delete(name)),
-      );
-    }
+    await deleteFindItCaches();
+    registration = null;
   } catch {
     /* best effort -- nothing here should surface to the user */
   }
