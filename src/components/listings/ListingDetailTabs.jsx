@@ -120,21 +120,23 @@ export function ListingLocation({ label, latitude, longitude }) {
 export function ListingSeller({ name, sellerId, activeListingCount, joinedAt, actions }) {
   const joined = joinedAt ? new Date(joinedAt) : null;
   const validJoined = joined && Number.isFinite(joined.getTime());
-  const body = (
-    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-      <div className="flex items-center gap-4">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted"><UserRound className="h-5 w-5 text-muted-foreground" /></span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-black">{name || 'FindIt seller'}</p>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            {validJoined && <span>Joined {joined.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>}
-            {Number.isFinite(Number(activeListingCount)) && <span>{Number(activeListingCount)} active listings</span>}
-          </div>
+  const profile = (
+    <div className="flex items-center gap-4">
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted"><UserRound className="h-5 w-5 text-muted-foreground" /></span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-lg font-black">{name || 'FindIt seller'}</p>
+        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {validJoined && <span>Joined {joined.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>}
+          {Number.isFinite(Number(activeListingCount)) && <span>{Number(activeListingCount)} active listings</span>}
         </div>
       </div>
-      {actions && <div className="mt-5">{actions}</div>}
     </div>
   );
 
-  return sellerId ? <Link to={`/seller/${encodeURIComponent(sellerId)}`} className="block">{body}</Link> : body;
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+      {sellerId ? <Link to={`/seller/${encodeURIComponent(sellerId)}`} className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{profile}</Link> : profile}
+      {actions && <div className="mt-5">{actions}</div>}
+    </div>
+  );
 }
