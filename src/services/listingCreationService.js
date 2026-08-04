@@ -14,6 +14,10 @@ import {
   normalizeOwnerListingAction,
 } from '@/services/listingSubmissionContracts';
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_COMPATIBILITY_DIMENSION = 4096;
+const COMPATIBILITY_CODES = new Set(['unsupported_image', 'mime_mismatch']);
+
 export function submitListing(ownerId, input) {
   return insertListingSubmission(normalizeListingSubmission(ownerId, input));
 }
@@ -22,8 +26,95 @@ export function changeOwnerListingState(listingId, action) {
   return transitionOwnerListing(normalizeOwnerListingAction(listingId, action));
 }
 
-export function uploadListingImage(file) {
-  return invokeListingImageUpload(normalizeListingImageFile(file));
+function shouldRetryAsJpeg(error) {
+  return error?.status === 415 || COMPATIBILITY_CODES.has(error?.code);
+}
+
+async function decodeForCompatibility(file) {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+      return {
+        width: bitmap.width,
+        height: bitmap.height,
+        draw(context, width, height) {
+          context.drawImage(bitmap, 0, 0, width, height);
+          bitmap.close();
+        },
+      };
+    } catch {
+      // Fall through to the image-element decoder used by older mobile browsers.
+    }
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error('This phone image cannot be prepared for upload'));
+      element.src = objectUrl;
+    });
+    return {
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      draw(context, width, height) {
+        context.drawImage(image, 0, 0, width, height);
+      },
+    };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function canvasBlob(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => blob ? resolve(blob) : reject(new Error('This phone image could not be converted')),
+      'image/jpeg',
+      quality,
+    );
+  });
+}
+
+async function convertPhoneImageToJpeg(file) {
+  const decoded = await decodeForCompatibility(file);
+  if (!decoded.width || !decoded.height) throw new Error('This phone image could not be read');
+
+  const scale = Math.min(1, MAX_COMPATIBILITY_DIMENSION / Math.max(decoded.width, decoded.height));
+  const width = Math.max(1, Math.round(decoded.width * scale));
+  const height = Math.max(1, Math.round(decoded.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d', { alpha: false });
+  if (!context) throw new Error('This phone image could not be prepared');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, width, height);
+  decoded.draw(context, width, height);
+
+  let blob = null;
+  for (const quality of [0.9, 0.82, 0.74, 0.66, 0.58]) {
+    blob = await canvasBlob(canvas, quality);
+    if (blob.size <= MAX_UPLOAD_BYTES) break;
+  }
+  if (!blob || blob.size > MAX_UPLOAD_BYTES) {
+    throw new Error('This photo is too large. Choose a smaller version and try again.');
+  }
+
+  const baseName = String(file.name || 'listing-photo').replace(/\.[^.]+$/, '') || 'listing-photo';
+  return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg', lastModified: Date.now() });
+}
+
+export async function uploadListingImage(file) {
+  const normalized = normalizeListingImageFile(file);
+  try {
+    return await invokeListingImageUpload(normalized);
+  } catch (error) {
+    if (!shouldRetryAsJpeg(error)) throw error;
+    const compatibleFile = await convertPhoneImageToJpeg(file);
+    return invokeListingImageUpload(normalizeListingImageFile(compatibleFile));
+  }
 }
 
 export async function removeStagedListingImage(path) {
