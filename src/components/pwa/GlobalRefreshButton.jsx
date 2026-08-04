@@ -4,9 +4,11 @@ import { toast } from 'sonner';
 import { usePwa } from '@/components/pwa/PwaProvider';
 import { cn } from '@/lib/utils';
 
-export default function GlobalRefreshButton({ className = '' }) {
+export default function GlobalRefreshButton({ inline = false, desktop = false, className = '' }) {
   const { refreshApp } = usePwa();
   const [refreshing, setRefreshing] = useState(false);
+
+  if (!inline && !desktop) return null;
 
   const handleRefresh = async () => {
     if (refreshing) return;
