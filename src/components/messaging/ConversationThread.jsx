@@ -28,6 +28,7 @@ import {
 } from '@/services/messagingService';
 
 const THREAD_PAGE_SIZE = 50;
+const ACTIVE_THREAD_REFRESH_MS = 2500;
 const listingPath = (conversation, tour = false) => `/${conversation.listing_kind}/${conversation.listing_id}${tour ? '?media=tour' : ''}`;
 
 function statusLabel(status) {
@@ -71,6 +72,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     queryFn: () => getMessageConversationMetadata(conversationId),
     enabled: Boolean(conversationId && currentUser?.id),
     staleTime: 15_000,
+    refetchOnWindowFocus: 'always',
   });
 
   const messagesQuery = useInfiniteQuery({
@@ -79,7 +81,11 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(conversationId && currentUser?.id),
-    staleTime: 10_000,
+    staleTime: 1_000,
+    refetchInterval: ACTIVE_THREAD_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
 
   const messages = useMemo(() => {
@@ -94,7 +100,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     markConversationSeen(conversationId)
       .then(() => queryClient.invalidateQueries({ queryKey: ['message-inbox'] }))
       .catch(() => {});
-  }, [conversationId, conversationQuery.data, messagesQuery.data, queryClient]);
+  }, [conversationId, conversationQuery.data, messages.length, messagesQuery.data, queryClient]);
 
   useEffect(() => {
     const container = scrollRef.current;
