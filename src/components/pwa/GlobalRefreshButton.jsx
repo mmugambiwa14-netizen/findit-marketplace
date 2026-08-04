@@ -30,7 +30,10 @@ export default function GlobalRefreshButton({ desktop = false }) {
         'flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card/95 text-muted-foreground shadow-sm backdrop-blur-xl transition hover:border-primary/40 hover:text-primary disabled:cursor-wait disabled:opacity-70',
         desktop
           ? 'shrink-0'
-          : 'fixed right-3 z-[75] md:hidden',
+          // The far-right mobile top-bar slot belongs to the page action
+          // (notifications, settings, overflow menu). Refresh occupies the
+          // adjacent slot so the controls never overlap.
+          : 'fixed right-[4.25rem] z-[75] md:hidden',
       )}
       style={desktop ? undefined : { top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
     >
