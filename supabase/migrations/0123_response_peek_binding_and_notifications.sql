@@ -113,6 +113,8 @@ $function$;
 revoke all on function public.seller_unbound_response_peeks() from public;
 revoke all on function public.response_peek_request_candidates(uuid) from public;
 revoke all on function public.bind_response_peek(uuid,uuid[]) from public;
+revoke execute on function public.seller_unbound_response_peeks() from anon;
+revoke execute on function public.response_peek_request_candidates(uuid) from anon;
 grant execute on function public.seller_unbound_response_peeks() to authenticated;
 grant execute on function public.response_peek_request_candidates(uuid) to authenticated;
 grant execute on function public.bind_response_peek(uuid,uuid[]) to authenticated;
