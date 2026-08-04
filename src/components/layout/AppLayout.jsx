@@ -92,6 +92,7 @@ export default function AppLayout() {
       {!selfContained && <div className="hidden md:block"><SiteFooter /></div>}
       {!selfContained && !isDiscoverHome && <GuestBanner user={user} />}
       {showMobileNav && <BottomNav />}
+      {/* The observer mounts only for the full-screen active conversation. */}
       {immersiveConversation && <ActiveConversationAutoScroll />}
     </div>
   );
