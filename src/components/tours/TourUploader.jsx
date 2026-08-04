@@ -9,6 +9,7 @@ import {
   normalizeTourVideoFile,
 } from '@/services/listingTourContracts';
 import { uploadListingTour } from '@/services/listingToursService';
+import { uploadResponsePeek } from '@/services/responsePeekUploadService';
 import TourRecordingGuide from './TourRecordingGuide';
 import TourUploadProgress from './TourUploadProgress';
 
@@ -21,10 +22,6 @@ function sizeLabel(bytes) {
   return `${(Number(bytes || 0) / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * @param {File} file
- * @returns {Promise<{durationSeconds: number, previewUrl: string}>}
- */
 function inspectVideo(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -56,13 +53,14 @@ function inspectVideo(file) {
 export default function TourUploader({
   parentType = 'listing',
   parentId = null,
+  peekKind = 'main',
   category,
   value,
   onChange,
   onUploaded = null,
   onUploadFailed = null,
   disabled = false,
-  heading = 'Peek video',
+  heading = null,
   onBusyChange = null,
   onSkip = null,
 }) {
@@ -73,8 +71,10 @@ export default function TourUploader({
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState('');
   const draft = value || null;
+  const isResponse = peekKind === 'response';
   const parentLabel = parentType === 'service' ? 'service' : 'listing';
   const managementLabel = parentType === 'service' ? 'Manage services' : 'Manage listings';
+  const resolvedHeading = heading || (isResponse ? 'Response Peek' : 'Peek video');
 
   if (!featureFlags.tours) return null;
 
@@ -100,6 +100,7 @@ export default function TourUploader({
         durationSeconds: inspected.durationSeconds,
         previewUrl: inspected.previewUrl,
         idempotencyKey: crypto.randomUUID(),
+        peekKind: isResponse ? 'response' : 'main',
         status: 'selected',
         resumeUpload: null,
         error: '',
@@ -125,7 +126,8 @@ export default function TourUploader({
     onBusyChange?.(true);
     setError('');
     try {
-      const result = await uploadListingTour({
+      const uploadFunction = isResponse ? uploadResponsePeek : uploadListingTour;
+      const result = await uploadFunction({
         parentType,
         parentId,
         file: draft.file,
@@ -138,7 +140,14 @@ export default function TourUploader({
           onChange?.({ ...draft, status: 'uploading', progress: next });
         },
       });
-      const completed = { ...draft, status: 'uploaded', tourId: result.tourId, progress: { percent: 100, message: 'Peek queued for processing' }, resumeUpload: null };
+      const completed = {
+        ...draft,
+        status: 'uploaded',
+        tourId: result.tourId,
+        peekKind: isResponse ? 'response' : 'main',
+        progress: { percent: 100, message: isResponse ? 'Response Peek queued for processing' : 'Peek queued for processing' },
+        resumeUpload: null,
+      };
       onChange?.(completed);
       onUploaded?.(result);
     } catch (failure) {
@@ -160,8 +169,12 @@ export default function TourUploader({
   return (
     <section className="space-y-3 rounded-2xl border border-border bg-card p-4" aria-labelledby="tour-uploader-heading">
       <div>
-        <h3 id="tour-uploader-heading" className="font-semibold">{heading} <span className="font-normal text-muted-foreground">— optional</span></h3>
-        <p className="mt-1 text-sm text-muted-foreground">One video, up to 2 minutes and 250 MB. The public version is processed to 720p.</p>
+        <h3 id="tour-uploader-heading" className="font-semibold">{resolvedHeading} {!isResponse && <span className="font-normal text-muted-foreground">— optional</span>}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {isResponse
+            ? 'Record clear visual evidence for one or more Buyer Peek Requests. Up to 2 minutes and 250 MB.'
+            : 'One video, up to 2 minutes and 250 MB. The public version is processed to 720p.'}
+        </p>
       </div>
       <TourRecordingGuide category={category} parentType={parentType} />
       <input ref={uploadInputRef} className="hidden" type="file" accept={TOUR_ALLOWED_MIME_TYPES.join(',')} onChange={choose} />
@@ -192,16 +205,16 @@ export default function TourUploader({
       )}
 
       {(uploading || draft?.status === 'uploading') && <TourUploadProgress progress={progress || draft?.progress} />}
-      {draft?.status === 'uploaded' && <p className="rounded-xl bg-success/10 p-3 text-sm font-medium text-success">Peek uploaded. Processing and moderation continue separately from the {parentLabel}.</p>}
+      {draft?.status === 'uploaded' && <p className="rounded-xl bg-success/10 p-3 text-sm font-medium text-success">{isResponse ? 'Response Peek uploaded. Processing and moderation must finish before it can answer requests.' : `Peek uploaded. Processing and moderation continue separately from the ${parentLabel}.`}</p>}
       {error && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
 
       {draft && parentId && draft.status !== 'uploaded' && !uploading && (
         <Button type="button" className="h-11 w-full rounded-xl" onClick={upload} disabled={disabled || selecting}>
-          {draft.status === 'error' ? <><RotateCcw />Resume upload</> : <><Upload />Upload Peek</>}
+          {draft.status === 'error' ? <><RotateCcw />Resume upload</> : <><Upload />{isResponse ? 'Upload Response Peek' : 'Upload Peek'}</>}
         </Button>
       )}
       {draft && !parentId && <p className="text-xs text-muted-foreground">The video will upload after the {parentLabel} record is created. Publishing does not wait for video processing.</p>}
-      {!draft && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Peek later from {managementLabel}.</p>}
+      {!draft && !isResponse && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Peek later from {managementLabel}.</p>}
     </section>
   );
 }
