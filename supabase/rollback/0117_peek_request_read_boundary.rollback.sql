@@ -1,0 +1,37 @@
+-- 0117_peek_request_read_boundary.rollback.sql
+--
+-- Intentionally a no-op, for the same reason as 0110: both halves of 0117
+-- repair a defect, and reversing either half reopens it.
+--
+-- Reversing the policy rewrite would restore
+--   exists (select 1 from public.listings l where ... l.content_suspended_at is null)
+-- inside peek_requests_public_read. Neither browser role holds a column grant
+-- on that column, and an RLS policy that names another table is evaluated with
+-- the caller's privileges, so the policy raises 42501 before any row is
+-- considered. That is not a degraded state -- it is a total outage of the Peek
+-- Thread read path, which is the condition 0117 was written to end.
+--
+-- Reversing the grant change would restore a table-level SELECT on
+-- public.peek_requests for `authenticated`, republishing requester_id,
+-- moderation_status, moderation_reason and decline_reason to every logged-in
+-- user. The brief requires a Peek Request to be public while the buyer behind
+-- it is not, and a column grant cannot be scoped to a row, so there is no
+-- narrower version of that grant to fall back to.
+--
+-- 0117 creates no table, drops no table and modifies no row, so there is no
+-- data state to restore either.
+--
+-- If a forward change genuinely needs one of these relaxed, do it as a new
+-- migration that states which specific column or predicate it needs and why,
+-- and keep the rest of the boundary intact. A blanket restore is the one thing
+-- this file will not do.
+--
+-- The three helpers 0117 adds are deliberately left in place:
+--
+--   private.is_peek_parent_public(uuid, uuid)      -- referenced by a live policy
+--   private.can_support_peek_request(uuid)         -- referenced by a live policy
+--   public.my_peek_request_ids(uuid[])             -- read path for "your request"
+--
+-- Dropping the first two would leave the policies referencing a function that
+-- no longer exists, which fails every read rather than restoring an older
+-- behaviour.

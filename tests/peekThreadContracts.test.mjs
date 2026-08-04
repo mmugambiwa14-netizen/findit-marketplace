@@ -629,3 +629,172 @@ test('the Peek Threads domain never says upvote', async () => {
     );
   }
 });
+
+// --- Migration 0117: the read boundary ------------------------------------
+//
+// 0116 shipped two defects that only a live probe exposed, and neither would
+// have been caught by reading the SQL back. These assertions pin the repaired
+// shape so a future edit cannot quietly restore either one.
+
+const READ_BOUNDARY = await readFile(
+  'supabase/migrations/0117_peek_request_read_boundary.sql',
+  'utf8',
+);
+
+test('the public read policy does not name a column browser roles cannot read', () => {
+  // DEFECT 1. An RLS policy that references another table is evaluated with the
+  // caller's privileges. listings.content_suspended_at is outside the anon and
+  // authenticated column allowlists, so naming it in the policy made every read
+  // of peek_requests fail with 42501 -- a total outage, not a filtered result.
+  const policy = READ_BOUNDARY.slice(
+    READ_BOUNDARY.indexOf('create policy peek_requests_public_read'),
+    READ_BOUNDARY.indexOf('drop policy if exists peek_request_supporters_create'),
+  );
+
+  assert.ok(policy.length > 0, '0117 rewrites peek_requests_public_read');
+  assert.doesNotMatch(policy, /content_suspended_at/i);
+  assert.doesNotMatch(policy, /from\s+public\.listings/i);
+  assert.doesNotMatch(policy, /from\s+public\.services/i);
+  assert.match(policy, /private\.is_peek_parent_public\(listing_id, service_id\)/);
+});
+
+test('the visibility helper runs as owner with an empty search path', () => {
+  const helper = READ_BOUNDARY.slice(
+    READ_BOUNDARY.indexOf('create or replace function private.is_peek_parent_public'),
+    READ_BOUNDARY.indexOf('revoke all on function private.is_peek_parent_public'),
+  );
+
+  assert.match(helper, /security definer/i);
+  assert.match(helper, /set search_path to ''/i);
+  assert.match(helper, /stable/i);
+  // The predicates the policy used to carry must survive the move intact.
+  assert.match(helper, /content_suspended_at is null/i);
+  assert.match(helper, /'available'::public\.listing_status/i);
+  assert.match(helper, /'under_offer'::public\.listing_status/i);
+  assert.match(helper, /'active'::public\.service_status/i);
+  assert.match(helper, /'legal'::public\.service_category/i);
+  // RLS evaluates it for both browser roles, so both need EXECUTE.
+  assert.match(
+    READ_BOUNDARY,
+    /grant execute on function private\.is_peek_parent_public\(uuid, uuid\)\s*\n?\s*to anon, authenticated, service_role/i,
+  );
+});
+
+test('no browser role holds a table-level grant on peek_requests', () => {
+  // DEFECT 2. A column grant is not row-scoped, so a table-level SELECT
+  // published every buyer's identity to every logged-in user.
+  assert.match(READ_BOUNDARY, /revoke select on public\.peek_requests from authenticated/i);
+  assert.match(READ_BOUNDARY, /revoke insert on public\.peek_requests from authenticated/i);
+  assert.doesNotMatch(
+    READ_BOUNDARY,
+    /grant select on public\.peek_requests to (anon|authenticated)/i,
+  );
+  assert.doesNotMatch(
+    READ_BOUNDARY,
+    /grant insert on public\.peek_requests to (anon|authenticated)/i,
+  );
+});
+
+test('requester identity and moderation notes are outside the read allowlist', () => {
+  const grants = Object.fromEntries(
+    [...READ_BOUNDARY.matchAll(
+      /grant (select|insert) \(([^)]*)\) on public\.peek_requests to ([a-z_, ]+);/gi,
+    )].map(([, verb, columns, roles]) => [
+      verb.toLowerCase(),
+      { columns: columns.split(',').map((column) => column.trim()), roles: roles.trim() },
+    ]),
+  );
+
+  assert.ok(grants.select, '0117 grants select as a column allowlist');
+  assert.ok(grants.insert, '0117 grants insert as a column allowlist');
+
+  // Reading who asked is the leak.
+  for (const column of ['requester_id', 'moderation_status', 'moderation_reason', 'decline_reason']) {
+    assert.equal(
+      grants.select.columns.includes(column),
+      false,
+      `${column} must not be readable by ${grants.select.roles}`,
+    );
+  }
+
+  // Writing your own identity is required: the client supplies requester_id and
+  // peek_requests_create pins it to auth.uid(). Being able to write a column you
+  // cannot read back is the correct asymmetry here, not an oversight.
+  assert.ok(grants.insert.columns.includes('requester_id'));
+
+  // Nothing the create policy pins may be client-supplied at all.
+  for (const column of ['status', 'moderation_status', 'supporter_count',
+    'current_response_id', 'merged_into_id', 'answered_at', 'declined_at']) {
+    assert.equal(
+      grants.insert.columns.includes(column),
+      false,
+      `${column} must not be client-writable`,
+    );
+  }
+});
+
+test('the buyer identifies their own requests through a caller-scoped function', () => {
+  const rpc = READ_BOUNDARY.slice(
+    READ_BOUNDARY.indexOf('create or replace function public.my_peek_request_ids'),
+    READ_BOUNDARY.indexOf('do $verify$'),
+  );
+
+  assert.match(rpc, /security definer/i);
+  assert.match(rpc, /set search_path to ''/i);
+  assert.match(rpc, /r\.requester_id = auth\.uid\(\)/);
+  // A page of threads is bounded; an unbounded array is not a legitimate call.
+  assert.match(rpc, /array_length\(v_ids, 1\) > 200/);
+  assert.match(rpc, /revoke all on function public\.my_peek_request_ids\(uuid\[\]\)/i);
+  assert.match(
+    rpc,
+    /grant execute on function public\.my_peek_request_ids\(uuid\[\]\)\s*\n?\s*to authenticated, service_role/i,
+  );
+  assert.doesNotMatch(
+    rpc,
+    /grant execute on function public\.my_peek_request_ids\(uuid\[\]\)[^;]*\banon\b/i,
+  );
+});
+
+test('the self-support rule survives losing the requester_id column grant', () => {
+  // peek_request_supporters_create used to read peek_requests.requester_id
+  // directly. Revoking that column would have broken the policy, so the rule
+  // moved into a helper rather than being dropped.
+  const helper = READ_BOUNDARY.slice(
+    READ_BOUNDARY.indexOf('create or replace function private.can_support_peek_request'),
+    READ_BOUNDARY.indexOf('revoke all on function private.can_support_peek_request'),
+  );
+
+  assert.match(helper, /security definer/i);
+  assert.match(helper, /r\.requester_id <> auth\.uid\(\)/);
+  assert.match(helper, /'pending'::public\.peek_request_status/);
+  assert.match(helper, /r\.moderation_status = 'approved'/);
+  assert.doesNotMatch(
+    READ_BOUNDARY,
+    /grant execute on function private\.can_support_peek_request\(uuid\)[^;]*\banon\b/i,
+  );
+});
+
+test('0117 asserts its own end state rather than trusting its statements', () => {
+  // 0116 reported success while leaving the read path dead. A migration that
+  // can silently do nothing is worse than one that fails.
+  const verify = READ_BOUNDARY.slice(READ_BOUNDARY.indexOf('do $verify$'));
+
+  assert.match(verify, /raise exception '0117 helper missing or not hardened/);
+  assert.match(verify, /raise exception '0117 left my_peek_request_ids executable by anon/);
+  assert.match(verify, /raise exception '0117 left buyer identity readable by a browser role/);
+  assert.match(verify, /raise exception '0117 left the public read policy depending on an ungranted column/);
+  // "set search_path to ''" is stored with its quotes; matching on
+  // "search_path=" alone silently matches nothing.
+  assert.match(verify, /'search_path=""' = any \(p\.proconfig\)/);
+});
+
+test('0117 changes no data and creates no table', () => {
+  const executable = READ_BOUNDARY.split('\n')
+    .filter((line) => !line.trim().startsWith('--'))
+    .join('\n');
+
+  for (const forbidden of [/\bcreate table\b/i, /\bdrop table\b/i, /\btruncate\b/i,
+    /\bdelete from\b/i, /\binsert into\b/i, /\balter table\b/i]) {
+    assert.doesNotMatch(executable, forbidden, `0117 must not contain ${forbidden}`);
+  }
+});
