@@ -28,7 +28,7 @@ import {
 } from '@/services/messagingService';
 
 const THREAD_PAGE_SIZE = 50;
-const ACTIVE_THREAD_REFRESH_MS = 2500;
+const ACTIVE_THREAD_REFRESH_MS = 4000;
 const listingPath = (conversation, tour = false) => `/${conversation.listing_kind}/${conversation.listing_id}${tour ? '?media=tour' : ''}`;
 
 function statusLabel(status) {
@@ -51,6 +51,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   const firstScrollRef = useRef(true);
   const scrollAfterSendRef = useRef(false);
   const olderScrollRef = useRef(null);
+  const lastSeenMessageRef = useRef(null);
   const [text, setText] = useState('');
   const [blockOpen, setBlockOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -61,6 +62,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     firstScrollRef.current = true;
     scrollAfterSendRef.current = false;
     olderScrollRef.current = null;
+    lastSeenMessageRef.current = null;
     setText('');
     setBlockOpen(false);
     setReportOpen(false);
@@ -81,7 +83,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(conversationId && currentUser?.id),
-    staleTime: 1_000,
+    staleTime: 2_000,
     refetchInterval: ACTIVE_THREAD_REFRESH_MS,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: 'always',
@@ -94,13 +96,16 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     for (const page of pages) for (const item of page.items) byId.set(item.message_id, item);
     return [...byId.values()];
   }, [messagesQuery.data]);
+  const latestMessageId = messages.at(-1)?.message_id ?? null;
 
   useEffect(() => {
-    if (!conversationQuery.data || !messagesQuery.data) return;
+    if (!conversationQuery.data || !messagesQuery.data || !latestMessageId) return;
+    if (lastSeenMessageRef.current === latestMessageId) return;
+    lastSeenMessageRef.current = latestMessageId;
     markConversationSeen(conversationId)
       .then(() => queryClient.invalidateQueries({ queryKey: ['message-inbox'] }))
-      .catch(() => {});
-  }, [conversationId, conversationQuery.data, messages.length, messagesQuery.data, queryClient]);
+      .catch(() => { lastSeenMessageRef.current = null; });
+  }, [conversationId, conversationQuery.data, latestMessageId, messagesQuery.data, queryClient]);
 
   useEffect(() => {
     const container = scrollRef.current;
