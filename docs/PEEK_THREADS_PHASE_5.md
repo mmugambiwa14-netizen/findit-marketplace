@@ -12,7 +12,7 @@ Status: buyer-facing asset listing integration complete; seller queue and Respon
 - “I want this too” support action.
 - Owner-aware decline action.
 - Loading, error and empty states.
-- Integration into Property, Vehicle and Machinery detail pages in the required order: details, Main Listing Peek/media, Peek Threads, seller and messaging/contact surfaces.
+- Integration into Property, Vehicle and Machinery detail pages.
 - Static UI contracts covering terminology, category use, role separation and storage-path exclusion.
 
 ## Preserved boundaries
