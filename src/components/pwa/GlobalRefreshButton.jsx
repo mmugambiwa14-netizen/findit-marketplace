@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePwa } from '@/components/pwa/PwaProvider';
+import { cn } from '@/lib/utils';
 
-export default function GlobalRefreshButton() {
+export default function GlobalRefreshButton({ desktop = false }) {
   const { refreshApp } = usePwa();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -25,10 +26,15 @@ export default function GlobalRefreshButton() {
       disabled={refreshing}
       aria-label="Refresh FindIt"
       title="Refresh FindIt"
-      className="fixed right-3 z-[70] flex h-11 w-11 items-center justify-center rounded-full border border-primary/35 bg-card/95 text-foreground shadow-floating backdrop-blur-xl transition hover:border-primary/60 hover:text-primary disabled:cursor-wait disabled:opacity-70 md:bottom-4 md:right-4"
-      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.65rem)' }}
+      className={cn(
+        'flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card/95 text-muted-foreground shadow-sm backdrop-blur-xl transition hover:border-primary/40 hover:text-primary disabled:cursor-wait disabled:opacity-70',
+        desktop
+          ? 'shrink-0'
+          : 'fixed right-3 z-[75] md:hidden',
+      )}
+      style={desktop ? undefined : { top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
     >
-      <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} aria-hidden="true" />
+      <RefreshCw className={cn('h-5 w-5', refreshing && 'animate-spin')} aria-hidden="true" />
     </button>
   );
 }
