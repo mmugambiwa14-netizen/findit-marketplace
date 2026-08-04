@@ -1,0 +1,61 @@
+/* Installed-mobile viewport normalization.
+ *
+ * iOS standalone windows can report a stale 100dvh during launch, rotation,
+ * keyboard transitions and status-bar changes. documentBootstrap keeps
+ * --findit-viewport-height aligned to visualViewport.height; these rules use it
+ * as the final authority while retaining svh/dvh fallbacks elsewhere.
+ */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100svh;
+  min-height: var(--findit-viewport-height, 100dvh);
+}
+
+html,
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+.findit-screen {
+  min-height: 100svh;
+  min-height: var(--findit-viewport-height, 100dvh);
+}
+
+.findit-full-viewport {
+  height: 100svh;
+  height: var(--findit-viewport-height, 100dvh);
+  min-height: 0;
+}
+
+.findit-mobile-nav {
+  bottom: max(0.625rem, env(safe-area-inset-bottom));
+  padding-bottom: 0;
+}
+
+@media (display-mode: standalone), (display-mode: minimal-ui) {
+  html,
+  body,
+  #root {
+    height: var(--findit-viewport-height, 100dvh);
+    min-height: var(--findit-viewport-height, 100dvh);
+  }
+
+  body {
+    position: relative;
+    background-color: hsl(var(--background));
+    background-attachment: scroll;
+  }
+
+  .findit-screen {
+    min-height: var(--findit-viewport-height, 100dvh);
+  }
+
+  .findit-mobile-nav-clearance {
+    padding-bottom: calc(4.75rem + max(0.75rem, env(safe-area-inset-bottom)));
+  }
+}
