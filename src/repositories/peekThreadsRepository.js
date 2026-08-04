@@ -25,6 +25,19 @@ export async function readPeekThreadPage(request) {
   return data ?? [];
 }
 
+export async function invokeResponsePeekPlayback(tourId) {
+  const { data, error } = await supabase.functions.invoke('tour-playback-access', {
+    body: { tourId },
+  });
+  if (error) {
+    const repositoryError = new Error('Unable to prepare Response Peek playback');
+    repositoryError.cause = error;
+    throw repositoryError;
+  }
+  if (!data?.tourId || !data?.playbackUrl) throw new Error('Response Peek playback is incomplete');
+  return data;
+}
+
 export function createPeekRequestRow(args) {
   return invoke('create_peek_request', args, 'Unable to create the Peek Request');
 }
