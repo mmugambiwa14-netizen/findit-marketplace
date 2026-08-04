@@ -32,9 +32,39 @@ body {
   min-height: 0;
 }
 
+/* Discover owns its mobile header instead of using the shared TopNav. Keep the
+ * normal page rhythm everywhere, then add the physical device inset only in an
+ * installed WebKit window. */
+.findit-discover-safe-top {
+  padding-top: 1rem;
+}
+
 .findit-mobile-nav {
   bottom: max(0.625rem, env(safe-area-inset-bottom));
   padding-bottom: 0;
+}
+
+/* The nav floats over photos and video thumbnails, so translucent dark-on-dark
+ * styling is not enough. This keeps it unmistakably separate without becoming
+ * an opaque toolbar. */
+.findit-mobile-nav .clay-nav {
+  border-color: hsl(var(--primary) / 0.34);
+  background:
+    linear-gradient(180deg, hsl(var(--card) / 0.99), hsl(var(--surface-secondary) / 0.99)),
+    hsl(var(--card));
+  box-shadow:
+    0 0 0 1px hsl(var(--background) / 0.9),
+    inset 0 1px 0 hsl(0 0% 100% / 0.16),
+    0 -8px 28px hsl(var(--background) / 0.82),
+    0 18px 46px hsl(var(--clay-shadow-dark) / 0.42);
+  backdrop-filter: blur(30px) saturate(155%);
+  -webkit-backdrop-filter: blur(30px) saturate(155%);
+}
+
+@media (min-width: 640px) {
+  .findit-discover-safe-top {
+    padding-top: 1.5rem;
+  }
 }
 
 @media (display-mode: standalone), (display-mode: minimal-ui) {
@@ -57,5 +87,15 @@ body {
 
   .findit-mobile-nav-clearance {
     padding-bottom: calc(4.75rem + max(0.75rem, env(safe-area-inset-bottom)));
+  }
+}
+
+/* iOS standalone mode renders beneath the translucent status bar. Android and
+ * desktop standalone windows must not receive this extra inset. */
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) and (max-width: 767px) {
+    .findit-discover-safe-top {
+      padding-top: calc(1rem + max(env(safe-area-inset-top), 0px));
+    }
   }
 }
