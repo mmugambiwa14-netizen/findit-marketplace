@@ -8,8 +8,13 @@ import { mapProviderConfigured } from './mapProvider.js';
 
 const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
 
-const STAGING_BRANCH = 'feature/listing-intelligence-foundation';
-const isStagingBranch = String(viteEnv.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim() === STAGING_BRANCH;
+const STAGING_BRANCHES = new Set([
+  'feature/listing-intelligence-foundation',
+  'claude/findit-hardening-listing-012cf0',
+  'feature/peek-threads-phase-3',
+]);
+const deploymentBranch = String(viteEnv.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim();
+const isStagingBranch = STAGING_BRANCHES.has(deploymentBranch);
 
 const flag = (envVar, fallback = false) => {
   const raw = viteEnv[envVar];
