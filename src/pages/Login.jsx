@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createRegisterPath, sanitizeReturnTo } from '@/lib/authNavigation';
 import { hasEnabledOAuthProvider, oauthProviders } from '@/lib/oauthProviders';
+import { userFacingError } from '@/lib/userFacingErrors';
 import * as authService from '@/services/authService';
 
 export default function Login() {
@@ -31,7 +32,7 @@ export default function Login() {
       const destination = returnTo !== '/' ? returnTo : (user?.role === 'admin' ? '/admin' : '/');
       window.location.assign(authService.appUrl(destination));
     } catch (failure) {
-      setError(failure.message || 'Invalid email or password');
+      setError(userFacingError(failure, 'We could not log you in. Check your details and try again.'));
     } finally {
       setLoading(false);
     }
@@ -43,7 +44,8 @@ export default function Login() {
     try {
       await authService.signInWithOAuth(provider, returnTo);
     } catch (failure) {
-      setError(failure.message || `Unable to continue with ${provider}`);
+      const providerName = provider === 'google' ? 'Google' : 'Apple';
+      setError(userFacingError(failure, `We could not connect to ${providerName}. Please try again.`));
       setOauthProvider('');
     }
   };
