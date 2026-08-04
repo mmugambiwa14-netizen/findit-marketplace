@@ -32,9 +32,6 @@ body {
   min-height: 0;
 }
 
-/* Discover owns its mobile header instead of using the shared TopNav. Keep the
- * normal page rhythm everywhere, then add the physical device inset only in an
- * installed WebKit window. */
 .findit-discover-safe-top {
   padding-top: 1rem;
 }
@@ -90,12 +87,14 @@ body {
   }
 }
 
-/* iOS standalone mode renders beneath the translucent status bar. Android and
- * desktop standalone windows must not receive this extra inset. */
+/* iOS standalone mode renders normal document content beneath the translucent
+ * status bar. Apply the physical inset once at the shared route shell instead
+ * of repeating it in individual page headers. Full-screen conversations keep
+ * their own safe-area-aware fixed header and are excluded in AppLayout. */
 @supports (-webkit-touch-callout: none) {
   @media (display-mode: standalone) and (max-width: 767px) {
-    .findit-discover-safe-top {
-      padding-top: calc(1rem + max(env(safe-area-inset-top), 0px));
+    .findit-mobile-safe-top {
+      padding-top: max(env(safe-area-inset-top), 0px);
     }
   }
 }
