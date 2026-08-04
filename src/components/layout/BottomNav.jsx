@@ -38,7 +38,7 @@ export default function BottomNav() {
         aria-label="Mobile navigation"
         className="findit-mobile-nav fixed inset-x-2.5 z-40 md:hidden"
       >
-        <div className="clay-nav mx-auto flex h-16 max-w-[500px] items-stretch rounded-[1.35rem] px-1">
+        <div className="clay-nav mx-auto flex h-[var(--findit-nav-height)] max-w-[500px] items-stretch rounded-[var(--findit-panel-radius)] px-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -52,7 +52,7 @@ export default function BottomNav() {
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={count > 0 ? `${item.label}, ${count} unread` : item.label}
                 className={cn(
-                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-muted-foreground focus-visible:z-10',
+                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--findit-control-radius)] px-1 text-muted-foreground focus-visible:z-10',
                   isActive && !item.prominent && 'text-primary',
                   item.prominent && 'text-foreground',
                 )}
@@ -64,7 +64,7 @@ export default function BottomNav() {
                 ) : (
                   <span
                     className={cn(
-                      'relative flex h-9 w-9 items-center justify-center rounded-xl transition-[background-color,color,box-shadow,transform]',
+                      'relative flex h-9 w-9 items-center justify-center rounded-[var(--findit-control-radius-sm)] transition-[background-color,color,box-shadow,transform]',
                       isActive
                         ? 'findit-active-nav-item scale-[1.04]'
                         : 'text-muted-foreground hover:bg-surface-raised/70 hover:text-foreground',
@@ -72,7 +72,7 @@ export default function BottomNav() {
                   >
                     <Icon
                       aria-hidden="true"
-                      className="h-[19px] w-[19px]"
+                      className="h-[var(--findit-nav-icon-size)] w-[var(--findit-nav-icon-size)]"
                       strokeWidth={isActive ? 2.25 : 1.85}
                     />
                     {count > 0 && (
@@ -87,7 +87,7 @@ export default function BottomNav() {
                 )}
                 <span
                   className={cn(
-                    'max-w-full truncate text-[9px] font-semibold leading-none tracking-[-0.01em]',
+                    'max-w-full truncate text-[var(--findit-nav-label-size)] font-semibold leading-none tracking-[-0.01em]',
                     item.prominent && '-mt-0.5',
                     isActive && !item.prominent && 'font-bold text-primary',
                   )}
