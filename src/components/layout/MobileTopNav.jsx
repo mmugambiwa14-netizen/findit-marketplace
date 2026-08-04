@@ -12,16 +12,16 @@ export default function MobileTopNav() {
 
   return (
     <header className="findit-shared-mobile-top-nav safe-area-top sticky top-0 z-50 border-b border-border/75 bg-background/92 backdrop-blur-xl md:hidden">
-      <div className="mx-auto flex min-h-[60px] max-w-[510px] items-center justify-between px-4">
+      <div className="mx-auto flex min-h-[60px] max-w-[510px] items-center justify-between px-[var(--findit-page-gutter)]">
         <BrandLogo
           className="gap-2"
           markClassName="h-8 w-8"
           wordmarkClassName="text-xl tracking-[-0.04em]"
         />
-        <div className="flex h-11 items-center gap-1" aria-label="App actions">
+        <div className="flex h-[var(--findit-control-height)] items-center gap-1" aria-label="App actions">
           <GlobalRefreshButton inline />
           {user && featureFlags.essentialNotifications && (
-            <Suspense fallback={<span className="h-11 w-11" aria-hidden="true" />}>
+            <Suspense fallback={<span className="h-[var(--findit-icon-button-size)] w-[var(--findit-icon-button-size)]" aria-hidden="true" />}>
               <NotificationBell />
             </Suspense>
           )}
