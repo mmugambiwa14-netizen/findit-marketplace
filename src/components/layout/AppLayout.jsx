@@ -57,6 +57,10 @@ function isImmersiveDesktopRoute(pathname) {
   return pathname.startsWith('/chats/') || pathname.startsWith('/messages/');
 }
 
+function isImmersivePeekRoute(pathname) {
+  return pathname === '/peek' || pathname.startsWith('/peek/');
+}
+
 export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
@@ -64,8 +68,9 @@ export default function AppLayout() {
   const isDiscoverHome = location.pathname === '/';
   const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
   const immersiveConversation = isImmersiveDesktopRoute(location.pathname);
-  const showDesktopNav = !immersiveConversation;
-  const showSharedMobileTopBar = !immersiveConversation;
+  const immersivePeek = isImmersivePeekRoute(location.pathname);
+  const showDesktopNav = !immersiveConversation && !immersivePeek;
+  const showSharedMobileTopBar = !immersiveConversation && !immersivePeek;
 
   return (
     <div className="findit-screen min-h-[100dvh]">
