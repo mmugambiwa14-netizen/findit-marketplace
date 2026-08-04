@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -10,12 +10,12 @@ import ListingReviewStep from '@/components/create-listing/ListingReviewStep';
 import PublishSuccess from '@/components/create-listing/PublishSuccess';
 import Step1Category from '@/components/create-listing/Step1Category';
 import StepProgress from '@/components/create-listing/StepProgress';
+import { usePersistentFormDraft } from '@/hooks/usePersistentFormDraft';
 import { useAuth } from '@/lib/AuthContext';
+import { customerErrorMessage } from '@/lib/customerErrors';
 import { resolveListingImages, submitListing } from '@/services/listingCreationService';
 import { removeListingTour, uploadListingTour } from '@/services/listingToursService';
 import { getActiveLocations } from '@/services/locationsService';
-import { readStoredJson, removeStoredValue, writeStoredJson } from '@/lib/browserStorage';
-import { customerErrorMessage } from '@/lib/customerErrors';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 function freshForm(user) {
@@ -32,7 +32,7 @@ function freshForm(user) {
 export default function CreateListing() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const draftKey = user?.id ? `findit_listing_draft_v1_${user.id}` : null;
+  const draftKey = user?.id ? `findit_listing_draft_v2_${user.id}` : null;
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(() => freshForm(user));
   const [media, setMedia] = useState([]);
@@ -43,41 +43,33 @@ export default function CreateListing() {
   const [locationName, setLocationName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submittedListing, setSubmittedListing] = useState(null);
-  const [loadedDraftKey, setLoadedDraftKey] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
   const update = (key, value) => setFormData((current) => ({ ...current, [key]: value }));
 
-  useEffect(() => {
-    if (!draftKey || loadedDraftKey === draftKey) return;
-    const stored = readStoredJson('local', draftKey, null);
-    if (stored?.formData) setFormData({ ...freshForm(user), ...stored.formData });
-    if (Array.isArray(stored?.media)) {
-      Promise.all(stored.media.map(async (item) => ({
+  const restoreDraft = useCallback((payload) => {
+    if (payload?.formData) setFormData({ ...freshForm(user), ...payload.formData });
+    if (Array.isArray(payload?.media)) {
+      Promise.all(payload.media.map(async (item) => ({
         ...item,
         previewUrl: (await resolveListingImages([item.path]))[0] || item.previewUrl,
-      }))).then(setMedia).catch(() => setMedia(stored.media));
+      }))).then(setMedia).catch(() => setMedia(payload.media));
     }
-    if (Number.isInteger(stored?.step) && stored.step >= 1 && stored.step <= 5) setStep(stored.step);
-    setLoadedDraftKey(draftKey);
-  }, [draftKey, loadedDraftKey, user]);
+    if (Number.isInteger(payload?.step) && payload.step >= 1 && payload.step <= 5) setStep(payload.step);
+  }, [user]);
 
-  useEffect(() => {
-    if (!draftKey || loadedDraftKey !== draftKey || submittedListing) return;
-    const persistedMedia = media.map(({ previewUrl: _previewUrl, ...item }) => item);
-    const timer = window.setTimeout(() => { writeStoredJson('local', draftKey, { formData, media: persistedMedia, step }); }, 800);
-    return () => window.clearTimeout(timer);
-  }, [draftKey, formData, loadedDraftKey, media, step, submittedListing]);
+  const draftValue = useMemo(() => ({
+    formData,
+    media: media.map(({ previewUrl: _previewUrl, ...item }) => item),
+    step,
+  }), [formData, media, step]);
 
-  // Resolving the canonical place name is async, so two quick changes leave two
-  // requests in flight. Without the cancelled flag the slower one can land last
-  // and display a place the seller did not choose, while location_id still
-  // holds the newer selection -- the exact stale-response overwrite Part III §8
-  // prohibits. The cleanup runs before the next effect, so only the newest
-  // request is allowed to write.
-  //
-  // A lookup failure also must not erase a confirmed selection: the previous
-  // resolved name is kept rather than blanked, so the seller does not watch
-  // their location disappear because a network call failed.
+  const { saveNow, clearDraft } = usePersistentFormDraft({
+    storageKey: draftKey,
+    value: draftValue,
+    onRestore: restoreDraft,
+    enabled: !submittedListing,
+  });
+
   useEffect(() => {
     if (!formData.location_id) {
       setLocationName('');
@@ -103,26 +95,24 @@ export default function CreateListing() {
   }, [tourDraft?.previewUrl]);
 
   const isDirty = useMemo(() => Boolean(formData.title || formData.listing_category || media.length || tourDraft), [formData, media.length, tourDraft]);
+
   useEffect(() => {
     const warn = (event) => {
       if (isDirty && !submittedListing) {
+        saveNow();
         event.preventDefault();
         event.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', warn);
     return () => window.removeEventListener('beforeunload', warn);
-  }, [isDirty, submittedListing]);
+  }, [isDirty, saveNow, submittedListing]);
 
   const saveDraft = () => {
-    if (!draftKey) return;
-    const persistedMedia = media.map(({ previewUrl: _previewUrl, ...item }) => item);
-    if (writeStoredJson('local', draftKey, { formData, media: persistedMedia, step })) {
-      toast.success('Draft saved on this device');
-    } else {
-      toast.error('This browser could not save the draft on this device.');
-    }
+    if (saveNow()) toast.success('Draft saved on this device');
+    else toast.error('This browser could not save the draft on this device.');
   };
+
   const submit = async () => {
     setSubmitting(true);
     try {
@@ -143,7 +133,7 @@ export default function CreateListing() {
         detail: formData.detail,
         media,
       });
-      if (draftKey) removeStoredValue('local', draftKey);
+      clearDraft();
       let completedTour = tourDraft;
       if (tourDraft?.file) {
         try {
@@ -183,7 +173,9 @@ export default function CreateListing() {
       setSubmitting(false);
     }
   };
+
   const reset = () => {
+    clearDraft();
     setFormData(freshForm(user));
     if (tourDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
     setMedia([]);
@@ -229,14 +221,11 @@ export default function CreateListing() {
     }
   };
 
-
   const discardInterruptedTour = async () => {
     if (!tourDraft || discardingTour || retryingTour) return;
     setDiscardingTour(true);
     try {
-      if (tourDraft.resumeUpload?.tourId) {
-        await removeListingTour(tourDraft.resumeUpload.tourId);
-      }
+      if (tourDraft.resumeUpload?.tourId) await removeListingTour(tourDraft.resumeUpload.tourId);
       if (tourDraft.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
       setTourDraft(null);
       setSubmissionProgress(null);
@@ -282,7 +271,10 @@ export default function CreateListing() {
       onConfirm={() => {
         const mode = confirmation;
         setConfirmation(null);
-        if (mode === 'exit-draft') navigate(-1);
+        if (mode === 'exit-draft') {
+          saveNow();
+          navigate(-1);
+        }
       }}
     />
   </div>;
@@ -298,7 +290,7 @@ function CreateListingConfirmation({ mode, busy, onCancel, onConfirm }) {
           <AlertDialogDescription>
             {discardTour
               ? 'The unfinished Peek upload will be removed. The published listing and its photos will remain.'
-              : 'Your listing draft is saved on this device and can be continued later.'}
+              : 'Your listing draft is saved automatically on this device and can be continued later.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
