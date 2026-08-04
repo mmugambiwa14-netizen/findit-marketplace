@@ -22,12 +22,20 @@ const flag = (envVar, fallback = false) => {
   return raw === 'true' || raw === true;
 };
 
+// These capabilities have already crossed their repository implementation
+// boundary on the trusted staging lineage. Vercel Preview and Production use
+// separate environment-variable scopes; an older Preview value of `false`
+// must not silently remove a capability that is visible on persistent staging.
+// Production outside this staging lineage remains governed by its explicit
+// environment value and therefore still fails closed.
+const stagingCertifiedFlag = (envVar) => isStagingBranch || flag(envVar, false);
+
 export const featureFlags = {
   businessProfiles: flag('VITE_FEATURE_BUSINESS_PROFILES', true),
-  messaging: flag('VITE_FEATURE_MESSAGING', isStagingBranch),
-  essentialNotifications: flag('VITE_FEATURE_ESSENTIAL_NOTIFICATIONS', isStagingBranch),
+  messaging: stagingCertifiedFlag('VITE_FEATURE_MESSAGING'),
+  essentialNotifications: stagingCertifiedFlag('VITE_FEATURE_ESSENTIAL_NOTIFICATIONS'),
 
-  tours: flag('VITE_FEATURE_TOURS', isStagingBranch),
+  tours: stagingCertifiedFlag('VITE_FEATURE_TOURS'),
   toursPreview: flag('VITE_FEATURE_TOURS_PREVIEW', Boolean(viteEnv.DEV)),
   previewFixtures: flag('VITE_FEATURE_PREVIEW_FIXTURES'),
 
@@ -36,7 +44,7 @@ export const featureFlags = {
   // first-party Supabase/PostGIS registry rather than a map-tile provider.
   maps: flag('VITE_FEATURE_MAPS', mapProviderConfigured()),
   manualLocation: flag('VITE_FEATURE_MANUAL_LOCATION', true),
-  currentLocation: flag('VITE_FEATURE_CURRENT_LOCATION', isStagingBranch),
+  currentLocation: stagingCertifiedFlag('VITE_FEATURE_CURRENT_LOCATION'),
 
   googleOAuth: flag('VITE_FEATURE_GOOGLE_OAUTH', flag('VITE_AUTH_GOOGLE_ENABLED')),
   reporting: flag('VITE_FEATURE_REPORTING', true),
