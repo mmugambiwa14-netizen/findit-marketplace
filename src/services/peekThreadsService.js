@@ -2,6 +2,7 @@ import {
   bindResponsePeekRows,
   createPeekRequestRow,
   declinePeekRequestRow,
+  invokeResponsePeekPlayback,
   mergePeekRequestRows,
   readPeekThreadPage,
   supportPeekRequestRow,
@@ -30,6 +31,10 @@ export async function getPeekThreadPage(input) {
   const request = normalizePeekThreadReadRequest(input);
   const rows = await readPeekThreadPage(request);
   return normalizePeekThreadPage(rows, request.limit);
+}
+
+export function getResponsePeekPlayback(tourId) {
+  return invokeResponsePeekPlayback(requireValid(normalizeRequestId(tourId)));
 }
 
 export function createPeekRequest(input) {
