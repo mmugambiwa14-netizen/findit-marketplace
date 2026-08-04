@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { Camera, ChevronRight, Film, RotateCcw, Trash2, Upload } from 'lucide-react';
+import CameraPermissionDialog from '@/components/permissions/CameraPermissionDialog';
 import { Button } from '@/components/ui/button';
+import { readStoredString, writeStoredString } from '@/lib/browserStorage';
 import { featureFlags } from '@/lib/featureFlags';
 import {
   TOUR_ALLOWED_MIME_TYPES,
@@ -12,6 +14,8 @@ import { uploadListingTour } from '@/services/listingToursService';
 import { uploadResponsePeek } from '@/services/responsePeekUploadService';
 import TourRecordingGuide from './TourRecordingGuide';
 import TourUploadProgress from './TourUploadProgress';
+
+const CAMERA_EXPLANATION_KEY = 'findit.camera-explanation-seen';
 
 function durationLabel(seconds) {
   const total = Math.max(0, Math.round(Number(seconds) || 0));
@@ -70,6 +74,7 @@ export default function TourUploader({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState('');
+  const [cameraExplanationOpen, setCameraExplanationOpen] = useState(false);
   const draft = value || null;
   const isResponse = peekKind === 'response';
   const parentLabel = parentType === 'service' ? 'service' : 'listing';
@@ -111,6 +116,20 @@ export default function TourUploader({
       setSelecting(false);
       onBusyChange?.(false);
     }
+  };
+
+  const openCamera = () => {
+    if (readStoredString('local', CAMERA_EXPLANATION_KEY) === '1') {
+      recordInputRef.current?.click();
+      return;
+    }
+    setCameraExplanationOpen(true);
+  };
+
+  const continueToCamera = () => {
+    writeStoredString('local', CAMERA_EXPLANATION_KEY, '1');
+    setCameraExplanationOpen(false);
+    window.requestAnimationFrame(() => recordInputRef.current?.click());
   };
 
   const clear = () => {
@@ -182,7 +201,7 @@ export default function TourUploader({
 
       {!draft && (
         <div className={`grid gap-3 ${onSkip ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={() => recordInputRef.current?.click()} disabled={disabled || selecting}><Camera />Record</Button>
+          <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={openCamera} disabled={disabled || selecting}><Camera />Record</Button>
           <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={() => uploadInputRef.current?.click()} disabled={disabled || selecting}><Upload />Upload</Button>
           {onSkip && <Button type="button" variant="ghost" className="h-12 rounded-xl" onClick={onSkip} disabled={disabled || selecting}><ChevronRight />Skip</Button>}
         </div>
@@ -215,6 +234,12 @@ export default function TourUploader({
       )}
       {draft && !parentId && <p className="text-xs text-muted-foreground">The video will upload after the {parentLabel} record is created. Publishing does not wait for video processing.</p>}
       {!draft && !isResponse && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Peek later from {managementLabel}.</p>}
+
+      <CameraPermissionDialog
+        open={cameraExplanationOpen}
+        onOpenChange={setCameraExplanationOpen}
+        onContinue={continueToCamera}
+      />
     </section>
   );
 }
