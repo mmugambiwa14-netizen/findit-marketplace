@@ -40,3 +40,11 @@ test('seller and buyer actions remain role separated', () => {
   assert.match(section, /isOwner &&/);
   assert.match(section, /declinePeekRequest/);
 });
+
+test('listing-detail decline uses a focus-managed validated dialog', () => {
+  assert.doesNotMatch(section, /window\.prompt/);
+  assert.match(section, /AlertDialogContent/);
+  assert.match(section, /autoFocus/);
+  assert.match(section, /declineReason\.trim\(\)\.length < 4/);
+  assert.match(section, /Decline this Peek Request\?/);
+});
