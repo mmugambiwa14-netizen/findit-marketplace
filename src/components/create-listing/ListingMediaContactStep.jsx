@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Camera, Loader2, Mail, Maximize, MessageCircle, Phone, Star, Trash2 } from 'lucide-react';
+import { Camera, Loader2, Mail, Maximize, MessageCircle, Phone, ShieldCheck, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import ImageLightbox from '@/components/ui/image-lightbox';
@@ -14,8 +14,6 @@ export default function ListingMediaContactStep({ formData, update, media, setMe
   const [uploading, setUploading] = useState(false);
   const [tourBusy, setTourBusy] = useState(false);
   const [error, setError] = useState('');
-  // Tiles are square-cropped, so a seller cannot judge framing or sharpness
-  // from the grid alone. null means the lightbox is closed.
   const [previewIndex, setPreviewIndex] = useState(null);
 
   const upload = async (event) => {
@@ -71,9 +69,16 @@ export default function ListingMediaContactStep({ formData, update, media, setMe
       onSkip={continueIfValid}
     />
     <div className="space-y-4 border-t pt-5">
-      <div><Label htmlFor="contact-phone" className="flex items-center gap-2"><Phone className="h-4 w-4" />Phone</Label><Input id="contact-phone" type="tel" maxLength={40} className="mt-1 h-11 rounded-xl" value={formData.contact_phone || ''} onChange={(event) => update('contact_phone', event.target.value)} placeholder="+263 77 123 4567" /></div>
+      <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/8 p-3">
+        <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <div>
+          <p className="text-sm font-semibold">Your contact details stay hidden in FindIt</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">Buyers see only the contact methods you enable. Your phone number or email address becomes visible only after they choose to open their phone, WhatsApp, or email app.</p>
+        </div>
+      </div>
+      <div><Label htmlFor="contact-phone" className="flex items-center gap-2"><Phone className="h-4 w-4" />Phone</Label><Input id="contact-phone" type="tel" maxLength={40} className="mt-1 h-11 rounded-xl" value={formData.contact_phone || ''} onChange={(event) => update('contact_phone', event.target.value)} placeholder="+263 77 123 4567" /><p className="mt-1 text-xs text-muted-foreground">Used only when a buyer confirms they want to open their phone app.</p></div>
       <div><Label htmlFor="contact-whatsapp" className="flex items-center gap-2"><MessageCircle className="h-4 w-4" />WhatsApp</Label><Input id="contact-whatsapp" type="tel" maxLength={40} className="mt-1 h-11 rounded-xl" value={formData.contact_whatsapp || ''} onChange={(event) => update('contact_whatsapp', event.target.value)} placeholder="+263 77 123 4567" /></div>
-      <div><Label htmlFor="contact-email" className="flex items-center gap-2"><Mail className="h-4 w-4" />Email</Label><Input id="contact-email" type="email" maxLength={254} className="mt-1 h-11 rounded-xl" value={formData.contact_email || ''} onChange={(event) => update('contact_email', event.target.value)} placeholder="you@example.com" /></div>
+      <div><Label htmlFor="contact-email" className="flex items-center gap-2"><Mail className="h-4 w-4" />Email</Label><Input id="contact-email" type="email" maxLength={254} className="mt-1 h-11 rounded-xl" value={formData.contact_email || ''} onChange={(event) => update('contact_email', event.target.value)} placeholder="you@example.com" /><p className="mt-1 text-xs text-muted-foreground">Used only when a buyer confirms they want to open their email app.</p></div>
     </div>
     {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
     <StepNav onBack={onBack} onContinue={continueIfValid} disabled={uploading || tourBusy} />
