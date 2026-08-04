@@ -15,19 +15,22 @@ import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
 const AUTOPLAY_KEY = 'findit:peek:autoplay';
 const MUTE_KEY = 'findit:peek:mute-default';
 const VALID_CATEGORIES = new Set(['all', 'property', 'car', 'machinery', 'service']);
+const MAX_RESTORE_PAGES = 10;
 
 export default function Tours() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const requestedCategory = params.get('category') || 'all';
+  const requestedTourId = params.get('peek') || null;
   const category = VALID_CATEGORIES.has(requestedCategory) ? requestedCategory : 'all';
   const [autoplay, setAutoplay] = useState(() => readStoredString('local', AUTOPLAY_KEY, 'on') !== 'off');
   const [muteByDefault, setMuteByDefault] = useState(() => readStoredString('local', MUTE_KEY, 'on') !== 'off');
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [activeTourId, setActiveTourId] = useState(null);
+  const [activeTourId, setActiveTourId] = useState(requestedTourId);
   const [savedOverrides, setSavedOverrides] = useState({});
   const feedRef = useRef(null);
+  const restoredTourRef = useRef(null);
 
   const filters = useMemo(() => ({ category, query: '', location: '', limit: 8 }), [category]);
   const feed = useInfiniteQuery({
@@ -57,8 +60,37 @@ export default function Tours() {
   const savedSet = useMemo(() => new Set(favourites.data || []), [favourites.data]);
 
   useEffect(() => {
-    if (!activeTourId && items[0]?.tourId) setActiveTourId(items[0].tourId);
-  }, [activeTourId, items]);
+    if (!activeTourId && !requestedTourId && items[0]?.tourId) setActiveTourId(items[0].tourId);
+  }, [activeTourId, items, requestedTourId]);
+
+  useEffect(() => {
+    if (!requestedTourId || restoredTourRef.current === requestedTourId) return;
+    const targetExists = items.some((item) => item.tourId === requestedTourId);
+
+    if (!targetExists) {
+      const loadedPages = feed.data?.pages?.length || 0;
+      if (feed.hasNextPage && !feed.isFetchingNextPage && loadedPages < MAX_RESTORE_PAGES) {
+        feed.fetchNextPage();
+      }
+      return;
+    }
+
+    restoredTourRef.current = requestedTourId;
+    setActiveTourId(requestedTourId);
+    window.requestAnimationFrame(() => {
+      feedRef.current?.querySelector(`[data-tour-id="${requestedTourId}"]`)?.scrollIntoView({ block: 'start' });
+    });
+  }, [feed, items, requestedTourId]);
+
+  useEffect(() => {
+    if (!activeTourId) return;
+    setParams((current) => {
+      if (current.get('peek') === activeTourId) return current;
+      const next = new URLSearchParams(current);
+      next.set('peek', activeTourId);
+      return next;
+    }, { replace: true });
+  }, [activeTourId, setParams]);
 
   useEffect(() => {
     if (activeIndex < 0 || activeIndex < items.length - 2 || !feed.hasNextPage || feed.isFetchingNextPage) return;
@@ -103,7 +135,9 @@ export default function Tours() {
   const changeCategory = (nextCategory) => {
     const next = new URLSearchParams(params);
     if (nextCategory === 'all') next.delete('category'); else next.set('category', nextCategory);
+    next.delete('peek');
     setParams(next, { replace: true });
+    restoredTourRef.current = null;
     setActiveTourId(null);
     feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
