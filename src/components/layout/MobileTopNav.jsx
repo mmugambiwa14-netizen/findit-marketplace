@@ -18,7 +18,7 @@ export default function MobileTopNav() {
           wordmarkClassName="text-xl tracking-[-0.04em]"
         />
         <div className="flex items-center gap-1" aria-label="App actions">
-          <GlobalRefreshButton />
+          <GlobalRefreshButton inline />
           {user && featureFlags.essentialNotifications && (
             <Suspense fallback={<span className="h-11 w-11" aria-hidden="true" />}>
               <NotificationBell />
