@@ -32,6 +32,7 @@ as $function$
 declare
   v_owner uuid := auth.uid();
   v_limit integer := least(greatest(coalesce(p_limit, 20), 1), 50);
+  v_now timestamptz := statement_timestamp();
 begin
   if v_owner is null then
     raise exception 'authentication required' using errcode = '42501';
@@ -50,10 +51,10 @@ begin
       r.body,
       r.supporter_count,
       r.created_at,
-      greatest(0, extract(epoch from (clock_timestamp() - r.created_at))::bigint) as pending_seconds,
+      greatest(0, extract(epoch from (v_now - r.created_at))::bigint) as pending_seconds,
       (
         greatest(r.supporter_count, 1)::bigint * 1000000
-        + least(greatest(0, extract(epoch from (clock_timestamp() - r.created_at))::bigint), 2592000)
+        + least(greatest(0, extract(epoch from (v_now - r.created_at))::bigint), 2592000)
       )::bigint as queue_score
     from public.peek_requests r
     left join public.listings l on l.id = r.listing_id
@@ -69,7 +70,9 @@ begin
   eligible as (
     select * from owned o
     where p_cursor_id is null
-       or (o.queue_score, o.created_at, o.id) < (p_cursor_score, p_cursor_created_at, p_cursor_id)
+       or o.queue_score < p_cursor_score
+       or (o.queue_score = p_cursor_score and o.created_at > p_cursor_created_at)
+       or (o.queue_score = p_cursor_score and o.created_at = p_cursor_created_at and o.id > p_cursor_id)
   ),
   page as (
     select * from eligible
