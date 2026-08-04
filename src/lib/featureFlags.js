@@ -30,6 +30,15 @@ const flag = (envVar, fallback = false) => {
 // environment value and therefore still fails closed.
 const stagingCertifiedFlag = (envVar) => isStagingBranch || flag(envVar, false);
 
+// Authentication providers are slightly stricter than ordinary UI features:
+// trusted staging branches inherit the configured provider, but an explicit
+// false value remains an emergency off switch in every environment.
+const stagingProviderFlag = (envVar, legacyEnvVar) => {
+  const raw = viteEnv[envVar] ?? viteEnv[legacyEnvVar];
+  if (raw === 'false' || raw === false) return false;
+  return isStagingBranch || raw === 'true' || raw === true;
+};
+
 export const featureFlags = {
   businessProfiles: flag('VITE_FEATURE_BUSINESS_PROFILES', true),
   messaging: stagingCertifiedFlag('VITE_FEATURE_MESSAGING'),
@@ -46,7 +55,10 @@ export const featureFlags = {
   manualLocation: flag('VITE_FEATURE_MANUAL_LOCATION', true),
   currentLocation: stagingCertifiedFlag('VITE_FEATURE_CURRENT_LOCATION'),
 
-  googleOAuth: flag('VITE_FEATURE_GOOGLE_OAUTH', flag('VITE_AUTH_GOOGLE_ENABLED')),
+  googleOAuth: stagingProviderFlag(
+    'VITE_FEATURE_GOOGLE_OAUTH',
+    'VITE_AUTH_GOOGLE_ENABLED',
+  ),
   reporting: flag('VITE_FEATURE_REPORTING', true),
 
   // These contracts are deliberately fail-closed until complete end-to-end
