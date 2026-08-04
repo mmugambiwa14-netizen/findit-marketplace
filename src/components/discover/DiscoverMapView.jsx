@@ -62,7 +62,7 @@ function createCategoryMarker(item, selected) {
   element.append(pin);
 
   const iconRoot = createRoot(iconSlot);
-  iconRoot.render(<Icon className="h-5 w-5" />);
+  iconRoot.render(<Icon className="h-5 w-5" strokeWidth={2.25} />);
   return { element, iconRoot };
 }
 
@@ -123,7 +123,18 @@ export default function DiscoverMapView({ location }) {
       try {
         const maplibregl = await loadMapLibre();
         if (cancelled || !mapNode.current) return;
-        map = new maplibregl.Map({ container: mapNode.current, style: mapTilerStyleUrl(), center: [visible[0].point.longitude, visible[0].point.latitude], zoom: 10, dragRotate: false, pitchWithRotate: false, cooperativeGestures: true });
+        map = new maplibregl.Map({
+          container: mapNode.current,
+          style: mapTilerStyleUrl(),
+          center: [visible[0].point.longitude, visible[0].point.latitude],
+          zoom: 10,
+          dragRotate: false,
+          pitchWithRotate: false,
+          // One finger pans on touch screens. Pinch zoom remains a two-finger
+          // gesture through MapLibre's native touchZoomRotate handler.
+          cooperativeGestures: false,
+          touchPitch: false,
+        });
         registerOptionalStyleImageFallbacks(map);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         const bounds = new maplibregl.LngLatBounds();
@@ -185,7 +196,7 @@ export default function DiscoverMapView({ location }) {
             >
               <span className="relative block aspect-[1.35] overflow-hidden rounded-lg border border-white/10 bg-surface-secondary">
                 <img src={visual.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover opacity-80 transition-transform duration-300 group-hover:scale-105" />
-                <span className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-black/55 text-primary backdrop-blur-sm"><Icon className="h-3.5 w-3.5" /></span>
+                <span className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-black/55 text-primary backdrop-blur-sm"><Icon className="h-3.5 w-3.5" strokeWidth={2.25} /></span>
               </span>
               <span className="mt-1 block truncate px-0.5 text-[10px] font-medium">{visual.label}</span>
             </button>
