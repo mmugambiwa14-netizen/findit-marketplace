@@ -45,7 +45,7 @@ export default function Home() {
 
   return (
     <div className="findit-screen">
-      <div className="findit-hero-panel mx-auto w-full max-w-[1180px] px-4 pb-6 pt-4 sm:px-6 sm:pt-6 lg:px-8">
+      <div className="findit-hero-panel findit-discover-safe-top mx-auto w-full max-w-[1180px] px-4 pb-6 sm:px-6 lg:px-8">
         <h1 className="sr-only md:hidden">Find what you need, right where you are.</h1>
         <header className="relative mb-3 flex min-h-11 items-center justify-center md:hidden">
           <BrandLogo
