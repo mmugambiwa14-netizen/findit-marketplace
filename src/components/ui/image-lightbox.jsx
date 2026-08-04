@@ -4,10 +4,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-// Listing galleries crop with object-cover so every card lines up. That means a
-// buyer never sees the whole photograph inline, so the lightbox shows it
-// uncropped (object-contain) and lets them open it at natural size to inspect
-// detail -- damage on a vehicle, a serial plate, the state of a room.
 export default function ImageLightbox({
   images = [],
   index = 0,
@@ -20,19 +16,14 @@ export default function ImageLightbox({
   const safeIndex = total ? Math.min(Math.max(index, 0), total - 1) : 0;
   const [zoomed, setZoomed] = useState(false);
 
-  // Any change of photo, and every reopen, starts fitted rather than inheriting
-  // a pan position from the previous image.
   useEffect(() => {
     setZoomed(false);
   }, [safeIndex, open]);
 
-  const step = useCallback(
-    (delta) => {
-      if (total < 2) return;
-      onIndexChange?.((safeIndex + delta + total) % total);
-    },
-    [onIndexChange, safeIndex, total],
-  );
+  const step = useCallback((delta) => {
+    if (total < 2) return;
+    onIndexChange?.((safeIndex + delta + total) % total);
+  }, [onIndexChange, safeIndex, total]);
 
   const onKeyDown = (event) => {
     if (event.key === "ArrowLeft") {
@@ -50,11 +41,14 @@ export default function ImageLightbox({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onKeyDown={onKeyDown}
-        className="left-0 top-0 h-[100dvh] w-screen max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 bg-black/95 p-0 [&>button]:z-20 [&>button]:text-white/80 [&>button]:hover:text-white"
+        className="left-0 top-0 h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-0 bg-black/95 p-0 [&>button]:right-[max(1rem,env(safe-area-inset-right))] [&>button]:top-[max(1rem,env(safe-area-inset-top))] [&>button]:z-30 [&>button]:bg-black/45 [&>button]:text-white [&>button]:backdrop-blur-md"
       >
         <DialogTitle className="sr-only">{`${title}, photo ${safeIndex + 1} of ${total}`}</DialogTitle>
 
-        <div className={cn("h-full w-full", zoomed ? "overflow-auto" : "flex items-center justify-center overflow-hidden")}>
+        <div className={cn(
+          "h-full w-full pb-[max(4.5rem,calc(env(safe-area-inset-bottom)+3.5rem))] pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))]",
+          zoomed ? "overflow-auto" : "flex items-center justify-center overflow-hidden",
+        )}>
           <img
             src={images[safeIndex]}
             alt={`${title}, photo ${safeIndex + 1} of ${total}`}
@@ -78,7 +72,7 @@ export default function ImageLightbox({
             <LightboxArrow label="Next photo" side="right" onClick={() => step(1)}>
               <ChevronRight className="h-6 w-6" aria-hidden="true" />
             </LightboxArrow>
-            <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold tabular-nums text-white/90">
+            <p className="pointer-events-none absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold tabular-nums text-white/90 backdrop-blur-md">
               {`${safeIndex + 1} / ${total}`}
             </p>
           </>
@@ -95,8 +89,10 @@ function LightboxArrow({ label, side, onClick, children }) {
       aria-label={label}
       onClick={onClick}
       className={cn(
-        "absolute top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur-md transition hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-        side === "left" ? "left-3 sm:left-4" : "right-3 sm:right-4",
+        "absolute top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur-md transition hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        side === "left"
+          ? "left-[max(0.75rem,env(safe-area-inset-left))]"
+          : "right-[max(0.75rem,env(safe-area-inset-right))]",
       )}
     >
       {children}
