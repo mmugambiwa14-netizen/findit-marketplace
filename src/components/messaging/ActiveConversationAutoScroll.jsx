@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 const THREAD_SELECTOR = 'main.findit-scroll-region';
+const ATTACH_RETRY_MS = 50;
 
 function scrollToLatest(container) {
   requestAnimationFrame(() => {
@@ -14,44 +15,63 @@ function scrollToLatest(container) {
 /**
  * Keeps an active conversation aligned to its newest rendered message.
  *
- * This component is intentionally part of the same branch-head deployment as
- * AppLayout so the shared shell never imports a file that is absent from the
- * deployed commit.
+ * Incoming messages can update through query polling without replacing the
+ * message-list element itself. Watch both DOM additions and list-size changes
+ * so React renders, image expansion and delayed layout all end at the newest
+ * message.
  */
 export default function ActiveConversationAutoScroll() {
   useEffect(() => {
-    let observer;
+    let mutationObserver;
+    let resizeObserver;
     let retryTimer;
-    let previousLastMessage;
+    let container;
+    let messageList;
+    let previousHeight = 0;
+
+    const followLatest = () => {
+      if (!container) return;
+      scrollToLatest(container);
+    };
 
     const attach = () => {
-      const container = document.querySelector(THREAD_SELECTOR);
-      const messageList = container?.firstElementChild;
+      container = document.querySelector(THREAD_SELECTOR);
+      messageList = container?.firstElementChild;
 
       if (!container || !messageList) {
-        retryTimer = window.setTimeout(attach, 50);
+        retryTimer = window.setTimeout(attach, ATTACH_RETRY_MS);
         return;
       }
 
-      previousLastMessage = messageList.lastElementChild;
-      scrollToLatest(container);
+      previousHeight = messageList.scrollHeight;
+      followLatest();
 
-      observer = new MutationObserver(() => {
-        const nextLastMessage = messageList.lastElementChild;
-        if (!nextLastMessage || nextLastMessage === previousLastMessage) return;
-
-        previousLastMessage = nextLastMessage;
-        scrollToLatest(container);
+      mutationObserver = new MutationObserver((records) => {
+        const addedContent = records.some((record) => record.addedNodes.length > 0);
+        if (addedContent) followLatest();
+      });
+      mutationObserver.observe(messageList, {
+        childList: true,
+        subtree: true,
       });
 
-      observer.observe(messageList, { childList: true });
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(() => {
+          const nextHeight = messageList.scrollHeight;
+          if (nextHeight <= previousHeight) return;
+          previousHeight = nextHeight;
+          followLatest();
+        });
+        resizeObserver.observe(messageList);
+      }
     };
 
     attach();
 
     return () => {
       if (retryTimer) window.clearTimeout(retryTimer);
-      observer?.disconnect();
+      mutationObserver?.disconnect();
+      resizeObserver?.disconnect();
     };
   }, []);
 
