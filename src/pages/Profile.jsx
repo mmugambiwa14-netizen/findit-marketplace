@@ -1,19 +1,34 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Bell, Building2, ChevronRight, Heart, HelpCircle, LayoutDashboard, ListChecks,
-  LogOut, MessageCircle, MessageSquareMore, ScrollText, Settings, ShieldCheck,
+  LogOut, MessageCircle, MessageSquareMore, RefreshCw, ScrollText, Settings, ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { usePwa } from '@/components/pwa/PwaProvider';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import { featureFlags } from '@/lib/featureFlags';
 import { toast } from 'sonner';
 
 export default function Profile() {
   const { user, isLoadingAuth: isLoading, logout } = useAuth();
+  const { refreshApp } = usePwa();
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleLogout = async () => {
     const signedOut = await logout();
     if (signedOut === false) toast.error('Could not sign out. Check your connection and try again.');
+  };
+
+  const handleRefresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshApp();
+    } catch {
+      setRefreshing(false);
+      toast.error('Could not refresh FindIt. Check your connection and try again.');
+    }
   };
 
   if (isLoading) return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
@@ -38,7 +53,19 @@ export default function Profile() {
     <div className="findit-screen">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-4 pt-5">
         <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Your FindIt</p><h1 className="mt-1 text-2xl font-black tracking-tight">Profile</h1></div>
-        <Link to="/settings" aria-label="Open settings" className="clay-icon h-11 w-11"><Settings className="h-5 w-5" /></Link>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            aria-label="Refresh FindIt"
+            title="Refresh FindIt"
+            className="clay-icon h-11 w-11 disabled:cursor-wait disabled:opacity-70"
+          >
+            <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <Link to="/settings" aria-label="Open settings" className="clay-icon h-11 w-11"><Settings className="h-5 w-5" /></Link>
+        </div>
       </header>
 
       <div className="mx-auto max-w-3xl">
