@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Camera, Clock3, Eye, Loader2, MessageSquareMore, Users, XCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,7 @@ import {
 import TourUploader from '@/components/tours/TourUploader';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import { declinePeekRequest, getSellerPeekRequestQueue } from '@/services/peekThreadsService';
+import { queueResponsePeekBinding } from '@/services/responsePeekBindingIntentService';
 
 function parentPath(item) {
   if (item.parentType === 'service') return `/service/${item.parentId}`;
@@ -37,17 +38,20 @@ function waitingLabel(seconds) {
   const hours = Math.max(0, Math.floor(Number(seconds) / 3600));
   if (hours < 1) return 'Less than an hour';
   if (hours < 24) return `${hours}h waiting`;
-  const days = Math.floor(hours / 24);
-  return `${days}d waiting`;
+  return `${Math.floor(hours / 24)}d waiting`;
 }
 
 export default function BuyerPeekRequestsQueue() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedId = searchParams.get('request');
   const [declineTarget, setDeclineTarget] = useState(null);
   const [declineReason, setDeclineReason] = useState('');
   const [responseTarget, setResponseTarget] = useState(null);
   const [responseDraft, setResponseDraft] = useState(null);
   const [responseBusy, setResponseBusy] = useState(false);
+  const [bindingBusy, setBindingBusy] = useState(false);
+
   const queue = useInfiniteQuery({
     queryKey: ['seller-peek-request-queue'],
     queryFn: ({ pageParam }) => getSellerPeekRequestQueue({ cursor: pageParam || null, limit: 20 }),
@@ -55,11 +59,23 @@ export default function BuyerPeekRequestsQueue() {
     getNextPageParam: (page) => page.nextCursor || undefined,
     staleTime: 30_000,
   });
+
   const items = useMemo(() => {
     const byId = new Map();
     for (const page of queue.data?.pages || []) for (const item of page.items) byId.set(item.requestId, item);
     return [...byId.values()];
   }, [queue.data]);
+
+  useEffect(() => {
+    if (!requestedId || responseTarget) return;
+    const match = items.find((item) => item.requestId === requestedId);
+    if (match) {
+      setResponseDraft(null);
+      setResponseTarget(match);
+      return;
+    }
+    if (queue.hasNextPage && !queue.isFetchingNextPage) queue.fetchNextPage();
+  }, [items, queue, requestedId, responseTarget]);
 
   const decline = useMutation({
     mutationFn: () => declinePeekRequest({ requestId: declineTarget.requestId, reason: declineReason.trim() }),
@@ -76,13 +92,35 @@ export default function BuyerPeekRequestsQueue() {
   const openResponse = (item) => {
     setResponseDraft(null);
     setResponseTarget(item);
+    const next = new URLSearchParams(searchParams);
+    next.set('request', item.requestId);
+    setSearchParams(next, { replace: true });
   };
 
   const closeResponse = () => {
-    if (responseBusy) return;
+    if (responseBusy || bindingBusy) return;
     if (responseDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(responseDraft.previewUrl);
     setResponseDraft(null);
     setResponseTarget(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete('request');
+    setSearchParams(next, { replace: true });
+  };
+
+  const completeResponseUpload = async (result) => {
+    if (!responseTarget?.requestId || !result?.tourId) return;
+    setBindingBusy(true);
+    try {
+      await queueResponsePeekBinding(result.tourId, responseTarget.requestId);
+      toast.success('Response Peek uploaded. It will answer this request automatically after approval.');
+      queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['peek-threads'] });
+      closeResponse();
+    } catch (error) {
+      toast.error(error.message || 'The Response Peek uploaded but could not be attached to this request.');
+    } finally {
+      setBindingBusy(false);
+    }
   };
 
   return (
@@ -129,11 +167,11 @@ export default function BuyerPeekRequestsQueue() {
       )}
 
       <Dialog open={Boolean(responseTarget)} onOpenChange={(open) => { if (!open) closeResponse(); }}>
-        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
+        <DialogContent className="max-h-[calc(100dvh-max(1rem,env(safe-area-inset-top))-max(1rem,env(safe-area-inset-bottom)))] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Record Response Peek</DialogTitle>
             <DialogDescription>
-              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. The video will be moderated before it becomes public evidence.` : 'Record visual evidence for this buyer request.'}
+              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. FindIt will attach the approved video to this request automatically.` : 'Record visual evidence for this buyer request.'}
             </DialogDescription>
           </DialogHeader>
           {responseTarget && (
@@ -144,14 +182,13 @@ export default function BuyerPeekRequestsQueue() {
               category={responseTarget.category}
               value={responseDraft}
               onChange={setResponseDraft}
+              disabled={bindingBusy}
               onBusyChange={setResponseBusy}
-              onUploaded={() => {
-                toast.success('Response Peek uploaded for processing');
-                queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
-              }}
+              onUploaded={completeResponseUpload}
             />
           )}
-          <p className="text-xs leading-5 text-muted-foreground">After approval, you will choose every compatible request this Response Peek answers. Uploading does not mark requests answered yet.</p>
+          {(bindingBusy || responseBusy) && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Finishing the Response Peek…</p>}
+          <p className="text-xs leading-5 text-muted-foreground">The request remains pending while the video is processed and moderated. It becomes answered automatically after approval.</p>
         </DialogContent>
       </Dialog>
 
