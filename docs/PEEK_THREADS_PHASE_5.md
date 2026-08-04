@@ -36,3 +36,7 @@ Still required to complete Phase 5:
 5. Integrate the shared section into Service detail once the service page’s stacked listing-shell work is reconciled.
 6. Replace the temporary decline prompt with the repository’s focus-managed dialog primitive.
 7. Run browser, keyboard, screen-reader and mobile acceptance.
+
+## Verification
+
+Repository-only verification currently consists of `tests/peekThreadUiContracts.test.mjs` plus the existing read/write contract suites. No live Supabase, browser or device execution is claimed from this environment.
