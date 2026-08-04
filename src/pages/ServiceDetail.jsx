@@ -4,11 +4,14 @@ import { Car, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
 import ContactButtons from "@/components/listings/ContactButtons";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
+import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
 import { ContactBar, DetailLoading, DetailSection, SafetyPanel, SellerPanel } from "@/components/listings/ListingDetailLayout";
+import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { getServiceCategory, getSubcategoryLabel } from "@/lib/serviceConstants";
 import { useCurrency } from "@/lib/CurrencyContext";
@@ -18,6 +21,7 @@ export default function ServiceDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { format } = useCurrency();
+  const { guestOpen, guestAction, guard, closeGuest } = useGuestGuard();
 
   const { data: service, isLoading, error, refetch } = useQuery({
     queryKey: ["service", id],
@@ -73,11 +77,13 @@ export default function ServiceDetail() {
           </section>
 
           {service.description && <DetailSection title="About this service"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{service.description}</p></DetailSection>}
+          <PeekThreadsSection parentType="service" parentId={service.id} listingKind="service" ownerId={service.provider_id} guard={guard} />
           <SellerPanel name={service.provider_name || "FindIt service provider"} sellerId={service.provider_id} />
           <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. FindIt does not handle service payments.</SafetyPanel>
         </div>
       </main>
       <ContactBar><ContactButtons listing={service} type="service" /></ContactBar>
+      <GuestPromptSheet open={guestOpen} onClose={closeGuest} action={guestAction} />
     </div>
   );
 }
