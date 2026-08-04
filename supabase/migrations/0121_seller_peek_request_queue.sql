@@ -99,7 +99,7 @@ begin
 end;
 $function$;
 
-revoke all on function public.seller_peek_request_queue(bigint, timestamptz, uuid, integer) from public;
+revoke all on function public.seller_peek_request_queue(bigint, timestamptz, uuid, integer) from public, anon;
 grant execute on function public.seller_peek_request_queue(bigint, timestamptz, uuid, integer) to authenticated;
 
 comment on function public.seller_peek_request_queue(bigint, timestamptz, uuid, integer) is
