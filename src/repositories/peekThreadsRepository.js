@@ -35,10 +35,16 @@ export async function readSellerPeekRequestQueue(request) {
   return data ?? [];
 }
 
+export async function readUnboundResponsePeeks() {
+  return await invoke('seller_unbound_response_peeks', {}, 'Unable to load approved Response Peeks') ?? [];
+}
+
+export async function readResponsePeekRequestCandidates(tourId) {
+  return await invoke('response_peek_request_candidates', { p_tour_id: tourId }, 'Unable to load matching Peek Requests') ?? [];
+}
+
 export async function invokeResponsePeekPlayback(tourId) {
-  const { data, error } = await supabase.functions.invoke('tour-playback-access', {
-    body: { tourId },
-  });
+  const { data, error } = await supabase.functions.invoke('tour-playback-access', { body: { tourId } });
   if (error) {
     const repositoryError = new Error('Unable to prepare Response Peek playback');
     repositoryError.cause = error;
@@ -48,26 +54,9 @@ export async function invokeResponsePeekPlayback(tourId) {
   return data;
 }
 
-export function createPeekRequestRow(args) {
-  return invoke('create_peek_request', args, 'Unable to create the Peek Request');
-}
-
-export function supportPeekRequestRow(requestId) {
-  return invoke('support_peek_request', { p_request_id: requestId }, 'Unable to support this Peek Request');
-}
-
-export function withdrawPeekRequestSupportRow(requestId) {
-  return invoke('withdraw_peek_request_support', { p_request_id: requestId }, 'Unable to withdraw support');
-}
-
-export function declinePeekRequestRow(args) {
-  return invoke('decline_peek_request', args, 'Unable to decline the Peek Request');
-}
-
-export function mergePeekRequestRows(args) {
-  return invoke('merge_peek_request', args, 'Unable to merge the Peek Requests');
-}
-
-export function bindResponsePeekRows(args) {
-  return invoke('bind_response_peek', args, 'Unable to attach the Response Peek');
-}
+export function createPeekRequestRow(args) { return invoke('create_peek_request', args, 'Unable to create the Peek Request'); }
+export function supportPeekRequestRow(requestId) { return invoke('support_peek_request', { p_request_id: requestId }, 'Unable to support this Peek Request'); }
+export function withdrawPeekRequestSupportRow(requestId) { return invoke('withdraw_peek_request_support', { p_request_id: requestId }, 'Unable to withdraw support'); }
+export function declinePeekRequestRow(args) { return invoke('decline_peek_request', args, 'Unable to decline the Peek Request'); }
+export function mergePeekRequestRows(args) { return invoke('merge_peek_request', args, 'Unable to merge the Peek Requests'); }
+export function bindResponsePeekRows(args) { return invoke('bind_response_peek', args, 'Unable to attach the Response Peek'); }
