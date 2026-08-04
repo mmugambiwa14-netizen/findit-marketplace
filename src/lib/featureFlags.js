@@ -5,39 +5,17 @@
 // release evidence are complete in the target environment.
 
 import { mapProviderConfigured } from './mapProvider.js';
+import {
+  readBooleanFlag,
+  resolveStagingCertifiedFlag,
+  resolveStagingProviderFlag,
+} from './stagingCapabilityPolicy.js';
 
 const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
-
-const STAGING_BRANCHES = new Set([
-  'feature/listing-intelligence-foundation',
-  'claude/findit-hardening-listing-012cf0',
-  'feature/peek-threads-phase-3',
-]);
-const deploymentBranch = String(viteEnv.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim();
-const isStagingBranch = STAGING_BRANCHES.has(deploymentBranch);
-
-const flag = (envVar, fallback = false) => {
-  const raw = viteEnv[envVar];
-  if (raw === undefined) return fallback;
-  return raw === 'true' || raw === true;
-};
-
-// These capabilities have already crossed their repository implementation
-// boundary on the trusted staging lineage. Vercel Preview and Production use
-// separate environment-variable scopes; an older Preview value of `false`
-// must not silently remove a capability that is visible on persistent staging.
-// Production outside this staging lineage remains governed by its explicit
-// environment value and therefore still fails closed.
-const stagingCertifiedFlag = (envVar) => isStagingBranch || flag(envVar, false);
-
-// Authentication providers are slightly stricter than ordinary UI features:
-// trusted staging branches inherit the configured provider, but an explicit
-// false value remains an emergency off switch in every environment.
-const stagingProviderFlag = (envVar, legacyEnvVar) => {
-  const raw = viteEnv[envVar] ?? viteEnv[legacyEnvVar];
-  if (raw === 'false' || raw === false) return false;
-  return isStagingBranch || raw === 'true' || raw === true;
-};
+const flag = (envVar, fallback = false) => readBooleanFlag(viteEnv, envVar, fallback);
+const stagingCertifiedFlag = (envVar) => resolveStagingCertifiedFlag(viteEnv, envVar);
+const stagingProviderFlag = (envVar, legacyEnvVar) =>
+  resolveStagingProviderFlag(viteEnv, envVar, legacyEnvVar);
 
 export const featureFlags = {
   businessProfiles: flag('VITE_FEATURE_BUSINESS_PROFILES', true),
