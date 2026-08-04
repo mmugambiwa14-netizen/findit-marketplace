@@ -1,6 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import BuyerPeekRequestsQueue from '@/components/peekThreads/BuyerPeekRequestsQueue';
+import ResponsePeekBindingQueue from '@/components/peekThreads/ResponsePeekBindingQueue';
 
 export default function BuyerPeekRequests() {
   const navigate = useNavigate();
@@ -13,7 +14,10 @@ export default function BuyerPeekRequests() {
           <p className="text-xs text-muted-foreground">Visual evidence buyers want from your listings</p>
         </div>
       </header>
-      <div className="pt-4"><BuyerPeekRequestsQueue /></div>
+      <div className="pt-4">
+        <ResponsePeekBindingQueue />
+        <BuyerPeekRequestsQueue />
+      </div>
     </div>
   );
 }
