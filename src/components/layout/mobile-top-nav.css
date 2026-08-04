@@ -1,0 +1,5 @@
+@media (max-width: 767px) {
+  .findit-shared-mobile-top-nav + main .findit-hero-panel > header:first-of-type {
+    display: none;
+  }
+}
