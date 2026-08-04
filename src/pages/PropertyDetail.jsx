@@ -9,6 +9,7 @@ import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
+import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
 import { ContactBar, DetailError, DetailLoading, DetailMissing, DetailSection, SafetyPanel, SellerPanel } from "@/components/listings/ListingDetailLayout";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
@@ -113,6 +114,7 @@ export default function PropertyDetail() {
           {property.description && <DetailSection title="About this property"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{property.description}</p></DetailSection>}
           <VariantSelector variants={property.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
           <PriceBreakdown listing={property} />
+          <PeekThreadsSection parentType="listing" parentId={property.id} listingKind="property" ownerId={property.seller_id} guard={guard} />
           <SellerPanel name={property.seller_name} sellerId={property.seller_id} />
           <SafetyPanel>Always view the property in person before making a payment. Never send money to someone you have not met. FindIt does not handle buyer–seller payments.{isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}</SafetyPanel>
           <ListingRecommendations subjectListingId={property.id} />
