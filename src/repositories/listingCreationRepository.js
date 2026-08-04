@@ -6,6 +6,23 @@ function failure(message, error) {
   return result;
 }
 
+async function functionFailure(message, error) {
+  let detail = null;
+  try {
+    const response = error?.context;
+    if (response && typeof response.clone === 'function') {
+      detail = await response.clone().json();
+    }
+  } catch {
+    detail = null;
+  }
+  const result = new Error(detail?.message || message);
+  result.code = detail?.code || error?.name || 'edge_function_error';
+  result.status = error?.context?.status || null;
+  result.cause = error;
+  return result;
+}
+
 export async function insertListingSubmission(request) {
   const { data, error } = await supabase.rpc('create_v1_listing_submission', {
     p_submission_key: request.submissionKey,
@@ -40,7 +57,7 @@ export async function invokeListingImageUpload(file) {
   const body = new FormData();
   body.append('file', file);
   const { data, error } = await supabase.functions.invoke('listing-image-upload', { body });
-  if (error) throw failure('Unable to upload the image', error);
+  if (error) throw await functionFailure('Unable to upload the image', error);
   if (!data?.path || !data?.intentId || !data?.previewUrl) throw new Error('The upload response is incomplete');
   return data;
 }
