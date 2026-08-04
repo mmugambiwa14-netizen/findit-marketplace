@@ -11,6 +11,7 @@ export async function invokeTourUploadIntent(request) {
     body: {
       parentType: request.parentType,
       parentId: request.parentId,
+      peekKind: request.peekKind || 'main',
       filename: request.filename,
       mimeType: request.mimeType,
       byteSize: request.byteSize,
@@ -19,9 +20,9 @@ export async function invokeTourUploadIntent(request) {
       idempotencyKey: request.idempotencyKey,
     },
   });
-  if (error) throw failure('Unable to prepare the Tour upload', error);
+  if (error) throw failure('Unable to prepare the Peek upload', error);
   if (!data?.intentId || !data?.tourId || !data?.path || !data?.uploadToken) {
-    throw new Error('The Tour upload response is incomplete');
+    throw new Error('The Peek upload response is incomplete');
   }
   return data;
 }
@@ -33,7 +34,7 @@ export async function uploadTourSourceObject({ path, uploadToken, file }) {
       contentType: file.type,
       upsert: false,
     });
-  if (error) throw failure('Unable to upload the Tour video', error);
+  if (error) throw failure('Unable to upload the Peek video', error);
   return data;
 }
 
@@ -41,11 +42,10 @@ export async function invokeTourUploadComplete(intentId) {
   const { data, error } = await supabase.functions.invoke('tour-upload-complete', {
     body: { intentId },
   });
-  if (error) throw failure('Unable to confirm the Tour upload', error);
-  if (!data?.tourId) throw new Error('The Tour completion response is incomplete');
+  if (error) throw failure('Unable to confirm the Peek upload', error);
+  if (!data?.tourId) throw new Error('The Peek completion response is incomplete');
   return data;
 }
-
 
 export async function readPublicTourSummaries({ listingIds = [], serviceIds = [] } = {}) {
   if (!listingIds.length && !serviceIds.length) return [];
@@ -53,7 +53,7 @@ export async function readPublicTourSummaries({ listingIds = [], serviceIds = []
     p_listing_ids: listingIds,
     p_service_ids: serviceIds,
   });
-  if (error) throw failure('Unable to read Tour summaries', error);
+  if (error) throw failure('Unable to read Peek summaries', error);
   return data ?? [];
 }
 
@@ -61,8 +61,8 @@ export async function invokePublicTourFeed(request) {
   const { data, error } = await supabase.functions.invoke('tour-feed', {
     body: request,
   });
-  if (error) throw failure('Unable to load Tours', error);
-  if (!data || !Array.isArray(data.items)) throw new Error('The Tour feed response is incomplete');
+  if (error) throw failure('Unable to load Peeks', error);
+  if (!data || !Array.isArray(data.items)) throw new Error('The Peek feed response is incomplete');
   return data;
 }
 
@@ -70,7 +70,7 @@ export async function invokePublicTourPlayback(parent) {
   const { data, error } = await supabase.functions.invoke('tour-playback-access', {
     body: parent,
   });
-  if (error) throw failure('Unable to prepare Tour playback', error);
+  if (error) throw failure('Unable to prepare Peek playback', error);
   return data;
 }
 
@@ -78,7 +78,7 @@ export async function readOwnerTourRows(parent) {
   let query = supabase
     .from('listing_tours')
     .select(`
-      id, owner_id, listing_id, service_id, status, moderation_status,
+      id, owner_id, listing_id, service_id, peek_kind, status, moderation_status,
       duration_seconds, width, height, source_byte_size, processed_byte_size,
       failure_code, failure_message, rejection_reason, created_at, uploaded_at,
       processing_started_at, ready_at, approved_at, published_at, removed_at
@@ -88,19 +88,19 @@ export async function readOwnerTourRows(parent) {
     ? query.eq('listing_id', parent.parentId)
     : query.eq('service_id', parent.parentId);
   const { data, error } = await query;
-  if (error) throw failure('Unable to read Tour status', error);
+  if (error) throw failure('Unable to read Peek status', error);
   return data ?? [];
 }
 
 export async function removeOwnerTourRow(tourId) {
   const { data, error } = await supabase.rpc('owner_remove_tour', { p_tour_id: tourId });
-  if (error) throw failure('Unable to remove the Tour', error);
+  if (error) throw failure('Unable to remove the Peek', error);
   return data;
 }
 
 export async function retryOwnerTourRow(tourId) {
   const { data, error } = await supabase.rpc('owner_retry_failed_tour', { p_tour_id: tourId });
-  if (error) throw failure('Unable to retry the Tour', error);
+  if (error) throw failure('Unable to retry the Peek', error);
   return data;
 }
 
@@ -110,7 +110,7 @@ export async function reportTourRow(request) {
     p_reason: request.reason,
     p_description: request.description,
   });
-  if (error) throw failure('Unable to report the Tour', error);
+  if (error) throw failure('Unable to report the Peek', error);
   return data;
 }
 
@@ -124,7 +124,7 @@ export async function readAdminTourQueue(filters = {}) {
     p_cursor_at: filters.cursor?.at ?? null,
     p_cursor_id: filters.cursor?.id ?? null,
   });
-  if (error) throw failure('Unable to read the Tour moderation queue', error);
+  if (error) throw failure('Unable to read the Peek moderation queue', error);
   return data ?? [];
 }
 
@@ -132,8 +132,8 @@ export async function invokeAdminTourReviewAccess(tourId) {
   const { data, error } = await supabase.functions.invoke('tour-admin-review-access', {
     body: { tourId },
   });
-  if (error) throw failure('Unable to prepare Tour review media', error);
-  if (!data?.tourId) throw new Error('The Tour review response is incomplete');
+  if (error) throw failure('Unable to prepare Peek review media', error);
+  if (!data?.tourId) throw new Error('The Peek review response is incomplete');
   return data;
 }
 
@@ -142,7 +142,7 @@ export async function approveAdminTour(tourId, reason) {
     p_tour_id: tourId,
     p_reason: reason,
   });
-  if (error) throw failure('Unable to approve the Tour', error);
+  if (error) throw failure('Unable to approve the Peek', error);
   return data;
 }
 
@@ -151,6 +151,6 @@ export async function rejectAdminTour(tourId, reason) {
     p_tour_id: tourId,
     p_reason: reason,
   });
-  if (error) throw failure('Unable to reject the Tour', error);
+  if (error) throw failure('Unable to reject the Peek', error);
   return data;
 }
