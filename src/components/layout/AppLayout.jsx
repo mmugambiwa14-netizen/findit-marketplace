@@ -4,6 +4,7 @@ import ActiveConversationAutoScroll from '@/components/messaging/ActiveConversat
 import { useAuth } from '@/lib/AuthContext';
 import { cn } from '@/lib/utils';
 import BottomNav from './BottomNav';
+import MobileTopNav from './MobileTopNav';
 import SiteFooter from './SiteFooter';
 import TopNav from './TopNav';
 
@@ -52,10 +53,6 @@ function matchesRoute(pathname, route) {
 }
 
 function isImmersiveDesktopRoute(pathname) {
-  // An open conversation owns the full viewport and has its own participant,
-  // listing and back controls. Every other marketplace route keeps the shared
-  // desktop header so an installed PWA never strands the user away from
-  // Discover, Peeks, Chats, Post or Profile.
   return pathname.startsWith('/chats/') || pathname.startsWith('/messages/');
 }
 
@@ -67,6 +64,7 @@ export default function AppLayout() {
   const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
   const immersiveConversation = isImmersiveDesktopRoute(location.pathname);
   const showDesktopNav = !immersiveConversation;
+  const showSharedMobileTopBar = !isDiscoverHome && !immersiveConversation;
 
   return (
     <div className="findit-screen min-h-[100dvh]">
@@ -77,12 +75,13 @@ export default function AppLayout() {
         Skip to main content
       </a>
       {showDesktopNav && <TopNav />}
+      {showSharedMobileTopBar && <MobileTopNav />}
       <main
         id="main-content"
         tabIndex={-1}
         className={cn(
           'min-h-[70vh]',
-          !immersiveConversation && 'findit-mobile-safe-top',
+          isDiscoverHome && 'findit-mobile-safe-top',
           showMobileNav && 'findit-mobile-nav-clearance',
         )}
       >
@@ -92,7 +91,6 @@ export default function AppLayout() {
       {!selfContained && <div className="hidden md:block"><SiteFooter /></div>}
       {!selfContained && !isDiscoverHome && <GuestBanner user={user} />}
       {showMobileNav && <BottomNav />}
-      {/* The observer mounts only for the full-screen active conversation. */}
       {immersiveConversation && <ActiveConversationAutoScroll />}
     </div>
   );
