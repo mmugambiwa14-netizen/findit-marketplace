@@ -57,13 +57,19 @@ function relativeTime(value) {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d ago`;
-  const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return `${Math.floor(days / 30)}mo ago`;
 }
 
 function viewCount(item) {
   const value = Number(item.viewCount ?? item.views ?? item.playCount ?? 0);
   return Number.isFinite(value) && value > 0 ? value.toLocaleString() : '0';
+}
+
+function formatPlaybackTime(seconds) {
+  const safeSeconds = Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainder = safeSeconds % 60;
+  return `${minutes}:${String(remainder).padStart(2, '0')}`;
 }
 
 export default function ImmersivePeekSlide({
@@ -88,7 +94,8 @@ export default function ImmersivePeekSlide({
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(muteByDefault);
-  const [progress, setProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const [saved, setSaved] = useState(isSaved);
   const [saving, setSaving] = useState(false);
   const [guestOpen, setGuestOpen] = useState(false);
@@ -141,7 +148,8 @@ export default function ImmersivePeekSlide({
     if (!nearby) {
       videoRef.current?.pause();
       setPlaying(false);
-      setProgress(0);
+      setCurrentTime(0);
+      setDuration(0);
       const timer = window.setTimeout(() => setPlayback(null), 500);
       return () => window.clearTimeout(timer);
     }
@@ -178,6 +186,16 @@ export default function ImmersivePeekSlide({
     if (!result || !videoRef.current) return;
     if (videoRef.current.paused) videoRef.current.play().catch(() => {});
     else videoRef.current.pause();
+  };
+
+  const seek = async (event) => {
+    const result = await loadPlayback();
+    const video = videoRef.current;
+    if (!result || !video) return;
+    const nextTime = Number(event.target.value);
+    if (!Number.isFinite(nextTime)) return;
+    video.currentTime = nextTime;
+    setCurrentTime(nextTime);
   };
 
   const toggleSave = async () => {
@@ -226,6 +244,8 @@ export default function ImmersivePeekSlide({
     setReportOpen(true);
   };
 
+  const actionClass = 'flex h-11 w-11 flex-col items-center justify-center rounded-full bg-transparent text-[9px] font-semibold text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.95)] hover:bg-white/10';
+
   return (
     <article
       ref={rootRef}
@@ -243,15 +263,14 @@ export default function ImmersivePeekSlide({
           preload={nearby ? 'metadata' : 'none'}
           className="absolute inset-0 h-full w-full object-cover"
           onClick={togglePlayback}
+          onLoadedMetadata={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
+          onDurationChange={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
-          onTimeUpdate={(event) => {
-            const duration = event.currentTarget.duration || 0;
-            setProgress(duration > 0 ? event.currentTarget.currentTime / duration : 0);
-          }}
+          onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime || 0)}
           onEnded={() => {
             setPlaying(false);
-            setProgress(1);
+            setCurrentTime(event?.currentTarget?.duration || duration);
             onEnded?.(item.tourId);
           }}
           onError={() => {
@@ -264,12 +283,9 @@ export default function ImmersivePeekSlide({
       ) : <div className="absolute inset-0 bg-slate-950" />}
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/95" aria-hidden="true" />
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-white/15" aria-hidden="true">
-        <div className="h-full bg-blue-400 transition-[width] duration-150" style={{ width: `${Math.max(0, Math.min(1, progress)) * 100}%` }} />
-      </div>
 
       {!playing && (
-        <button type="button" onClick={togglePlayback} disabled={loading} className="absolute left-1/2 top-[43%] z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/40 shadow-2xl backdrop-blur-md active:scale-95" aria-label="Play Peek">
+        <button type="button" onClick={togglePlayback} disabled={loading} className="absolute left-1/2 top-[43%] z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/35 shadow-2xl backdrop-blur-sm active:scale-95" aria-label="Play Peek">
           {loading ? <RotateCcw className="h-5 w-5 animate-spin" /> : <Play className="ml-0.5 h-6 w-6 fill-current" />}
         </button>
       )}
@@ -285,59 +301,78 @@ export default function ImmersivePeekSlide({
       )}
 
       <div className="absolute inset-x-0 bottom-0 z-10 px-[var(--findit-page-gutter)] pb-[calc(var(--findit-nav-height)+1.1rem+env(safe-area-inset-bottom))] sm:pb-5">
-        <div className="relative pr-[4.2rem]">
+        <div className="relative pr-[3.8rem]">
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-white/15 bg-black/45 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-white/85 backdrop-blur-md">
+            <span className="rounded-full border border-white/15 bg-black/35 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-white/90 backdrop-blur-sm">
               {item.parentType === 'service' ? 'Service' : item.parentCategory || item.category || 'Listing'}
             </span>
           </div>
-          <h2 className="line-clamp-2 text-xl font-black leading-tight">{item.title}</h2>
-          <p className="mt-1 text-lg font-extrabold text-blue-400">{priceLabel(item, format)}</p>
-          {item.publicLocation && <p className="mt-1 flex items-center gap-1.5 text-sm text-white/80"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">{item.publicLocation}</span></p>}
-          {item.peekKind === 'response' && item.requestText && <p className="mt-2 line-clamp-2 max-w-xl rounded-xl border border-blue-400/25 bg-blue-500/15 px-3 py-2 text-xs text-white/90 backdrop-blur-md">Answers: “{item.requestText}”</p>}
+          <h2 className="line-clamp-2 text-xl font-black leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">{item.title}</h2>
+          <p className="mt-1 text-lg font-extrabold text-blue-400 drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">{priceLabel(item, format)}</p>
+          {item.publicLocation && <p className="mt-1 flex items-center gap-1.5 text-sm text-white/90 drop-shadow-[0_2px_5px_rgba(0,0,0,0.9)]"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">{item.publicLocation}</span></p>}
+          {item.peekKind === 'response' && item.requestText && <p className="mt-2 line-clamp-2 max-w-xl rounded-xl border border-blue-400/25 bg-black/30 px-3 py-2 text-xs text-white/95 backdrop-blur-sm">Answers: “{item.requestText}”</p>}
 
-          <div className="absolute bottom-0 right-0 flex flex-col gap-2">
+          <div className="absolute bottom-0 right-0 flex flex-col gap-1.5">
             {listingOnly && (
-              <button type="button" onClick={toggleSave} disabled={saving} className={cn('flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/12 bg-black/58 text-[9px] font-semibold text-white/90 backdrop-blur-xl', saved && 'border-blue-400/45 text-blue-300')} aria-label={saved ? 'Remove from saved' : 'Save listing'}>
+              <button type="button" onClick={toggleSave} disabled={saving} className={cn(actionClass, saved && 'text-blue-300')} aria-label={saved ? 'Remove from saved' : 'Save listing'}>
                 <Bookmark className={cn('mb-0.5 h-4 w-4', saved && 'fill-current')} />
                 {saved ? 'Saved' : 'Save'}
               </button>
             )}
-            <button type="button" onClick={share} className="flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/12 bg-black/58 text-[9px] font-semibold text-white/90 backdrop-blur-xl" aria-label="Share listing">
+            <button type="button" onClick={share} className={actionClass} aria-label="Share listing">
               <Share2 className="mb-0.5 h-4 w-4" />Share
             </button>
             {!isOwner && (
-              <button type="button" onClick={openReport} className="flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/12 bg-black/58 text-[9px] font-semibold text-white/90 backdrop-blur-xl" aria-label="Report listing">
+              <button type="button" onClick={openReport} className={actionClass} aria-label="Report listing">
                 <Flag className="mb-0.5 h-4 w-4" />Report
               </button>
             )}
-            <button type="button" onClick={() => setMuted((value) => !value)} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-black/58 text-white/90 backdrop-blur-xl" aria-label={muted ? 'Turn sound on' : 'Mute'}>
+            <button type="button" onClick={() => setMuted((value) => !value)} className={actionClass} aria-label={muted ? 'Turn sound on' : 'Mute'}>
               {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              <span className="sr-only">{muted ? 'Sound off' : 'Sound on'}</span>
             </button>
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3" onClick={(event) => event.stopPropagation()}>
+          <input
+            type="range"
+            min="0"
+            max={Math.max(duration, 0)}
+            step="0.05"
+            value={Math.min(currentTime, duration || 0)}
+            onChange={seek}
+            disabled={!duration}
+            aria-label="Seek through Peek"
+            className="h-5 w-full cursor-pointer appearance-none bg-transparent accent-blue-500 disabled:cursor-default disabled:opacity-55 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-white/35 [&::-webkit-slider-thumb]:-mt-1.5 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg [&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-blue-500 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-white [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-white/35"
+          />
+          <div className="-mt-1 flex justify-between text-[10px] font-semibold tabular-nums text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+            <span>{formatPlaybackTime(currentTime)}</span>
+            <span>{formatPlaybackTime(duration)}</span>
+          </div>
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
           <Link to={detailPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] bg-primary px-3 text-sm font-bold text-primary-foreground">View listing</Link>
           {!isOwner && listingOnly ? (
-            <Link to={requestPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] border border-blue-400/35 bg-slate-950/70 px-3 text-sm font-bold text-white">Request a Peek</Link>
+            <Link to={requestPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] border border-white/25 bg-black/25 px-3 text-sm font-bold text-white backdrop-blur-sm">Request a Peek</Link>
           ) : (
-            <Link to={detailPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] border border-white/10 bg-white/5 px-3 text-sm font-bold text-white/85">More details</Link>
+            <Link to={detailPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] border border-white/20 bg-black/20 px-3 text-sm font-bold text-white/90 backdrop-blur-sm">More details</Link>
           )}
         </div>
 
-        <div className="mt-2 grid grid-cols-3 divide-x divide-white/10 rounded-[var(--findit-panel-radius)] border border-white/10 bg-black/58 px-1 py-2 backdrop-blur-xl">
+        <div className="mt-2 grid grid-cols-3 divide-x divide-white/10 rounded-[var(--findit-panel-radius)] border border-white/10 bg-black/35 px-1 py-2 backdrop-blur-md">
           <div className="flex min-w-0 items-center justify-center gap-1.5 px-1.5">
             <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" />
-            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{availabilityLabel(item.availability)}</p><p className="truncate text-[9px] text-white/50">Status</p></div>
+            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{availabilityLabel(item.availability)}</p><p className="truncate text-[9px] text-white/55">Status</p></div>
           </div>
           <div className="flex min-w-0 items-center justify-center gap-1.5 px-1.5">
-            <Eye className="h-4 w-4 shrink-0 text-white/65" />
-            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{viewCount(item)}</p><p className="truncate text-[9px] text-white/50">Views</p></div>
+            <Eye className="h-4 w-4 shrink-0 text-white/70" />
+            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{viewCount(item)}</p><p className="truncate text-[9px] text-white/55">Views</p></div>
           </div>
           <div className="flex min-w-0 items-center justify-center gap-1.5 px-1.5">
-            <Clock3 className="h-4 w-4 shrink-0 text-white/65" />
-            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{relativeTime(postedAt)}</p><p className="truncate text-[9px] text-white/50">Fresh</p></div>
+            <Clock3 className="h-4 w-4 shrink-0 text-white/70" />
+            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{relativeTime(postedAt)}</p><p className="truncate text-[9px] text-white/55">Fresh</p></div>
           </div>
         </div>
       </div>
