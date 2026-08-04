@@ -85,8 +85,9 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0112_business_profile_url_scheme_constraint.sql
 // - 0113_listing_text_and_price_bounds.sql
 // - 0114_listing_category_attributes.sql
+// - 0115_owner_contact_access_boundary.sql
 // Release-tip anchor: bump this deliberately when a migration is added.
-const RELEASE_TIP_MIGRATION = '0115_owner_contact_access_boundary.sql';
+const RELEASE_TIP_MIGRATION = '0116_peek_threads_foundation.sql';
 if (basename(migrationFiles.at(-1) ?? '') !== RELEASE_TIP_MIGRATION) {
   failures.push(
     `latest expected migration is ${RELEASE_TIP_MIGRATION}, found ${migrationFiles.at(-1) ?? 'none'}`,

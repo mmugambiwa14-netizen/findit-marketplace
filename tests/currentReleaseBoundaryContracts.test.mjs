@@ -11,8 +11,8 @@ const [sqlBoundary, hygiene, migrationWorkflow] = await Promise.all([
 // This anchor is deliberately duplicated between the verifier and this test so
 // that adding a migration cannot silently move the reviewed release tip --
 // whoever bumps it has to touch both, and say so in review.
-test('the reviewed SQL release tip is migration 0115', () => {
-  assert.match(sqlBoundary, /0115_owner_contact_access_boundary\.sql/);
+test('the reviewed SQL release tip is migration 0116', () => {
+  assert.match(sqlBoundary, /0116_peek_threads_foundation\.sql/);
   assert.match(sqlBoundary, /RELEASE_TIP_MIGRATION/);
   // The previous tip stays referenced in the reviewed-tips list above it, so a
   // reader can trace the chain rather than seeing it vanish.
