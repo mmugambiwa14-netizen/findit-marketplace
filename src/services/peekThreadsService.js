@@ -5,6 +5,7 @@ import {
   invokeResponsePeekPlayback,
   mergePeekRequestRows,
   readPeekThreadPage,
+  readSellerPeekRequestQueue,
   supportPeekRequestRow,
   withdrawPeekRequestSupportRow,
 } from '@/repositories/peekThreadsRepository';
@@ -12,6 +13,10 @@ import {
   normalizePeekThreadPage,
   normalizePeekThreadReadRequest,
 } from '@/domain/peekThreads/readContracts';
+import {
+  normalizeSellerPeekQueuePage,
+  normalizeSellerPeekQueueRequest,
+} from '@/domain/peekThreads/sellerQueueContracts';
 import {
   normalizeCreatePeekRequest,
   normalizeDeclinePeekRequest,
@@ -31,6 +36,12 @@ export async function getPeekThreadPage(input) {
   const request = normalizePeekThreadReadRequest(input);
   const rows = await readPeekThreadPage(request);
   return normalizePeekThreadPage(rows, request.limit);
+}
+
+export async function getSellerPeekRequestQueue(input = {}) {
+  const request = normalizeSellerPeekQueueRequest(input);
+  const rows = await readSellerPeekRequestQueue(request);
+  return normalizeSellerPeekQueuePage(rows, request.limit);
 }
 
 export function getResponsePeekPlayback(tourId) {
