@@ -1,30 +1,35 @@
-import { CarFront, House, PanelsTopLeft, Wrench } from 'lucide-react';
+import { CarFront, House, Construction, Wrench } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-function CategoryIcon({ icon: Icon, className = 'h-6 w-6', ...props }) {
+function CategoryIcon({ icon: Icon, color, className = 'h-6 w-6', ...props }) {
   return (
-    <Icon
-      className={className}
-      strokeWidth={2.15}
+    <span
+      className={cn('findit-3d-category-icon', className)}
+      style={{ '--category-icon-color': color }}
       aria-hidden="true"
       {...props}
-    />
+    >
+      <span className="findit-3d-category-icon-face">
+        <Icon className="h-[58%] w-[58%]" strokeWidth={2.35} />
+      </span>
+    </span>
   );
 }
 
 export function PropertyCategoryIcon(props) {
-  return <CategoryIcon icon={House} {...props} />;
+  return <CategoryIcon icon={House} color="#14b8a6" {...props} />;
 }
 
 export function CarCategoryIcon(props) {
-  return <CategoryIcon icon={CarFront} {...props} />;
+  return <CategoryIcon icon={CarFront} color="#2563eb" {...props} />;
 }
 
 export function MachineryCategoryIcon(props) {
-  return <CategoryIcon icon={PanelsTopLeft} {...props} />;
+  return <CategoryIcon icon={Construction} color="#f59e0b" {...props} />;
 }
 
 export function ServicesCategoryIcon(props) {
-  return <CategoryIcon icon={Wrench} {...props} />;
+  return <CategoryIcon icon={Wrench} color="#8b5cf6" {...props} />;
 }
 
 export const CATEGORY_VISUALS = {
