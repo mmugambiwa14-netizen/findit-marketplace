@@ -64,51 +64,6 @@ begin
   if not public.is_active_user() then
     raise exception 'an active account is required' using errcode = '42501';
   end if;
-
-  if ((p_listing_id is not null)::integer + (p_service_id is not null)::integer) <> 1 then
-    raise exception 'exactly one Peek Request parent is required' using errcode = '22023';
-  end if;
-
-  if char_length(v_body) not between 8 and 280 then
-    raise exception 'Peek Request must be between 8 and 280 characters' using errcode = '22023';
-  end if;
-
-  if not private.is_peek_parent_public(p_listing_id, p_service_id) then
-    raise exception 'this listing is not accepting public Peek Requests' using errcode = '42501';
-  end if;
-
-  -- Owners may not manufacture buyer demand on their own listing/service.
-  perform private.assert_peek_parent_owner(p_listing_id, p_service_id, auth.uid());
-  raise exception 'owners cannot request Peeks from themselves' using errcode = '42501';
-exception
-  when insufficient_privilege then
-    -- Expected for a genuine buyer; continue. Any owner reaches the explicit
-    -- exception above.
-    null;
-end;
-$function$;
-
--- Recreate the function body without exception-driven control flow so owner
--- checks remain obvious and auditable.
-create or replace function public.create_peek_request(
-  p_listing_id uuid default null,
-  p_service_id uuid default null,
-  p_category public.peek_request_category default 'custom',
-  p_body text default null
-)
-returns uuid
-language plpgsql
-security definer
-set search_path to ''
-as $function$
-declare
-  v_id uuid;
-  v_body text := btrim(regexp_replace(coalesce(p_body, ''), '[\n\r\t]+', ' ', 'g'));
-  v_recent_count integer;
-begin
-  if not public.is_active_user() then
-    raise exception 'an active account is required' using errcode = '42501';
-  end if;
   if ((p_listing_id is not null)::integer + (p_service_id is not null)::integer) <> 1 then
     raise exception 'exactly one Peek Request parent is required' using errcode = '22023';
   end if;
