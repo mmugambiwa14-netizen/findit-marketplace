@@ -11,17 +11,22 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const STAGING_BRANCH = 'feature/listing-intelligence-foundation';
+const STAGING_BRANCHES = new Set([
+  'feature/listing-intelligence-foundation',
+  'claude/findit-hardening-listing-012cf0',
+  'feature/peek-threads-phase-3',
+]);
 const STAGING_SUPABASE_URL = 'https://bwgklpxoetrrkutottdb.supabase.co';
 const STAGING_SUPABASE_PUBLISHABLE_KEY =
   'sb_publishable_D1bWn2S-Dh4vbrzYVLa3GQ_UQXrMcWb';
 const deploymentBranch = String(import.meta.env.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim();
-const isStagingBranch = deploymentBranch === STAGING_BRANCH;
+const isStagingBranch = STAGING_BRANCHES.has(deploymentBranch);
 
-// The staging branch may use its browser-public Supabase URL and publishable
-// key as branch-scoped fallbacks. This keeps staging usable even when its
-// Vercel variables are removed. Every other deployment still fails closed and
-// must provide its own environment-specific values.
+// Only the explicitly trusted staging branch lineage may use this
+// browser-public Supabase URL and publishable key as fallbacks. This keeps
+// stacked staging previews usable when Vercel Preview variables are absent,
+// while every unrelated branch and all production deployments still fail
+// closed and require their own environment-specific values.
 const supabaseUrl =
   String(import.meta.env.VITE_SUPABASE_URL ?? '').trim() ||
   (isStagingBranch ? STAGING_SUPABASE_URL : '');
