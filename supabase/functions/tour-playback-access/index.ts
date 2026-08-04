@@ -18,6 +18,12 @@ function browserReachableUrl(req: Request, value: string): string {
   return `${new URL(req.url).origin}${value.slice(LOCAL_INTERNAL_ORIGIN.length)}`;
 }
 
+type PlaybackPayload = {
+  parentType?: unknown;
+  parentId?: unknown;
+  tourId?: unknown;
+};
+
 Deno.serve(async (req: Request) => {
   const early = requireJsonRequest(req);
   if (early) return early;
@@ -29,18 +35,22 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const payload = await req.json() as { parentType?: unknown; parentId?: unknown };
-    if ((payload.parentType !== "listing" && payload.parentType !== "service") || !isUuid(payload.parentId)) {
-      return json(req, 400, { requestId, code: "invalid_parent", message: "A valid Tour parent is required." });
+    const payload = await req.json() as PlaybackPayload;
+    const explicitTour = payload.tourId != null;
+    const validParent = (payload.parentType === "listing" || payload.parentType === "service") && isUuid(payload.parentId);
+    if ((explicitTour && !isUuid(payload.tourId)) || (!explicitTour && !validParent)) {
+      return json(req, 400, { requestId, code: "invalid_playback_target", message: "A valid Peek playback target is required." });
     }
 
     const admin = adminClient();
-    const { data, error } = await admin.rpc("public_tour_metadata", {
-      p_listing_id: payload.parentType === "listing" ? payload.parentId : null,
-      p_service_id: payload.parentType === "service" ? payload.parentId : null,
-    });
-    const metadata = Array.isArray(data) ? data[0] : null;
-    if (error || !metadata) {
+    const metadataResult = explicitTour
+      ? await admin.rpc("public_response_peek_metadata", { p_tour_id: payload.tourId })
+      : await admin.rpc("public_tour_metadata", {
+          p_listing_id: payload.parentType === "listing" ? payload.parentId : null,
+          p_service_id: payload.parentType === "service" ? payload.parentId : null,
+        });
+    const metadata = Array.isArray(metadataResult.data) ? metadataResult.data[0] : null;
+    if (metadataResult.error || !metadata) {
       return json(req, 404, { requestId, code: "tour_not_found", message: "Tour not found." });
     }
 
@@ -63,7 +73,7 @@ Deno.serve(async (req: Request) => {
       return json(req, 503, {
         requestId,
         code: "playback_unavailable",
-        message: "This Tour is temporarily unavailable.",
+        message: "This Peek is temporarily unavailable.",
       });
     }
 
@@ -84,13 +94,13 @@ Deno.serve(async (req: Request) => {
       await recordOperationalMetric(admin, {
         name: "playback_access_latency_ms",
         value: elapsedMilliseconds(startedAt),
-        dimension: metadata.parent_type,
+        dimension: explicitTour ? "response" : metadata.parent_type,
         sampleCount: 100,
       });
     }
     return json(req, 200, responseBody);
   } catch (error) {
-    console.error("Tour playback access failed", { requestId, error });
+    console.error("Peek playback access failed", { requestId, error });
     try {
       await recordOperationalMetric(adminClient(), {
         name: "playback_access_failed",
@@ -103,7 +113,7 @@ Deno.serve(async (req: Request) => {
     return json(req, 500, {
       requestId,
       code: "playback_access_unavailable",
-      message: "Tour playback is temporarily unavailable.",
+      message: "Peek playback is temporarily unavailable.",
     });
   }
 });
