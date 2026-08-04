@@ -15,6 +15,7 @@ import {
 type IntentPayload = {
   parentType?: unknown;
   parentId?: unknown;
+  peekKind?: unknown;
   filename?: unknown;
   mimeType?: unknown;
   byteSize?: unknown;
@@ -32,7 +33,7 @@ Deno.serve(async (req: Request) => {
     return json(req, 503, {
       requestId,
       code: "tours_disabled",
-      message: "Tour uploads are not enabled in this environment.",
+      message: "Peek uploads are not enabled in this environment.",
     });
   }
 
@@ -41,7 +42,7 @@ Deno.serve(async (req: Request) => {
     return json(req, 401, {
       requestId,
       code: "authentication_required",
-      message: "Sign in to upload a Tour.",
+      message: "Sign in to upload a Peek.",
     });
   }
 
@@ -49,6 +50,7 @@ Deno.serve(async (req: Request) => {
     const payload = await req.json() as IntentPayload;
     const parentType = payload.parentType;
     const parentId = payload.parentId;
+    const peekKind = payload.peekKind === "response" ? "response" : "main";
     const mimeType = payload.mimeType;
     const byteSize = Number(payload.byteSize);
     const durationSeconds = Number(payload.durationSeconds);
@@ -60,6 +62,9 @@ Deno.serve(async (req: Request) => {
     if ((parentType !== "listing" && parentType !== "service") || !isUuid(parentId)) {
       return json(req, 400, { requestId, code: "invalid_parent", message: "Choose a valid listing or service." });
     }
+    if (payload.peekKind != null && payload.peekKind !== "main" && payload.peekKind !== "response") {
+      return json(req, 400, { requestId, code: "invalid_peek_kind", message: "Choose a valid Peek type." });
+    }
     if (typeof mimeType !== "string" || !TOUR_MIME_EXTENSIONS[mimeType]) {
       return json(req, 415, { requestId, code: "unsupported_video", message: "Use an MP4, MOV, or WebM video." });
     }
@@ -67,14 +72,14 @@ Deno.serve(async (req: Request) => {
       return json(req, 413, {
         requestId,
         code: "video_too_large",
-        message: "Tour videos must be 250 MB or smaller.",
+        message: "Peek videos must be 250 MB or smaller.",
       });
     }
     if (!Number.isFinite(durationSeconds) || durationSeconds <= 0 || durationSeconds > TOUR_LIMITS.maxDurationSeconds) {
       return json(req, 422, {
         requestId,
         code: "video_too_long",
-        message: "Tour videos must be 2 minutes or shorter.",
+        message: "Peek videos must be 2 minutes or shorter.",
       });
     }
     if (checksum && !/^[0-9a-f]{64}$/.test(checksum)) {
@@ -99,7 +104,10 @@ Deno.serve(async (req: Request) => {
     const extension = TOUR_MIME_EXTENSIONS[mimeType];
     const sourcePath = `${userData.user.id}/${tourId}/source/${objectId}.${extension}`;
     const admin = adminClient();
-    const { data: authorized, error: authorizeError } = await admin.rpc("authorize_tour_upload", {
+    const authorizationFunction = peekKind === "response"
+      ? "authorize_response_peek_upload"
+      : "authorize_tour_upload";
+    const { data: authorized, error: authorizeError } = await admin.rpc(authorizationFunction, {
       p_user_id: userData.user.id,
       p_tour_id: tourId,
       p_listing_id: parentType === "listing" ? parentId : null,
@@ -114,20 +122,26 @@ Deno.serve(async (req: Request) => {
     });
 
     if (authorizeError || !Array.isArray(authorized) || !authorized[0]) {
-      const message = authorizeError?.message ?? "Tour upload could not be authorized";
+      const message = authorizeError?.message ?? "Peek upload could not be authorized";
       const status = message.includes("rate exceeded") ? 429
         : message.includes("pending Tour") ? 409
         : message.includes("ownership") || message.includes("eligible") || message.includes("parent not found") ? 403
+        : message.includes("no eligible") ? 409
         : message.includes("disabled") ? 503
         : 400;
       return json(req, status, {
         requestId,
-        code: status === 429 ? "rate_limited" : status === 409 ? "replacement_in_progress" : "upload_not_authorized",
+        code: status === 429 ? "rate_limited"
+          : status === 409 && peekKind === "response" ? "no_pending_requests"
+          : status === 409 ? "replacement_in_progress"
+          : "upload_not_authorized",
         message: status === 429
-          ? "Too many Tour uploads were started. Try again later."
+          ? "Too many Peek uploads were started. Try again later."
+          : status === 409 && peekKind === "response"
+          ? "This listing has no pending Buyer Peek Requests to answer."
           : status === 409
-          ? "This item already has a Tour upload in progress."
-          : "This Tour upload could not be authorized.",
+          ? "This item already has a Peek upload in progress."
+          : "This Peek upload could not be authorized.",
       });
     }
 
@@ -137,19 +151,14 @@ Deno.serve(async (req: Request) => {
       source_storage_path: string;
       expires_at: string;
     };
-    // Generate the signed upload under the authenticated seller JWT so
-    // Storage records owner_id from the user subject. The storage policy also
-    // requires this exact active server-created intent path.
     const { data: signed, error: signedError } = await user.storage
       .from("tour-sources")
       .createSignedUploadUrl(intent.source_storage_path, { upsert: false });
     if (signedError || !signed?.token) {
-      // Keep the bounded intent authorized so the same idempotency key can be
-      // retried. Its expiry is handled by the cleanup worker if no upload occurs.
       return json(req, 502, {
         requestId,
         code: "signed_upload_unavailable",
-        message: "The Tour upload could not be prepared. Try again.",
+        message: "The Peek upload could not be prepared. Try again.",
       });
     }
 
@@ -157,6 +166,7 @@ Deno.serve(async (req: Request) => {
       requestId,
       intentId: intent.intent_id,
       tourId: intent.tour_id,
+      peekKind,
       bucket: "tour-sources",
       path: intent.source_storage_path,
       uploadToken: signed.token,
@@ -168,11 +178,11 @@ Deno.serve(async (req: Request) => {
       },
     });
   } catch (error) {
-    console.error("tour upload intent failed", { requestId, error });
+    console.error("Peek upload intent failed", { requestId, error });
     return json(req, 500, {
       requestId,
       code: "upload_intent_unavailable",
-      message: "Tour upload is temporarily unavailable.",
+      message: "Peek upload is temporarily unavailable.",
     });
   }
 });
