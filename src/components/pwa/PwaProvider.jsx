@@ -4,7 +4,9 @@ import { useConnectivity } from '@/hooks/useConnectivity';
 import {
   applyPendingUpdate,
   checkForUpdate,
+  previewDeployment,
   registerServiceWorker,
+  resetPreviewServiceWorkerState,
   serviceWorkerSupported,
 } from '@/lib/serviceWorker';
 import { readStoredString, writeStoredString } from '@/lib/browserStorage';
@@ -22,6 +24,7 @@ import { readStoredString, writeStoredString } from '@/lib/browserStorage';
 const PwaContext = createContext(null);
 
 const INSTALL_DISMISSED_KEY = '__findit_install_dismissed_at';
+const PREVIEW_RESET_KEY = '__findit_preview_service_worker_reset';
 const INSTALL_DISMISS_DAYS = 30;
 const UPDATE_POLL_MS = 30 * 60 * 1000;
 
@@ -57,6 +60,18 @@ export function PwaProvider({ children }) {
     if (registered.current || !serviceWorkerSupported()) return undefined;
     registered.current = true;
 
+    if (previewDeployment()) {
+      // Branch aliases are reused across deployments. Remove an older worker
+      // and its FindIt-owned shell caches, then reload once so the current
+      // deployment takes control immediately rather than after another visit.
+      resetPreviewServiceWorkerState().then((changed) => {
+        if (!changed || readStoredString('session', PREVIEW_RESET_KEY) === '1') return;
+        writeStoredString('session', PREVIEW_RESET_KEY, '1');
+        window.location.reload();
+      });
+      return undefined;
+    }
+
     // Registering after load keeps the worker's own fetch off the critical path
     // on exactly the slow connections offline support is meant to help.
     let cancelled = false;
@@ -77,9 +92,9 @@ export function PwaProvider({ children }) {
   }, []);
 
   // An installed app can go days without a navigation, which is how browsers
-  // normally notice a new worker. Poll gently to cover that.
+  // normally notice a new worker. Poll gently to cover that in production only.
   useEffect(() => {
-    if (!serviceWorkerSupported()) return undefined;
+    if (!serviceWorkerSupported() || previewDeployment()) return undefined;
     const timer = window.setInterval(() => {
       checkForUpdate().then((waiting) => { if (waiting) setUpdateReady(true); });
     }, UPDATE_POLL_MS);
