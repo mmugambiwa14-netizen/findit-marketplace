@@ -4,6 +4,16 @@ import { CheckCircle2, Clock3, Eye, Loader2, Plus, ThumbsUp, XCircle } from 'luc
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import ResponsePeekWatchButton from '@/components/peekThreads/ResponsePeekWatchButton';
 import { PEEK_REQUEST_CATEGORIES, peekRequestCategoryLabel, suggestedRequests } from '@/domain/peekThreads/categories';
 import { findDuplicateRequest } from '@/domain/peekThreads/requestContracts';
@@ -36,6 +46,8 @@ export default function PeekThreadsSection({
   const [composerOpen, setComposerOpen] = useState(false);
   const [category, setCategory] = useState(suggestedRequests(listingKind)[0]?.category || 'condition');
   const [body, setBody] = useState('');
+  const [declineTarget, setDeclineTarget] = useState(null);
+  const [declineReason, setDeclineReason] = useState('');
   const filter = FILTERS[activeFilter];
   const queryKey = ['peek-threads', parentType, parentId, filter.value, filter.sort];
 
@@ -82,6 +94,8 @@ export default function PeekThreadsSection({
   const declineMutation = useMutation({
     mutationFn: ({ requestId, reason }) => declinePeekRequest({ requestId, reason }),
     onSuccess: () => {
+      setDeclineTarget(null);
+      setDeclineReason('');
       refresh();
       toast.success('Peek Request declined');
     },
@@ -199,12 +213,58 @@ export default function PeekThreadsSection({
             busy={supportMutation.isPending || declineMutation.isPending}
             onSupport={() => guard?.('support this Peek Request', () => supportMutation.mutate({ requestId: item.id, supported: false }))}
             onDecline={() => {
-              const reason = window.prompt('Briefly tell buyers why this cannot be shown.');
-              if (reason?.trim()) declineMutation.mutate({ requestId: item.id, reason });
+              setDeclineTarget(item);
+              setDeclineReason('');
             }}
           />
         ))}
       </div>
+
+      <AlertDialog
+        open={Boolean(declineTarget)}
+        onOpenChange={(open) => {
+          if (!open && !declineMutation.isPending) {
+            setDeclineTarget(null);
+            setDeclineReason('');
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Decline this Peek Request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Give buyers a short, useful reason. The request will no longer appear publicly as awaiting your response.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {declineTarget?.body && (
+            <p className="rounded-xl border border-border bg-muted/30 p-3 text-sm font-medium">“{declineTarget.body}”</p>
+          )}
+          <label className="text-sm font-semibold" htmlFor={`peek-thread-decline-${parentId}`}>Reason</label>
+          <textarea
+            id={`peek-thread-decline-${parentId}`}
+            autoFocus
+            value={declineReason}
+            onChange={(event) => setDeclineReason(event.target.value)}
+            maxLength={280}
+            rows={3}
+            className="w-full rounded-xl border border-border bg-card p-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+            placeholder="For example: the vehicle is stored off-site until Friday"
+          />
+          <div className="text-right text-xs text-muted-foreground">{declineReason.trim().length}/280</div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={declineMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={declineReason.trim().length < 4 || declineMutation.isPending}
+              onClick={(event) => {
+                event.preventDefault();
+                declineMutation.mutate({ requestId: declineTarget.id, reason: declineReason.trim() });
+              }}
+            >
+              {declineMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Declining</> : 'Decline request'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
