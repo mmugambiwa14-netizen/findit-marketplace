@@ -7,6 +7,7 @@ import ContactButtons from "@/components/listings/ContactButtons";
 import ListingCode from "@/components/listings/ListingCode";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
+import ListingMediaActions from "@/components/listings/ListingMediaActions";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
@@ -59,19 +60,27 @@ export default function PropertyDetail() {
 
   return (
     <div className="findit-screen pb-20">
-      <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("property", property)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
+      <ListingDetailActions onBack={() => navigate(-1)} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer
-          photos={property.photos}
-          title={property.title}
-          fallbackImage={placeholderProperty}
-          tour={property.tour || null}
-          tourActionLabel="Take a Peek"
-          tourOwnerId={property.seller_id}
-          parentType="listing"
-          parentId={property.id}
-          className="md:mt-4 md:rounded-3xl md:border"
-        />
+        <div className="relative">
+          <ListingMediaViewer
+            photos={property.photos}
+            title={property.title}
+            fallbackImage={placeholderProperty}
+            tour={property.tour || null}
+            tourActionLabel="Take a Peek"
+            tourOwnerId={property.seller_id}
+            parentType="listing"
+            parentId={property.id}
+            className="md:mt-4 md:rounded-3xl md:border"
+          />
+          <ListingMediaActions
+            onShare={() => shareListing("property", property)}
+            onSave={toggleSave}
+            isSaved={isSaved}
+            isSaving={isSaving}
+          />
+        </div>
 
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5 sm:p-6">
