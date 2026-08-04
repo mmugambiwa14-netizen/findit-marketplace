@@ -37,6 +37,7 @@ const Profile = lazy(() => import('@/pages/Profile'));
 const PropertyDetail = lazy(() => import('@/pages/PropertyDetail'));
 const CarDetail = lazy(() => import('@/pages/CarDetail'));
 const MyListings = lazy(() => import('@/pages/MyListings'));
+const BuyerPeekRequests = lazy(() => import('@/pages/BuyerPeekRequests'));
 const Inquiries = lazy(() => import('@/pages/Inquiries'));
 const MachineryDetail = lazy(() => import('@/pages/MachineryDetail'));
 const Settings = lazy(() => import('@/pages/Settings'));
@@ -163,6 +164,7 @@ const AuthenticatedApp = () => {
             <Route path="/saved" element={<Saved />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/my-listings" element={<MyListings />} />
+            <Route path="/peek-requests" element={<BuyerPeekRequests />} />
             <Route path="/settings" element={<Settings />} />
             {featureFlags.messaging && <Route path="/chats" element={<Inquiries />} />}
             {featureFlags.messaging && <Route path="/chats/:conversationId" element={<Inquiries />} />}
@@ -197,8 +199,6 @@ function App() {
     <AuthProvider>
       <CurrencyProvider>
         <QueryClientProvider client={queryClientInstance}>
-          {/* Outside the Router on purpose: connectivity and update state are
-              route-independent, and the status bar must survive navigation. */}
           <PwaProvider>
             <Router basename={routerBaseName}>
               <AuthenticatedApp />
