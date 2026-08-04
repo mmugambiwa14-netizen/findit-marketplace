@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
+import { ArrowLeft, BellRing, Check, Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
 import * as authService from "@/services/authService";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import SellerProfileFields from "@/components/settings/SellerProfileFields";
 import PersonalizationSettings from "@/components/settings/PersonalizationSettings";
+import PushNotificationSettings from "@/components/settings/PushNotificationSettings";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -78,6 +79,10 @@ export default function Settings() {
       </div>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-4">
+        <Section icon={BellRing} title="Push notifications">
+          <PushNotificationSettings />
+        </Section>
+
         <Section icon={User} title="Account profile">
           <div className="space-y-3">
             <div>
