@@ -40,7 +40,11 @@ export default function DiscoverCategoryCard({
         <div className="min-w-0">
           <h2 className="text-[1.35rem] font-black tracking-[-0.03em] text-foreground sm:text-2xl">{label}</h2>
           <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground sm:text-sm">{description}</p>
-          <p className="mt-2.5 inline-flex rounded-full border border-primary/15 bg-primary/[0.07] px-2.5 py-1 text-[10px] font-bold text-primary sm:text-[11px]">{countLabel}</p>
+          {countLabel && (
+            <p className="mt-2.5 inline-flex rounded-full border border-primary/15 bg-primary/[0.07] px-2.5 py-1 text-[10px] font-bold text-primary sm:text-[11px]">
+              {countLabel}
+            </p>
+          )}
         </div>
       </div>
     </Link>
