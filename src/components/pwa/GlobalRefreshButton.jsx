@@ -32,7 +32,7 @@ export default function GlobalRefreshButton({ desktop = false }) {
           ? 'shrink-0'
           : 'fixed right-[4.25rem] z-[75] md:hidden',
       )}
-      style={desktop ? undefined : { top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
+      style={desktop ? undefined : { top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
     >
       <RefreshCw className={cn('h-[18px] w-[18px]', refreshing && 'animate-spin')} aria-hidden="true" />
     </button>
