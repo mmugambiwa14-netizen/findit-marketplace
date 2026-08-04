@@ -8,6 +8,7 @@ import ContactButtons from "@/components/listings/ContactButtons";
 import ListingCode from "@/components/listings/ListingCode";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
+import ListingMediaActions from "@/components/listings/ListingMediaActions";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
@@ -53,9 +54,12 @@ export default function MachineryDetail() {
 
   return (
     <div className="findit-screen pb-20">
-      <ListingDetailActions onBack={() => navigate(-1)} onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
+      <ListingDetailActions onBack={() => navigate(-1)} />
       <main className="mx-auto max-w-4xl">
-        <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Take a Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} className="md:mt-4 md:rounded-3xl md:border" />
+        <div className="relative">
+          <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Take a Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} className="md:mt-4 md:rounded-3xl md:border" />
+          <ListingMediaActions onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
+        </div>
         <div className="space-y-5 px-4 py-5 sm:px-6">
           <section className="surface-panel p-5 sm:p-6">
             <div className="flex flex-wrap items-center gap-2">
