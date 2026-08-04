@@ -1,6 +1,6 @@
 # Peek Threads Phase 5 — UI integration handoff
 
-Status: buyer-facing integration, explicit Response Peek playback and seller-wide request queue complete; Response Peek upload and binding remain open.
+Status: buyer-facing integration, explicit Response Peek playback, seller-wide request queue and Response Peek upload path complete; post-moderation request selection and binding remain open.
 
 ## Delivered
 
@@ -22,33 +22,41 @@ Status: buyer-facing integration, explicit Response Peek playback and seller-wid
 - Owner-scoped database authorization for both listing and service requests.
 - Stable keyset pagination with a maximum page size of 50.
 - Focus-managed decline dialog with a required buyer-facing reason.
-- Static UI, playback and seller-queue contracts.
+- Existing `TourUploader` extended with explicit `peekKind="response"` mode.
+- Response uploads reuse `tour-sources`, signed upload intents, upload completion, processing and moderation.
+- Response authorization bypasses the single Main Peek slot and cannot replace the hero Peek.
+- Approved Response Peeks publish independently through `promote_approved_tour`.
+- Seller queue Record response action opens the existing uploader in a focus-managed dialog.
+- Static UI, playback, seller-queue and upload contracts.
 
 ## Preserved boundaries
 
 - Components call service and repository boundaries; they do not query Supabase directly.
-- No second video table, upload route, storage path, moderation system or seller identity system was created.
-- Response Peek cards receive only the public read model.
+- No second video table, upload bucket, processing worker, moderation system or seller identity system was created.
+- Main Listing Peek upload calls default to `peekKind = main` and retain slot replacement semantics.
+- Response Peek upload requires an owned public parent with at least one approved pending buyer request.
+- Uploading or approval alone does not mark any request answered.
+- Request binding and buyer notification remain explicit later operations.
 - Raw storage paths and playback URLs are not rendered by the thread API.
-- Main Listing Peek playback remains unchanged and parent-addressed.
-- Response playback is explicit by `tourId` and succeeds only when the Peek is current public evidence for an approved answered request.
-- The seller queue is derived from existing `peek_requests`, `listings` and `services` records.
 
 ## Hosted staging state
 
 - `public_response_peek_metadata(uuid)` is installed.
-- `tour-playback-access` version 13 accepts either the existing parent target or an explicit Response Peek identity.
+- `tour-playback-access` version 13 supports Main and explicit Response Peek playback.
 - `seller_peek_request_queue(...)` is installed and executable only by authenticated users.
-- There are currently no published Response Peeks bound to answered requests in staging, so live response playback awaits the first completed response upload.
+- `authorize_response_peek_upload(...)` is installed.
+- `promote_approved_tour(uuid)` publishes approved Response Peeks without touching `listing_tour_slots`.
+- `tour-upload-intent` version 13 dispatches explicitly between Main and Response authorization.
+- Staging currently contains no approved pending Peek Requests, so a live Response upload is correctly rejected until a real request exists.
 
 ## Still required to complete Phase 5
 
-1. Extend the existing Peek uploader intent with `peek_kind = response` and parent/request binding context.
-2. Add the post-upload “Which requests does this answer?” selection step.
-3. Connect the seller queue’s Record response action to that uploader flow.
+1. Add the post-moderation “Which requests does this answer?” selection step.
+2. Persist a seller’s intended request selection while media is processing, or present the selector once the Response Peek becomes approved.
+3. Bind the approved Response Peek to one or more compatible requests and trigger deduplicated notifications.
 4. Integrate the shared section into Service detail once the service page’s stacked listing-shell work is reconciled.
-5. Replace the listing-detail temporary decline prompt with the same focus-managed dialog primitive now used by the seller queue.
-6. Add a natural seller-dashboard navigation entry for `/peek-requests` while preserving the current compact mobile layout.
+5. Replace the listing-detail temporary decline prompt with the same focus-managed dialog primitive used by the seller queue.
+6. Add a natural seller-dashboard navigation entry for `/peek-requests` while preserving the compact mobile layout.
 7. Run browser, keyboard, screen-reader and mobile acceptance.
 
 ## Verification
@@ -60,5 +68,6 @@ Repository verification consists of:
 - `tests/peekThreadWriteContracts.test.mjs`
 - `tests/responsePeekPlaybackContracts.test.mjs`
 - `tests/peekThreadSellerQueueContracts.test.mjs`
+- `tests/responsePeekUploadContracts.test.mjs`
 
-Live staging confirms the playback authorization function, Edge Function deployment and seller queue RPC. End-to-end Response Peek publication still requires uploader support, moderation and request binding.
+Live staging confirms the playback authorization, seller queue, Response upload authorization, independent promotion path and Edge Function dispatch. End-to-end Response Peek publication still requires a real pending request, moderation completion and explicit request binding.
