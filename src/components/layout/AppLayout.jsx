@@ -50,12 +50,21 @@ function matchesRoute(pathname, route) {
     : pathname === route || pathname.startsWith(`${route}/`);
 }
 
+function isImmersiveDesktopRoute(pathname) {
+  // An open conversation owns the full viewport and has its own participant,
+  // listing and back controls. Every other marketplace route keeps the shared
+  // desktop header so an installed PWA never strands the user away from
+  // Discover, Peeks, Chats, Post or Profile.
+  return pathname.startsWith('/chats/') || pathname.startsWith('/messages/');
+}
+
 export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const selfContained = SELF_CONTAINED_ROUTES.some((route) => matchesRoute(location.pathname, route));
   const isDiscoverHome = location.pathname === '/';
   const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
+  const showDesktopNav = !isImmersiveDesktopRoute(location.pathname);
 
   return (
     <div className="findit-screen min-h-[100dvh]">
@@ -65,7 +74,7 @@ export default function AppLayout() {
       >
         Skip to main content
       </a>
-      {!selfContained && <TopNav />}
+      {showDesktopNav && <TopNav />}
       <main
         id="main-content"
         tabIndex={-1}
