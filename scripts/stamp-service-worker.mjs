@@ -1,18 +1,9 @@
 // stamp-service-worker.mjs
 //
 // Replaces the __SW_VERSION__ placeholder in the built service worker with a
-// hash derived from the build output.
-//
-// Why this exists: a service worker is byte-compared by the browser to decide
-// whether an update exists. A hand-maintained version constant means someone
-// eventually ships a deploy without bumping it, the worker looks unchanged, and
-// users keep the previous app indefinitely. Deriving the version from the built
-// asset names makes that impossible -- any change to the bundle changes the
-// worker, and an unchanged bundle produces a byte-identical worker so users are
-// not churned for nothing.
-//
-// The hash covers file NAMES only, which is sufficient because Vite content-
-// hashes every emitted asset: different content always means a different name.
+// hash derived from the build output and loads the independent Web Push
+// handlers. Keeping push handling in public/push-sw.js avoids weakening the
+// carefully reviewed cache boundary in public/sw.js.
 
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
@@ -21,6 +12,7 @@ import { join, relative, resolve } from 'node:path';
 const projectRoot = resolve(import.meta.dirname, '..');
 const outputRoot = join(projectRoot, 'dist');
 const workerPath = join(outputRoot, 'sw.js');
+const pushImport = "importScripts('/push-sw.js');\n";
 
 function collect(directory, files = []) {
   for (const name of readdirSync(directory)) {
@@ -47,7 +39,9 @@ if (!source.includes('__SW_VERSION__')) {
 
 const fingerprint = collect(outputRoot).sort().join('\n');
 const version = createHash('sha256').update(fingerprint).digest('hex').slice(0, 12);
+let stamped = source.replaceAll('__SW_VERSION__', version);
+if (!stamped.startsWith(pushImport)) stamped = `${pushImport}${stamped}`;
 
-writeFileSync(workerPath, source.replaceAll('__SW_VERSION__', version), 'utf8');
+writeFileSync(workerPath, stamped, 'utf8');
 
-console.log(`Service worker stamp: PASS (version ${version} from ${fingerprint.split('\n').length} build artefacts)`);
+console.log(`Service worker stamp: PASS (version ${version} from ${fingerprint.split('\n').length} build artefacts; push enabled)`);
