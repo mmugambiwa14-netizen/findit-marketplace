@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
 import { searchPublicListingsPage } from '@/services/publicListingsService';
 import { getPublicServicesPage } from '@/services/servicesService';
+import './discover-map-popup.css';
 
 const CATEGORY_KEYS = ['property', 'car', 'machinery', 'service'];
 const CITY_COORDS = {
@@ -42,7 +43,7 @@ function price(item) {
   return `${item.currency === 'USD' || !item.currency ? 'US$' : item.currency} ${Number(item.price).toLocaleString()}`;
 }
 
-function createCategoryMarker(item, selected) {
+function createCategoryMarker(item) {
   const visual = CATEGORY_VISUALS[item._kind];
   const Icon = visual.icon;
   const element = document.createElement('button');
@@ -52,9 +53,9 @@ function createCategoryMarker(item, selected) {
   element.type = 'button';
   element.className = 'findit-map-marker';
   element.dataset.category = item._kind;
-  element.dataset.selected = selected ? 'true' : 'false';
+  element.dataset.selected = 'false';
   element.style.setProperty('--marker-color', visual.color);
-  element.setAttribute('aria-label', `Open ${visual.label.toLowerCase()} listing: ${item.title}`);
+  element.setAttribute('aria-label', `Preview ${visual.label.toLowerCase()} listing: ${item.title}`);
   element.title = `${visual.label}: ${item.title}`;
   pin.className = 'findit-map-marker-pin';
   iconSlot.className = 'findit-map-marker-icon';
@@ -62,8 +63,40 @@ function createCategoryMarker(item, selected) {
   element.append(pin);
 
   const iconRoot = createRoot(iconSlot);
-  iconRoot.render(<Icon className="h-5 w-5" strokeWidth={2.25} />);
+  iconRoot.render(<Icon className="h-6 w-6" />);
   return { element, iconRoot };
+}
+
+function MapListingPreview({ item, onOpen, onClose }) {
+  const visual = CATEGORY_VISUALS[item._kind];
+  return (
+    <article className="findit-map-listing-preview" aria-label={`${item.title} preview`}>
+      <button type="button" onClick={onClose} aria-label="Close listing preview" className="findit-map-preview-close">
+        <X className="h-4 w-4" />
+      </button>
+      <button type="button" onClick={onOpen} className="block w-full text-left">
+        <div className="findit-map-preview-image">
+          {image(item) ? (
+            <img src={image(item)} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" />
+          ) : (
+            <span className="flex h-full items-center justify-center"><ImageOff className="h-6 w-6 text-muted-foreground" /></span>
+          )}
+          <span className="findit-map-preview-category">
+            <visual.icon className="h-5 w-5" />
+            {visual.label}
+          </span>
+        </div>
+        <div className="p-3">
+          <p className="text-base font-extrabold text-primary">{price(item)}</p>
+          <h2 className="mt-0.5 line-clamp-1 text-sm font-bold text-foreground">{item.title}</h2>
+          <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{place(item)}</p>
+          <span className="mt-2.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-primary text-xs font-bold text-primary-foreground">
+            View listing <ChevronRight className="h-4 w-4" />
+          </span>
+        </div>
+      </button>
+    </article>
+  );
 }
 
 function tuneDarkBasemap(map) {
@@ -80,8 +113,7 @@ function tuneDarkBasemap(map) {
         if (layer.paint?.['text-halo-color']) map.setPaintProperty(layer.id, 'text-halo-color', '#071a2c');
       }
     } catch {
-      // A provider layer can expose a paint property that MapLibre does not
-      // allow to be changed at runtime; the base style remains usable.
+      // Provider layers may reject runtime paint changes; the map remains usable.
     }
   });
 }
@@ -105,19 +137,76 @@ export default function DiscoverMapView({ location }) {
   const navigate = useNavigate();
   const mapNode = useRef(null);
   const [category, setCategory] = useState('all');
-  const [selectedId, setSelectedId] = useState(null);
   const [failure, setFailure] = useState('');
   const { items, loading } = useItems(location);
   const mapped = useMemo(() => items.map((item) => ({ item, point: coordinates(item) })).filter((entry) => entry.point), [items]);
   const visible = useMemo(() => category === 'all' ? mapped : mapped.filter(({ item }) => item._kind === category), [category, mapped]);
-  const selected = mapped.find(({ item }) => item.id === selectedId)?.item || null;
 
   useEffect(() => {
     if (!mapNode.current || !visible.length) return undefined;
     let cancelled = false;
     let map;
+    let activePopup;
+    let activePopupRoot;
+    let activeMarkerElement;
+    let closeTimer;
     const markers = [];
     const markerIconRoots = [];
+    const hoverCapable = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
+
+    const cancelClose = () => {
+      if (closeTimer) window.clearTimeout(closeTimer);
+      closeTimer = undefined;
+    };
+
+    const closePreview = () => {
+      cancelClose();
+      activeMarkerElement?.setAttribute('data-selected', 'false');
+      activeMarkerElement = undefined;
+      activePopupRoot?.unmount();
+      activePopupRoot = undefined;
+      activePopup?.remove();
+      activePopup = undefined;
+    };
+
+    const scheduleClose = () => {
+      cancelClose();
+      closeTimer = window.setTimeout(closePreview, 180);
+    };
+
+    const showPreview = (maplibregl, item, point, markerElement, persistent) => {
+      closePreview();
+      markerElement.dataset.selected = 'true';
+      activeMarkerElement = markerElement;
+
+      const popupNode = document.createElement('div');
+      activePopupRoot = createRoot(popupNode);
+      activePopupRoot.render(
+        <MapListingPreview
+          item={item}
+          onOpen={() => navigate(path(item))}
+          onClose={closePreview}
+        />,
+      );
+
+      activePopup = new maplibregl.Popup({
+        anchor: 'bottom',
+        closeButton: false,
+        closeOnClick: false,
+        focusAfterOpen: false,
+        offset: 48,
+        maxWidth: 'none',
+        className: 'findit-listing-map-popup',
+      })
+        .setLngLat([point.longitude, point.latitude])
+        .setDOMContent(popupNode)
+        .addTo(map);
+
+      const popupElement = activePopup.getElement();
+      popupElement.addEventListener('mouseenter', cancelClose);
+      if (!persistent) popupElement.addEventListener('mouseleave', scheduleClose);
+    };
+
     setFailure('');
     (async () => {
       try {
@@ -130,35 +219,54 @@ export default function DiscoverMapView({ location }) {
           zoom: 10,
           dragRotate: false,
           pitchWithRotate: false,
-          // One finger pans on touch screens. Pinch zoom remains a two-finger
-          // gesture through MapLibre's native touchZoomRotate handler.
           cooperativeGestures: false,
           touchPitch: false,
         });
         registerOptionalStyleImageFallbacks(map);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         const bounds = new maplibregl.LngLatBounds();
+
         visible.forEach(({ item, point }) => {
-          const { element, iconRoot } = createCategoryMarker(item, item.id === selectedId);
+          const { element, iconRoot } = createCategoryMarker(item);
           const marker = new maplibregl.Marker({ element, anchor: 'bottom' })
-            .setLngLat([point.longitude, point.latitude]).addTo(map);
-          element.addEventListener('click', () => setSelectedId(item.id));
+            .setLngLat([point.longitude, point.latitude])
+            .addTo(map);
+
+          if (hoverCapable) {
+            element.addEventListener('mouseenter', () => showPreview(maplibregl, item, point, element, false));
+            element.addEventListener('mouseleave', scheduleClose);
+          }
+          element.addEventListener('click', (event) => {
+            event.stopPropagation();
+            showPreview(maplibregl, item, point, element, true);
+          });
+          element.addEventListener('focus', () => showPreview(maplibregl, item, point, element, true));
+
           markerIconRoots.push(iconRoot);
           markers.push(marker);
           bounds.extend([point.longitude, point.latitude]);
         });
+
         map.once('load', () => {
           if (cancelled) return;
           tuneDarkBasemap(map);
-          map.fitBounds(bounds, { animate: false, padding: { top: 45, right: 38, bottom: selectedId ? 240 : 55, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
+          map.fitBounds(bounds, { animate: false, padding: { top: 190, right: 38, bottom: 65, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
         });
+        map.on('click', closePreview);
         map.on('error', () => !cancelled && setFailure('Map tiles are temporarily unavailable.'));
-      } catch { if (!cancelled) setFailure('The map could not load. Switch back to list view to continue.'); }
+      } catch {
+        if (!cancelled) setFailure('The map could not load. Switch back to list view to continue.');
+      }
     })();
-    return () => { cancelled = true; markerIconRoots.forEach((root) => root.unmount()); markers.forEach((marker) => marker.remove()); map?.remove(); };
-  }, [selectedId, visible]);
 
-  useEffect(() => { if (selectedId && !visible.some(({ item }) => item.id === selectedId)) setSelectedId(null); }, [selectedId, visible]);
+    return () => {
+      cancelled = true;
+      closePreview();
+      markerIconRoots.forEach((root) => root.unmount());
+      markers.forEach((marker) => marker.remove());
+      map?.remove();
+    };
+  }, [navigate, visible]);
 
   if (loading) return <div className="locked-map-panel flex min-h-[540px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
   if (!mapped.length) return <div className="locked-map-panel flex min-h-[540px] flex-col items-center justify-center px-6 text-center"><MapPin className="h-9 w-9 text-primary" /><h2 className="mt-4 text-lg font-bold">No mapped results</h2><p className="mt-2 text-sm text-muted-foreground">Listings without public coordinates remain available in list view.</p></div>;
@@ -168,17 +276,6 @@ export default function DiscoverMapView({ location }) {
       <div className="locked-map-panel relative min-h-[540px]">
         <div ref={mapNode} className="h-[calc(100svh-270px)] min-h-[540px] max-h-[720px] w-full" />
         {failure && <div className="absolute inset-x-3 top-3 z-20 rounded-xl border border-border bg-background/94 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">{failure}</div>}
-        {selected && (
-          <div className="locked-bottom-sheet absolute inset-x-0 bottom-0 z-30 p-3.5">
-            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-muted-foreground/40" />
-            <button type="button" onClick={() => setSelectedId(null)} aria-label="Close preview" className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground"><X className="h-5 w-5" /></button>
-            <button type="button" onClick={() => navigate(path(selected))} className="grid w-full grid-cols-[112px_minmax(0,1fr)] gap-3 pr-8 text-left">
-              <div className="h-28 overflow-hidden rounded-xl border border-border bg-muted">{image(selected) ? <img src={image(selected)} alt="" loading="eager" decoding="async" className="h-full w-full object-cover" /> : <span className="flex h-full items-center justify-center"><ImageOff className="h-6 w-6 text-muted-foreground" /></span>}</div>
-              <div className="min-w-0 py-0.5"><p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">{CATEGORY_VISUALS[selected._kind].label}</p><p className="mt-1 text-lg font-extrabold text-primary">{price(selected)}</p><h2 className="line-clamp-1 text-base font-bold">{selected.title}</h2><p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{place(selected)}</p></div>
-            </button>
-            <button type="button" onClick={() => navigate(path(selected))} className="clay-button mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold">View full listing <ChevronRight className="h-4 w-4" /></button>
-          </div>
-        )}
       </div>
 
       <div className="discover-map-rail surface-panel grid grid-cols-4 gap-1.5 p-2.5" role="group" aria-label="Filter map categories">
@@ -196,7 +293,7 @@ export default function DiscoverMapView({ location }) {
             >
               <span className="relative block aspect-[1.35] overflow-hidden rounded-lg border border-white/10 bg-surface-secondary">
                 <img src={visual.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover opacity-80 transition-transform duration-300 group-hover:scale-105" />
-                <span className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-black/55 text-primary backdrop-blur-sm"><Icon className="h-3.5 w-3.5" strokeWidth={2.25} /></span>
+                <span className="absolute left-1 top-1 flex h-8 w-8 items-center justify-center"><Icon className="h-8 w-8" /></span>
               </span>
               <span className="mt-1 block truncate px-0.5 text-[10px] font-medium">{visual.label}</span>
             </button>
