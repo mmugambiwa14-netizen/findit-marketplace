@@ -1,100 +1,72 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import * as authService from '@/services/authService';
 import { Button } from '@/components/ui/button';
 import { ADMIN_NAV_ITEMS, isNavigationItemActive } from '@/lib/navigationConfig';
 import BrandLogo from '@/components/BrandLogo';
-import {
-  LogOut,
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, LogOut, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export default function AdminSidebarCollapsible() {
+export default function AdminSidebarCollapsible({ mobileOpen = false, onMobileOpenChange }) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const handleLogout = async () => {
-    // AuthContext's onAuthStateChange subscription clears shared user state.
-    await authService.signOut('/');
-  };
+  useEffect(() => { onMobileOpenChange?.(false); }, [location.pathname, onMobileOpenChange]);
 
-  return (
-    <div className={`h-screen shrink-0 bg-sidebar overflow-y-auto flex flex-col sticky top-0 transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-20 sm:w-64'} border-r border-sidebar-border`}>
-      {/* Logo & Toggle */}
-      <div className={`border-b border-sidebar-border flex items-center justify-between ${isCollapsed ? 'p-2.5' : 'p-4'}`}>
-        {!isCollapsed && (
-          <Link to="/admin" className="hidden sm:block" aria-label="FindIt admin overview">
-            <BrandLogo markClassName="h-8 w-8" wordmarkClassName="text-lg" />
-          </Link>
-        )}
-        <Link to="/admin" className={isCollapsed ? 'hidden sm:block' : 'sm:hidden'} aria-label="FindIt admin overview">
-          <BrandLogo showWordmark={false} markClassName="h-7 w-7" />
-        </Link>
-        <button type="button"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="hidden p-1 hover:bg-sidebar-accent rounded-lg transition-colors sm:block"
-          aria-label={isCollapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-5 h-5 text-sidebar-foreground" />
-          ) : (
-            <ChevronLeft className="w-5 h-5 text-sidebar-foreground" />
-          )}
+  const handleLogout = async () => { await authService.signOut('/'); };
+  const nav = (
+    <aside className={cn(
+      'flex h-full min-h-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200',
+      isCollapsed ? 'sm:w-20' : 'sm:w-64',
+      'w-[min(88vw,22rem)]',
+    )}>
+      <div className="flex min-h-16 items-center justify-between border-b border-sidebar-border px-4 pt-[env(safe-area-inset-top)]">
+        <Link to="/admin" aria-label="FindIt admin overview"><BrandLogo showWordmark={!isCollapsed} markClassName="h-8 w-8" wordmarkClassName="text-lg" /></Link>
+        <button type="button" onClick={() => onMobileOpenChange?.(false)} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-sidebar-accent sm:hidden" aria-label="Close admin navigation"><X className="h-5 w-5" /></button>
+        <button type="button" onClick={() => setIsCollapsed((value) => !value)} className="hidden h-9 w-9 items-center justify-center rounded-xl hover:bg-sidebar-accent sm:flex" aria-label={isCollapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}>
+          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-3">
+      <nav className="min-h-0 flex-1 overflow-y-auto p-3" aria-label="Admin navigation">
         <div className="space-y-1">
-              {ADMIN_NAV_ITEMS.map((item) => {
-                const Icon = item.icon;
-                const isActive = isNavigationItemActive(location.pathname, item.path);
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    title={item.label}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                      isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Icon className="w-4 h-4 flex-shrink-0" />
-                      {!isCollapsed && <span className="hidden truncate sm:inline">{item.label}</span>}
-                    </div>
-                  </Link>
-                );
-              })}
+          {ADMIN_NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const active = isNavigationItemActive(location.pathname, item.path);
+            return (
+              <Link key={item.path} to={item.path} title={isCollapsed ? item.label : undefined} aria-current={active ? 'page' : undefined} className={cn(
+                'flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition-colors',
+                active ? 'bg-sidebar-accent font-bold text-sidebar-accent-foreground' : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
+                isCollapsed && 'sm:justify-center sm:px-0',
+              )}>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className={cn('truncate', isCollapsed && 'sm:hidden')}>{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-sidebar-border space-y-1">
-        <Button
-          asChild
-          variant="ghost"
-          className="w-full justify-start text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          title={isCollapsed ? "Back to App" : undefined}
-        >
-          <Link to="/">
-            <ArrowLeft className="w-4 h-4 mr-2 flex-shrink-0" />
-            {!isCollapsed && <span className="hidden sm:inline">Back to App</span>}
-          </Link>
+      <div className="space-y-1 border-t border-sidebar-border p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <Button asChild variant="ghost" className={cn('w-full justify-start text-sidebar-foreground/75 hover:bg-sidebar-accent/60', isCollapsed && 'sm:justify-center sm:px-0')}>
+          <Link to="/"><ArrowLeft className="h-4 w-4 shrink-0" /><span className={cn(isCollapsed && 'sm:hidden')}>Back to app</span></Link>
         </Button>
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          className="w-full justify-start text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          title={isCollapsed ? "Logout" : undefined}
-        >
-          <LogOut className="w-4 h-4 mr-2 flex-shrink-0" />
-          {!isCollapsed && <span className="hidden sm:inline">Logout</span>}
+        <Button onClick={handleLogout} variant="ghost" className={cn('w-full justify-start text-sidebar-foreground/75 hover:bg-sidebar-accent/60', isCollapsed && 'sm:justify-center sm:px-0')}>
+          <LogOut className="h-4 w-4 shrink-0" /><span className={cn(isCollapsed && 'sm:hidden')}>Sign out</span>
         </Button>
       </div>
-    </div>
+    </aside>
+  );
+
+  return (
+    <>
+      <div className="sticky top-0 hidden h-[100dvh] shrink-0 sm:block">{nav}</div>
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[70] sm:hidden" role="dialog" aria-modal="true" aria-label="Admin navigation">
+          <button type="button" className="absolute inset-0 bg-black/70" onClick={() => onMobileOpenChange?.(false)} aria-label="Close admin navigation" />
+          <div className="relative h-[100dvh]">{nav}</div>
+        </div>
+      )}
+    </>
   );
 }
