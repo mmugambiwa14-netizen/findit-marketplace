@@ -1,6 +1,6 @@
 # Peek Threads Phase 5 — UI integration handoff
 
-Status: buyer and seller flows are functionally integrated across asset listings and services. Response Peek upload, moderation-safe playback, post-approval request binding and deduplicated notifications are complete. Final repository-side work is accessibility cleanup and acceptance.
+Status: buyer and seller flows are functionally integrated across asset listings and services. Response Peek upload, moderation-safe playback, post-approval request binding, deduplicated notifications and repository-side accessibility cleanup are complete. Hosted acceptance remains open.
 
 ## Delivered
 
@@ -22,7 +22,8 @@ Status: buyer and seller flows are functionally integrated across asset listings
 - Requester and supporter notifications are deduplicated per buyer and Response Peek.
 - Correct deep links for property, car, machinery and service threads.
 - Natural seller entry from Profile to Buyer Peek Requests.
-- Rollback capsules and static contracts for read, write, playback, queue, upload, binding, notifications and service integration.
+- Focus-managed, validated decline dialogs in both the seller queue and listing-detail threads.
+- Rollback capsules and static contracts for read, write, playback, queue, upload, binding, notifications, accessibility and service integration.
 
 ## Preserved boundaries
 
@@ -47,9 +48,8 @@ Status: buyer and seller flows are functionally integrated across asset listings
 
 ## Still required to close Phase 5
 
-1. Replace the listing-detail `window.prompt` decline interaction with the same focus-managed dialog used in the seller queue.
-2. Run browser, keyboard, screen-reader and mobile acceptance.
-3. Exercise one complete hosted lifecycle with a real buyer request, seller Response Peek upload, moderation approval, binding, notification and playback.
+1. Run browser, keyboard, screen-reader and mobile acceptance.
+2. Exercise one complete hosted lifecycle with a real buyer request, seller Response Peek upload, moderation approval, binding, notification and playback.
 
 ## Verification
 
