@@ -270,7 +270,7 @@ export default function ImmersivePeekSlide({
           onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime || 0)}
           onEnded={() => {
             setPlaying(false);
-            setCurrentTime(event?.currentTarget?.duration || duration);
+            setCurrentTime(duration);
             onEnded?.(item.tourId);
           }}
           onError={() => {
