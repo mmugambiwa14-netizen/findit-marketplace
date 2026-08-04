@@ -64,7 +64,7 @@ export default function AppLayout() {
   const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
   const immersiveConversation = isImmersiveDesktopRoute(location.pathname);
   const showDesktopNav = !immersiveConversation;
-  const showSharedMobileTopBar = !isDiscoverHome && !immersiveConversation;
+  const showSharedMobileTopBar = !immersiveConversation;
 
   return (
     <div className="findit-screen min-h-[100dvh]">
@@ -81,7 +81,6 @@ export default function AppLayout() {
         tabIndex={-1}
         className={cn(
           'min-h-[70vh]',
-          isDiscoverHome && 'findit-mobile-safe-top',
           showMobileNav && 'findit-mobile-nav-clearance',
         )}
       >
