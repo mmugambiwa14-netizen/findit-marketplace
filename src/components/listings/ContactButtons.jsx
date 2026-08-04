@@ -10,6 +10,16 @@ import {
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -22,6 +32,7 @@ import MessageDialog from '@/components/listings/MessageDialog';
 import { revealContactDetails } from '@/repositories/contactRevealRepository';
 import { useAuth } from '@/lib/AuthContext';
 import { featureFlags } from '@/lib/featureFlags';
+import { userFacingError } from '@/lib/userFacingErrors';
 import { cn } from '@/lib/utils';
 
 const actionClass = 'flex min-h-14 w-full items-center gap-3 rounded-2xl border border-border bg-surface-secondary/45 px-4 text-left transition hover:border-primary/35 hover:bg-primary/8';
@@ -31,7 +42,8 @@ export default function ContactButtons({ listing, type = 'property', placement =
   const [guestOpen, setGuestOpen] = useState(false);
   const [guestAction, setGuestAction] = useState('contact this seller');
   const [messageOpen, setMessageOpen] = useState(false);
-  const [revealed, setRevealed] = useState(null);
+  const [externalAction, setExternalAction] = useState(null);
+  const [openingExternal, setOpeningExternal] = useState(false);
   const { user } = useAuth();
   const browsePlacement = placement === 'browse';
 
@@ -43,24 +55,18 @@ export default function ContactButtons({ listing, type = 'property', placement =
     ? `Hi, I'm interested in your service: ${listing.title}`
     : `Hi, I'm interested in your listing: ${listing.title} (${typeLabel})${priceText}`;
   const encodedMessage = encodeURIComponent(enquiryText);
+  const emailSubject = encodeURIComponent(`Enquiry about ${type === 'service' ? 'your service' : 'your listing'}: ${listing.title}`);
 
-  // Owner rows still carry the raw values. Public rows carry only the
-  // has_contact_* flags, and the values arrive from the reveal RPC once the
-  // sheet is opened by an authenticated viewer. See migration 0109.
+  // Owners may receive raw values in their own management projection. Public
+  // listing rows expose only has_contact_* flags. Buyers receive the selected
+  // value from the authenticated, rate-limited reveal RPC only after confirming
+  // an external contact action; it is never rendered in FindIt.
   const rawWhatsapp = listing.contact_whatsapp || '';
   const rawPhone = listing.contact_phone || '';
   const rawEmail = listing.contact_email || listing.seller_email || listing.provider_email || '';
-
-  const whatsappNumber = (revealed?.contact_whatsapp || rawWhatsapp).replace(/[^0-9]/g, '');
-  const phoneNumber = revealed?.contact_phone || rawPhone;
-  const emailAddress = revealed?.contact_email || rawEmail;
-
   const canCall = Boolean(rawPhone || listing.has_contact_phone);
   const canWhatsApp = Boolean(rawWhatsapp || listing.has_contact_whatsapp);
   const canEmail = Boolean(rawEmail || listing.has_contact_email);
-  const needsReveal = !revealed && !rawPhone && !rawWhatsapp && !rawEmail
-    && (canCall || canWhatsApp || canEmail);
-  const emailSubject = encodeURIComponent(`Enquiry about ${type === 'service' ? 'your service' : 'your listing'}: ${listing.title}`);
 
   const enquiryEligible = type === 'service'
     ? listing.status === 'active'
@@ -92,9 +98,6 @@ export default function ContactButtons({ listing, type = 'property', placement =
     window.setTimeout(action, 0);
   };
 
-  // Contact values are resolved when the sheet opens rather than on each
-  // action, so the tel:/mailto:/window.open handlers stay inside the original
-  // user gesture and are not treated as popups.
   const handleContactOpenChange = (next) => {
     if (next && !user) {
       setGuestAction(`contact this ${recipientLabel}`);
@@ -102,11 +105,6 @@ export default function ContactButtons({ listing, type = 'property', placement =
       return;
     }
     setContactOpen(next);
-    if (next && needsReveal) {
-      revealContactDetails(type, listing.id)
-        .then(setRevealed)
-        .catch((failure) => toast.error(failure.message));
-    }
   };
 
   const openChat = () => {
@@ -119,48 +117,69 @@ export default function ContactButtons({ listing, type = 'property', placement =
     closeThen(() => setMessageOpen(true));
   };
 
-  const openWhatsApp = () => closeThen(() => {
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
-  });
+  const requestExternalAction = (kind) => {
+    setContactOpen(false);
+    window.setTimeout(() => setExternalAction(kind), 0);
+  };
 
-  const openCall = () => closeThen(() => {
-    window.location.href = `tel:${phoneNumber}`;
-  });
+  const revealForAction = async () => {
+    if (!externalAction || openingExternal) return;
+    setOpeningExternal(true);
+    try {
+      const revealed = (rawPhone || rawWhatsapp || rawEmail)
+        ? { contact_phone: rawPhone, contact_whatsapp: rawWhatsapp, contact_email: rawEmail }
+        : await revealContactDetails(type, listing.id);
 
-  const openEmail = () => closeThen(() => {
-    toast.success(`Opening your email app to contact ${emailAddress}`);
-    window.location.href = `mailto:${emailAddress}?subject=${emailSubject}&body=${encodedMessage}`;
-  });
+      if (externalAction === 'call') {
+        const phone = String(revealed?.contact_phone || '').trim();
+        if (!phone) throw new Error('Phone contact is unavailable.');
+        window.location.assign(`tel:${phone}`);
+      } else if (externalAction === 'email') {
+        const email = String(revealed?.contact_email || '').trim();
+        if (!email) throw new Error('Email contact is unavailable.');
+        window.location.assign(`mailto:${email}?subject=${emailSubject}&body=${encodedMessage}`);
+      } else if (externalAction === 'whatsapp') {
+        const whatsapp = String(revealed?.contact_whatsapp || '').replace(/[^0-9]/g, '');
+        if (!whatsapp) throw new Error('WhatsApp contact is unavailable.');
+        window.open(`https://wa.me/${whatsapp}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+      }
+      setExternalAction(null);
+    } catch (failure) {
+      toast.error(userFacingError(failure, `We could not open this contact method. Please try again.`));
+    } finally {
+      setOpeningExternal(false);
+    }
+  };
 
   const actions = [
     showMessage && {
       key: 'message',
       label: 'Chat in FindIt',
-      description: 'Keep the listing and conversation together.',
+      description: 'Keep your contact details private in FindIt.',
       icon: MessageSquareText,
       onClick: openChat,
     },
     canCall && {
       key: 'call',
       label: 'Call',
-      description: phoneNumber,
+      description: 'Open your phone app.',
       icon: PhoneCall,
-      onClick: openCall,
+      onClick: () => requestExternalAction('call'),
     },
     canWhatsApp && {
       key: 'whatsapp',
       label: 'WhatsApp',
       description: 'Continue in WhatsApp.',
       icon: MessageCircle,
-      onClick: openWhatsApp,
+      onClick: () => requestExternalAction('whatsapp'),
       iconClassName: 'bg-emerald-500/15 text-emerald-400',
     },
     canEmail && {
       key: 'email',
       label: 'Email',
-      description: emailAddress,
+      description: 'Open your email app.',
       icon: Mail,
-      onClick: openEmail,
+      onClick: () => requestExternalAction('email'),
     },
   ].filter(Boolean);
 
@@ -172,6 +191,24 @@ export default function ContactButtons({ listing, type = 'property', placement =
       </Button>
     );
   }
+
+  const actionCopy = externalAction === 'call'
+    ? {
+        title: `Call this ${recipientLabel}?`,
+        description: `FindIt will open your phone app. The ${recipientLabel}'s phone number will be visible there, but it will not be displayed inside FindIt.`,
+        confirm: 'Open phone app',
+      }
+    : externalAction === 'email'
+      ? {
+          title: `Email this ${recipientLabel}?`,
+          description: `FindIt will open your email app. The ${recipientLabel}'s email address will be visible there, but it will not be displayed inside FindIt.`,
+          confirm: 'Open email app',
+        }
+      : {
+          title: `Open WhatsApp?`,
+          description: `FindIt will open WhatsApp. The ${recipientLabel}'s number may be visible there, but it will not be displayed inside FindIt.`,
+          confirm: 'Open WhatsApp',
+        };
 
   return (
     <>
@@ -210,10 +247,25 @@ export default function ContactButtons({ listing, type = 'property', placement =
 
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-primary/8 p-3 text-xs leading-5 text-muted-foreground">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p>Never send payment before verifying the item, provider, and terms. FindIt does not hold buyer funds.</p>
+            <p>Phone numbers and email addresses stay hidden in FindIt. They become visible only in the external app you choose to open.</p>
           </div>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={Boolean(externalAction)} onOpenChange={(open) => { if (!open && !openingExternal) setExternalAction(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{actionCopy.title}</AlertDialogTitle>
+            <AlertDialogDescription>{actionCopy.description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={openingExternal}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={revealForAction} disabled={openingExternal}>
+              {openingExternal ? 'Opening…' : actionCopy.confirm}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <GuestPromptSheet open={guestOpen} onClose={() => setGuestOpen(false)} action={guestAction} />
       {showMessage && <MessageDialog open={messageOpen} onClose={() => setMessageOpen(false)} listing={listing} type={type} />}
