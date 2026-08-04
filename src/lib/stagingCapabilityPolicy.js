@@ -1,0 +1,28 @@
+export const TRUSTED_STAGING_BRANCHES = Object.freeze([
+  'feature/listing-intelligence-foundation',
+  'claude/findit-hardening-listing-012cf0',
+  'feature/peek-threads-phase-3',
+]);
+
+const trustedStagingBranches = new Set(TRUSTED_STAGING_BRANCHES);
+
+export function isTrustedStagingBranch(env = {}) {
+  const branch = String(env.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim();
+  return trustedStagingBranches.has(branch);
+}
+
+export function readBooleanFlag(env = {}, envVar, fallback = false) {
+  const raw = env[envVar];
+  if (raw === undefined) return fallback;
+  return raw === 'true' || raw === true;
+}
+
+export function resolveStagingCertifiedFlag(env = {}, envVar) {
+  return isTrustedStagingBranch(env) || readBooleanFlag(env, envVar, false);
+}
+
+export function resolveStagingProviderFlag(env = {}, envVar, legacyEnvVar) {
+  const raw = env[envVar] ?? env[legacyEnvVar];
+  if (raw === 'false' || raw === false) return false;
+  return isTrustedStagingBranch(env) || raw === 'true' || raw === true;
+}
