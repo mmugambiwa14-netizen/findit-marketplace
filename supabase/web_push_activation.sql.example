@@ -1,0 +1,31 @@
+-- Run only after setting Edge Function secrets:
+-- WEB_PUSH_PUBLIC_KEY
+-- WEB_PUSH_PRIVATE_KEY
+-- WEB_PUSH_SUBJECT (for example mailto:support@example.com)
+-- PUSH_DISPATCH_TOKEN
+--
+-- Replace <DISPATCH_TOKEN> below with the same PUSH_DISPATCH_TOKEN value.
+-- Keep the real token out of Git.
+
+create extension if not exists pg_net with schema extensions;
+create extension if not exists pg_cron with schema pg_catalog;
+
+select cron.unschedule(jobid)
+from cron.job
+where jobname = 'findit-web-push-dispatch';
+
+select cron.schedule(
+  'findit-web-push-dispatch',
+  '* * * * *',
+  $cron$
+  select net.http_post(
+    url := 'https://bwgklpxoetrrkutottdb.supabase.co/functions/v1/web-push-dispatch',
+    headers := jsonb_build_object(
+      'content-type', 'application/json',
+      'x-push-dispatch-token', '<DISPATCH_TOKEN>'
+    ),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 15000
+  );
+  $cron$
+);
