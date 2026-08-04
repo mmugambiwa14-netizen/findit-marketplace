@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { GuestBanner } from '@/components/auth/GuestPromptSheet';
+import ActiveConversationAutoScroll from '@/components/messaging/ActiveConversationAutoScroll';
 import { useAuth } from '@/lib/AuthContext';
 import { cn } from '@/lib/utils';
 import BottomNav from './BottomNav';
@@ -64,7 +65,8 @@ export default function AppLayout() {
   const selfContained = SELF_CONTAINED_ROUTES.some((route) => matchesRoute(location.pathname, route));
   const isDiscoverHome = location.pathname === '/';
   const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
-  const showDesktopNav = !isImmersiveDesktopRoute(location.pathname);
+  const immersiveConversation = isImmersiveDesktopRoute(location.pathname);
+  const showDesktopNav = !immersiveConversation;
 
   return (
     <div className="findit-screen min-h-[100dvh]">
@@ -78,7 +80,11 @@ export default function AppLayout() {
       <main
         id="main-content"
         tabIndex={-1}
-        className={cn('min-h-[70vh]', showMobileNav && 'findit-mobile-nav-clearance')}
+        className={cn(
+          'min-h-[70vh]',
+          !immersiveConversation && 'findit-mobile-safe-top',
+          showMobileNav && 'findit-mobile-nav-clearance',
+        )}
       >
         <Outlet />
         {isDiscoverHome && <div className="md:hidden"><SiteFooter compact /></div>}
@@ -86,6 +92,7 @@ export default function AppLayout() {
       {!selfContained && <div className="hidden md:block"><SiteFooter /></div>}
       {!selfContained && !isDiscoverHome && <GuestBanner user={user} />}
       {showMobileNav && <BottomNav />}
+      {immersiveConversation && <ActiveConversationAutoScroll />}
     </div>
   );
 }
