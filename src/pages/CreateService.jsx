@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
@@ -14,27 +14,15 @@ import { V1_SERVICE_CATEGORIES, PRICING_TYPES, getServiceCategory } from "@/lib/
 import { ZIMBABWE_LOCATIONS } from "@/lib/constants";
 import { getSupportedListingCurrencies } from "@/lib/marketConfig";
 import { customerErrorMessage } from "@/lib/customerErrors";
+import { usePersistentFormDraft } from "@/hooks/usePersistentFormDraft";
 import { createService } from "@/services/servicesService";
 import { removeStagedMarketplaceImage, uploadMarketplaceImage } from "@/services/marketplaceImagesService";
 import TourUploader from "@/components/tours/TourUploader";
 import TourUploadProgress from "@/components/tours/TourUploadProgress";
 import { removeListingTour, uploadListingTour } from "@/services/listingToursService";
 
-export default function CreateService() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const imageInputRef = useRef(null);
-  const [media, setMedia] = useState([]);
-  const [uploading, setUploading] = useState(false);
-  const [tourDraft, setTourDraft] = useState(null);
-  const [tourProgress, setTourProgress] = useState(null);
-  const [tourBusy, setTourBusy] = useState(false);
-  const [publishedService, setPublishedService] = useState(null);
-  const [retryingTour, setRetryingTour] = useState(false);
-  const [discardingTour, setDiscardingTour] = useState(false);
-  const [mediaError, setMediaError] = useState('');
-  const [form, setForm] = useState({
+function freshServiceForm(user) {
+  return {
     title: "",
     description: "",
     category: "",
@@ -48,8 +36,60 @@ export default function CreateService() {
     contact_phone: user?.phone || "",
     contact_whatsapp: "",
     contact_email: user?.email || "",
-  });
+  };
+}
+
+export default function CreateService() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const imageInputRef = useRef(null);
+  const draftKey = user?.id ? `findit_service_draft_v1_${user.id}` : null;
+  const [media, setMedia] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [tourDraft, setTourDraft] = useState(null);
+  const [tourProgress, setTourProgress] = useState(null);
+  const [tourBusy, setTourBusy] = useState(false);
+  const [publishedService, setPublishedService] = useState(null);
+  const [retryingTour, setRetryingTour] = useState(false);
+  const [discardingTour, setDiscardingTour] = useState(false);
+  const [mediaError, setMediaError] = useState('');
+  const [form, setForm] = useState(() => freshServiceForm(user));
   const [sameAsPhone, setSameAsPhone] = useState(false);
+
+  const restoreDraft = useCallback((payload) => {
+    if (payload?.form) {
+      setForm({
+        ...freshServiceForm(user),
+        ...payload.form,
+        subcategories: Array.isArray(payload.form.subcategories) ? payload.form.subcategories : [],
+      });
+    }
+    if (Array.isArray(payload?.media)) setMedia(payload.media);
+    setSameAsPhone(Boolean(payload?.sameAsPhone));
+  }, [user]);
+
+  const draftValue = useMemo(() => ({
+    form,
+    media: media.map((item) => ({ ...item })),
+    sameAsPhone,
+  }), [form, media, sameAsPhone]);
+
+  const { draftReady, saveNow, clearDraft } = usePersistentFormDraft({
+    storageKey: draftKey,
+    value: draftValue,
+    onRestore: restoreDraft,
+    enabled: !publishedService,
+  });
+
+  useEffect(() => {
+    if (!draftReady || !user) return;
+    setForm((current) => ({
+      ...current,
+      contact_phone: current.contact_phone || user.phone || "",
+      contact_email: current.contact_email || user.email || "",
+    }));
+  }, [draftReady, user]);
 
   useEffect(() => () => {
     if (tourDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
@@ -60,6 +100,19 @@ export default function CreateService() {
   const cities = Object.keys(ZIMBABWE_LOCATIONS);
   const currencies = getSupportedListingCurrencies("ZW");
   const priceDisabled = ["quote", "quote_required", "contact_for_price"].includes(form.pricing_type);
+  const isDirty = Boolean(form.title || form.description || form.category || media.length || tourDraft);
+
+  useEffect(() => {
+    const warn = (event) => {
+      if (isDirty && !publishedService) {
+        saveNow();
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [isDirty, publishedService, saveNow]);
 
   const handlePhoneChange = (value) => {
     setForm((current) => ({
@@ -106,6 +159,7 @@ export default function CreateService() {
       }
     },
     onSuccess: ({ service, tourError, tourQueued }) => {
+      clearDraft();
       queryClient.invalidateQueries({ queryKey: ["services"] });
       queryClient.invalidateQueries({ queryKey: ["my-services", user.id] });
       if (tourError) {
@@ -198,7 +252,6 @@ export default function CreateService() {
     }
   };
 
-
   const continueWithoutPublishedTour = async () => {
     if (!publishedService?.id || retryingTour || discardingTour) return;
     setDiscardingTour(true);
@@ -226,7 +279,6 @@ export default function CreateService() {
               <p className="mt-1 text-sm text-muted-foreground">Your service is saved and remains usable even though its optional Peek upload was interrupted.</p>
             </div>
           </div>
-
           <div className="rounded-xl border border-warning/30 bg-warning/5 p-4">
             <div className="flex items-start gap-3">
               <Film className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
@@ -236,9 +288,7 @@ export default function CreateService() {
               </div>
             </div>
           </div>
-
           {tourProgress && <TourUploadProgress progress={tourProgress} />}
-
           <Button type="button" className="h-12 w-full rounded-xl" onClick={resumePublishedTour} disabled={retryingTour || discardingTour}>
             {retryingTour ? <><Loader2 className="animate-spin" />Resuming Peek upload...</> : <><RotateCcw />Resume Peek upload</>}
           </Button>
@@ -256,7 +306,7 @@ export default function CreateService() {
         <div className="flex items-center gap-3 mb-5">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => { saveNow(); navigate(-1); }}
             aria-label="Go back"
             className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center"
           >
@@ -264,7 +314,7 @@ export default function CreateService() {
           </button>
           <div>
             <h1 className="text-xl font-bold">Offer a Service</h1>
-            <p className="text-sm text-muted-foreground">Tell customers what you do and how to contact you.</p>
+            <p className="text-sm text-muted-foreground">Your progress is saved automatically on this device.</p>
           </div>
         </div>
 
@@ -293,13 +343,7 @@ export default function CreateService() {
                 {selectedCategory.subcategories.map((subcategory) => {
                   const active = form.subcategories.includes(subcategory.value);
                   return (
-                    <button
-                      key={subcategory.value}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => toggleSubcategory(subcategory.value)}
-                      className={`px-3 py-2 rounded-xl text-sm border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-muted"}`}
-                    >
+                    <button key={subcategory.value} type="button" aria-pressed={active} onClick={() => toggleSubcategory(subcategory.value)} className={`px-3 py-2 rounded-xl text-sm border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-muted"}`}>
                       {subcategory.label}
                     </button>
                   );
@@ -312,7 +356,6 @@ export default function CreateService() {
             <Label htmlFor="service-title">Title *</Label>
             <Input id="service-title" value={form.title} onChange={(event) => update("title", event.target.value)} placeholder="e.g. Pre-purchase vehicle inspection" className="mt-1.5 h-11 rounded-xl" />
           </div>
-
           <div>
             <Label htmlFor="service-description">Description</Label>
             <Textarea id="service-description" value={form.description} onChange={(event) => update("description", event.target.value)} placeholder="Describe what you offer, experience and turnaround time" className="mt-1.5 rounded-xl min-h-28" />
@@ -333,14 +376,7 @@ export default function CreateService() {
 
           {form.category !== "legal" && (
             <>
-              <TourUploader
-                parentType="service"
-                category="service"
-                value={tourDraft}
-                onChange={setTourDraft}
-                disabled={uploading || createMutation.isPending}
-                onBusyChange={setTourBusy}
-              />
+              <TourUploader parentType="service" category="service" value={tourDraft} onChange={setTourDraft} disabled={uploading || createMutation.isPending} onBusyChange={setTourBusy} />
               {createMutation.isPending && tourDraft && tourProgress && <TourUploadProgress progress={tourProgress} />}
             </>
           )}
@@ -350,9 +386,7 @@ export default function CreateService() {
               <Label htmlFor="service-pricing-type">Pricing</Label>
               <Select value={form.pricing_type} onValueChange={(value) => update("pricing_type", value)}>
                 <SelectTrigger id="service-pricing-type" className="mt-1.5 h-11 rounded-xl"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PRICING_TYPES.map((pricing) => <SelectItem key={pricing.value} value={pricing.value}>{pricing.label}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{PRICING_TYPES.map((pricing) => <SelectItem key={pricing.value} value={pricing.value}>{pricing.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
