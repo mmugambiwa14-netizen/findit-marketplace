@@ -11,6 +11,13 @@ function scrollToLatest(container) {
   });
 }
 
+/**
+ * Keeps an active conversation aligned to its newest rendered message.
+ *
+ * This component is intentionally part of the same branch-head deployment as
+ * AppLayout so the shared shell never imports a file that is absent from the
+ * deployed commit.
+ */
 export default function ActiveConversationAutoScroll() {
   useEffect(() => {
     let observer;
