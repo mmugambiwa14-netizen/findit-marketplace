@@ -31,5 +31,26 @@ function applyDarkTheme() {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#050914');
 }
 
+function applyViewportHeight() {
+  const viewport = window.visualViewport;
+  const height = Math.round(viewport?.height || window.innerHeight || document.documentElement.clientHeight);
+  if (height > 0) document.documentElement.style.setProperty('--findit-viewport-height', `${height}px`);
+}
+
+function trackViewportHeight() {
+  let frame = 0;
+  const schedule = () => {
+    window.cancelAnimationFrame(frame);
+    frame = window.requestAnimationFrame(applyViewportHeight);
+  };
+
+  applyViewportHeight();
+  window.addEventListener('resize', schedule, { passive: true });
+  window.addEventListener('orientationchange', schedule, { passive: true });
+  window.visualViewport?.addEventListener('resize', schedule, { passive: true });
+  window.visualViewport?.addEventListener('scroll', schedule, { passive: true });
+}
+
 restoreDeepLink();
 applyDarkTheme();
+trackViewportHeight();
