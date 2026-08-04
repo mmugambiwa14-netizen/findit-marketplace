@@ -10,6 +10,7 @@ import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
+import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -80,6 +81,7 @@ export default function CarDetail() {
           {car.description && <DetailSection title="About this vehicle"><p className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">{car.description}</p></DetailSection>}
           <VariantSelector variants={car.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
           <PriceBreakdown listing={car} />
+          <PeekThreadsSection parentType="listing" parentId={car.id} listingKind="car" ownerId={car.seller_id} guard={guard} />
           <SellerPanel name={car.seller_name} sellerId={car.seller_id} />
           <SafetyPanel>Request a test drive, verify ownership documents and consider an independent mechanical inspection. Never send money before seeing the vehicle.</SafetyPanel>
           <ListingRecommendations subjectListingId={car.id} />
