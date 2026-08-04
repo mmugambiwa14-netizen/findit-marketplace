@@ -1,7 +1,14 @@
 import { useRef, useState } from 'react';
 import { Camera, ChevronRight, Film, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import PermissionIntroDialog from '@/components/permissions/PermissionIntroDialog';
 import { featureFlags } from '@/lib/featureFlags';
+import {
+  PERMISSION_KINDS,
+  hasSeenPermissionIntro,
+  markPermissionIntroSeen,
+  readBrowserPermissionState,
+} from '@/lib/contextualPermissions';
 import {
   TOUR_ALLOWED_MIME_TYPES,
   TOUR_MAX_DURATION_SECONDS,
@@ -21,10 +28,6 @@ function sizeLabel(bytes) {
   return `${(Number(bytes || 0) / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * @param {File} file
- * @returns {Promise<{durationSeconds: number, previewUrl: string}>}
- */
 function inspectVideo(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -72,6 +75,7 @@ export default function TourUploader({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(null);
   const [error, setError] = useState('');
+  const [cameraIntroOpen, setCameraIntroOpen] = useState(false);
   const draft = value || null;
   const parentLabel = parentType === 'service' ? 'service' : 'listing';
   const managementLabel = parentType === 'service' ? 'Manage services' : 'Manage listings';
@@ -110,6 +114,26 @@ export default function TourUploader({
       setSelecting(false);
       onBusyChange?.(false);
     }
+  };
+
+  const launchRecorder = () => {
+    markPermissionIntroSeen(PERMISSION_KINDS.CAMERA);
+    setCameraIntroOpen(false);
+    recordInputRef.current?.click();
+  };
+
+  const requestRecording = async () => {
+    setError('');
+    const permissionState = await readBrowserPermissionState(PERMISSION_KINDS.CAMERA);
+    if (permissionState === 'denied') {
+      setError('Camera access is blocked for FindIt. Allow camera access in your browser or device settings, then try again. You can still upload an existing video.');
+      return;
+    }
+    if (permissionState === 'granted' || hasSeenPermissionIntro(PERMISSION_KINDS.CAMERA)) {
+      recordInputRef.current?.click();
+      return;
+    }
+    setCameraIntroOpen(true);
   };
 
   const clear = () => {
@@ -169,7 +193,7 @@ export default function TourUploader({
 
       {!draft && (
         <div className={`grid gap-3 ${onSkip ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={() => recordInputRef.current?.click()} disabled={disabled || selecting}><Camera />Record</Button>
+          <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={requestRecording} disabled={disabled || selecting}><Camera />Record</Button>
           <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={() => uploadInputRef.current?.click()} disabled={disabled || selecting}><Upload />Upload</Button>
           {onSkip && <Button type="button" variant="ghost" className="h-12 rounded-xl" onClick={onSkip} disabled={disabled || selecting}><ChevronRight />Skip</Button>}
         </div>
@@ -202,6 +226,15 @@ export default function TourUploader({
       )}
       {draft && !parentId && <p className="text-xs text-muted-foreground">The video will upload after the {parentLabel} record is created. Publishing does not wait for video processing.</p>}
       {!draft && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Peek later from {managementLabel}.</p>}
+
+      <PermissionIntroDialog
+        open={cameraIntroOpen}
+        title="Allow camera access?"
+        description="FindIt needs camera access only when you choose Record, so you can capture a new Peek for this listing. FindIt does not turn on the camera in the background."
+        confirmLabel="Open camera"
+        onConfirm={launchRecorder}
+        onCancel={() => setCameraIntroOpen(false)}
+      />
     </section>
   );
 }
