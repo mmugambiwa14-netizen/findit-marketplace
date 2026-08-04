@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Clock3, LogOut, ShieldAlert } from 'lucide-react';
+import { Clock3, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -13,6 +13,13 @@ export default function AdminSessionBoundary({ children }) {
   const [remainingMs, setRemainingMs] = useState(IDLE_LIMIT_MS);
   const [timedOut, setTimedOut] = useState(false);
 
+  const evaluateIdleTime = useCallback(() => {
+    const nextRemaining = Math.max(0, IDLE_LIMIT_MS - (Date.now() - lastActivityRef.current));
+    setRemainingMs(nextRemaining);
+    if (nextRemaining === 0) setTimedOut(true);
+    return nextRemaining;
+  }, []);
+
   const markActive = useCallback(() => {
     if (timedOut) return;
     lastActivityRef.current = Date.now();
@@ -22,22 +29,17 @@ export default function AdminSessionBoundary({ children }) {
   useEffect(() => {
     for (const eventName of ACTIVITY_EVENTS) window.addEventListener(eventName, markActive, { passive: true });
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') markActive();
+      if (document.visibilityState === 'visible') evaluateIdleTime();
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
-
-    const timer = window.setInterval(() => {
-      const nextRemaining = Math.max(0, IDLE_LIMIT_MS - (Date.now() - lastActivityRef.current));
-      setRemainingMs(nextRemaining);
-      if (nextRemaining === 0) setTimedOut(true);
-    }, 1000);
+    const timer = window.setInterval(evaluateIdleTime, 1000);
 
     return () => {
       window.clearInterval(timer);
       for (const eventName of ACTIVITY_EVENTS) window.removeEventListener(eventName, markActive);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [markActive]);
+  }, [evaluateIdleTime, markActive]);
 
   useEffect(() => {
     if (!timedOut) return;
