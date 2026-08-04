@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Loader2, RefreshCw, Settings2, WifiOff } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Loader2, RefreshCw, Settings2, WifiOff } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import BrandLogo from '@/components/BrandLogo';
+import NotificationBell from '@/components/layout/NotificationBell';
+import GlobalRefreshButton from '@/components/pwa/GlobalRefreshButton';
 import ImmersivePeekSlide from '@/components/tours/ImmersivePeekSlide';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/lib/AuthContext';
 import { readStoredString, writeStoredString } from '@/lib/browserStorage';
+import { featureFlags } from '@/lib/featureFlags';
 import { getFavouriteIds } from '@/services/favouritesService';
 import { getPublicTourFeedPage } from '@/services/listingToursService';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
@@ -16,9 +20,15 @@ const AUTOPLAY_KEY = 'findit:peek:autoplay';
 const MUTE_KEY = 'findit:peek:mute-default';
 const VALID_CATEGORIES = new Set(['all', 'property', 'car', 'machinery', 'service']);
 const MAX_RESTORE_PAGES = 10;
+const CATEGORY_OPTIONS = [
+  ['all', 'For you'],
+  ['property', 'Property'],
+  ['car', 'Cars'],
+  ['machinery', 'Machinery'],
+  ['service', 'Services'],
+];
 
 export default function Tours() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const requestedCategory = params.get('category') || 'all';
@@ -143,45 +153,53 @@ export default function Tours() {
   };
 
   return (
-    <div className="fixed inset-0 z-40 bg-black text-white sm:top-[4.5rem]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex items-center justify-between px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <button type="button" onClick={() => navigate(-1)} className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 backdrop-blur-xl" aria-label="Go back">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="pointer-events-auto flex items-center gap-2">
-          <button type="button" onClick={() => updateAutoplay(!autoplay)} className="flex h-11 items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 text-xs font-bold backdrop-blur-xl" aria-pressed={autoplay}>
-            <span>Autoplay</span>
-            <span className={autoplay ? 'text-blue-400' : 'text-white/55'}>{autoplay ? 'On' : 'Off'}</span>
-          </button>
-          <button type="button" onClick={() => setSettingsOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/40 backdrop-blur-xl" aria-label="Peek settings">
-            <Settings2 className="h-5 w-5" />
-          </button>
+    <div className="fixed inset-0 z-40 bg-black text-white">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-50 px-[var(--findit-page-gutter)] pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex items-center justify-between gap-3">
+          <BrandLogo
+            className="pointer-events-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]"
+            markClassName="h-8 w-8"
+            wordmarkClassName="text-xl text-white"
+          />
+          <div className="pointer-events-auto flex items-center gap-1 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            <GlobalRefreshButton inline className="text-white/90 hover:bg-black/20 hover:text-white" />
+            {user && featureFlags.essentialNotifications && (
+              <NotificationBell className="text-white/90 hover:bg-black/20 hover:text-white" iconClassName="text-white" />
+            )}
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="flex h-[var(--findit-icon-button-size)] w-[var(--findit-icon-button-size)] items-center justify-center rounded-[var(--findit-control-radius)] text-white/90 hover:bg-black/20"
+              aria-label={`Peek settings. Autoplay is ${autoplay ? 'on' : 'off'}`}
+            >
+              <Settings2 className="h-[var(--findit-icon-size)] w-[var(--findit-icon-size)]" />
+            </button>
+          </div>
         </div>
-      </div>
 
-      <nav className="absolute left-1/2 top-[max(4.4rem,calc(env(safe-area-inset-top)+3.6rem))] z-40 flex max-w-[calc(100vw-1rem)] -translate-x-1/2 gap-1 overflow-x-auto rounded-full border border-white/10 bg-black/40 p-1 backdrop-blur-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Peek categories">
-        {[
-          ['all', 'For you'],
-          ['property', 'Property'],
-          ['car', 'Cars'],
-          ['machinery', 'Machinery'],
-          ['service', 'Services'],
-        ].map(([value, label]) => (
-          <button key={value} type="button" onClick={() => changeCategory(value)} className={`min-h-9 shrink-0 rounded-full px-3 text-[11px] font-bold ${category === value ? 'bg-white text-black' : 'text-white/70'}`}>
-            {label}
-          </button>
-        ))}
-      </nav>
+        <nav className="pointer-events-auto mt-3 flex max-w-full gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Peek categories">
+          {CATEGORY_OPTIONS.map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => changeCategory(value)}
+              className={`h-[var(--findit-control-height-sm)] shrink-0 rounded-full px-3 text-xs font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] ${category === value ? 'bg-white text-black' : 'text-white'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      </div>
 
       {feed.isLoading ? (
         <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-400" /></div>
       ) : feed.isError ? (
         <div className="flex h-full items-center justify-center px-5">
-          <section className="max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6 text-center">
+          <section className="max-w-sm rounded-3xl border border-white/10 bg-black/55 p-6 text-center backdrop-blur-xl">
             <WifiOff className="mx-auto h-7 w-7 text-blue-400" />
             <h1 className="mt-3 text-lg font-bold">Peeks are temporarily offline</h1>
             <p className="mt-2 text-sm text-white/65">Check your connection and try again.</p>
-            <Button variant="secondary" className="mt-4" onClick={() => feed.refetch()}><RefreshCw className="h-4 w-4" />Try again</Button>
+            <Button variant="secondary" className="mt-4" onClick={() => feed.refetch()}><RefreshCw />Try again</Button>
           </section>
         </div>
       ) : items.length === 0 ? (
@@ -217,15 +235,15 @@ export default function Tours() {
             <SheetDescription>Control how videos behave while you browse.</SheetDescription>
           </SheetHeader>
           <div className="mt-5 space-y-3">
-            <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+            <label className="flex items-center justify-between rounded-[var(--findit-panel-radius)] border border-white/10 bg-white/5 p-4">
               <span><span className="block text-sm font-bold">Autoplay</span><span className="mt-1 block text-xs text-white/55">Play the visible Peek and continue when it ends.</span></span>
               <Switch checked={autoplay} onCheckedChange={updateAutoplay} />
             </label>
-            <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4">
+            <label className="flex items-center justify-between rounded-[var(--findit-panel-radius)] border border-white/10 bg-white/5 p-4">
               <span><span className="block text-sm font-bold">Muted by default</span><span className="mt-1 block text-xs text-white/55">Start each Peek without sound.</span></span>
               <Switch checked={muteByDefault} onCheckedChange={updateMuteDefault} />
             </label>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs leading-5 text-white/60">
+            <div className="rounded-[var(--findit-panel-radius)] border border-white/10 bg-white/5 p-4 text-xs leading-5 text-white/60">
               FindIt keeps only the current, previous, and next Peek ready. Other videos are released from memory, and playback pauses whenever the app goes into the background.
             </div>
           </div>
