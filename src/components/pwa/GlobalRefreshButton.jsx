@@ -28,11 +28,9 @@ export default function GlobalRefreshButton({ desktop = false }) {
       title="Refresh FindIt"
       className={cn(
         'flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-wait disabled:opacity-70',
-        desktop
-          ? 'shrink-0'
-          : 'fixed right-[4.25rem] z-[75] md:hidden',
+        desktop ? 'shrink-0' : 'fixed right-[4.25rem] z-[75] md:hidden',
       )}
-      style={desktop ? undefined : { top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+      style={desktop ? undefined : { top: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
     >
       <RefreshCw className={cn('h-[18px] w-[18px]', refreshing && 'animate-spin')} aria-hidden="true" />
     </button>
