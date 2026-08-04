@@ -4,6 +4,7 @@ import { CheckCircle2, Clock3, Eye, Loader2, Plus, ThumbsUp, XCircle } from 'luc
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import ResponsePeekWatchButton from '@/components/peekThreads/ResponsePeekWatchButton';
 import { PEEK_REQUEST_CATEGORIES, peekRequestCategoryLabel, suggestedRequests } from '@/domain/peekThreads/categories';
 import { findDuplicateRequest } from '@/domain/peekThreads/requestContracts';
 import { useAuth } from '@/lib/AuthContext';
@@ -229,9 +230,7 @@ function ThreadCard({ item, isOwner, busy, onSupport, onDecline }) {
             <p className="text-sm font-semibold">Response Peek available</p>
             <p className="mt-1 text-xs text-muted-foreground">Captured {new Date(item.responsePeek.capturedAt).toLocaleDateString()}</p>
           </div>
-          <Button type="button" size="sm" variant="outline" disabled title="Response playback is connected in the next UI boundary">
-            <Eye className="mr-2 h-4 w-4" />Watch Peek
-          </Button>
+          <ResponsePeekWatchButton tourId={item.responsePeek.id} title={item.body} />
         </div>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
