@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
 import TourReportDialog from '@/components/tours/TourReportDialog';
 import { Button } from '@/components/ui/button';
+import { useImmediatePeekView } from '@/hooks/useImmediatePeekView';
 import { useAuth } from '@/lib/AuthContext';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { cn } from '@/lib/utils';
@@ -60,9 +61,9 @@ function relativeTime(value) {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
-function viewCount(item) {
+function initialViewCount(item) {
   const value = Number(item.viewCount ?? item.views ?? item.playCount ?? 0);
-  return Number.isFinite(value) && value > 0 ? value.toLocaleString() : '0';
+  return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
 function formatPlaybackTime(seconds) {
@@ -108,6 +109,11 @@ export default function ImmersivePeekSlide({
   const poster = item.thumbnailUrl || item.coverImageUrl || undefined;
   const requestPath = `${detailPath}${detailPath.includes('?') ? '&' : '?'}requestPeek=1`;
   const postedAt = item.publishedAt || item.capturedAt || item.createdAt;
+  const { viewCount, recordView } = useImmediatePeekView({
+    tourId: item.tourId,
+    initialCount: initialViewCount(item),
+    enabled: !isOwner,
+  });
 
   useEffect(() => setSaved(isSaved), [isSaved]);
   useEffect(() => setMuted(muteByDefault), [muteByDefault]);
@@ -265,7 +271,10 @@ export default function ImmersivePeekSlide({
           onClick={togglePlayback}
           onLoadedMetadata={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
           onDurationChange={(event) => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
-          onPlay={() => setPlaying(true)}
+          onPlay={() => {
+            setPlaying(true);
+            recordView();
+          }}
           onPause={() => setPlaying(false)}
           onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime || 0)}
           onEnded={() => {
@@ -368,7 +377,7 @@ export default function ImmersivePeekSlide({
           </div>
           <div className="flex min-w-0 items-center justify-center gap-1.5 px-1.5">
             <Eye className="h-4 w-4 shrink-0 text-white/70" />
-            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{viewCount(item)}</p><p className="truncate text-[9px] text-white/55">Views</p></div>
+            <div className="min-w-0"><p className="truncate text-[11px] font-bold">{viewCount.toLocaleString()}</p><p className="truncate text-[9px] text-white/55">Views</p></div>
           </div>
           <div className="flex min-w-0 items-center justify-center gap-1.5 px-1.5">
             <Clock3 className="h-4 w-4 shrink-0 text-white/70" />
