@@ -25,6 +25,16 @@ export async function readPeekThreadPage(request) {
   return data ?? [];
 }
 
+export async function readSellerPeekRequestQueue(request) {
+  const data = await invoke('seller_peek_request_queue', {
+    p_cursor_score: request.cursor?.score ?? null,
+    p_cursor_created_at: request.cursor?.createdAt ?? null,
+    p_cursor_id: request.cursor?.id ?? null,
+    p_limit: request.limit,
+  }, 'Unable to load Buyer Peek Requests');
+  return data ?? [];
+}
+
 export async function invokeResponsePeekPlayback(tourId) {
   const { data, error } = await supabase.functions.invoke('tour-playback-access', {
     body: { tourId },
