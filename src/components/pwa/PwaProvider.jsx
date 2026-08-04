@@ -144,17 +144,32 @@ export function PwaProvider({ children }) {
     setInstallDismissed(true);
   }, []);
 
+  const refreshApp = useCallback(async () => {
+    // A manual refresh should also activate a version the browser has downloaded
+    // but not yet promoted. When there is no waiting worker, use a normal reload.
+    if (serviceWorkerSupported() && !previewDeployment()) {
+      const waiting = await checkForUpdate();
+      if (waiting) {
+        setUpdateReady(true);
+        applyPendingUpdate();
+        return;
+      }
+    }
+    window.location.reload();
+  }, []);
+
   const value = useMemo(() => ({
     ...connectivity,
     updateReady,
     applyUpdate: applyPendingUpdate,
+    refreshApp,
     standalone,
     // Never offered when already installed, when the browser has not said the
     // app is installable, or within the dismissal window. §6: no spamming.
     canInstall: Boolean(installEvent) && !standalone && !installDismissed,
     promptInstall,
     dismissInstall,
-  }), [connectivity, updateReady, standalone, installEvent, installDismissed,
+  }), [connectivity, updateReady, refreshApp, standalone, installEvent, installDismissed,
     promptInstall, dismissInstall]);
 
   return <PwaContext.Provider value={value}>{children}</PwaContext.Provider>;
@@ -176,6 +191,7 @@ export function usePwa() {
     recheck: async () => true,
     updateReady: false,
     applyUpdate: () => {},
+    refreshApp: () => window.location.reload(),
     standalone: false,
     canInstall: false,
     promptInstall: async () => 'unavailable',
