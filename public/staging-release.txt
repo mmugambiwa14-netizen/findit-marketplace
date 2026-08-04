@@ -1,0 +1,4 @@
+FindIt staging release
+Media actions moved beside Photos and Peek.
+Share and Save use compact controls; Save uses the bookmark icon.
+Release generated: 2026-08-04T20:34:00+03:00
