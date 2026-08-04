@@ -15,6 +15,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import TourUploader from '@/components/tours/TourUploader';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import { declinePeekRequest, getSellerPeekRequestQueue } from '@/services/peekThreadsService';
 
@@ -37,6 +45,9 @@ export default function BuyerPeekRequestsQueue() {
   const queryClient = useQueryClient();
   const [declineTarget, setDeclineTarget] = useState(null);
   const [declineReason, setDeclineReason] = useState('');
+  const [responseTarget, setResponseTarget] = useState(null);
+  const [responseDraft, setResponseDraft] = useState(null);
+  const [responseBusy, setResponseBusy] = useState(false);
   const queue = useInfiniteQuery({
     queryKey: ['seller-peek-request-queue'],
     queryFn: ({ pageParam }) => getSellerPeekRequestQueue({ cursor: pageParam || null, limit: 20 }),
@@ -61,6 +72,18 @@ export default function BuyerPeekRequestsQueue() {
     },
     onError: (error) => toast.error(error.message || 'Unable to decline this request'),
   });
+
+  const openResponse = (item) => {
+    setResponseDraft(null);
+    setResponseTarget(item);
+  };
+
+  const closeResponse = () => {
+    if (responseBusy) return;
+    if (responseDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(responseDraft.previewUrl);
+    setResponseDraft(null);
+    setResponseTarget(null);
+  };
 
   return (
     <section className="mx-4 mb-5 overflow-hidden rounded-2xl border border-border bg-card" aria-labelledby="buyer-peek-requests-heading">
@@ -96,7 +119,7 @@ export default function BuyerPeekRequestsQueue() {
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline"><Link to={`${parentPath(item)}#peek-threads`}><Eye className="mr-2 h-4 w-4" />View listing</Link></Button>
-                <Button size="sm" disabled title="Response recording is enabled in the next uploader boundary"><Camera className="mr-2 h-4 w-4" />Record response</Button>
+                <Button size="sm" onClick={() => openResponse(item)}><Camera className="mr-2 h-4 w-4" />Record response</Button>
                 <Button size="sm" variant="ghost" onClick={() => { setDeclineTarget(item); setDeclineReason(''); }}><XCircle className="mr-2 h-4 w-4" />Decline</Button>
               </div>
             </article>
@@ -104,6 +127,33 @@ export default function BuyerPeekRequestsQueue() {
           {queue.hasNextPage && <div className="flex justify-center p-4"><Button variant="outline" disabled={queue.isFetchingNextPage} onClick={() => queue.fetchNextPage()}>{queue.isFetchingNextPage ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading</> : 'Load more requests'}</Button></div>}
         </div>
       )}
+
+      <Dialog open={Boolean(responseTarget)} onOpenChange={(open) => { if (!open) closeResponse(); }}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Record Response Peek</DialogTitle>
+            <DialogDescription>
+              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. The video will be moderated before it becomes public evidence.` : 'Record visual evidence for this buyer request.'}
+            </DialogDescription>
+          </DialogHeader>
+          {responseTarget && (
+            <TourUploader
+              parentType={responseTarget.parentType}
+              parentId={responseTarget.parentId}
+              peekKind="response"
+              category={responseTarget.category}
+              value={responseDraft}
+              onChange={setResponseDraft}
+              onBusyChange={setResponseBusy}
+              onUploaded={() => {
+                toast.success('Response Peek uploaded for processing');
+                queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
+              }}
+            />
+          )}
+          <p className="text-xs leading-5 text-muted-foreground">After approval, you will choose every compatible request this Response Peek answers. Uploading does not mark requests answered yet.</p>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={Boolean(declineTarget)} onOpenChange={(open) => { if (!open && !decline.isPending) setDeclineTarget(null); }}>
         <AlertDialogContent>
