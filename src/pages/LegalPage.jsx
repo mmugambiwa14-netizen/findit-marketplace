@@ -22,6 +22,25 @@ const LEGAL_LINKS = [
   { slug: 'community-guidelines', label: 'Community rules', description: 'Clear standards for safe listings and respectful conduct.', icon: UsersRound },
 ];
 
+const CONTACT_DISCLOSURE_REPLACEMENTS = new Map([
+  [
+    'Contact details you attach to a listing -- phone, WhatsApp number, and email. These are published with the listing. Only provide the ones you are willing to make public.',
+    'Contact methods you enable for a listing, such as phone, WhatsApp, and email. FindIt does not display the full phone number or email address in the listing interface. After an authenticated buyer deliberately confirms an external contact action, the selected detail is provided to the buyer’s phone, WhatsApp, or email application and may be visible there.',
+  ],
+  [
+    'Anything you publish is public. Listings, service offerings, business profiles, seller display names, reviews you write, and the contact details you attach to a listing are visible to anyone who visits FindIt, including people without an account. They may be copied, cached, or indexed by search engines, and FindIt cannot retrieve copies that others have already made.',
+    'Listings, service offerings, business profiles, seller display names, and reviews you publish may be visible to anyone who visits FindIt and may be copied, cached, or indexed. Listing phone numbers and email addresses are not displayed publicly in FindIt. They are disclosed only to an authenticated buyer who deliberately confirms that they want to open an external phone, WhatsApp, or email application.',
+  ],
+  [
+    'Your email address is not published unless you choose to display it on a listing or business profile. Your precise address, your identity documents, your selfie, your saved listings, your support requests, and your verification status details are never published.',
+    'Your account email address is not published. Where you enable email as a listing contact method, it remains hidden in FindIt and is disclosed only after an authenticated buyer confirms that they want to open their email application. Your precise address, identity documents, selfie, saved listings, support requests, and verification details are never published.',
+  ],
+]);
+
+function legalDisplayText(text) {
+  return CONTACT_DISCLOSURE_REPLACEMENTS.get(text) || text;
+}
+
 function LegalHub() {
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:py-10">
@@ -101,14 +120,17 @@ export default function LegalPage() {
             <h2 id={`section-${section.title.replace(/\W+/g, '-').toLowerCase()}`} className="text-xl font-bold tracking-tight">
               {section.title}
             </h2>
-            {section.paragraphs?.map((paragraph) => (
-              <p key={paragraph} className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
-                {paragraph}
-              </p>
-            ))}
+            {section.paragraphs?.map((paragraph) => {
+              const displayed = legalDisplayText(paragraph);
+              return (
+                <p key={paragraph} className="mt-3 text-sm leading-7 text-muted-foreground sm:text-base">
+                  {displayed}
+                </p>
+              );
+            })}
             {section.bullets && (
               <ul className="mt-3 space-y-2 pl-5 text-sm leading-7 text-muted-foreground sm:text-base">
-                {section.bullets.map((item) => <li key={item} className="list-disc">{item}</li>)}
+                {section.bullets.map((item) => <li key={item} className="list-disc">{legalDisplayText(item)}</li>)}
               </ul>
             )}
           </section>
