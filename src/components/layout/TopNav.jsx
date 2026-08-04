@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { createLoginPath } from '@/lib/authNavigation';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import BrandLogo from '@/components/BrandLogo';
+import GlobalRefreshButton from '@/components/pwa/GlobalRefreshButton';
 
 const NotificationBell = lazy(() => import('@/components/layout/NotificationBell'));
 
@@ -70,6 +71,7 @@ export default function TopNav() {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5">
+          <GlobalRefreshButton desktop />
           {user && featureFlags.essentialNotifications && (
             <Suspense fallback={null}><NotificationBell /></Suspense>
           )}
