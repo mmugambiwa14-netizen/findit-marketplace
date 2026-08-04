@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { removeStagedListingImage, uploadListingImage } from '@/services/listingCreationService';
 import TourUploader from '@/components/tours/TourUploader';
+import { customerErrorMessage } from '@/lib/customerErrors';
 import StepNav from './StepNav';
 
 export default function ListingMediaContactStep({ formData, update, media, setMedia, tourDraft, setTourDraft, onBack, onContinue }) {
@@ -23,13 +24,20 @@ export default function ListingMediaContactStep({ formData, update, media, setMe
     if (media.length + files.length > 20) return setError('A listing can contain up to 20 images.');
     setUploading(true);
     setError('');
+    let failedCount = 0;
     for (const file of files) {
       try {
         const uploaded = await uploadListingImage(file);
         setMedia((current) => [...current, uploaded]);
       } catch (failure) {
-        toast.error(failure.message || `Could not upload ${file.name}`);
+        failedCount += 1;
+        toast.error(customerErrorMessage(failure, 'IMAGE_UPLOAD_FAILED'));
       }
+    }
+    if (failedCount > 0) {
+      setError(failedCount === files.length
+        ? 'We could not upload these photos. Your selected photos are still on your device, so you can try again.'
+        : `${failedCount} ${failedCount === 1 ? 'photo was' : 'photos were'} not uploaded. You can try again.`);
     }
     setUploading(false);
   };
@@ -39,7 +47,7 @@ export default function ListingMediaContactStep({ formData, update, media, setMe
       await removeStagedListingImage(item.path);
       setMedia((current) => current.filter((candidate) => candidate.path !== item.path));
     } catch (failure) {
-      toast.error(failure.message || 'Could not remove the image');
+      toast.error(customerErrorMessage(failure, 'IMAGE_UPLOAD_FAILED'));
     }
   };
   const makeCover = (index) => setMedia((current) => {
