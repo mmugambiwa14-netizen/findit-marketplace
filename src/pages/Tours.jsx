@@ -1,83 +1,33 @@
-import { readStoredJson, writeStoredJson } from '@/lib/browserStorage';
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import { CheckCircle2, Clapperboard, Loader2, RefreshCw, SearchX, WifiOff } from 'lucide-react';
-import TourCard from '@/components/tours/TourCard';
-import TourCatalogueHeader from '@/components/tours/TourCatalogueHeader';
-import TourCategoryChips from '@/components/tours/TourCategoryChips';
+import { ArrowLeft, Loader2, RefreshCw, Settings2, WifiOff } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import ImmersivePeekCard from '@/components/tours/ImmersivePeekCard';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/lib/AuthContext';
+import { readStoredString, writeStoredString } from '@/lib/browserStorage';
 import { getFavouriteIds } from '@/services/favouritesService';
 import { getPublicTourFeedPage } from '@/services/listingToursService';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
 
-const RESTORE_KEY = 'findit:peek:catalogue-state';
+const AUTOPLAY_KEY = 'findit:peek:autoplay';
 const VALID_CATEGORIES = new Set(['all', 'property', 'car', 'machinery', 'service']);
 
-function readRestoration() {
-  return readStoredJson('session', RESTORE_KEY, {});
-}
-
 export default function Tours() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
-  const initialRestoration = useRef(readRestoration());
-  const initialFilterKey = useRef(JSON.stringify({
-    q: params.get('q') || '',
-    location: params.get('location') || '',
-    category: params.get('category') || 'all',
-  }));
-  const [query, setQuery] = useState(params.get('q') || '');
-  const [location, setLocation] = useState(params.get('location') || '');
   const requestedCategory = params.get('category') || 'all';
   const category = VALID_CATEGORIES.has(requestedCategory) ? requestedCategory : 'all';
-  const deferredQuery = useDeferredValue(query.trim());
-  const deferredLocation = useDeferredValue(location.trim());
-  const [activeTourId, setActiveTourId] = useState(() => initialRestoration.current.activeTourId || null);
-  const [restorePageCount, setRestorePageCount] = useState(() => {
-    const state = initialRestoration.current;
-    const stateFilterKey = JSON.stringify(state.filters || {});
-    if (stateFilterKey !== initialFilterKey.current) return 1;
-    return Math.min(10, Math.max(1, Number(state.pageCount) || 1));
-  });
-  const restored = useRef(false);
-  const paramsKey = params.toString();
+  const [autoplay, setAutoplay] = useState(() => readStoredString('local', AUTOPLAY_KEY, 'on') !== 'off');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [activeTourId, setActiveTourId] = useState(null);
+  const [savedOverrides, setSavedOverrides] = useState({});
+  const feedRef = useRef(null);
 
-  useEffect(() => {
-    const current = new URLSearchParams(paramsKey);
-    const nextQuery = current.get('q') || '';
-    const nextLocation = current.get('location') || '';
-    setQuery((currentValue) => currentValue === nextQuery ? currentValue : nextQuery);
-    setLocation((currentValue) => currentValue === nextLocation ? currentValue : nextLocation);
-  }, [paramsKey]);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setParams((current) => {
-        const next = new URLSearchParams(current);
-        if (query.trim()) next.set('q', query.trim()); else next.delete('q');
-        if (location.trim()) next.set('location', location.trim()); else next.delete('location');
-        if (!VALID_CATEGORIES.has(next.get('category') || 'all')) next.delete('category');
-        return next;
-      }, { replace: true });
-    }, 250);
-    return () => window.clearTimeout(timer);
-  }, [query, location, setParams]);
-
-  const filters = useMemo(() => ({ category, query: deferredQuery, location: deferredLocation, limit: 8 }), [category, deferredQuery, deferredLocation]);
-  const filterKey = useMemo(() => JSON.stringify({ q: deferredQuery, location: deferredLocation, category }), [category, deferredLocation, deferredQuery]);
-
-  const previousFilterKey = useRef(filterKey);
-  useEffect(() => {
-    if (previousFilterKey.current === filterKey) return;
-    previousFilterKey.current = filterKey;
-    setRestorePageCount(1);
-    setActiveTourId(null);
-    restored.current = true;
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, [filterKey]);
-
+  const filters = useMemo(() => ({ category, query: '', location: '', limit: 8 }), [category]);
   const feed = useInfiniteQuery({
     queryKey: listingTourQueryKeys.publicFeed(filters),
     queryFn: ({ pageParam }) => getPublicTourFeedPage({ ...filters, cursor: pageParam || null }),
@@ -91,6 +41,7 @@ export default function Tours() {
     for (const page of feed.data?.pages || []) for (const item of page.items) byId.set(item.tourId, item);
     return [...byId.values()];
   }, [feed.data]);
+
   const listingIds = useMemo(() => [...new Set(items.filter((item) => item.parentType === 'listing').map((item) => item.parentId))], [items]);
   const favourites = useQuery({
     queryKey: ['tour-feed-favourites', user?.id || null, listingIds],
@@ -98,120 +49,81 @@ export default function Tours() {
     enabled: Boolean(user && listingIds.length),
     staleTime: 30_000,
   });
-  const [savedOverrides, setSavedOverrides] = useState({});
   const savedSet = useMemo(() => new Set(favourites.data || []), [favourites.data]);
-  const loadedPageCount = feed.data?.pages?.length || 0;
-  const { fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = feed;
-
-  useEffect(() => setSavedOverrides({}), [user?.id]);
 
   useEffect(() => {
-    if (loadedPageCount >= restorePageCount || !hasNextPage || isFetchingNextPage || isLoading) return;
-    fetchNextPage();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, loadedPageCount, restorePageCount]);
+    if (!activeTourId && items[0]?.tourId) setActiveTourId(items[0].tourId);
+  }, [activeTourId, items]);
 
   useEffect(() => {
-    const restorationComplete = loadedPageCount >= restorePageCount || !hasNextPage;
-    if (restored.current || !items.length || !restorationComplete) return;
-    restored.current = true;
-    const state = initialRestoration.current;
-    requestAnimationFrame(() => window.scrollTo({ top: Number(state.scrollY) || 0, behavior: 'auto' }));
-  }, [hasNextPage, items.length, loadedPageCount, restorePageCount]);
+    const index = items.findIndex((item) => item.tourId === activeTourId);
+    if (index < items.length - 2 || !feed.hasNextPage || feed.isFetchingNextPage) return;
+    feed.fetchNextPage();
+  }, [activeTourId, feed, items]);
 
-  useEffect(() => {
-    const save = () => writeStoredJson('session', RESTORE_KEY, {
-      scrollY: window.scrollY,
-      activeTourId,
-      pageCount: Math.max(1, loadedPageCount),
-      filters: { q: deferredQuery, location: deferredLocation, category },
-    });
-    window.addEventListener('pagehide', save);
-    return () => { save(); window.removeEventListener('pagehide', save); };
-  }, [activeTourId, category, deferredLocation, deferredQuery, loadedPageCount]);
+  const updateAutoplay = (enabled) => {
+    setAutoplay(enabled);
+    writeStoredString('local', AUTOPLAY_KEY, enabled ? 'on' : 'off');
+  };
 
   const changeCategory = (nextCategory) => {
-    setActiveTourId(null);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     const next = new URLSearchParams(params);
     if (nextCategory === 'all') next.delete('category'); else next.set('category', nextCategory);
     setParams(next, { replace: true });
-  };
-
-  const resetFilters = () => {
-    setQuery('');
-    setLocation('');
     setActiveTourId(null);
-    setParams(new URLSearchParams(), { replace: true });
+    feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="findit-screen">
-      <TourCatalogueHeader query={query} location={location} onQueryChange={setQuery} onLocationChange={setLocation} />
-      <main className="mx-auto max-w-3xl">
-        <TourCategoryChips value={category} onChange={changeCategory} />
-
-        {feed.isLoading ? (
-          <PeekLoading />
-        ) : feed.isError ? (
-          <section className="clay-card mx-4 mt-4 rounded-3xl px-6 py-12 text-center">
-            <span className="locked-icon-tile mx-auto h-12 w-12"><WifiOff className="h-5 w-5" /></span>
-            <h2 className="mt-4 text-lg font-bold">Peeks are temporarily offline</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">We kept your search and filters. Reconnect and try again—your place will not be lost.</p>
-            <Button variant="outline" className="clay-control mt-5" onClick={() => feed.refetch()}><RefreshCw className="h-4 w-4" />Try again</Button>
-          </section>
-        ) : items.length === 0 ? (
-          <section className="clay-card mx-4 mt-4 rounded-3xl px-6 py-12 text-center">
-            <span className="locked-icon-tile mx-auto h-12 w-12"><SearchX className="h-5 w-5" /></span>
-            <h2 className="mt-4 text-lg font-bold">No matching Peeks</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Clear the filters or try a nearby place.</p>
-            {(query || location || category !== 'all') && <Button variant="outline" className="clay-control mt-5" onClick={resetFilters}>Show all Peeks</Button>}
-          </section>
-        ) : (
-          <section aria-label="Peek catalogue" className="px-4 pb-8">
-            <div className="mb-3 mt-2 flex items-end justify-between gap-3">
-              <div><p className="findit-overline">Watch and decide</p><h2 className="findit-section-title mt-0.5">{deferredLocation ? `Peeks in ${deferredLocation}` : 'Latest Peeks'}</h2></div>
-              <p className="shrink-0 text-xs text-muted-foreground">{items.length} shown</p>
-            </div>
-            <div className="space-y-4">
-              {items.map((item) => (
-                <TourCard
-                  key={item.tourId}
-                  item={item}
-                  active={activeTourId === item.tourId}
-                  onActivate={setActiveTourId}
-                  isSaved={savedOverrides[item.parentId] ?? savedSet.has(item.parentId)}
-                  onSavedChange={(id, saved) => setSavedOverrides((current) => ({ ...current, [id]: saved }))}
-                  onReported={(tourId) => setActiveTourId((current) => current === tourId ? null : current)}
-                />
-              ))}
-            </div>
-            {feed.hasNextPage && (
-              <div className="flex justify-center py-5">
-                <Button variant="outline" className="clay-control min-w-48" disabled={feed.isFetchingNextPage} onClick={() => feed.fetchNextPage()}>
-                  {feed.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more Peeks'}
-                </Button>
-              </div>
-            )}
-            {!feed.hasNextPage && items.length > 0 && <p className="flex items-center justify-center gap-1.5 py-5 text-center text-xs text-muted-foreground"><CheckCircle2 className="h-4 w-4 text-primary" />You have seen every matching Peek.</p>}
-          </section>
-        )}
-      </main>
-    </div>
-  );
-}
-
-function PeekLoading() {
-  return (
-    <div className="space-y-4 px-4 pb-8 pt-2" role="status" aria-label="Loading Peeks">
-      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"><Clapperboard className="h-4 w-4 animate-pulse text-primary" />Finding the best Peeks…</div>
-      {[1, 2].map((item) => (
-        <div key={item} className="clay-card overflow-hidden rounded-2xl">
-          <div className="aspect-[16/10] animate-pulse bg-surface-raised" />
-          <div className="grid grid-cols-4 gap-2 p-3">
-            {[1, 2, 3, 4].map((part) => <div key={part} className="h-9 animate-pulse rounded-xl bg-surface-raised" />)}
-          </div>
+    <div className="fixed inset-0 z-40 bg-black text-white sm:top-[4.5rem]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-50 flex items-center justify-between px-3 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <button type="button" onClick={() => navigate(-1)} className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/35 backdrop-blur-xl" aria-label="Go back"><ArrowLeft className="h-5 w-5" /></button>
+        <div className="pointer-events-auto flex items-center gap-2">
+          <button type="button" onClick={() => updateAutoplay(!autoplay)} className="flex h-11 items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 text-xs font-bold backdrop-blur-xl" aria-pressed={autoplay}><span>Autoplay</span><span className={autoplay ? 'text-blue-400' : 'text-white/55'}>{autoplay ? 'On' : 'Off'}</span></button>
+          <button type="button" onClick={() => setSettingsOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/35 backdrop-blur-xl" aria-label="Peek settings"><Settings2 className="h-5 w-5" /></button>
         </div>
-      ))}
+      </div>
+
+      <nav className="absolute left-1/2 top-[max(4.4rem,calc(env(safe-area-inset-top)+3.6rem))] z-40 flex -translate-x-1/2 gap-1 rounded-full border border-white/10 bg-black/35 p-1 backdrop-blur-xl" aria-label="Peek categories">
+        {[
+          ['all', 'For you'], ['property', 'Property'], ['car', 'Cars'], ['machinery', 'Machinery'], ['service', 'Services'],
+        ].map(([value, label]) => <button key={value} type="button" onClick={() => changeCategory(value)} className={`min-h-9 rounded-full px-3 text-[11px] font-bold ${category === value ? 'bg-white text-black' : 'text-white/70'}`}>{label}</button>)}
+      </nav>
+
+      {feed.isLoading ? (
+        <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-400" /></div>
+      ) : feed.isError ? (
+        <div className="flex h-full items-center justify-center px-5"><section className="max-w-sm rounded-3xl border border-white/10 bg-white/5 p-6 text-center"><WifiOff className="mx-auto h-7 w-7 text-blue-400" /><h1 className="mt-3 text-lg font-bold">Peeks are temporarily offline</h1><p className="mt-2 text-sm text-white/65">Check your connection and try again.</p><Button variant="secondary" className="mt-4" onClick={() => feed.refetch()}><RefreshCw className="h-4 w-4" />Try again</Button></section></div>
+      ) : items.length === 0 ? (
+        <div className="flex h-full items-center justify-center px-5 text-center"><div><h1 className="text-xl font-bold">No Peeks here yet</h1><p className="mt-2 text-sm text-white/60">Try another category.</p></div></div>
+      ) : (
+        <main ref={feedRef} className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain scroll-smooth" aria-label="Full-screen Peeks feed">
+          {items.map((item, index) => (
+            <ImmersivePeekCard
+              key={item.tourId}
+              item={item}
+              index={index}
+              total={items.length + (feed.hasNextPage ? 1 : 0)}
+              active={activeTourId === item.tourId}
+              autoplay={autoplay}
+              onVisible={setActiveTourId}
+              isSaved={savedOverrides[item.parentId] ?? savedSet.has(item.parentId)}
+              onSavedChange={(id, saved) => setSavedOverrides((current) => ({ ...current, [id]: saved }))}
+            />
+          ))}
+          {feed.isFetchingNextPage && <div className="flex h-20 snap-start items-center justify-center bg-black"><Loader2 className="h-5 w-5 animate-spin text-blue-400" /></div>}
+        </main>
+      )}
+
+      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <SheetContent side="bottom" className="mx-auto max-w-xl rounded-t-[1.75rem] bg-slate-950 text-white">
+          <SheetHeader className="text-left"><SheetTitle className="text-white">Peeks settings</SheetTitle><SheetDescription>Control how videos play while you browse.</SheetDescription></SheetHeader>
+          <div className="mt-5 space-y-3">
+            <label className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4"><span><span className="block text-sm font-bold">Autoplay</span><span className="mt-1 block text-xs text-white/55">Play the visible Peek automatically.</span></span><Switch checked={autoplay} onCheckedChange={updateAutoplay} /></label>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs leading-5 text-white/60">Only the active Peek plays. Videos pause when you swipe away or leave the page.</div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
