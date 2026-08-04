@@ -1,0 +1,5 @@
+{
+  "release": "2026-08-04-image-upload-fix",
+  "sourceCommit": "04ef071f81e126dc612daee1b502fb6b0b0417fa",
+  "purpose": "Deploy listing image upload origin and customer-error fixes"
+}
