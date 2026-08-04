@@ -29,11 +29,11 @@ export default function GlobalRefreshButton({ inline = false, desktop = false, c
       aria-label="Refresh FindIt"
       title="Refresh FindIt"
       className={cn(
-        'relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-wait disabled:opacity-70',
+        'relative flex h-[var(--findit-icon-button-size)] w-[var(--findit-icon-button-size)] shrink-0 items-center justify-center rounded-[var(--findit-control-radius)] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-wait disabled:opacity-70',
         className,
       )}
     >
-      <RefreshCw className={cn('h-[18px] w-[18px]', refreshing && 'animate-spin')} aria-hidden="true" />
+      <RefreshCw className={cn('h-[var(--findit-icon-size)] w-[var(--findit-icon-size)]', refreshing && 'animate-spin')} aria-hidden="true" />
     </button>
   );
 }
