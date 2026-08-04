@@ -56,7 +56,7 @@ set search_path = ''
 as $$
 begin
   if new.status = 'ready'
-     and (old.status is distinct from new.status or old.moderation_status is distinct from new.moderation_status)
+     and old.status is distinct from new.status
      and new.deleted_at is null
      and new.removed_at is null
      and coalesce(new.moderation_status, 'pending') not in ('rejected', 'removed') then
