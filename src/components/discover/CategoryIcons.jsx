@@ -1,5 +1,6 @@
 import { CarFront, House, Construction, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import './category-icons.css';
 
 function CategoryIcon({ icon: Icon, color, className = 'h-6 w-6', ...props }) {
   return (
