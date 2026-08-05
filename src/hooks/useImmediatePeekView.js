@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { readStoredString, writeStoredString } from '@/lib/browserStorage';
+import { readStoredString, removeStoredValue, writeStoredString } from '@/lib/browserStorage';
 
 const VIEWER_KEY = 'findit:peek-viewer-key';
 const VIEWED_PREFIX = 'findit:peek-viewed:';
@@ -48,7 +48,7 @@ export function useImmediatePeekView({ tourId, initialCount = 0, enabled = true 
       }
     } catch {
       // Keep playback uninterrupted. Remove the local marker so a later play can retry.
-      try { localStorage.removeItem(viewedKey); } catch { /* storage may be unavailable */ }
+      removeStoredValue('local', viewedKey);
       setCount((current) => Math.max(0, current - 1));
       recordingRef.current = false;
     }
