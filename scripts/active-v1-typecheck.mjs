@@ -18,8 +18,10 @@ if (config.error) {
 }
 
 const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, projectRoot);
+const declarationFiles = parsed.fileNames.filter((file) => /\.d\.[cm]?ts$/i.test(file));
+const rootNames = [...new Set([...sourceFiles, ...declarationFiles])];
 const program = ts.createProgram({
-  rootNames: sourceFiles,
+  rootNames,
   options: { ...parsed.options, noEmit: true },
 });
 const activeFiles = new Set(sourceFiles.map((file) => resolve(file).toLowerCase()));
