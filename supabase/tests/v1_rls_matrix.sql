@@ -13,7 +13,10 @@ values
 
 update public.users set status = 'suspended', role = 'admin'
 where id = '00000000-0000-4000-8000-000000001004';
-update public.users set role = 'admin'
+-- The founder-operated admin model (migration 0030) requires super_admin, not
+-- just role='admin'. In a pgTAP run session_user stays 'postgres' after SET
+-- ROLE, which satisfies the founder-or-postgres branch of private.is_admin().
+update public.users set role = 'admin', super_admin = true
 where id = '00000000-0000-4000-8000-000000001005';
 
 insert into public.locations (id, name, type, country_code, is_active)
@@ -122,17 +125,17 @@ select extensions.is(
   'anonymous users can read the explicit public business projection'
 );
 select extensions.is(
-  public.get_public_seller_profile('V1-OWNER@EXAMPLE.TEST') ->> 'full_name',
+  public.get_public_seller_profile('00000000-0000-4000-8000-000000001001'::uuid) ->> 'full_name',
   'V1 Owner'::text,
-  'anonymous users can resolve the bounded active seller summary case-insensitively'
+  'anonymous users can resolve the bounded active seller summary by id'
 );
 select extensions.is(
-  public.get_public_seller_profile('v1-suspended@example.test'),
+  public.get_public_seller_profile('00000000-0000-4000-8000-000000001004'::uuid),
   null::jsonb,
   'suspended accounts have no public seller summary'
 );
 select extensions.is(
-  public.get_public_seller_profile('v1-owner@example.test')
+  public.get_public_seller_profile('00000000-0000-4000-8000-000000001001'::uuid)
     ?| array['email', 'phone', 'role', 'status', 'verified'],
   false,
   'public seller summary excludes private and verification fields'

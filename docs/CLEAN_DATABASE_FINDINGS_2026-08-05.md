@@ -126,3 +126,64 @@ It is authoritative for **whether the migration chain applies from nothing** —
 migration that fails there fails `supabase db reset` too. It is *not*
 authoritative for exact privilege boundaries, because PostgreSQL grants EXECUTE
 on functions to PUBLIC by default and Supabase does not.
+
+## Update — pgTAP suite triage (Docker stack unavailable)
+
+Attempted the authoritative run on the real Supabase Docker stack. The daemon
+starts, but this environment's egress policy returns 403 on the CDN hosts that
+serve Docker image layers (`production.cloudfront.docker.com` for Docker Hub,
+`*.cloudfront.net` for ECR Public), so no images can be pulled and
+`supabase test db` cannot come up. This is an organization policy denial, not a
+transient failure — reported, not routed around.
+
+Fell back to the hand-built Postgres 16 harness, which **is** authoritative for
+behavioural and migration-set-data assertions (it is not authoritative for exact
+anon/authenticated grant sets, because its bootstrap grants browser roles a
+default that Supabase does not). Current state: **34 of 48 suites pass**.
+
+### Fixed and verified
+
+- **`v1_rls_matrix.sql` — now 51/51.** Two genuinely stale assertions, both
+  proven by migration DDL, not harness quirks:
+  1. It called `get_public_seller_profile('…@example.test')`, but migration
+     `0090` changed that function from `(seller_email text)` to
+     `(p_seller_id uuid)` (an email-enumeration privacy fix). Updated the three
+     calls to pass the fixture UUIDs.
+  2. Its admin fixture set only `role='admin'`, but migration `0030`'s
+     founder-lock model requires `super_admin=true` as well
+     (`private.is_admin()` = active + admin + super_admin + (founder-email OR
+     `session_user='postgres'`)). In a pgTAP run `session_user` stays `postgres`
+     after `SET ROLE`, so adding `super_admin=true` is the correct, sufficient
+     fixture fix.
+
+### Confirmed stale, root-caused, left for the Docker run to fix end-to-end
+
+- **The recommendation "disabled by default" cluster** —
+  `v1_recommendation_services`, `v1_recommendation_related_services`,
+  `v1_recommendation_service_operations`, `v1_contextual_ecosystem_intelligence`.
+  All assert services are disabled by default. Migration
+  `0100_release_control_consistency.sql` is, by its own comment, "the reviewed
+  release-control activation point" — it deliberately enables all seven services
+  (0059 creates them disabled; 0100 turns them on and self-validates exactly 7).
+  The test expectation predates 0100. Fixing these fully means rewriting each
+  suite's disabled-service setup, which should be validated on the real stack.
+
+### Not resolvable on this harness (need the Docker stack)
+
+These fail on the anon/authenticated **grant set**, which the hand-built
+bootstrap over-grants relative to Supabase, so the harness cannot judge them:
+`database_auth_rls_smoke`, `v1_admin_operations`, `v1_contact_support`,
+`v1_listing_creation_and_media`, `v1_function_privilege_matrix`,
+`v1_security_advisor_baseline`. `v1_function_privilege_matrix` additionally has
+real drift (it lists `is_public_marketplace_image`, which `20260805073000` moved
+to `private`, and omits ~18 functions added since), but its exact expected grant
+set can only be rewritten against the real stack.
+
+The remaining behavioural failures (`v1_essential_notifications`,
+`v1_marketplace_profile_media`, `v1_private_country_helper_implementations`,
+`v1_tour_foundation`) are single-assertion and want per-suite review with the
+real stack before rewriting.
+
+Net: the exhaustive run was worth doing — it surfaced **two genuinely stale
+suites with real, migration-proven drift** (one fixed here, one root-caused),
+not just harness noise.
