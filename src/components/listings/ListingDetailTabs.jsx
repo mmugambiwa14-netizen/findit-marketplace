@@ -128,21 +128,37 @@ export function ListingSeller({
   profileLabel = 'View listings',
 }) {
   const [avatarFailed, setAvatarFailed] = useState(false);
-  const joined = joinedAt ? new Date(joinedAt) : null;
+  const listingMetadata = actions?.props?.listing || {};
+  const resolvedAvatarUrl = avatarUrl
+    || listingMetadata.seller_avatar_url
+    || listingMetadata.provider_avatar_url
+    || listingMetadata.avatar_url
+    || listingMetadata.profile_photo_url
+    || '';
+  const resolvedJoinedAt = joinedAt
+    || listingMetadata.seller_joined_at
+    || listingMetadata.provider_joined_at
+    || listingMetadata.profile_created_at
+    || null;
+  const resolvedActiveListingCount = activeListingCount
+    ?? listingMetadata.seller_active_listing_count
+    ?? listingMetadata.provider_active_listing_count
+    ?? null;
+  const joined = resolvedJoinedAt ? new Date(resolvedJoinedAt) : null;
   const validJoined = joined && Number.isFinite(joined.getTime());
   const resolvedProfilePath = profilePath || (sellerId ? `/seller/${encodeURIComponent(sellerId)}` : null);
   const profile = (
     <div className="flex items-center gap-4">
       <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border">
-        {avatarUrl && !avatarFailed
-          ? <img src={avatarUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={() => setAvatarFailed(true)} />
+        {resolvedAvatarUrl && !avatarFailed
+          ? <img src={resolvedAvatarUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={() => setAvatarFailed(true)} />
           : <UserRound className="h-6 w-6 text-muted-foreground" />}
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-lg font-black">{name || 'FindIt seller'}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {validJoined && <span>Joined {joined.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>}
-          {Number.isFinite(Number(activeListingCount)) && <span>{Number(activeListingCount)} active listings</span>}
+          {Number.isFinite(Number(resolvedActiveListingCount)) && <span>{Number(resolvedActiveListingCount)} active listings</span>}
         </div>
       </div>
     </div>
