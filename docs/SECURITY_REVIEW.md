@@ -923,3 +923,75 @@ suspected key compromise.
 These are proposals. Several — duplicate detection, verification retention
 design, DPA compliance — are product and policy decisions rather than security
 fixes, and picking defaults unilaterally would be the wrong call.
+
+## Addendum — 2026-08-05: services contact grant for `authenticated` (High)
+
+An adversarial re-audit, run against a from-scratch database, found that the
+seller-contact boundary closed for `anon` on 2026-08-02 was still open for
+`authenticated` on `public.services` — and that a later migration meant to close
+it never took effect.
+
+### The exploit
+
+Acting as an ordinary signed-in user (not the provider, not a buyer, no reveal
+request), against the real migrated schema:
+
+```sql
+set role authenticated;
+select contact_phone, contact_whatsapp, contact_email from public.services;  -- returned every row
+select count(contact_phone) from public.services where contact_phone is not null;  -- bulk harvest
+```
+
+Every service provider's raw phone, WhatsApp and email was readable in a single
+query, with no rate limit and no `contact_reveal_events` row — bypassing the
+`reveal_service_contact` RPC and its 40/day cap entirely.
+
+### Root cause — a no-op revoke, twice
+
+The 2026-08-02 addendum (§1) noted `authenticated` retained the contact column
+grant and that closing it "remains open". Migration `0115` then tried to close
+it:
+
+```sql
+revoke select (contact_phone, contact_whatsapp, contact_email)
+  on public.services from authenticated;   -- 0115, lines 187-188
+```
+
+That revoke was a no-op. `authenticated` still held the **table-level** SELECT
+grant from `0047` (`0111` removed only `anon`'s), and a table-level grant covers
+every column and cannot be narrowed by revoking individual columns — the exact
+behaviour `0111` had documented one migration earlier. `public.listings` was
+never exposed this way because `0049` removed its table-level grant from both
+roles and replaced it with a column allowlist, so `0115`'s revoke took effect
+there.
+
+The gap was invisible because the application already behaved as if it were
+closed: `servicesRepository.js` selects only the `has_contact_*` flags and reads
+owner values through the `owner_service_contacts` RPC. The code comment even
+reads "Contact columns are no longer selectable by `authenticated` -- see
+migration 0115." The frontend stopped selecting the columns; the database never
+stopped serving them.
+
+### Fix
+
+`20260805100000_services_contact_column_allowlist_authenticated.sql` applies to
+`authenticated` the treatment `0111` applied to `anon`: revoke the table-level
+SELECT and grant a column allowlist rebuilt from the live column list minus the
+three contact columns (so a column added later is not silently exposed). It
+fails closed if the contact columns stay readable, if a table-level grant
+survives, or if a safe column is lost.
+
+### Verified (executed, from-scratch database)
+
+- Before: harvester reads phone/WhatsApp/email of any service, plus the bulk
+  form. After: all four denied (`42501 permission denied for table services`).
+- Marketplace browsing intact: the active service row stays visible and `title`
+  / `has_contact_phone` stay readable.
+- Owner self-read intact: `owner_service_contacts` (SECURITY DEFINER, filtered
+  on `provider_id = auth.uid()`) still returns the provider's own values.
+- `listings` parity confirmed: `authenticated` cannot read `listings.contact_phone`.
+
+Regression guard: `supabase/tests/v1_services_contact_column_boundary.sql`
+(15 assertions — grant shape plus live role-switched harvest attempts), added to
+the migration certification list. A future migration that re-grants a
+table-level SELECT fails this suite.

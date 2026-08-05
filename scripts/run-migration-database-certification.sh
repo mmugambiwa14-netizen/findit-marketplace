@@ -51,6 +51,7 @@ TEST_FILES=(
   supabase/tests/v1_tour_foundation.sql
   supabase/tests/v1_legal_domain_isolation.sql
   supabase/tests/v1_deferred_commerce_isolation.sql
+  supabase/tests/v1_services_contact_column_boundary.sql
 )
 
 cleanup() {
