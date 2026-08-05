@@ -28,7 +28,11 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-const denoArgs = ['check', ...files];
+// Deno 2 defaults to manual node_modules resolution when package.json exists.
+// Supabase's Edge Runtime declarations include npm type dependencies that are
+// not application dependencies, so the checker must resolve them through
+// Deno's isolated automatic npm boundary rather than the npm application lock.
+const denoArgs = ['check', '--node-modules-dir=auto', ...files];
 let result = spawnSync('deno', denoArgs, {
   cwd: root,
   encoding: 'utf8',
