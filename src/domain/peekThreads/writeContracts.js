@@ -29,11 +29,11 @@ export function normalizeDeclinePeekRequest(input) {
   const request = normalizeRequestId(input?.requestId);
   const reason = normalizeDeclineReason(input?.reason);
 
-  if (!request.ok) {
-    if (!reason.ok) return { ok: false, errors: [...request.errors, ...reason.errors] };
+  if (request.ok === false) {
+    if (reason.ok === false) return { ok: false, errors: [...request.errors, ...reason.errors] };
     return request;
   }
-  if (!reason.ok) return reason;
+  if (reason.ok === false) return reason;
 
   return { ok: true, value: { p_request_id: request.value, p_reason: reason.value } };
 }
@@ -42,11 +42,11 @@ export function normalizeMergePeekRequests(input) {
   const source = normalizeRequestId(input?.sourceRequestId, 'sourceRequest');
   const target = normalizeRequestId(input?.targetRequestId, 'targetRequest');
 
-  if (!source.ok) {
-    if (!target.ok) return { ok: false, errors: [...source.errors, ...target.errors] };
+  if (source.ok === false) {
+    if (target.ok === false) return { ok: false, errors: [...source.errors, ...target.errors] };
     return source;
   }
-  if (!target.ok) return target;
+  if (target.ok === false) return target;
   if (source.value === target.value) {
     return { ok: false, errors: [{ field: 'targetRequest', message: 'Choose a different request to merge into' }] };
   }
@@ -68,7 +68,7 @@ export function normalizeResponseBinding(input) {
   for (const id of uniqueRequestIds) {
     if (!uuidLike(id)) errors.push({ field: 'requestIds', message: 'A selected Peek Request is invalid' });
   }
-  if (!tour.ok) return { ok: false, errors: [...tour.errors, ...errors] };
+  if (tour.ok === false) return { ok: false, errors: [...tour.errors, ...errors] };
   if (errors.length) return { ok: false, errors };
 
   return { ok: true, value: { p_tour_id: tour.value, p_request_ids: uniqueRequestIds } };
