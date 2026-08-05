@@ -22,13 +22,18 @@ function tomlInt(source, key) {
 test('auth rate limits are configured within safe upper bounds', () => {
   // Supabase enforces these per IP. The bounds below are the maximum we accept;
   // a future edit that loosens them past a safe ceiling fails here.
+  // The anti-abuse limits stay tight. email_sent is a spam/cost control, not a
+  // brute-force vector, so it has a much higher ceiling -- it should track the
+  // custom SMTP provider's throughput (see docs/SMTP_SETUP.md), not be pinned to
+  // the shared-SMTP default that throttles signups. The ceiling only guards
+  // against a value so high it stops metering email entirely.
   const bounds = {
     // sign-in AND sign-up requests per 5 min per IP.
     sign_in_sign_ups: 30,
     // OTP / magic-link / recovery verifications per 5 min per IP.
     token_verifications: 30,
-    // confirmation / recovery emails per hour.
-    email_sent: 30,
+    // confirmation / recovery emails per hour (custom-SMTP capacity).
+    email_sent: 1000,
     // session refreshes per 5 min per IP.
     token_refresh: 200,
   };
@@ -37,8 +42,27 @@ test('auth rate limits are configured within safe upper bounds', () => {
     const value = tomlInt(config, key);
     assert.notEqual(value, null, `[auth.rate_limit] ${key} must be set`);
     assert.ok(value >= 1, `${key} must be a positive limit, got ${value}`);
-    assert.ok(value <= max, `${key} is ${value}; must be <= ${max} to stay brute-force resistant`);
+    assert.ok(value <= max, `${key} is ${value}; must be <= ${max}`);
   }
+
+  // email_sent must be lifted above the shared-SMTP default so custom SMTP can
+  // actually clear a signup burst.
+  assert.ok(
+    tomlInt(config, 'email_sent') >= 50,
+    'email_sent must be raised for custom SMTP capacity (>= 50/hour)',
+  );
+});
+
+test('custom SMTP is wired env-driven with no committed secret', () => {
+  // The block is documented for the hosted project; whether commented (local
+  // safety) or enabled, it must be env-driven and never carry a literal secret.
+  assert.match(config, /docs\/SMTP_SETUP\.md/, 'config must point to the SMTP runbook');
+  assert.match(config, /env\(FINDIT_SMTP_PASS\)/, 'the SMTP password must be env-driven');
+  assert.doesNotMatch(
+    config,
+    /pass\s*=\s*"(?!env\()[^"]+"/,
+    'the SMTP password must never be a committed literal',
+  );
 });
 
 test('email throttling between sends is enforced', () => {

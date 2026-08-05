@@ -197,8 +197,14 @@ password_requirements = "lower_upper_letters_digits"
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
 # Local Mailpit is used by the repeatable Phase 2 signup/recovery smoke test.
 # This affects only the local CLI stack; production SMTP limits are configured
-# independently in the hosted Supabase project.
-email_sent = 20
+# independently in the hosted Supabase project (see docs/SMTP_SETUP.md).
+#
+# Raised from Supabase's default of ~4/hour: the default assumes the shared
+# built-in SMTP, which throttles signup/recovery to a few dozen an hour and is
+# the first thing to break under a launch. With the custom SMTP provider in
+# docs/SMTP_SETUP.md this cap reflects real deliverability headroom; the hosted
+# project must set the matching value in its own rate-limit settings.
+email_sent = 100
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
@@ -235,15 +241,32 @@ otp_length = 8
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
+# Production-ready SMTP. See docs/SMTP_SETUP.md for the full runbook (provider
+# choice, DNS/SPF/DKIM/DMARC, and verification).
+#
+# This block is intentionally left disabled for the LOCAL stack: `supabase start`
+# routes auth email to the built-in Mailpit, which the Phase 2 auth smoke test
+# reads (scripts/phase2-auth-smoke-local.mjs). Enabling it here would redirect
+# local email to the external provider and break that test, and an env() value
+# that is unset would fail `supabase start` in CI.
+#
+# Custom SMTP belongs on the HOSTED project. Set it in the Supabase dashboard
+# (Authentication -> Emails -> SMTP), or apply this exact block to the linked
+# project with `supabase config push` from an environment where the FINDIT_SMTP_*
+# variables are set. Values are env-driven so no secret is ever committed:
+#
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
+# host = "env(FINDIT_SMTP_HOST)"
 # port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# user = "env(FINDIT_SMTP_USER)"
+# pass = "env(FINDIT_SMTP_PASS)"
+# admin_email = "env(FINDIT_SMTP_ADMIN_EMAIL)"
+# sender_name = "env(FINDIT_SMTP_SENDER_NAME)"
+#
+# The production Auth auditor (scripts/verify-hosted-auth-hardening.mjs) fails a
+# production preflight unless the hosted project reports a configured SMTP host
+# and sender, so this cannot be forgotten silently.
 
 [auth.email.template.confirmation]
 subject = "Confirm your FindIt email"

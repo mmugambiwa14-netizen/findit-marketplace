@@ -84,6 +84,7 @@ Read these before deployment:
 - [Environment variables](docs/ENVIRONMENT_VARIABLES.md)
 - [Google and Apple OAuth setup](docs/OAUTH_SETUP.md)
 - [FindIt authentication email templates](docs/EMAIL_TEMPLATES.md)
+- [Custom SMTP setup](docs/SMTP_SETUP.md)
 - [QA](QA_STATUS.md) and [security review](docs/SECURITY_REVIEW.md)
 - [Solo founder guide](SOLO_FOUNDER_GUIDE.md)
 
