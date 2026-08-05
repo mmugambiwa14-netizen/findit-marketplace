@@ -35,6 +35,7 @@ TEST_FILES=(
   supabase/tests/v1_private_personalization_preference_implementations.sql
   supabase/tests/v1_release_control_consistency.sql
   supabase/tests/v1_private_authenticated_rpc_implementations.sql
+  supabase/tests/v1_private_new_authenticated_rpc_implementations.sql
   supabase/tests/v1_security_advisor_baseline.sql
   supabase/tests/v1_recommendation_personalization.sql
   supabase/tests/v1_recommendation_analytics.sql
