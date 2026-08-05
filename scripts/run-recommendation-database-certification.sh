@@ -6,6 +6,7 @@ SUPABASE=(npx --yes "supabase@${SUPABASE_CLI_VERSION}")
 
 TEST_FILES=(
   supabase/tests/v1_private_authenticated_rpc_implementations.sql
+  supabase/tests/v1_private_new_authenticated_rpc_implementations.sql
   supabase/tests/v1_security_advisor_baseline.sql
   supabase/tests/v1_recommendation_foundation.sql
   supabase/tests/v1_recommendation_projection_queue.sql
