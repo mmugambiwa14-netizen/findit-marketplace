@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
+import { buildArchitectureSnapshot } from '../scripts/generate-architecture-snapshot.mjs';
 
 // The architecture snapshot is generated from the repository. This regenerates
 // it into memory and compares, so a migration or Edge Function added without
@@ -14,18 +14,14 @@ import { readFile } from 'node:fs/promises';
 const snapshotPath = new URL('../docs/ARCHITECTURE_SNAPSHOT.md', import.meta.url);
 
 test('the committed architecture snapshot matches the repository', async () => {
-  const before = await readFile(snapshotPath, 'utf8');
+  const committed = await readFile(snapshotPath, 'utf8');
+  const { snapshot } = await buildArchitectureSnapshot();
 
-  execFileSync('node', ['./scripts/generate-architecture-snapshot.mjs'], {
-    cwd: new URL('..', import.meta.url),
-    stdio: 'pipe',
-  });
-
-  const after = await readFile(snapshotPath, 'utf8');
-
+  // Rebuilt in memory: the test never writes, so a stale snapshot fails here
+  // instead of being silently repaired by the act of running the suite.
   assert.equal(
-    after,
-    before,
+    snapshot,
+    committed,
     'docs/ARCHITECTURE_SNAPSHOT.md is stale. Run `npm run docs:architecture` and commit the result.',
   );
 });

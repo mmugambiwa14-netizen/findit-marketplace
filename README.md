@@ -73,6 +73,7 @@ Read these before deployment:
 - [Production readiness](PRODUCTION_READINESS_REPORT.md)
 - [Migration completion](MIGRATION_COMPLETION_REPORT.md)
 - [Architecture snapshot (generated)](docs/ARCHITECTURE_SNAPSHOT.md)
+- [Recommendation endpoint migration](docs/RECOMMENDATION_ENDPOINT_MIGRATION.md)
 - [Architecture](ARCHITECTURE.md)
 - [Database](docs/DATABASE.md)
 - [Supabase setup](docs/SUPABASE_SETUP.md)

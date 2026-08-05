@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { assertSmokeTarget } from './lib/smoke-target.mjs';
+import { resolveRecommendationRoute, withServiceField } from './lib/recommendation-endpoints.mjs';
 
 const url = process.env.FINDIT_SUPABASE_URL;
 const publishableKey = process.env.FINDIT_SUPABASE_ANON_KEY;
@@ -101,7 +102,8 @@ async function functionRequest(path, body, authorization) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
-    const response = await fetch(`${url}/functions/v1/${path}?certification=${stamp}-${crypto.randomUUID()}`, {
+    const { endpoint } = resolveRecommendationRoute(path);
+    const response = await fetch(`${url}/functions/v1/${endpoint}?certification=${stamp}-${crypto.randomUUID()}`, {
       method: 'POST',
       cache: 'no-store',
       signal: controller.signal,
@@ -113,7 +115,7 @@ async function functionRequest(path, body, authorization) {
         'Content-Type': 'application/json',
         'x-client-info': 'findit-phase7-staging-certification',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(withServiceField(path, body)),
     });
     const payload = await response.json().catch(() => ({}));
     return { response, payload };
@@ -123,7 +125,8 @@ async function functionRequest(path, body, authorization) {
 }
 
 async function preflight(path) {
-  const response = await fetch(`${url}/functions/v1/${path}`, {
+  const { endpoint } = resolveRecommendationRoute(path);
+  const response = await fetch(`${url}/functions/v1/${endpoint}`, {
     method: 'OPTIONS',
     headers: {
       Origin: origin,

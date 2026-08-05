@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { assertSmokeTarget } from './lib/smoke-target.mjs';
+import {
+  PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  resolveRecommendationRoute,
+  withServiceField,
+} from './lib/recommendation-endpoints.mjs';
 
 const url = process.env.FINDIT_SUPABASE_URL;
 const publishableKey = process.env.FINDIT_SUPABASE_ANON_KEY;
@@ -52,10 +57,13 @@ function success(result, label) {
 }
 
 async function functionRequest(path, body, authorization) {
+  // Services address themselves by their historical path; the resolver maps that
+  // to the multiplexed endpoint and adds the dispatch field.
+  const { endpoint } = resolveRecommendationRoute(path);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    const response = await fetch(`${url}/functions/v1/${path}`, {
+    const response = await fetch(`${url}/functions/v1/${endpoint}`, {
       method: 'POST',
       cache: 'no-store',
       signal: controller.signal,
@@ -67,7 +75,7 @@ async function functionRequest(path, body, authorization) {
         'x-client-info': 'findit-phase3-staging-certification',
         ...(authorization ? { Authorization: `Bearer ${authorization}` } : {}),
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(withServiceField(path, body)),
     });
     let payload = {};
     try {
@@ -82,9 +90,10 @@ async function functionRequest(path, body, authorization) {
 }
 
 async function preflight(path) {
+  const { endpoint } = resolveRecommendationRoute(path);
   let response;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
-    response = await fetch(`${url}/functions/v1/${path}`, {
+    response = await fetch(`${url}/functions/v1/${endpoint}`, {
       method: 'OPTIONS',
       headers: {
         Origin: origin,
@@ -334,7 +343,7 @@ try {
   await preflight('recently-listed');
   await preflight('contextual-ecosystem');
 
-  const invalidOrigin = await fetch(`${url}/functions/v1/recently-listed`, {
+  const invalidOrigin = await fetch(`${url}/functions/v1/${PUBLIC_RECOMMENDATIONS_ENDPOINT}`, {
     method: 'OPTIONS',
     headers: {
       Origin: 'https://untrusted.example',

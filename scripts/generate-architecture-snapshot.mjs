@@ -6,58 +6,68 @@
 // silently decayed for months. Counts that describe the repository should be
 // derived from it, so this file owns them and ARCHITECTURE.md links here.
 //
-// Run `npm run docs:architecture` to refresh; the contract test fails when the
-// committed snapshot no longer matches the repository.
+// Run `npm run docs:architecture` to refresh. Importing this module has no side
+// effects, so the contract test can rebuild the snapshot and compare without
+// touching the working tree.
 
 import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const root = process.cwd();
+// Resolve against this file, not process.cwd(), so the builder returns the same
+// snapshot whichever directory it is invoked from.
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-const sqlIn = async (directory) =>
-  (await readdir(resolve(root, directory))).filter((name) => name.endsWith('.sql')).sort();
+export const SNAPSHOT_PATH = resolve(root, 'docs/ARCHITECTURE_SNAPSHOT.md');
 
-const migrations = await sqlIn('supabase/migrations');
-const pgTapSuites = await sqlIn('supabase/tests');
+export async function buildArchitectureSnapshot() {
+  const sqlIn = async (directory) =>
+    (await readdir(resolve(root, directory))).filter((name) => name.endsWith('.sql')).sort();
 
-const migrationSql = (
-  await Promise.all(
-    migrations.map((name) => readFile(resolve(root, 'supabase/migrations', name), 'utf8')),
-  )
-).join('\n');
+  const migrations = await sqlIn('supabase/migrations');
+  const pgTapSuites = await sqlIn('supabase/tests');
 
-const distinct = (pattern) => {
-  const found = new Set();
-  for (const match of migrationSql.matchAll(pattern)) {
-    const name = match[1]?.toLowerCase();
-    if (name && !['public', 'private'].includes(name)) found.add(name);
-  }
-  return found;
-};
+  const migrationSql = (
+    await Promise.all(
+      migrations.map((name) => readFile(resolve(root, 'supabase/migrations', name), 'utf8')),
+    )
+  ).join('\n');
 
-const tables = distinct(/create table (?:if not exists )?(?:public\.)?([a-z_0-9]+)/gi);
-const views = distinct(/create (?:or replace )?view (?:public\.)?([a-z_0-9]+)/gi);
-const policies = (migrationSql.match(/create policy/gi) ?? []).length;
-const securityDefiner = (migrationSql.match(/security definer/gi) ?? []).length;
-const searchPathPins = (migrationSql.match(/set search_path/gi) ?? []).length;
-const rlsEnabled = distinct(
-  /alter table (?:public\.)?([a-z_0-9]+)\s+enable row level security/gi,
-);
+  const distinct = (pattern) => {
+    const found = new Set();
+    for (const match of migrationSql.matchAll(pattern)) {
+      const name = match[1]?.toLowerCase();
+      if (name && !['public', 'private'].includes(name)) found.add(name);
+    }
+    return found;
+  };
 
-const edgeFunctions = (
-  await readdir(resolve(root, 'supabase/functions'), { withFileTypes: true })
-)
-  .filter((entry) => entry.isDirectory() && entry.name !== '_shared')
-  .map((entry) => entry.name)
-  .sort();
+  const tables = distinct(/create table (?:if not exists )?(?:public\.)?([a-z_0-9]+)/gi);
+  const views = distinct(/create (?:or replace )?view (?:public\.)?([a-z_0-9]+)/gi);
+  const policies = (migrationSql.match(/create policy/gi) ?? []).length;
+  const securityDefiner = (migrationSql.match(/security definer/gi) ?? []).length;
+  const searchPathPins = (migrationSql.match(/set search_path/gi) ?? []).length;
+  const rlsEnabled = distinct(
+    /alter table (?:public\.)?([a-z_0-9]+)\s+enable row level security/gi,
+  );
 
-const workflows = (await readdir(resolve(root, '.github/workflows')))
-  .filter((name) => name.endsWith('.yml'))
-  .sort();
+  const edgeFunctions = (await readdir(resolve(root, 'supabase/functions'), { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory() && entry.name !== '_shared')
+    .map((entry) => entry.name)
+    .sort();
 
-const tablesWithoutRls = [...tables].filter((name) => !rlsEnabled.has(name)).sort();
+  const workflows = (await readdir(resolve(root, '.github/workflows')))
+    .filter((name) => name.endsWith('.yml'))
+    .sort();
 
-const snapshot = `# Architecture snapshot
+  const tablesWithoutRls = [...tables].filter((name) => !rlsEnabled.has(name)).sort();
+
+  const rlsSentence = tablesWithoutRls.length === 0
+    ? 'Every table created in a migration has row level security enabled.'
+    : `Tables without an \`enable row level security\` statement: ${
+      tablesWithoutRls.map((name) => `\`${name}\``).join(', ')}.`;
+
+  const snapshot = `# Architecture snapshot
 
 <!--
   GENERATED FILE -- do not edit by hand.
@@ -80,11 +90,7 @@ Derived from the repository on each run of \`npm run docs:architecture\`.
 | \`set search_path\` pins | ${searchPathPins} |
 | pgTAP suites | ${pgTapSuites.length} |
 
-${
-  tablesWithoutRls.length === 0
-    ? 'Every table created in a migration has row level security enabled.'
-    : `Tables without an \`enable row level security\` statement: ${tablesWithoutRls.map((n) => `\`${n}\``).join(', ')}.`
-}
+${rlsSentence}
 
 ## Edge Functions (${edgeFunctions.length})
 
@@ -100,8 +106,17 @@ ${workflows.map((name) => `- \`${name}\``).join('\n')}
 - Last: \`${migrations.at(-1)}\`
 `;
 
-await writeFile(resolve(root, 'docs/ARCHITECTURE_SNAPSHOT.md'), snapshot);
-console.log(
-  `Architecture snapshot written: ${migrations.length} migrations, ${tables.size} tables, `
-  + `${edgeFunctions.length} Edge Functions, ${pgTapSuites.length} pgTAP suites.`,
-);
+  return {
+    snapshot,
+    summary:
+      `${migrations.length} migrations, ${tables.size} tables, `
+      + `${edgeFunctions.length} Edge Functions, ${pgTapSuites.length} pgTAP suites`,
+  };
+}
+
+// Only write when run as a script.
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const { snapshot, summary } = await buildArchitectureSnapshot();
+  await writeFile(SNAPSHOT_PATH, snapshot);
+  console.log(`Architecture snapshot written: ${summary}.`);
+}

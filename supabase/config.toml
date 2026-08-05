@@ -474,26 +474,16 @@ verify_jwt = false
 # stays off and the function's own credential check is authoritative.
 verify_jwt = false
 
-[functions.similar-listings]
-# Public recommendation service invoked by browsers with an sb_publishable_* key.
-# New publishable keys are opaque credentials, not Supabase JWTs, so gateway JWT
-# verification must stay off. The function still enforces origin, method, body,
-# policy, budget and service-specific authentication boundaries itself.
-verify_jwt = false
-
-[functions.seller-recommendations]
-verify_jwt = false
-
-[functions.related-services]
-verify_jwt = false
-
-[functions.related-products]
-verify_jwt = false
-
-[functions.nearby-listings]
-verify_jwt = false
-
-[functions.recently-listed]
+[functions.recommendations]
+# One function serves every unauthenticated recommendation service; the service
+# name arrives in the request body and is validated against the shared runtime's
+# public allowlist. These were six three-line functions differing only in the
+# constant they passed to that runtime.
+#
+# Browsers invoke it with an sb_publishable_* key. New publishable keys are
+# opaque credentials, not Supabase JWTs, so gateway JWT verification must stay
+# off. The function still enforces origin, method, body bounds and per-client
+# request budget itself.
 verify_jwt = false
 
 [functions.personalized-recommendations]

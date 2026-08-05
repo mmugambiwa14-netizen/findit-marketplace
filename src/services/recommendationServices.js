@@ -15,14 +15,21 @@ function bucketedLimit(limit) {
   return LIMIT_BUCKETS.find((bucket) => limit <= bucket) ?? MAX_PAGE_SIZE;
 }
 
+// Every unauthenticated service is served by one Edge Function and selects
+// itself through the request body. personalized_recommendation_service keeps a
+// dedicated function so the gateway's verify_jwt check still rejects an
+// unauthenticated caller before any function code runs.
+const PUBLIC_RECOMMENDATIONS_ENDPOINT = 'recommendations';
+const PERSONALIZED_ENDPOINT = 'personalized-recommendations';
+
 const SERVICE_ENDPOINTS = Object.freeze({
-  similar_listings_service: 'similar-listings',
-  seller_recommendations_service: 'seller-recommendations',
-  related_services_service: 'related-services',
-  related_products_service: 'related-products',
-  nearby_service: 'nearby-listings',
-  recently_listed_service: 'recently-listed',
-  personalized_recommendation_service: 'personalized-recommendations',
+  similar_listings_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  seller_recommendations_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  related_services_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  related_products_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  nearby_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  recently_listed_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  personalized_recommendation_service: PERSONALIZED_ENDPOINT,
 });
 
 function emptyResult(service, reason = 'unavailable') {
@@ -186,12 +193,17 @@ async function fetchRecommendationService(service, {
   const normalizedLimit = bucketedLimit(requestedLimit);
 
   /** @type {{
+   *   service: keyof typeof SERVICE_ENDPOINTS,
    *   subjectListingId?: string,
    *   cursor: string | null,
    *   limit: number,
    *   maxDistanceMeters?: number,
    * }} */
   const body = {
+    // The multiplexed endpoint dispatches on this; the dedicated personalized
+    // function ignores it and uses its own deploy-time constant, so sending it
+    // unconditionally keeps one request shape.
+    service,
     ...(subjectRequired ? { subjectListingId } : {}),
     cursor: normalizedCursor,
     limit: normalizedLimit,

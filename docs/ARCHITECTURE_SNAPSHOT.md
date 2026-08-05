@@ -23,7 +23,7 @@ Derived from the repository on each run of `npm run docs:architecture`.
 
 Every table created in a migration has row level security enabled.
 
-## Edge Functions (28)
+## Edge Functions (23)
 
 - `contextual-ecosystem`
 - `contextual-ecosystem-health`
@@ -33,15 +33,10 @@ Every table created in a migration has row level security enabled.
 - `listing-image-upload`
 - `marketplace-image-upload`
 - `media-lifecycle-cleanup`
-- `nearby-listings`
 - `personalized-recommendations`
-- `recently-listed`
 - `recommendation-maintenance`
 - `recommendation-service-health`
-- `related-products`
-- `related-services`
-- `seller-recommendations`
-- `similar-listings`
+- `recommendations`
 - `tour-admin-review-access`
 - `tour-cache-invalidation`
 - `tour-feed`

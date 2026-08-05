@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
+import { resolveRecommendationRoute, withServiceField } from './lib/recommendation-endpoints.mjs';
 
 const baseUrl = process.env.FINDIT_RECOMMENDATION_SMOKE_URL?.replace(/\/$/, '');
 const anonKey = process.env.FINDIT_SUPABASE_ANON_KEY;
@@ -31,10 +32,11 @@ const supabase = createClient(baseUrl, anonKey, {
 });
 
 async function request(path, options = {}) {
+  const { endpoint } = resolveRecommendationRoute(path);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    return await fetch(`${baseUrl}/functions/v1/${path}`, {
+    return await fetch(`${baseUrl}/functions/v1/${endpoint}`, {
       ...options,
       signal: controller.signal,
       headers: {
@@ -77,8 +79,9 @@ assert.ok(Array.isArray(health.health?.services));
 for (const [path, body] of publicServices) {
   if (path !== 'recently-listed' && !subjectListingId) continue;
   await preflight(path);
-  const { data: payload, error } = await supabase.functions.invoke(path, {
-    body: { ...body, limit: 3 },
+  const { endpoint } = resolveRecommendationRoute(path);
+  const { data: payload, error } = await supabase.functions.invoke(endpoint, {
+    body: withServiceField(path, { ...body, limit: 3 }),
     headers: { Origin: browserOrigin },
   });
   assert.equal(error, null, `${path} must not fail at the transport boundary`);

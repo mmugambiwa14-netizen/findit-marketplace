@@ -405,133 +405,218 @@ function degradedPayload(
     reason,
   };
 }
+// The set a browser may select through the multiplexed public endpoint.
+//
+// personalized_recommendation_service is deliberately absent: it is the only
+// service requiring a signed-in viewer, and it keeps its own Edge Function so
+// the gateway's verify_jwt check still rejects an unauthenticated caller before
+// any function code or database round-trip happens. Folding it in here would
+// have traded that outer layer for one fewer deployment unit.
+const PUBLIC_SERVICES: readonly RecommendationServiceName[] = [
+  "similar_listings_service",
+  "seller_recommendations_service",
+  "related_services_service",
+  "related_products_service",
+  "nearby_service",
+  "recently_listed_service",
+];
 
-export function serveRecommendationService(service: RecommendationServiceName): void {
+const publicServices = new Set<string>(PUBLIC_SERVICES);
+
+function isPublicService(value: unknown): value is RecommendationServiceName {
+  return typeof value === "string" && publicServices.has(value);
+}
+
+/**
+ * Validate the request shape that every recommendation service shares.
+ *
+ * Returns a Response when the request must be rejected, or the parsed body when
+ * it may proceed. Ordering matters and matches the original per-service
+ * functions exactly: preflight, method, origin, media type, then a bounded read.
+ */
+async function readRecommendationRequest(
+  request: Request,
+  correlationId: string,
+): Promise<Response | RecommendationRequest> {
+  if (request.method === "OPTIONS") {
+    if (!allowedRequestOrigin(request)) return new Response(null, { status: 403, headers: responseHeaders(request) });
+    return new Response(null, { status: 204, headers: responseHeaders(request) });
+  }
+  if (request.method !== "POST") {
+    return json(request, 405, { correlationId, code: "method_not_allowed", message: "POST is required." });
+  }
+  if (request.headers.get("origin") && !allowedRequestOrigin(request)) {
+    return json(request, 403, { correlationId, code: "origin_not_allowed", message: "This origin is not allowed." });
+  }
+
+  const contentType = request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase();
+  if (contentType !== "application/json") {
+    return json(request, 415, { correlationId, code: "unsupported_media_type", message: "A JSON request is required." });
+  }
+  // Bound what is actually buffered. A chunked request carries no content-length,
+  // so a header-only check can be bypassed entirely.
+  const parsed = await readBoundedJson(request, MAXIMUM_REQUEST_BYTES);
+  if (parsed === BODY_TOO_LARGE) {
+    return json(request, 413, { correlationId, code: "payload_too_large", message: "The request is too large." });
+  }
+  if (parsed === BODY_INVALID || !parsed || typeof parsed !== "object") {
+    return json(request, 400, { correlationId, code: "invalid_json", message: "The request could not be read." });
+  }
+  return parsed as RecommendationRequest;
+}
+
+/**
+ * Execute one recommendation service against an already-validated request body.
+ *
+ * The service is resolved by the caller -- fixed at deploy time for the
+ * dedicated personalized function, taken from the request body for the
+ * multiplexed public endpoint -- and is a RecommendationServiceName by the time
+ * it reaches here, never a raw client string.
+ */
+async function runRecommendationService(
+  request: Request,
+  service: RecommendationServiceName,
+  body: RecommendationRequest,
+  correlationId: string,
+): Promise<Response> {
   const config = SERVICE_CONFIG[service];
 
+  if (config.subjectRequired && !validUuid(body.subjectListingId)) {
+    return json(request, 400, { correlationId, code: "invalid_subject", message: "A valid listing is required." });
+  }
+  // A null cursor is the explicit "first page" signal the browser adapter sends;
+  // only a present, non-null cursor is subject to the string and length bounds.
+  if (body.cursor !== undefined && body.cursor !== null
+    && (typeof body.cursor !== "string" || body.cursor.length === 0 || body.cursor.length > 1024)) {
+    return json(request, 400, { correlationId, code: "invalid_cursor", message: "The cursor is invalid." });
+  }
+  const requestedLimit = boundedInteger(body.limit, 12, 1, 100);
+  const distance = boundedInteger(body.maxDistanceMeters, 50_000, 100, 500_000);
+  if (requestedLimit === null || (service === "nearby_service" && distance === null)) {
+    return json(request, 400, { correlationId, code: "invalid_limit", message: "A request limit is outside the allowed range." });
+  }
+  if (service === "nearby_service") body.maxDistanceMeters = distance ?? 50_000;
+
+  let cached: CachedRecommendation | null = null;
+  let policy: RuntimePolicy | null = null;
+
+  try {
+    const viewerId = await authenticatedUserId(request);
+    if (config.authenticationRequired && !viewerId) {
+      return json(request, 401, { correlationId, code: "authentication_required", message: "Sign in to use personalized recommendations." });
+    }
+
+    const adminClient = createClient(supabaseUrl(), configuredAdminKey(), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    policy = await runtimePolicy(adminClient, service);
+    // Bucket the page size before it reaches the cache key, so a caller cannot
+    // mint unbounded distinct cache entries by varying the limit by one.
+    body.limit = bucketedLimit(Math.min(requestedLimit, policy.maximumPageSize));
+
+    if (!policy.enabled) {
+      return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "service_disabled"));
+    }
+
+    const key = config.sharedCacheAllowed ? await cacheKey(service, body) : null;
+    if (key) {
+      cached = await readCache(adminClient, service, key);
+      if (cached && cached.staleAt > Date.now()) {
+        return json(request, 200, { ...cached.payload, correlationId, cache: "fresh" }, viewerCacheControl(viewerId));
+      }
+    }
+
+    if (circuitOpen(service, policy)) {
+      return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "circuit_open", cached));
+    }
+
+    // Budget is consumed only once a request is about to reach the database, so
+    // cache hits and disabled services do not spend it.
+    const hash = await clientHash(request);
+    if (hash) {
+      const { data: withinBudget } = await adminClient.rpc("consume_recommendation_request_budget_v1", {
+        p_client_hash: hash,
+        p_service_name: service,
+        p_budget: policy.requestBudgetPerWindow,
+        p_window_seconds: policy.requestBudgetWindowSeconds,
+      });
+      if (withinBudget === false) {
+        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "request_budget_exhausted", cached), "private, max-age=0");
+      }
+    }
+
+    const result = await executeWithTimeout(adminClient, config.rpc, rpcArguments(service, body, viewerId), policy.timeoutMs);
+    if (result.timedOut) {
+      await recordFailure(service, adminClient);
+      return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "timeout", cached), "private, max-age=0");
+    }
+    if (result.error || !validPayload(result.data, service, policy.contractVersion)) {
+      await recordFailure(service, adminClient);
+      return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "invalid_or_unavailable_response", cached));
+    }
+
+    await recordSuccess(service, adminClient);
+    const payload = result.data;
+    if (key && payload.degraded === false) {
+      try {
+        await writeCache(adminClient, service, key, body.subjectListingId, payload, policy);
+      } catch (error) {
+        console.error("recommendation cache write failed", { correlationId, service, error });
+      }
+    }
+
+    return json(
+      request,
+      200,
+      { ...payload, correlationId, cache: "miss" },
+      viewerCacheControl(viewerId),
+    );
+  } catch (error) {
+    await recordFailure(service);
+    console.error("recommendation service unavailable", { correlationId, service, error });
+    return json(request, 200, degradedPayload(service, policy?.contractVersion ?? 1, correlationId, "service_unavailable", cached));
+  }
+}
+
+/**
+ * Serve a single service on its own Edge Function, fixed at deploy time.
+ *
+ * Retained for personalized-recommendations, which needs its own function so the
+ * gateway keeps enforcing verify_jwt.
+ */
+export function serveRecommendationService(service: RecommendationServiceName): void {
   Deno.serve(async (request: Request) => {
     const correlationId = crypto.randomUUID();
+    const body = await readRecommendationRequest(request, correlationId);
+    if (body instanceof Response) return body;
+    return runRecommendationService(request, service, body, correlationId);
+  });
+}
 
-    if (request.method === "OPTIONS") {
-      if (!allowedRequestOrigin(request)) return new Response(null, { status: 403, headers: responseHeaders(request) });
-      return new Response(null, { status: 204, headers: responseHeaders(request) });
-    }
-    if (request.method !== "POST") {
-      return json(request, 405, { correlationId, code: "method_not_allowed", message: "POST is required." });
-    }
-    if (request.headers.get("origin") && !allowedRequestOrigin(request)) {
-      return json(request, 403, { correlationId, code: "origin_not_allowed", message: "This origin is not allowed." });
-    }
+/**
+ * Serve every unauthenticated recommendation service from one Edge Function.
+ *
+ * These six previously shipped as six three-line functions that differed only in
+ * the constant they passed to this module -- six deployment units, six config
+ * entries and six cold starts for one code path. The service now arrives in the
+ * request body and is checked against PUBLIC_SERVICES before it is used, so an
+ * unknown or authenticated-only name is rejected rather than dispatched.
+ */
+export function servePublicRecommendationServices(): void {
+  Deno.serve(async (request: Request) => {
+    const correlationId = crypto.randomUUID();
+    const body = await readRecommendationRequest(request, correlationId);
+    if (body instanceof Response) return body;
 
-    const contentType = request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase();
-    if (contentType !== "application/json") {
-      return json(request, 415, { correlationId, code: "unsupported_media_type", message: "A JSON request is required." });
-    }
-    // Bound what is actually buffered. A chunked request carries no content-length,
-    // so a header-only check can be bypassed entirely.
-    const parsed = await readBoundedJson(request, MAXIMUM_REQUEST_BYTES);
-    if (parsed === BODY_TOO_LARGE) {
-      return json(request, 413, { correlationId, code: "payload_too_large", message: "The request is too large." });
-    }
-    if (parsed === BODY_INVALID || !parsed || typeof parsed !== "object") {
-      return json(request, 400, { correlationId, code: "invalid_json", message: "The request could not be read." });
-    }
-    const body = parsed as RecommendationRequest;
-
-    if (config.subjectRequired && !validUuid(body.subjectListingId)) {
-      return json(request, 400, { correlationId, code: "invalid_subject", message: "A valid listing is required." });
-    }
-    // A null cursor is the explicit "first page" signal the browser adapter sends;
-    // only a present, non-null cursor is subject to the string and length bounds.
-    if (body.cursor !== undefined && body.cursor !== null
-      && (typeof body.cursor !== "string" || body.cursor.length === 0 || body.cursor.length > 1024)) {
-      return json(request, 400, { correlationId, code: "invalid_cursor", message: "The cursor is invalid." });
-    }
-    const requestedLimit = boundedInteger(body.limit, 12, 1, 100);
-    const distance = boundedInteger(body.maxDistanceMeters, 50_000, 100, 500_000);
-    if (requestedLimit === null || (service === "nearby_service" && distance === null)) {
-      return json(request, 400, { correlationId, code: "invalid_limit", message: "A request limit is outside the allowed range." });
-    }
-    if (service === "nearby_service") body.maxDistanceMeters = distance ?? 50_000;
-
-    let cached: CachedRecommendation | null = null;
-    let policy: RuntimePolicy | null = null;
-
-    try {
-      const viewerId = await authenticatedUserId(request);
-      if (config.authenticationRequired && !viewerId) {
-        return json(request, 401, { correlationId, code: "authentication_required", message: "Sign in to use personalized recommendations." });
-      }
-
-      const adminClient = createClient(supabaseUrl(), configuredAdminKey(), {
-        auth: { persistSession: false, autoRefreshToken: false },
+    const requested = (body as { service?: unknown }).service;
+    if (!isPublicService(requested)) {
+      return json(request, 400, {
+        correlationId,
+        code: "unknown_service",
+        message: "A supported recommendation service is required.",
       });
-      policy = await runtimePolicy(adminClient, service);
-      // Bucket the page size before it reaches the cache key, so a caller cannot
-      // mint unbounded distinct cache entries by varying the limit by one.
-      body.limit = bucketedLimit(Math.min(requestedLimit, policy.maximumPageSize));
-
-      if (!policy.enabled) {
-        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "service_disabled"));
-      }
-
-      const key = config.sharedCacheAllowed ? await cacheKey(service, body) : null;
-      if (key) {
-        cached = await readCache(adminClient, service, key);
-        if (cached && cached.staleAt > Date.now()) {
-          return json(request, 200, { ...cached.payload, correlationId, cache: "fresh" }, viewerCacheControl(viewerId));
-        }
-      }
-
-      if (circuitOpen(service, policy)) {
-        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "circuit_open", cached));
-      }
-
-      // Budget is consumed only once a request is about to reach the database, so
-      // cache hits and disabled services do not spend it.
-      const hash = await clientHash(request);
-      if (hash) {
-        const { data: withinBudget } = await adminClient.rpc("consume_recommendation_request_budget_v1", {
-          p_client_hash: hash,
-          p_service_name: service,
-          p_budget: policy.requestBudgetPerWindow,
-          p_window_seconds: policy.requestBudgetWindowSeconds,
-        });
-        if (withinBudget === false) {
-          return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "request_budget_exhausted", cached), "private, max-age=0");
-        }
-      }
-
-      const result = await executeWithTimeout(adminClient, config.rpc, rpcArguments(service, body, viewerId), policy.timeoutMs);
-      if (result.timedOut) {
-        await recordFailure(service, adminClient);
-        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "timeout", cached), "private, max-age=0");
-      }
-      if (result.error || !validPayload(result.data, service, policy.contractVersion)) {
-        await recordFailure(service, adminClient);
-        return json(request, 200, degradedPayload(service, policy.contractVersion, correlationId, "invalid_or_unavailable_response", cached));
-      }
-
-      await recordSuccess(service, adminClient);
-      const payload = result.data;
-      if (key && payload.degraded === false) {
-        try {
-          await writeCache(adminClient, service, key, body.subjectListingId, payload, policy);
-        } catch (error) {
-          console.error("recommendation cache write failed", { correlationId, service, error });
-        }
-      }
-
-      return json(
-        request,
-        200,
-        { ...payload, correlationId, cache: "miss" },
-        viewerCacheControl(viewerId),
-      );
-    } catch (error) {
-      await recordFailure(service);
-      console.error("recommendation service unavailable", { correlationId, service, error });
-      return json(request, 200, degradedPayload(service, policy?.contractVersion ?? 1, correlationId, "service_unavailable", cached));
     }
+
+    return runRecommendationService(request, requested, body, correlationId);
   });
 }
