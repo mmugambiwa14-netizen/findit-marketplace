@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { clearStoredValues } from '@/lib/browserStorage';
 import { deleteCurrentAccount } from '@/services/accountDeletionService';
 import * as authService from '@/services/authService';
 import { userFacingError } from '@/lib/userFacingErrors';
@@ -39,8 +40,8 @@ export default function DeleteAccountSection({ user }) {
     try {
       await deleteCurrentAccount(confirmation);
       try { await authService.signOut(); } catch { /* the server has already revoked access */ }
-      window.localStorage.clear();
-      window.sessionStorage.clear();
+      clearStoredValues('local');
+      clearStoredValues('session');
       window.location.replace(authService.appUrl('/login?accountDeleted=1'));
     } catch (error) {
       toast.error(userFacingError(error, 'We could not delete your account. Please try again.'));
