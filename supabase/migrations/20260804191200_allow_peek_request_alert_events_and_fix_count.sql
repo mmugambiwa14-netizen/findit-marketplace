@@ -10,10 +10,10 @@ alter table public.app_alerts add constraint app_alerts_v1_event_type_check chec
 );
 
 create or replace function public.create_peek_request(
-  p_listing_id uuid,
-  p_service_id uuid,
-  p_category public.peek_request_category,
-  p_body text
+  p_listing_id uuid default null,
+  p_service_id uuid default null,
+  p_category public.peek_request_category default 'custom',
+  p_body text default null
 ) returns uuid
 language plpgsql
 security definer
