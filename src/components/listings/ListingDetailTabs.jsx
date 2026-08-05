@@ -151,7 +151,7 @@ export function ListingSeller({
     <div className="flex items-center gap-4">
       <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border">
         {resolvedAvatarUrl && !avatarFailed
-          ? <img src={resolvedAvatarUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={() => setAvatarFailed(true)} />
+          ? <img src={resolvedAvatarUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" onError={() => setAvatarFailed(true)} />
           : <UserRound className="h-6 w-6 text-muted-foreground" />}
       </span>
       <div className="min-w-0 flex-1">
