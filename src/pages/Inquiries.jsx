@@ -2,7 +2,7 @@ import { useDeferredValue, useMemo, useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { ArrowLeft, ImageOff, Loader2, MessageCircle, Play, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ConversationThread from '@/components/messaging/ConversationThread';
+import RealtimeConversationThread from '@/components/messaging/RealtimeConversationThread';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,7 +51,7 @@ export default function Inquiries() {
     return [...byId.values()];
   }, [inboxQuery.data]);
 
-  if (conversationId) return <ConversationThread conversationId={conversationId} currentUser={user} onBack={() => navigate('/chats')} />;
+  if (conversationId) return <RealtimeConversationThread conversationId={conversationId} currentUser={user} onBack={() => navigate('/chats')} />;
 
   return (
     <div className="findit-screen">
