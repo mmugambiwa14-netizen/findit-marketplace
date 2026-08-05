@@ -8,6 +8,9 @@ const root = process.cwd();
 // keyboard-shortcut strings, and rewriting a vendored bundle would defeat the
 // point of pinning it to a verified upstream hash.
 const ignoredDirectories = new Set(['.git', 'node_modules', 'dist', 'coverage', 'vendor']);
+// Certification output is generated from command stdout and can contain
+// tool-owned symbols. It is evidence, not repository-authored source.
+const ignoredPaths = new Set(['artifacts/certification']);
 const ignoredExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.ico', '.mp4', '.webm', '.pdf', '.zip', '.woff', '.woff2', '.ttf']);
 const markerRoots = ['src/', 'scripts/', 'supabase/functions/'];
 const markerScannerPath = 'scripts/verify-repository-hygiene.mjs';
@@ -40,8 +43,9 @@ const incompleteImplementationPatterns = [
 
 async function walk(directory) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if (entry.isDirectory() && ignoredDirectories.has(entry.name)) continue;
     const path = join(directory, entry.name);
+    const displayPath = relative(root, path).replaceAll('\\', '/');
+    if (entry.isDirectory() && (ignoredDirectories.has(entry.name) || ignoredPaths.has(displayPath))) continue;
     if (entry.isDirectory()) {
       await walk(path);
       continue;
