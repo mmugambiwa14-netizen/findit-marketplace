@@ -1,10 +1,10 @@
 begin;
 
 create or replace function public.create_peek_request(
-  p_listing_id uuid,
-  p_service_id uuid,
-  p_category public.peek_request_category,
-  p_body text
+  p_listing_id uuid default null,
+  p_service_id uuid default null,
+  p_category public.peek_request_category default 'custom',
+  p_body text default null
 ) returns uuid
 language plpgsql
 security definer
@@ -189,14 +189,14 @@ end;
 $$;
 
 create or replace function public.peek_thread_page(
-  p_listing_id uuid,
-  p_service_id uuid,
-  p_filter text,
-  p_sort text,
-  p_cursor_supporter_count integer,
-  p_cursor_created_at timestamptz,
-  p_cursor_id uuid,
-  p_limit integer
+  p_listing_id uuid default null,
+  p_service_id uuid default null,
+  p_filter text default 'all',
+  p_sort text default 'most_wanted',
+  p_cursor_supporter_count integer default null,
+  p_cursor_created_at timestamptz default null,
+  p_cursor_id uuid default null,
+  p_limit integer default 20
 ) returns table(
   request_id uuid, listing_id uuid, service_id uuid, category public.peek_request_category,
   body text, status public.peek_request_status, supporter_count integer,
