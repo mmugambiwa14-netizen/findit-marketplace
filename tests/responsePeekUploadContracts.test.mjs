@@ -22,12 +22,13 @@ test('upload intent defaults to Main Peek and requires explicit Response Peek mo
   assert.match(repository, /peekKind: request\.peekKind \|\| 'main'/);
 });
 
-test('seller queue reuses the existing uploader and does not bind before moderation', async () => {
+test('seller queue reuses the existing uploader and waits for moderation before answering', async () => {
   const queue = await read('src/components/peekThreads/BuyerPeekRequestsQueue.jsx');
   const uploader = await read('src/components/tours/TourUploader.jsx');
   const service = await read('src/services/responsePeekUploadService.js');
   assert.match(queue, /peekKind="response"/);
-  assert.match(queue, /Uploading does not mark requests answered yet/);
+  assert.match(queue, /The request remains pending while the video is processed and moderated/);
+  assert.match(queue, /It becomes answered automatically after approval/);
   assert.match(uploader, /uploadResponsePeek/);
   assert.match(service, /peekKind: 'response'/);
   assert.doesNotMatch(service, /bindResponsePeek/);
