@@ -2,10 +2,10 @@ begin;
 
 -- Extend the authenticated RPC implementation boundary established by 0101.
 -- Later feature migrations added 22 authenticated-callable SECURITY DEFINER
--- functions in public. Move those implementations behind invoker wrappers
--- without changing signatures, defaults, results, planner attributes or the
--- named-role grant matrix. Anonymous access is preserved only where it already
--- existed on the function being moved.
+-- functions in public. Ordinary RPC implementations move behind invoker
+-- wrappers with signatures, defaults, results, planner attributes and named-role
+-- grants preserved. Trigger functions move to private with all client execution
+-- revoked because they are internal database hooks, not RPC endpoints.
 
 create temporary table findit_20260805073000_snapshot on commit drop as
 select
@@ -16,6 +16,7 @@ select
   pg_get_function_identity_arguments(p.oid) as identity_arguments,
   pg_get_function_arguments(p.oid) as full_arguments,
   pg_get_function_result(p.oid) as result_type,
+  pg_get_function_result(p.oid) in ('trigger', 'event_trigger') as is_trigger,
   l.lanname as language_name,
   p.provolatile,
   p.proretset,
@@ -43,6 +44,8 @@ order by p.proname, pg_get_function_identity_arguments(p.oid);
 do $migration$
 declare
   target_count integer;
+  rpc_target_count integer;
+  trigger_target_count integer;
   target record;
   call_arguments text;
   wrapper_body text;
@@ -53,9 +56,13 @@ declare
   wrapper_sql text;
   private_count integer;
   wrapper_count integer;
+  private_trigger_count integer;
 begin
-  select count(*)::integer
-  into target_count
+  select
+    count(*)::integer,
+    count(*) filter (where not is_trigger)::integer,
+    count(*) filter (where is_trigger)::integer
+  into target_count, rpc_target_count, trigger_target_count
   from findit_20260805073000_snapshot;
 
   if target_count <> 22 then
@@ -70,10 +77,10 @@ begin
     where language_name not in ('sql', 'plpgsql')
        or not authenticated_execute
        or function_name is null
-       or self_reference
+       or (self_reference and not is_trigger)
   ) then
     raise exception
-      '20260805073000 encountered an unsupported or self-referential target';
+      '20260805073000 encountered an unsupported or self-referential RPC target';
   end if;
 
   if exists (
@@ -94,6 +101,23 @@ begin
     from findit_20260805073000_snapshot
     order by function_name, identity_arguments
   loop
+    execute format('alter function %s set schema private', target.regprocedure_text);
+    execute format(
+      'revoke all on function private.%I(%s) from public, anon, authenticated, service_role',
+      target.function_name,
+      target.identity_types
+    );
+
+    if target.is_trigger then
+      execute format(
+        'comment on function private.%I(%s) is %L',
+        target.function_name,
+        target.identity_types,
+        'findit:20260805073000-trigger-boundary'
+      );
+      continue;
+    end if;
+
     select coalesce(string_agg('$' || position::text, ', ' order by position), '')
     into call_arguments
     from generate_series(1, target.pronargs) as generated(position);
@@ -123,8 +147,6 @@ begin
         format('select private.%I(%s);', target.function_name, call_arguments)
     end;
 
-    execute format('alter function %s set schema private', target.regprocedure_text);
-
     wrapper_sql := format(
       'create function public.%I(%s) returns %s language sql %s %s security invoker %s cost %s %s set search_path = '''' as $wrapper$%s$wrapper$',
       target.function_name,
@@ -141,11 +163,6 @@ begin
 
     execute format(
       'revoke all on function public.%I(%s) from public, anon, authenticated, service_role',
-      target.function_name,
-      target.identity_types
-    );
-    execute format(
-      'revoke all on function private.%I(%s) from public, anon, authenticated, service_role',
       target.function_name,
       target.identity_types
     );
@@ -227,7 +244,8 @@ begin
    and pg_get_function_identity_arguments(p.oid) = expected.identity_arguments
   join pg_namespace n on n.oid = p.pronamespace
   join pg_language l on l.oid = p.prolang
-  where n.nspname = 'public'
+  where not expected.is_trigger
+    and n.nspname = 'public'
     and l.lanname = 'sql'
     and pg_get_function_result(p.oid) = expected.result_type
     and p.provolatile = expected.provolatile
@@ -242,11 +260,24 @@ begin
     and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
     and position('private.' || expected.function_name || '(' in p.prosrc) > 0;
 
-  if private_count <> 22 or wrapper_count <> 22 then
+  select count(*)::integer
+  into private_trigger_count
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'private'
+    and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-trigger-boundary'
+    and pg_get_function_result(p.oid) in ('trigger', 'event_trigger');
+
+  if private_count <> target_count
+     or wrapper_count <> rpc_target_count
+     or private_trigger_count <> trigger_target_count then
     raise exception
-      '20260805073000 did not preserve all implementations and wrappers: private %, public %',
+      '20260805073000 boundary mismatch: private %, wrappers %/%, triggers %/%',
       private_count,
-      wrapper_count;
+      wrapper_count,
+      rpc_target_count,
+      private_trigger_count,
+      trigger_target_count;
   end if;
 
   if exists (
@@ -272,7 +303,8 @@ begin
       on private_implementation.proname = expected.function_name
      and pg_get_function_identity_arguments(private_implementation.oid) = expected.identity_arguments
     join pg_namespace private_schema on private_schema.oid = private_implementation.pronamespace
-    where public_schema.nspname = 'public'
+    where not expected.is_trigger
+      and public_schema.nspname = 'public'
       and private_schema.nspname = 'private'
       and (
         has_function_privilege('anon', public_wrapper.oid, 'EXECUTE') <> expected.anon_execute
@@ -284,7 +316,23 @@ begin
       )
   ) then
     raise exception
-      '20260805073000 did not preserve the named-role execution matrix';
+      '20260805073000 did not preserve the RPC named-role execution matrix';
+  end if;
+
+  if exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private'
+      and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-trigger-boundary'
+      and (
+        has_function_privilege('anon', p.oid, 'EXECUTE')
+        or has_function_privilege('authenticated', p.oid, 'EXECUTE')
+        or has_function_privilege('service_role', p.oid, 'EXECUTE')
+      )
+  ) then
+    raise exception
+      '20260805073000 left a client role grant on an internal trigger function';
   end if;
 
   if exists (
@@ -294,7 +342,10 @@ begin
     cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) privilege
     where n.nspname in ('public', 'private')
       and (
-        obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
+        obj_description(p.oid, 'pg_proc') in (
+          'findit:20260805073000-authenticated-boundary',
+          'findit:20260805073000-trigger-boundary'
+        )
         or exists (
           select 1
           from findit_20260805073000_snapshot expected
