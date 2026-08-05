@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   TRUSTED_STAGING_BRANCHES,
   isTrustedStagingBranch,
+  isTrustedStagingHost,
   readBooleanFlag,
   resolveStagingCertifiedFlag,
   resolveStagingProviderFlag,
@@ -19,12 +20,32 @@ test('all certified staging branches are recognized', () => {
   }
 });
 
+test('server-side Vercel branch metadata is recognized', () => {
+  assert.equal(
+    isTrustedStagingBranch({ VERCEL_GIT_COMMIT_REF: 'feature/listing-intelligence-foundation' }),
+    true,
+  );
+});
+
 test('unknown and missing branches fail closed', () => {
   assert.equal(isTrustedStagingBranch({}), false);
   assert.equal(
     isTrustedStagingBranch({ VITE_VERCEL_GIT_COMMIT_REF: 'feature/untrusted-preview' }),
     false,
   );
+});
+
+test('stable and generated FindIt staging hosts are recognized', () => {
+  assert.equal(isTrustedStagingHost('findit-marketplace-staging.vercel.app'), true);
+  assert.equal(isTrustedStagingHost('findit-marketplace-staging-iwgkds7gn.vercel.app'), true);
+  assert.equal(isTrustedStagingHost('findit-marketplace-stagi-git-18ac2e-team.vercel.app'), true);
+});
+
+test('production-looking and unrelated hosts fail closed', () => {
+  assert.equal(isTrustedStagingHost('findit-marketplace.vercel.app'), false);
+  assert.equal(isTrustedStagingHost('findit-marketplace-staging.example.com'), false);
+  assert.equal(isTrustedStagingHost('example.vercel.app'), false);
+  assert.equal(isTrustedStagingHost(''), false);
 });
 
 test('ordinary boolean flags preserve explicit values and fallback', () => {
