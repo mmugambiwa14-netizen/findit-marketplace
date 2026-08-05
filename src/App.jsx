@@ -46,8 +46,10 @@ const BusinessProfiles = lazy(() => import('@/pages/BusinessProfiles'));
 const PublicBusinessProfile = lazy(() => import('@/pages/PublicBusinessProfile'));
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminListings = lazy(() => import('@/pages/admin/AdminListings'));
+const AdminPeeks = lazy(() => import('@/pages/admin/AdminPeeks'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminReports = lazy(() => import('@/pages/admin/AdminReports'));
+const AdminSupportRequests = lazy(() => import('@/pages/admin/AdminSupportRequests'));
 const AdminAuditLog = lazy(() => import('@/pages/admin/AdminAuditLog'));
 const AdminCategories = lazy(() => import('@/pages/admin/AdminCategories'));
 const NotificationCenter = lazy(() => import('@/pages/NotificationCenter'));
@@ -75,12 +77,8 @@ const AuthUnavailable = ({ message, onRetry, onSignOut }) => (
       <h1 className="text-xl font-semibold">We could not verify your account</h1>
       <p className="mt-2 text-sm text-muted-foreground">{message}</p>
       <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-        <button type="button" className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover" onClick={onRetry}>
-          Try again
-        </button>
-        <button type="button" className="inline-flex h-11 items-center justify-center rounded-xl border border-border-strong bg-card px-4 text-sm font-semibold" onClick={onSignOut}>
-          Sign out
-        </button>
+        <button type="button" className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover" onClick={onRetry}>Try again</button>
+        <button type="button" className="inline-flex h-11 items-center justify-center rounded-xl border border-border-strong bg-card px-4 text-sm font-semibold" onClick={onSignOut}>Sign out</button>
       </div>
     </section>
     <nav className="mt-5 flex gap-4 text-xs text-muted-foreground" aria-label="Legal">
@@ -113,11 +111,7 @@ const DarkSonner = () => <SonnerToaster position="top-center" richColors theme="
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, blockedAccount, checkUserAuth, logout } = useAuth();
   if (isLoadingPublicSettings || isLoadingAuth) return <LoadingScreen />;
-
-  if (blockedAccount) {
-    return <AccountBlocked status={blockedAccount.status} reason={blockedAccount.reason} banUntil={blockedAccount.banUntil} />;
-  }
-
+  if (blockedAccount) return <AccountBlocked status={blockedAccount.status} reason={blockedAccount.reason} banUntil={blockedAccount.banUntil} />;
   if (authError) {
     if (authError.type === 'profile_missing') return <UserNotRegisteredError onRetry={checkUserAuth} onSignOut={logout} />;
     return <AuthUnavailable message={authError.message} onRetry={checkUserAuth} onSignOut={logout} />;
@@ -142,9 +136,7 @@ const AuthenticatedApp = () => {
           {featureFlags.businessProfiles && <Route path="/dealer/:id" element={<PublicBusinessProfile />} />}
           <Route path="/services" element={<Services />} />
           <Route path="/service/:id" element={<ServiceDetail />} />
-          {(featureFlags.tours || featureFlags.toursPreview) && (
-            <Route path="/peek" element={featureFlags.tours ? <Tours /> : <ToursPlaceholder />} />
-          )}
+          {(featureFlags.tours || featureFlags.toursPreview) && <Route path="/peek" element={featureFlags.tours ? <Tours /> : <ToursPlaceholder />} />}
           {(featureFlags.tours || featureFlags.toursPreview) && <Route path="/tours" element={<LegacyPathRedirect to="/peek" />} />}
           <Route path="/help" element={<FAQs />} />
           <Route path="/help/contact" element={<ContactSupport />} />
@@ -178,8 +170,10 @@ const AuthenticatedApp = () => {
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/listings" element={<AdminListings />} />
+            <Route path="/admin/peeks" element={<AdminPeeks />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/support" element={<AdminSupportRequests />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
             <Route path="/admin/audit-log" element={<AdminAuditLog />} />
           </Route>
@@ -192,18 +186,13 @@ const AuthenticatedApp = () => {
 };
 
 function App() {
-  const routerBaseName = import.meta.env.BASE_URL === '/'
-    ? undefined
-    : import.meta.env.BASE_URL.replace(/\/$/, '');
-
+  const routerBaseName = import.meta.env.BASE_URL === '/' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '');
   return (
     <AuthProvider>
       <CurrencyProvider>
         <QueryClientProvider client={queryClientInstance}>
           <PwaProvider>
-            <Router basename={routerBaseName}>
-              <AuthenticatedApp />
-            </Router>
+            <Router basename={routerBaseName}><AuthenticatedApp /></Router>
             <PwaStatusBar />
             <GlobalRefreshButton />
             <InstallPrompt />
