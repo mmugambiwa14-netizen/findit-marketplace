@@ -9,8 +9,8 @@ select extensions.is(
       'private.admin_review_report(uuid,public.report_status,text)'::regprocedure,
       'private.admin_tour_queue(text,text,integer,integer)'::regprocedure,
       'private.seller_peek_request_queue(bigint,timestamptz,uuid,integer)'::regprocedure
-    ]) target
-    join pg_proc p on p.oid = target::oid
+    ]) as targets(function_oid)
+    join pg_proc p on p.oid = targets.function_oid::oid
     where position('#variable_conflict use_column' in p.prosrc) > 0
   ),
   3::bigint,
@@ -23,8 +23,8 @@ select extensions.is(
     from unnest(array[
       'private.bind_response_peek(uuid,uuid[])'::regprocedure,
       'private.apply_pending_response_peek_binding()'::regprocedure
-    ]) target
-    join pg_proc p on p.oid = target::oid
+    ]) as targets(function_oid)
+    join pg_proc p on p.oid = targets.function_oid::oid
     where position('''system''' in p.prosrc) > 0
       and position('''info''' in p.prosrc) = 0
       and position('''peek_request_answered''' in p.prosrc) > 0
