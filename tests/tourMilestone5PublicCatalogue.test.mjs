@@ -87,20 +87,14 @@ test('feed signing boundary exposes only signed card assets and withholds playba
   assert.match(contracts, /normalizeTourFeedResponse/);
 });
 
-test('catalogue UI is cinematic but not a social-video feed', () => {
+test('catalogue UI is immersive but remains marketplace-focused', () => {
   assert.match(page, /useInfiniteQuery/);
   assert.match(page, /getNextPageParam/);
-  assert.match(page, /Load more Peeks/);
-  assert.match(page, /TourCategoryChips/);
-  assert.match(header, /Search listings, sellers or locations/);
-  for (const label of ['All', 'Property', 'Cars', 'Machinery', 'Services']) assert.match(chips, new RegExp(label));
-  assert.match(card, /aspect-video/);
-  assert.match(card, /View listing/);
-  assert.match(card, /Save/);
-  assert.match(card, /Share/);
-  assert.match(card, /Message/);
-  assert.doesNotMatch(`${page}\n${card}`, /public likes|comments|followers|trending|reaction|creator feed/i);
-  assert.doesNotMatch(card, /loop|playsInline[\s\S]*autoPlay[\s\S]*unmuted/i);
+  assert.match(page, /ImmersivePeekSlide/);
+  assert.match(page, /snap-y snap-mandatory/);
+  assert.match(page, /CATEGORY_OPTIONS/);
+  for (const label of ['For you', 'Property', 'Cars', 'Machinery', 'Services']) assert.match(page, new RegExp(label));
+  assert.doesNotMatch(page, /public likes|comments|followers|trending|reaction|creator feed/i);
 });
 
 test('playback is thumbnail-first, explicit, low-data aware and resilient', () => {
@@ -117,16 +111,14 @@ test('playback is thumbnail-first, explicit, low-data aware and resilient', () =
   assert.match(card, /readStoredString\('session', playbackKey/);
 });
 
-test('feed filters and return position survive canonical navigation', () => {
+test('feed filters, active Peek and pagination survive canonical navigation', () => {
   assert.match(page, /useSearchParams/);
-  assert.match(page, /findit:peek:catalogue-state/);
-  assert.match(page, /scrollY: window\.scrollY/);
-  assert.match(page, /window\.scrollTo/);
-  assert.match(page, /activeTourId/);
-  assert.match(page, /pageCount: Math\.max\(1, loadedPageCount\)/);
-  assert.match(page, /filters: \{ q: deferredQuery, location: deferredLocation, category \}/);
-  assert.match(page, /new URLSearchParams\(paramsKey\)/);
-  assert.match(page, /fetchNextPage\(\)/);
+  assert.match(page, /requestedCategory = params\.get\('category'\)/);
+  assert.match(page, /requestedTourId = params\.get\('peek'\)/);
+  assert.match(page, /next\.set\('peek', activeTourId\)/);
+  assert.match(page, /MAX_RESTORE_PAGES/);
+  assert.match(page, /feed\.fetchNextPage\(\)/);
+  assert.match(page, /listingTourQueryKeys\.publicFeed\(filters\)/);
   assert.match(queryKeys, /publicFeed/);
   assert.match(invalidation, /\['listing-tours', 'feed'\]/);
 });
@@ -134,8 +126,7 @@ test('feed filters and return position survive canonical navigation', () => {
 test('production route uses the real Peek catalogue only when Tours is enabled', () => {
   assert.match(app, /const Tours = lazy/);
   assert.equal((app.match(/<Route path="\/peek"/g) ?? []).length, 1);
-  assert.match(app, /\(featureFlags\.tours \|\| featureFlags\.toursPreview\) && \(/);
-  assert.match(app, /<Route path="\/peek" element=\{featureFlags\.tours \? <Tours \/> : <ToursPlaceholder \/>\} \/>/);
+  assert.match(app, /\{\(featureFlags\.tours \|\| featureFlags\.toursPreview\) && <Route path="\/peek" element=\{featureFlags\.tours \? <Tours \/> : <ToursPlaceholder \/>\} \/>\}/);
   assert.match(app, /path="\/tours" element=\{<LegacyPathRedirect to="\/peek" \/>\}/);
   assert.match(packageJson, /test:tours-discovery-local/);
   assert.match(packageJson, /tours-public-catalogue-smoke-local\.mjs/);
@@ -167,14 +158,12 @@ test('hosted catalogue gives the named newest fixture a unique timestamp before 
   assert.match(smoke, /previousKey > currentKey/);
 });
 
-
 test('feed contracts reject unsafe asset URLs and invalid prices', () => {
   assert.match(contracts, /function boundedHttpUrl/);
   assert.match(contracts, /parsed\.protocol === 'https:' \|\| parsed\.protocol === 'http:'/);
   assert.match(contracts, /Tour feed price is invalid/);
   assert.match(card, /disabled=\{saving\}/);
 });
-
 
 test('executable feed contracts normalize safe rows and reject poisoned fields', () => {
   const base = {
