@@ -63,7 +63,7 @@ export function ListingDetailTabs({ children }) {
   );
 }
 
-export function ListingTabSection({ id, title, children, className }) {
+export function ListingTabSection({ id, title, children, className = '' }) {
   return (
     <section id={id} aria-labelledby={`${id}-heading`} className={cn('scroll-mt-28', className)}>
       <h2 id={`${id}-heading`} className="mb-4 text-xl font-black tracking-tight">{title}</h2>
@@ -120,11 +120,11 @@ export function ListingLocation({ label, latitude, longitude }) {
 export function ListingSeller({
   name,
   sellerId,
-  avatarUrl,
+  avatarUrl = '',
   activeListingCount,
   joinedAt,
   actions,
-  profilePath,
+  profilePath = null,
   profileLabel = 'View listings',
 }) {
   const [avatarFailed, setAvatarFailed] = useState(false);
