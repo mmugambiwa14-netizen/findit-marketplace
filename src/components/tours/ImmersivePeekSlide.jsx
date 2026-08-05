@@ -343,13 +343,14 @@ export default function ImmersivePeekSlide({
           </div>
         </div>
 
-        <div className="mt-3" onClick={(event) => event.stopPropagation()}>
+        <div className="mt-3">
           <input
             type="range"
             min="0"
             max={Math.max(duration, 0)}
             step="0.05"
             value={Math.min(currentTime, duration || 0)}
+            onClick={(event) => event.stopPropagation()}
             onChange={seek}
             disabled={!duration}
             aria-label="Seek through Peek"
