@@ -21,7 +21,7 @@ const REASONS = [
   ['duplicate_content', 'Duplicate content'],
 ];
 
-export default function TourReportDialog({ open, onOpenChange, tourId, title, onReported }) {
+export default function TourReportDialog({ open, onOpenChange, tourId, title, onReported = undefined }) {
   const [reason, setReason] = useState('misleading_representation');
   const [description, setDescription] = useState('');
   const queryClient = useQueryClient();
