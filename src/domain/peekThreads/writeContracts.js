@@ -28,19 +28,29 @@ export function normalizeRequestId(value, field = 'request') {
 export function normalizeDeclinePeekRequest(input) {
   const request = normalizeRequestId(input?.requestId);
   const reason = normalizeDeclineReason(input?.reason);
-  const errors = [...(request.ok ? [] : request.errors), ...(reason.ok ? [] : reason.errors)];
-  if (errors.length) return { ok: false, errors };
+
+  if (!request.ok) {
+    if (!reason.ok) return { ok: false, errors: [...request.errors, ...reason.errors] };
+    return request;
+  }
+  if (!reason.ok) return reason;
+
   return { ok: true, value: { p_request_id: request.value, p_reason: reason.value } };
 }
 
 export function normalizeMergePeekRequests(input) {
   const source = normalizeRequestId(input?.sourceRequestId, 'sourceRequest');
   const target = normalizeRequestId(input?.targetRequestId, 'targetRequest');
-  const errors = [...(source.ok ? [] : source.errors), ...(target.ok ? [] : target.errors)];
-  if (source.ok && target.ok && source.value === target.value) {
-    errors.push({ field: 'targetRequest', message: 'Choose a different request to merge into' });
+
+  if (!source.ok) {
+    if (!target.ok) return { ok: false, errors: [...source.errors, ...target.errors] };
+    return source;
   }
-  if (errors.length) return { ok: false, errors };
+  if (!target.ok) return target;
+  if (source.value === target.value) {
+    return { ok: false, errors: [{ field: 'targetRequest', message: 'Choose a different request to merge into' }] };
+  }
+
   return {
     ok: true,
     value: { p_source_request_id: source.value, p_target_request_id: target.value },
@@ -50,13 +60,16 @@ export function normalizeMergePeekRequests(input) {
 export function normalizeResponseBinding(input) {
   const tour = normalizeRequestId(input?.tourId, 'tour');
   const uniqueRequestIds = [...new Set(Array.isArray(input?.requestIds) ? input.requestIds : [])];
-  const errors = tour.ok ? [] : [...tour.errors];
+  const errors = [];
+
   if (uniqueRequestIds.length < 1 || uniqueRequestIds.length > 25) {
     errors.push({ field: 'requestIds', message: 'Choose between 1 and 25 Peek Requests' });
   }
   for (const id of uniqueRequestIds) {
     if (!uuidLike(id)) errors.push({ field: 'requestIds', message: 'A selected Peek Request is invalid' });
   }
+  if (!tour.ok) return { ok: false, errors: [...tour.errors, ...errors] };
   if (errors.length) return { ok: false, errors };
+
   return { ok: true, value: { p_tour_id: tour.value, p_request_ids: uniqueRequestIds } };
 }
