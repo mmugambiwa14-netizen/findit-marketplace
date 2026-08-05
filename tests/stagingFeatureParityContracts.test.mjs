@@ -2,20 +2,29 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const flags = await readFile(new URL('../src/lib/featureFlags.js', import.meta.url), 'utf8');
+const [flags, policy] = await Promise.all([
+  readFile(new URL('../src/lib/featureFlags.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/lib/stagingCapabilityPolicy.js', import.meta.url), 'utf8'),
+]);
 
 test('trusted continuation branches share the staging capability set', () => {
+  assert.match(policy, /export const TRUSTED_STAGING_BRANCHES/);
+  assert.match(policy, /export function isTrustedStagingBranch/);
   for (const branch of [
     'feature/listing-intelligence-foundation',
     'claude/findit-hardening-listing-012cf0',
     'feature/peek-threads-phase-3',
   ]) {
-    assert.ok(flags.includes(`'${branch}'`), `${branch} must remain in the trusted staging lineage`);
+    assert.ok(policy.includes(`'${branch}'`), `${branch} must remain in the trusted staging lineage`);
   }
 });
 
 test('staging-certified capabilities cannot be hidden by Preview environment drift', () => {
-  assert.match(flags, /const stagingCertifiedFlag = \(envVar\) => isStagingBranch \|\| flag\(envVar, false\)/);
+  assert.match(flags, /const stagingCertifiedFlag = \(envVar\) => resolveStagingCertifiedFlag\(viteEnv, envVar\)/);
+  assert.match(
+    policy,
+    /export function resolveStagingCertifiedFlag[\s\S]*isTrustedStagingEnvironment\(env\) \|\| readBooleanFlag\(env, envVar, false\)/,
+  );
   for (const capability of [
     "messaging: stagingCertifiedFlag('VITE_FEATURE_MESSAGING')",
     "essentialNotifications: stagingCertifiedFlag('VITE_FEATURE_ESSENTIAL_NOTIFICATIONS')",
