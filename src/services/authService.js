@@ -318,3 +318,101 @@ export async function updatePassword(newPassword) {
   clearPasswordRecoveryMarker();
   return data;
 }
+
+// ---------------------------------------------------------------------------
+// Multi-factor authentication (authenticator app / TOTP)
+// ---------------------------------------------------------------------------
+//
+// FindIt offers opt-in TOTP MFA. Enrollment lives in Settings; once a user
+// holds a verified factor, every subsequent sign-in -- password OR OAuth --
+// must clear an assurance step-up before the app renders. That gate is enforced
+// globally in AuthenticatedApp via mfaChallengeRequired(), so it does not matter
+// which page performed the sign-in. All of these calls stay in this module so
+// authService remains the single supabase.auth boundary.
+//
+// Whether TOTP can be enrolled/verified at all is a backend switch
+// ([auth.mfa.totp] locally; Authentication -> MFA on the hosted project). With
+// it off, enroll() rejects and the UI surfaces that; the challenge gate simply
+// never triggers because no one can hold a verified factor.
+
+/**
+ * Assurance level of the current session. `nextLevel` only rises to 'aal2'
+ * when the user has a verified factor, so a pending step-up is exactly
+ * currentLevel 'aal1' while nextLevel is 'aal2'. Returns null levels for a
+ * guest.
+ */
+export async function getAuthenticatorAssuranceLevel() {
+  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * True when the signed-in user holds a verified factor but this session has not
+ * yet cleared the MFA challenge. Guests and users without a factor return
+ * false. Errors are rethrown, never swallowed as `false`, so the gate that
+ * consumes this fails safe (shows an error state) rather than skipping MFA.
+ */
+export async function mfaChallengeRequired() {
+  const { currentLevel, nextLevel } = await getAuthenticatorAssuranceLevel();
+  // Already stepped up, or a guest (null levels): nothing to challenge.
+  if (currentLevel !== 'aal1') return false;
+  // Fast path: the session already reports a second factor exists.
+  if (nextLevel === 'aal2') return true;
+  // Otherwise confirm against a fresh factor list rather than trusting a
+  // possibly-stale `user.factors` on the session. Never skip MFA on stale data.
+  const verified = await listVerifiedTotpFactors();
+  return verified.length > 0;
+}
+
+/** Verified TOTP factors for the current user. supabase-js already filters
+ *  `data.totp` to verified factors; unverified ones live only in `data.all`. */
+export async function listVerifiedTotpFactors() {
+  const { data, error } = await supabase.auth.mfa.listFactors();
+  if (error) throw error;
+  return data?.totp ?? [];
+}
+
+/**
+ * Begin TOTP enrollment. Returns the QR code (an SVG the browser can render),
+ * the shared secret and the otpauth URI so the UI can offer a scan with a
+ * manual-entry fallback. Any lingering *unverified* factor is cleared first so
+ * a retried enrollment neither collides on the unique friendly name nor leaves
+ * dead half-enrolled factors behind.
+ */
+export async function enrollTotpFactor(friendlyName = 'FindIt authenticator') {
+  const { data: factors, error: listError } = await supabase.auth.mfa.listFactors();
+  if (listError) throw listError;
+  const stale = (factors?.all ?? []).filter((factor) => factor.status !== 'verified');
+  for (const factor of stale) {
+    // Best-effort cleanup; a failure here should not block a fresh enrollment.
+    await supabase.auth.mfa.unenroll({ factorId: factor.id }).catch(() => {});
+  }
+
+  const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName });
+  if (error) throw error;
+  return {
+    factorId: data.id,
+    qrCode: data.totp?.qr_code ?? '',
+    secret: data.totp?.secret ?? '',
+    uri: data.totp?.uri ?? '',
+  };
+}
+
+/**
+ * Verify a 6-digit code against a factor. Used both to confirm a freshly
+ * enrolled factor and to clear the sign-in step-up. `challengeAndVerify` issues
+ * a fresh challenge and verifies it in one round trip; on success the session
+ * is elevated to aal2.
+ */
+export async function verifyTotpCode(factorId, code) {
+  const { data, error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
+  if (error) throw error;
+  return data;
+}
+
+/** Remove a TOTP factor. Once the last one is gone the user drops to aal1. */
+export async function unenrollMfaFactor(factorId) {
+  const { error } = await supabase.auth.mfa.unenroll({ factorId });
+  if (error) throw error;
+}

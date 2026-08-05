@@ -91,10 +91,14 @@ Read these before deployment:
 Completed migration, milestone and audit records are archived under
 [`docs/history/`](docs/history/).
 
-The accepted staging release is deployed at
-`https://mmugambiwa14-netizen.github.io/findit-marketplace/`. Peek is enabled in
-the bottom navigation and backend, its workers are active, and all seven
-recommendation policies are enabled on staging. Production remains a separate,
-explicit rollout: its Supabase project is intentionally unchanged and still
-requires a named migration/function window, production secrets and domain,
-SMTP, monitoring, recovery ownership, and final browser/device acceptance.
+The accepted staging release is the installable PWA deployed on Vercel at
+`https://findit-marketplace-staging.vercel.app/`, which is also the Supabase
+Auth Site URL (`supabase/config.toml`). Peek is enabled in the bottom
+navigation and backend, its workers are active, and all seven recommendation
+policies are enabled on staging. The earlier GitHub Pages preview
+(`https://mmugambiwa14-netizen.github.io/findit-marketplace/`) is superseded and
+kept only as a legacy allow-listed redirect; it is not the live staging target.
+Production remains a separate, explicit rollout: its Supabase project is
+intentionally unchanged and still requires a named migration/function window,
+production secrets and domain, SMTP, monitoring, recovery ownership, and final
+browser/device acceptance.
