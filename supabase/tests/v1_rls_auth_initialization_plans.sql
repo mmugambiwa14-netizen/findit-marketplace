@@ -11,6 +11,7 @@ with expected(table_name, policy_name) as (
     ('business_profiles', 'business_profiles_owner_write'),
     ('car_details', 'car_details_owner_update'),
     ('car_details', 'car_details_owner_write'),
+    ('contact_reveal_events', 'contact_reveal_events_own_read'),
     ('conversation_reports', 'conversation_reports_reporter_or_admin_read'),
     ('conversations', 'conversations_participant_read'),
     ('inquiries', 'inquiries_participant_read'),
@@ -25,6 +26,11 @@ with expected(table_name, policy_name) as (
     ('listings', 'listings_owner_write'),
     ('machinery_details', 'machinery_details_owner_update'),
     ('machinery_details', 'machinery_details_owner_write'),
+    ('peek_request_supporters', 'peek_request_supporters_create'),
+    ('peek_request_supporters', 'peek_request_supporters_own_read'),
+    ('peek_request_supporters', 'peek_request_supporters_withdraw'),
+    ('peek_requests', 'peek_requests_create'),
+    ('peek_requests', 'peek_requests_participant_read'),
     ('property_details', 'property_details_owner_update'),
     ('property_details', 'property_details_owner_write'),
     ('recommendation_events', 'recommendation_events_actor_read'),
@@ -40,7 +46,8 @@ with expected(table_name, policy_name) as (
     ('services', 'services_owner_write'),
     ('services', 'services_public_read_active'),
     ('users', 'users_select_own_or_admin'),
-    ('users', 'users_update_own_or_admin')
+    ('users', 'users_update_own_or_admin'),
+    ('web_push_subscriptions', 'users_manage_own_web_push_subscriptions')
 ), missing_or_uninitialized as (
   select expected.table_name, expected.policy_name
   from expected
@@ -57,7 +64,7 @@ with expected(table_name, policy_name) as (
 select extensions.is(
   (select count(*)::bigint from missing_or_uninitialized),
   0::bigint,
-  'all 36 locked RLS policies use an auth.uid initialization plan'
+  'all 43 locked RLS policies use an auth.uid initialization plan'
 );
 
 select extensions.is(
@@ -70,8 +77,8 @@ select extensions.is(
         or coalesce(with_check, '') ~* '\(\s*SELECT\s+auth\.uid\(\)\s+AS\s+uid\s*\)'
       )
   ),
-  36::bigint,
-  'exactly 36 public policies contain initialized auth.uid calls'
+  43::bigint,
+  'exactly 43 public policies contain initialized auth.uid calls'
 );
 
 select extensions.is(
