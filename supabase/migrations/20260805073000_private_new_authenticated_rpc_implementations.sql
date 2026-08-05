@@ -1,11 +1,41 @@
 begin;
 
 -- Extend the authenticated RPC implementation boundary established by 0101.
--- Later feature migrations added 22 authenticated-callable SECURITY DEFINER
--- functions in public. Ordinary RPC implementations move behind invoker
--- wrappers with signatures, defaults, results, planner attributes and named-role
--- grants preserved. Trigger functions move to private with all client execution
--- revoked because they are internal database hooks, not RPC endpoints.
+-- Later feature migrations added 23 authenticated-callable SECURITY DEFINER
+-- RPCs in public plus one service-only trigger function. Move the RPC
+-- implementations behind invoker wrappers while preserving signatures,
+-- defaults, result shapes, planner attributes and named-role grants. Move the
+-- trigger implementation to private with every client execution grant revoked.
+
+create temporary table findit_20260805073000_expected (
+  function_oid regprocedure primary key
+) on commit drop;
+
+insert into findit_20260805073000_expected(function_oid)
+values
+  ('public.bind_response_peek(uuid,uuid[])'::regprocedure),
+  ('public.create_peek_request(uuid,uuid,public.peek_request_category,text)'::regprocedure),
+  ('public.decline_peek_request(uuid,text)'::regprocedure),
+  ('public.disable_web_push_subscription(text)'::regprocedure),
+  ('public.discover_category_counts()'::regprocedure),
+  ('public.merge_peek_request(uuid,uuid)'::regprocedure),
+  ('public.my_peek_request_ids(uuid[])'::regprocedure),
+  ('public.owner_listing_contacts(uuid[])'::regprocedure),
+  ('public.owner_service_contacts(uuid[])'::regprocedure),
+  ('public.peek_thread_page(uuid,uuid,text,text,integer,timestamptz,uuid,integer)'::regprocedure),
+  ('public.prepare_own_account_deletion(text)'::regprocedure),
+  ('public.public_response_peek_metadata(uuid)'::regprocedure),
+  ('public.public_tour_view_counts(uuid[])'::regprocedure),
+  ('public.queue_response_peek_binding(uuid,uuid)'::regprocedure),
+  ('public.record_public_tour_view(uuid,uuid)'::regprocedure),
+  ('public.register_web_push_subscription(text,text,text,text,text)'::regprocedure),
+  ('public.response_peek_request_candidates(uuid)'::regprocedure),
+  ('public.reveal_listing_contact(uuid)'::regprocedure),
+  ('public.reveal_service_contact(uuid)'::regprocedure),
+  ('public.seller_peek_request_queue(bigint,timestamptz,uuid,integer)'::regprocedure),
+  ('public.seller_unbound_response_peeks()'::regprocedure),
+  ('public.support_peek_request(uuid)'::regprocedure),
+  ('public.withdraw_peek_request_support(uuid)'::regprocedure);
 
 create temporary table findit_20260805073000_snapshot on commit drop as
 select
@@ -16,7 +46,6 @@ select
   pg_get_function_identity_arguments(p.oid) as identity_arguments,
   pg_get_function_arguments(p.oid) as full_arguments,
   pg_get_function_result(p.oid) as result_type,
-  pg_get_function_result(p.oid) in ('trigger', 'event_trigger') as is_trigger,
   l.lanname as language_name,
   p.provolatile,
   p.proretset,
@@ -43,9 +72,6 @@ order by p.proname, pg_get_function_identity_arguments(p.oid);
 
 do $migration$
 declare
-  target_count integer;
-  rpc_target_count integer;
-  trigger_target_count integer;
   target record;
   call_arguments text;
   wrapper_body text;
@@ -56,19 +82,25 @@ declare
   wrapper_sql text;
   private_count integer;
   wrapper_count integer;
-  private_trigger_count integer;
+  trigger_oid regprocedure := to_regprocedure('public.apply_pending_response_peek_binding()');
 begin
-  select
-    count(*)::integer,
-    count(*) filter (where not is_trigger)::integer,
-    count(*) filter (where is_trigger)::integer
-  into target_count, rpc_target_count, trigger_target_count
-  from findit_20260805073000_snapshot;
-
-  if target_count <> 22 then
+  if exists (
+    select function_oid::oid from findit_20260805073000_expected
+    except
+    select oid from findit_20260805073000_snapshot
+  ) or exists (
+    select oid from findit_20260805073000_snapshot
+    except
+    select function_oid::oid from findit_20260805073000_expected
+  ) then
     raise exception
-      '20260805073000 authenticated function catalog drifted: expected 22, found %',
-      target_count;
+      '20260805073000 authenticated SECURITY DEFINER catalog does not match the locked 23-RPC boundary';
+  end if;
+
+  if trigger_oid is null
+     or pg_get_function_result(trigger_oid::oid) <> 'trigger' then
+    raise exception
+      '20260805073000 response binding trigger function is missing or has an invalid result type';
   end if;
 
   if exists (
@@ -77,7 +109,7 @@ begin
     where language_name not in ('sql', 'plpgsql')
        or not authenticated_execute
        or function_name is null
-       or (self_reference and not is_trigger)
+       or self_reference
   ) then
     raise exception
       '20260805073000 encountered an unsupported or self-referential RPC target';
@@ -101,23 +133,6 @@ begin
     from findit_20260805073000_snapshot
     order by function_name, identity_arguments
   loop
-    execute format('alter function %s set schema private', target.regprocedure_text);
-    execute format(
-      'revoke all on function private.%I(%s) from public, anon, authenticated, service_role',
-      target.function_name,
-      target.identity_types
-    );
-
-    if target.is_trigger then
-      execute format(
-        'comment on function private.%I(%s) is %L',
-        target.function_name,
-        target.identity_types,
-        'findit:20260805073000-trigger-boundary'
-      );
-      continue;
-    end if;
-
     select coalesce(string_agg('$' || position::text, ', ' order by position), '')
     into call_arguments
     from generate_series(1, target.pronargs) as generated(position);
@@ -147,6 +162,8 @@ begin
         format('select private.%I(%s);', target.function_name, call_arguments)
     end;
 
+    execute format('alter function %s set schema private', target.regprocedure_text);
+
     wrapper_sql := format(
       'create function public.%I(%s) returns %s language sql %s %s security invoker %s cost %s %s set search_path = '''' as $wrapper$%s$wrapper$',
       target.function_name,
@@ -163,6 +180,11 @@ begin
 
     execute format(
       'revoke all on function public.%I(%s) from public, anon, authenticated, service_role',
+      target.function_name,
+      target.identity_types
+    );
+    execute format(
+      'revoke all on function private.%I(%s) from public, anon, authenticated, service_role',
       target.function_name,
       target.identity_types
     );
@@ -214,6 +236,12 @@ begin
     );
   end loop;
 
+  execute format('alter function %s set schema private', trigger_oid::text);
+  revoke all on function private.apply_pending_response_peek_binding()
+    from public, anon, authenticated, service_role;
+  comment on function private.apply_pending_response_peek_binding() is
+    'findit:20260805073000-trigger-boundary';
+
   select count(*)::integer
   into private_count
   from findit_20260805073000_snapshot expected
@@ -244,8 +272,7 @@ begin
    and pg_get_function_identity_arguments(p.oid) = expected.identity_arguments
   join pg_namespace n on n.oid = p.pronamespace
   join pg_language l on l.oid = p.prolang
-  where not expected.is_trigger
-    and n.nspname = 'public'
+  where n.nspname = 'public'
     and l.lanname = 'sql'
     and pg_get_function_result(p.oid) = expected.result_type
     and p.provolatile = expected.provolatile
@@ -260,24 +287,17 @@ begin
     and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
     and position('private.' || expected.function_name || '(' in p.prosrc) > 0;
 
-  select count(*)::integer
-  into private_trigger_count
-  from pg_proc p
-  join pg_namespace n on n.oid = p.pronamespace
-  where n.nspname = 'private'
-    and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-trigger-boundary'
-    and pg_get_function_result(p.oid) in ('trigger', 'event_trigger');
-
-  if private_count <> target_count
-     or wrapper_count <> rpc_target_count
-     or private_trigger_count <> trigger_target_count then
+  if private_count <> 23 or wrapper_count <> 23 then
     raise exception
-      '20260805073000 boundary mismatch: private %, wrappers %/%, triggers %/%',
+      '20260805073000 boundary mismatch: private %, wrappers %',
       private_count,
-      wrapper_count,
-      rpc_target_count,
-      private_trigger_count,
-      trigger_target_count;
+      wrapper_count;
+  end if;
+
+  if to_regprocedure('private.apply_pending_response_peek_binding()') is null
+     or to_regprocedure('public.apply_pending_response_peek_binding()') is not null then
+    raise exception
+      '20260805073000 did not move the response binding trigger implementation to private';
   end if;
 
   if exists (
@@ -303,8 +323,7 @@ begin
       on private_implementation.proname = expected.function_name
      and pg_get_function_identity_arguments(private_implementation.oid) = expected.identity_arguments
     join pg_namespace private_schema on private_schema.oid = private_implementation.pronamespace
-    where not expected.is_trigger
-      and public_schema.nspname = 'public'
+    where public_schema.nspname = 'public'
       and private_schema.nspname = 'private'
       and (
         has_function_privilege('anon', public_wrapper.oid, 'EXECUTE') <> expected.anon_execute
@@ -319,20 +338,21 @@ begin
       '20260805073000 did not preserve the RPC named-role execution matrix';
   end if;
 
-  if exists (
-    select 1
-    from pg_proc p
-    join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'private'
-      and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-trigger-boundary'
-      and (
-        has_function_privilege('anon', p.oid, 'EXECUTE')
-        or has_function_privilege('authenticated', p.oid, 'EXECUTE')
-        or has_function_privilege('service_role', p.oid, 'EXECUTE')
-      )
+  if has_function_privilege(
+    'anon',
+    'private.apply_pending_response_peek_binding()'::regprocedure,
+    'EXECUTE'
+  ) or has_function_privilege(
+    'authenticated',
+    'private.apply_pending_response_peek_binding()'::regprocedure,
+    'EXECUTE'
+  ) or has_function_privilege(
+    'service_role',
+    'private.apply_pending_response_peek_binding()'::regprocedure,
+    'EXECUTE'
   ) then
     raise exception
-      '20260805073000 left a client role grant on an internal trigger function';
+      '20260805073000 left a client role grant on the internal trigger implementation';
   end if;
 
   if exists (
