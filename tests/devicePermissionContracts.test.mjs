@@ -10,11 +10,17 @@ const locationSelector = await read('src/components/location/LocationSelector.js
 const locationDialog = await read('src/components/location/LocationPermissionDialog.jsx');
 const pushSettings = await read('src/components/settings/PushNotificationSettings.jsx');
 
+function effectBodies(source) {
+  return [...source.matchAll(/useEffect\s*\(\s*\(\)\s*=>\s*\{([\s\S]*?)\}\s*,\s*\[[^\]]*\]\s*\)/g)]
+    .map((match) => match[1])
+    .join('\n');
+}
+
 test('camera access is initiated only from the Record action', () => {
   assert.match(uploader, /onClick=\{openCamera\}/);
   assert.match(uploader, /recordInputRef\.current\?\.click\(\)/);
   assert.match(uploader, /capture="environment"/);
-  assert.doesNotMatch(uploader, /useEffect[\s\S]{0,300}recordInputRef\.current\?\.click/);
+  assert.doesNotMatch(effectBodies(uploader), /recordInputRef\.current\?\.click/);
 });
 
 test('camera first-use explanation covers camera, microphone, local review and cancellation', () => {
@@ -26,9 +32,10 @@ test('camera first-use explanation covers camera, microphone, local review and c
 });
 
 test('camera explanation is remembered without bypassing the browser permission boundary', () => {
-  assert.match(uploader, /CAMERA_EXPLANATION_KEY/);
-  assert.match(uploader, /readStoredString\('local'/);
-  assert.match(uploader, /writeStoredString\('local'/);
+  assert.match(uploader, /PERMISSION_KINDS\.CAMERA/);
+  assert.match(uploader, /hasSeenPermissionIntro/);
+  assert.match(uploader, /markPermissionIntroSeen/);
+  assert.match(uploader, /readBrowserPermissionState/);
   assert.doesNotMatch(uploader, /getUserMedia/);
 });
 
@@ -36,11 +43,12 @@ test('location remains explanation-first and user initiated', () => {
   assert.match(locationSelector, /onClick=\{\(\) => setPermissionOpen\(true\)\}/);
   assert.match(locationSelector, /consentGranted: true/);
   assert.match(locationDialog, /Use your location once/);
-  assert.doesNotMatch(locationSelector, /useEffect[\s\S]{0,300}resolveCurrentMarketplaceLocation/);
+  assert.doesNotMatch(effectBodies(locationSelector), /resolveCurrentMarketplaceLocation/);
 });
 
 test('notification permission remains behind an explicit opt-in control', () => {
-  assert.match(pushSettings, /enableWebPush/);
-  assert.match(pushSettings, /onClick|onCheckedChange/);
-  assert.doesNotMatch(pushSettings, /useEffect[\s\S]{0,300}enableWebPush/);
+  assert.match(pushSettings, /const toggle = async/);
+  assert.match(pushSettings, /await enableWebPush\(\)/);
+  assert.match(pushSettings, /onClick=\{toggle\}/);
+  assert.doesNotMatch(effectBodies(pushSettings), /enableWebPush/);
 });
