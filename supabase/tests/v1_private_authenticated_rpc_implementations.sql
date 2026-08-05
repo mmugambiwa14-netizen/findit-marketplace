@@ -24,7 +24,7 @@ select extensions.is(
       and obj_description(p.oid, 'pg_proc') = 'findit:0101-authenticated-boundary'
   ),
   57::bigint,
-  'all 57 public compatibility wrappers exist'
+  'all 57 original public compatibility wrappers exist'
 );
 
 select extensions.is(
@@ -42,7 +42,7 @@ select extensions.is(
       and implementation.prosecdef
   ),
   57::bigint,
-  'all wrappers have private privileged implementations'
+  'all original wrappers have private privileged implementations'
 );
 
 select extensions.is(
@@ -59,7 +59,7 @@ select extensions.is(
       and position('private.' || wrapper.proname || '(' in wrapper.prosrc) > 0
   ),
   57::bigint,
-  'all public wrappers are invoker SQL functions with an empty search path'
+  'all original public wrappers are invoker SQL functions with an empty search path'
 );
 
 select extensions.is(
@@ -84,7 +84,7 @@ select extensions.is(
       and wrapper.pronargdefaults = implementation.pronargdefaults
   ),
   57::bigint,
-  'wrapper results, defaults and execution planner attributes match implementations'
+  'original wrapper results, defaults and planner attributes match implementations'
 );
 
 select extensions.is(
@@ -96,8 +96,28 @@ select extensions.is(
       and obj_description(wrapper.oid, 'pg_proc') = 'findit:0101-authenticated-boundary'
       and has_function_privilege('authenticated', wrapper.oid, 'EXECUTE')
   ),
-  57::bigint,
-  'authenticated retains every public RPC grant'
+  51::bigint,
+  'authenticated retains the 51 active original public RPC grants'
+);
+
+select extensions.is(
+  (
+    select array_agg(wrapper.proname order by wrapper.proname)
+    from pg_proc wrapper
+    join pg_namespace n on n.oid = wrapper.pronamespace
+    where n.nspname = 'public'
+      and obj_description(wrapper.oid, 'pg_proc') = 'findit:0101-authenticated-boundary'
+      and not has_function_privilege('authenticated', wrapper.oid, 'EXECUTE')
+  ),
+  array[
+    'admin_audit_rows',
+    'admin_marketplace_rows',
+    'admin_report_rows',
+    'admin_support_request_rows',
+    'admin_tour_queue',
+    'admin_user_rows'
+  ]::name[],
+  'only the six replaced offset admin RPCs are closed to authenticated'
 );
 
 select extensions.is(
@@ -118,7 +138,7 @@ select extensions.is(
       and has_function_privilege('authenticated', implementation.oid, 'EXECUTE')
   ),
   57::bigint,
-  'authenticated can traverse each invoker wrapper to its private implementation'
+  'authenticated can traverse each original invoker wrapper implementation'
 );
 
 select extensions.is(
@@ -183,7 +203,7 @@ select extensions.is(
       and has_function_privilege('anon', wrapper.oid, 'EXECUTE')
   ),
   0::bigint,
-  'anon cannot execute any authenticated wrapper'
+  'anon cannot execute any original authenticated wrapper'
 );
 
 select extensions.is(
@@ -204,7 +224,7 @@ select extensions.is(
       and has_function_privilege('anon', implementation.oid, 'EXECUTE')
   ),
   0::bigint,
-  'anon cannot execute any target private implementation'
+  'anon cannot execute any original private implementation'
 );
 
 select extensions.is(
@@ -219,7 +239,7 @@ select extensions.is(
       and privilege.privilege_type = 'EXECUTE'
   ),
   0::bigint,
-  'PUBLIC has no execute privilege on the wrappers'
+  'PUBLIC has no execute privilege on the original wrappers'
 );
 
 select extensions.is(
