@@ -13,7 +13,7 @@ const [
   contracts,
   app,
   sellerPage,
-  detailLayout,
+  sellerComponent,
   propertyDetail,
   carDetail,
   machineryDetail,
@@ -28,7 +28,7 @@ const [
   read('src/services/sellerProfileContracts.js'),
   read('src/App.jsx'),
   read('src/pages/SellerProfile.jsx'),
-  read('src/components/listings/ListingDetailLayout.jsx'),
+  read('src/components/listings/ListingDetailTabs.jsx'),
   read('src/pages/PropertyDetail.jsx'),
   read('src/pages/CarDetail.jsx'),
   read('src/pages/MachineryDetail.jsx'),
@@ -81,17 +81,15 @@ test('the routed seller surface never embeds or resolves account emails', () => 
   assert.match(sellerPage, /isSellerProfileId\(sellerId\)/);
   assert.match(sellerPage, /enabled: validSellerId/);
   assert.doesNotMatch(sellerPage, /normalizeSellerProfileEmail|seller_email|\{ email =/);
-  assert.match(detailLayout, /SellerPanel\(\{ name, sellerId \}\)/);
-  assert.match(detailLayout, /`\/seller\/\$\{encodeURIComponent\(sellerId\)\}`/);
-  assert.doesNotMatch(detailLayout, /encodeURIComponent\(email\)|\{ name, email \}/);
+  assert.match(sellerComponent, /export function ListingSeller/);
+  assert.match(sellerComponent, /`\/seller\/\$\{encodeURIComponent\(sellerId\)\}`/);
+  assert.doesNotMatch(sellerComponent, /encodeURIComponent\(email\)|\{ name, email \}/);
 
-  for (const detail of [propertyDetail, carDetail, machineryDetail]) {
-    assert.match(detail, /<SellerPanel name=\{[^}]+\.seller_name\} sellerId=\{[^}]+\.seller_id\} \/>/);
-    assert.doesNotMatch(detail, /<SellerPanel[^>]+email=/);
+  for (const detail of [propertyDetail, carDetail, machineryDetail, serviceDetail]) {
+    assert.match(detail, /<ListingSeller\b/);
+    assert.match(detail, /sellerId=\{/);
+    assert.doesNotMatch(detail, /<ListingSeller[^>]+email=/);
   }
-
-  assert.match(serviceDetail, /<SellerPanel name=\{service\.provider_name \|\| "FindIt service provider"\} sellerId=\{service\.provider_id\} \/>/);
-  assert.doesNotMatch(serviceDetail, /<SellerPanel[^>]+email=/);
 });
 
 test('migration gates run the seller profile matrix and SQL boundary is advanced to the privacy migration', () => {
