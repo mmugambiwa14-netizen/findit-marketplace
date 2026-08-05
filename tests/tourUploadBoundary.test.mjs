@@ -17,9 +17,12 @@ test('large Tour bytes upload directly to signed Storage, not through the Edge r
   assert.match(repository, /tour-sources/);
 });
 
-test('upload intent authenticates the user and delegates ownership to a service-only RPC', () => {
+test('upload intent authenticates the user and delegates ownership to the correct service-only RPC', () => {
   assert.match(intent, /user\.auth\.getUser\(\)/);
-  assert.match(intent, /rpc\("authorize_tour_upload"/);
+  assert.match(intent, /authorizationFunction = peekKind === "response"/);
+  assert.match(intent, /"authorize_response_peek_upload"/);
+  assert.match(intent, /"authorize_tour_upload"/);
+  assert.match(intent, /admin\.rpc\(authorizationFunction,/);
   assert.match(intent, /message\.includes\("parent not found"\) \? 403/);
   assert.match(complete, /rpc\("complete_tour_upload"/);
   assert.match(complete, /userData\.user\.id/);
@@ -44,6 +47,7 @@ test('upload paths are server generated, owner scoped and idempotent', () => {
 
 test('temporary signed-url failure leaves the bounded intent retryable', () => {
   const signedFailure = intent.slice(intent.indexOf('if (signedError'));
-  assert.match(signedFailure, /same idempotency key can be[\s\S]*retried/);
+  assert.match(signedFailure, /signed_upload_unavailable/);
+  assert.match(intent, /p_idempotency_key: idempotencyKey/);
   assert.doesNotMatch(signedFailure.slice(0, signedFailure.indexOf('return json(req, 201')), /update\(\{ state: "rejected" \}\)/);
 });
