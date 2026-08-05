@@ -2,17 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [validator, envExample, flags, config, runtime] = await Promise.all([
+const [validator, envExample, flags, policy, config, runtime] = await Promise.all([
   readFile(new URL('../scripts/validate-env.mjs', import.meta.url), 'utf8'),
   readFile(new URL('../.env.example', import.meta.url), 'utf8'),
   readFile(new URL('../src/lib/featureFlags.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/lib/stagingCapabilityPolicy.js', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/functions/_shared/tour-runtime.ts', import.meta.url), 'utf8'),
 ]);
 
 test('browser and backend Tour switches are separate and production-default closed', () => {
-  assert.match(flags, /const STAGING_BRANCH = 'feature\/listing-intelligence-foundation'/);
-  assert.match(flags, /tours: flag\('VITE_FEATURE_TOURS', isStagingBranch\)/);
+  assert.match(flags, /tours: stagingCertifiedFlag\('VITE_FEATURE_TOURS'\)/);
+  assert.match(policy, /resolveStagingCertifiedFlag/);
+  assert.match(policy, /readBooleanFlag\(env, envVar, false\)/);
   assert.match(envExample, /VITE_FEATURE_TOURS=false/);
   assert.match(envExample, /TOURS_BACKEND_ENABLED=false/);
   assert.match(validator, /Tour browser or preview access cannot be enabled unless TOURS_BACKEND_ENABLED is true/);
@@ -57,7 +59,6 @@ test('all Tour Edge functions have an explicit JWT policy', () => {
     assert.match(config, new RegExp(`\\[functions\\.${name}\\][\\s\\S]*?verify_jwt = (?:true|false)`));
   }
 });
-
 
 test('Tour endpoints reject non-JSON bodies at the shared boundary', () => {
   assert.match(runtime, /contentType !== \"application\/json\"/);
