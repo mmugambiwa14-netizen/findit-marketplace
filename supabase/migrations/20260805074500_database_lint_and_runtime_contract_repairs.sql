@@ -37,11 +37,22 @@ begin
     end if;
   end loop;
 
+  -- Resolved in either schema rather than pinned to private.
+  --
+  -- 20260805073000 moves SECURITY DEFINER functions out of public, selecting on
+  -- has_function_privilege('authenticated', ...). bind_response_peek keeps that
+  -- grant and moves; apply_pending_response_peek_binding is a trigger function
+  -- whose execute was already revoked from public, anon and authenticated by
+  -- 20260805023000, so the filter skips it and it stays in public. Pinning both
+  -- to private made this migration fail on any clean database.
   foreach target_signature in array array[
-    'private.bind_response_peek(uuid,uuid[])',
-    'private.apply_pending_response_peek_binding()'
+    'bind_response_peek(uuid,uuid[])',
+    'apply_pending_response_peek_binding()'
   ] loop
-    target_oid := to_regprocedure(target_signature);
+    target_oid := coalesce(
+      to_regprocedure('private.' || target_signature),
+      to_regprocedure('public.' || target_signature)
+    );
     if target_oid is null then
       raise exception 'missing function required for Peek alert repair: %', target_signature;
     end if;

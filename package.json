@@ -96,7 +96,8 @@
     "test:recommendation-db": "node ./scripts/run-recommendation-db-tests.mjs",
     "verify:recommendation": "npm run verify:sql-boundary && npm run test:recommendation-contracts",
     "certify:recommendation-local": "npm run verify:recommendation && npm run test:recommendation-db",
-    "certify:recommendation-hosted": "npm run verify:recommendation && npm run test:recommendation-services-hosted"
+    "certify:recommendation-hosted": "npm run verify:recommendation && npm run test:recommendation-services-hosted",
+    "test:pgtap-local": "bash ./scripts/run-local-pgtap.sh"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.6",
