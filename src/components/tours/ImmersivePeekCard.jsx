@@ -166,7 +166,7 @@ export default function ImmersivePeekCard({ item, active, autoplay, index, total
           onError={() => { setFailed(true); setPlayback(null); }}
         />
       ) : poster ? (
-        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" loading={index < 2 ? 'eager' : 'lazy'} />
+        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" loading={index < 2 ? 'eager' : 'lazy'} decoding="async" />
       ) : <div className="absolute inset-0 bg-slate-950" />}
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/5 to-black/90" aria-hidden="true" />
