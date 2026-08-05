@@ -16,8 +16,8 @@ preferences.
 | Authentication | Supabase Auth plus `public.users` profile | Production SMTP/session acceptance |
 | Authorisation | Supabase RLS and protected role/domain RPCs | Repeat the accepted staging matrix in production |
 | Data access | All active marketplace, admin, messaging, notification and profile routes use Supabase repositories/services; no Base44 source caller remains | Domain services/repositories with stable page contracts |
-| Database | Twenty-nine Supabase migrations, 49 tables, 4 views, 64 public policies and 6 Storage policies; clean reset, lint and 258 pgTAP assertions pass. Future legal and deferred-commerce tables are browser-fail-closed while service-role reconciliation remains. The earlier 13-migration checkpoint has a disposable restore rehearsal | Stable, production-upgrade-tested schema with imported-data reconciliation and current provider recovery evidence |
-| Server operations | Four hosted Edge Functions, protected domain RPCs and two GitHub scheduler jobs | Add production monitoring/alert destinations |
+| Database | Supabase Postgres with RLS on every migration-created table; clean reset, lint and the full pgTAP suite pass. Current counts live in [the architecture snapshot](docs/ARCHITECTURE_SNAPSHOT.md). Future legal and deferred-commerce tables are browser-fail-closed while service-role reconciliation remains | Stable, production-upgrade-tested schema with imported-data reconciliation and current provider recovery evidence |
+| Server operations | Hosted Edge Functions (enumerated in [the snapshot](docs/ARCHITECTURE_SNAPSHOT.md)), protected domain RPCs and GitHub scheduler jobs | Add production monitoring/alert destinations |
 | Storage | Two hosted private buckets with signed delivery, metadata sanitization, trusted attachment and lifecycle cleanup | Repeat in production; add scanning only if approved |
 | Deployment/operations | Supabase staging and GitHub workflows configured; private-repo Pages plan blocked | Select frontend host/domain and separate production environment |
 
@@ -64,6 +64,13 @@ scan prevent Base44 from returning.
    retained functions, email, SMS, integrations, and scheduled work
    with reviewed server-side implementations.
 
-The historical archive assessment is retained in `ARCHITECTURE_REVIEW.md`.
+Repository-derived counts (migrations, tables, policies, Edge Functions,
+pgTAP suites) are generated into
+[`docs/ARCHITECTURE_SNAPSHOT.md`](docs/ARCHITECTURE_SNAPSHOT.md) by
+`npm run docs:architecture`. A contract test fails when that snapshot no
+longer matches the repository, so those figures cannot silently decay the way
+the earlier hand-counted ones did.
+
+The historical archive assessment is retained in `docs/history/ARCHITECTURE_REVIEW.md`.
 Current readiness and acceptance evidence live in `PROJECT_STATUS.md`,
 `QA_STATUS.md`, and `PRODUCTION_READINESS_REPORT.md`.

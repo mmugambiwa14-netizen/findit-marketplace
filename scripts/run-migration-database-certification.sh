@@ -40,6 +40,17 @@ TEST_FILES=(
   supabase/tests/v1_recommendation_personalization.sql
   supabase/tests/v1_recommendation_analytics.sql
   supabase/tests/v1_recommendation_related_services.sql
+  supabase/tests/database_auth_rls_smoke.sql
+  supabase/tests/v1_rls_matrix.sql
+  supabase/tests/v1_function_privilege_matrix.sql
+  supabase/tests/mvp_listing_location_privacy.sql
+  supabase/tests/v1_admin_operations.sql
+  supabase/tests/v1_listing_creation_and_media.sql
+  supabase/tests/v1_marketplace_profile_media.sql
+  supabase/tests/v1_image_lifecycle_cleanup.sql
+  supabase/tests/v1_tour_foundation.sql
+  supabase/tests/v1_legal_domain_isolation.sql
+  supabase/tests/v1_deferred_commerce_isolation.sql
 )
 
 cleanup() {

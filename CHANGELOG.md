@@ -592,4 +592,4 @@ not reached a production release.
 
 The supplied `findit-phase2b-registration-reset.zip` remains the authoritative
 starting codebase. Its implementation history and archive-era findings are
-preserved in `MIGRATION.md` and `PHASE_0_TO_2B_VERIFICATION.md`.
+preserved in `docs/history/MIGRATION.md` and `docs/history/PHASE_0_TO_2B_VERIFICATION.md`.

@@ -31,10 +31,23 @@ npm run lint
 npm run typecheck
 npm run typecheck:migration
 npm run typecheck:active
-npm run test:contracts
+npm run test            # contract suite + behavioural suite
+npm run verify:hygiene
+npm run verify:source-graph
 npm run verify:base44-elimination
 npm run build
 ```
+
+`npm test` runs two suites with different jobs:
+
+- `npm run test:contracts` (`node --test tests/*.test.mjs`) reads source files
+  as text and asserts on their structure, wiring and migration boundaries.
+- `npm run test:behaviour` (`vitest run tests/behaviour/`) imports the real
+  modules and renders the real components, so it catches regressions that leave
+  the source text intact. Use `npm run test:behaviour:watch` while developing.
+
+New product behaviour belongs in the behavioural suite. A text assertion cannot
+tell a working component from a deleted one.
 
 Hosted disposable acceptance is run through
 `scripts/run-hosted-acceptance.ps1`; worker credentials and schedules are set
@@ -59,6 +72,7 @@ Read these before deployment:
 - [Project status](PROJECT_STATUS.md)
 - [Production readiness](PRODUCTION_READINESS_REPORT.md)
 - [Migration completion](MIGRATION_COMPLETION_REPORT.md)
+- [Architecture snapshot (generated)](docs/ARCHITECTURE_SNAPSHOT.md)
 - [Architecture](ARCHITECTURE.md)
 - [Database](docs/DATABASE.md)
 - [Supabase setup](docs/SUPABASE_SETUP.md)
@@ -69,6 +83,9 @@ Read these before deployment:
 - [FindIt authentication email templates](docs/EMAIL_TEMPLATES.md)
 - [QA](QA_STATUS.md) and [security review](docs/SECURITY_REVIEW.md)
 - [Solo founder guide](SOLO_FOUNDER_GUIDE.md)
+
+Completed migration, milestone and audit records are archived under
+[`docs/history/`](docs/history/).
 
 The accepted staging release is deployed at
 `https://mmugambiwa14-netizen.github.io/findit-marketplace/`. Peek is enabled in

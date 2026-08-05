@@ -20,7 +20,6 @@ const [
   contracts,
   reportDialog,
   reportAction,
-  tourCard,
   mediaViewer,
   adminQueue,
   adminReports,
@@ -38,7 +37,6 @@ const [
   read('src/services/listingTourContracts.js'),
   read('src/components/tours/TourReportDialog.jsx'),
   read('src/components/tours/TourReportAction.jsx'),
-  read('src/components/tours/TourCard.jsx'),
   read('src/components/listings/ListingMediaViewer.jsx'),
   read('src/components/admin/AdminTourQueue.jsx'),
   read('src/pages/admin/AdminReports.jsx'),
@@ -97,7 +95,7 @@ test('public users can report the video from catalogue and detail playback', () 
   assert.match(reportDialog, /duplicate_content/);
   assert.match(reportDialog, /reportListingTour/);
   assert.match(reportAction, /GuestPromptSheet/);
-  assert.match(tourCard, /Report Peek/);
+  assert.match(reportAction, /Report Peek/);
   assert.match(mediaViewer, /TourReportAction/);
   assert.match(mediaViewer, /setTourReported\(true\)/);
 });
@@ -175,7 +173,12 @@ test('executable Tour moderation contracts reject malformed admin and report inp
 test('package exposes local and guarded hosted Tour moderation smokes', () => {
   const pkg = JSON.parse(packageJson);
   assert.equal(pkg.scripts['test:tours-moderation-local'], 'node ./scripts/tours-moderation-admin-smoke-local.mjs');
-  assert.equal(pkg.scripts['test:tours-moderation-hosted'], 'node ./scripts/tours-moderation-admin-smoke-local.mjs');
+  // The hosted script must route through the guard: the smoke scripts default
+  // to the local stack, so an unguarded hosted entry silently verifies localhost.
+  assert.equal(
+    pkg.scripts['test:tours-moderation-hosted'],
+    'node ./scripts/run-hosted-smoke.mjs ./scripts/tours-moderation-admin-smoke-local.mjs',
+  );
   assert.match(smoke, /Tour report enters the existing report queue/);
   assert.match(smoke, /Tour-only removal/);
   assert.match(smoke, /repeat-offender context/);

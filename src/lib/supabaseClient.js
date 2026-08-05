@@ -11,28 +11,19 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const STAGING_BRANCHES = new Set([
-  'feature/listing-intelligence-foundation',
-  'claude/findit-hardening-listing-012cf0',
-  'feature/peek-threads-phase-3',
-]);
-const STAGING_SUPABASE_URL = 'https://bwgklpxoetrrkutottdb.supabase.co';
-const STAGING_SUPABASE_PUBLISHABLE_KEY =
-  'sb_publishable_D1bWn2S-Dh4vbrzYVLa3GQ_UQXrMcWb';
-const deploymentBranch = String(import.meta.env.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim();
-const isStagingBranch = STAGING_BRANCHES.has(deploymentBranch);
-
-// Only the explicitly trusted staging branch lineage may use this
-// browser-public Supabase URL and publishable key as fallbacks. This keeps
-// stacked staging previews usable when Vercel Preview variables are absent,
-// while every unrelated branch and all production deployments still fail
-// closed and require their own environment-specific values.
-const supabaseUrl =
-  String(import.meta.env.VITE_SUPABASE_URL ?? '').trim() ||
-  (isStagingBranch ? STAGING_SUPABASE_URL : '');
-const supabaseAnonKey =
-  String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim() ||
-  (isStagingBranch ? STAGING_SUPABASE_PUBLISHABLE_KEY : '');
+// Every deployment supplies its own Supabase URL and publishable key through
+// the environment. There is deliberately no in-source fallback.
+//
+// A previous revision embedded the staging project URL and publishable key here
+// and used them whenever the build came from one of a hardcoded set of branch
+// names. That kept stacked previews convenient, but it put credential material
+// in git, tied backend selection to branch naming, and meant renaming a branch
+// silently changed which database the app talked to. Preview environments now
+// set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY like every other
+// environment; a preview without them fails closed here rather than reaching
+// for someone else's project.
+const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL ?? '').trim();
+const supabaseAnonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
 
 const missingVariables = [
   ['VITE_SUPABASE_URL', supabaseUrl],

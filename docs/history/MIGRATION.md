@@ -19,8 +19,8 @@ and what (if anything) remains to be done. Update this file in the same
 commit/step as the change it describes — it should never fall behind the
 actual codebase.
 
-Related docs: [`docs/DATABASE.md`](docs/DATABASE.md) ·
-[`docs/FEATURE_FLAGS.md`](docs/FEATURE_FLAGS.md) ·
+Related docs: [`docs/DATABASE.md`](../DATABASE.md) ·
+[`docs/FEATURE_FLAGS.md`](../FEATURE_FLAGS.md) ·
 [`FindIt_Technical_Audit.md`](FindIt_Technical_Audit.md) (original audit) ·
 [`PHASE_0_TO_2B_VERIFICATION.md`](PHASE_0_TO_2B_VERIFICATION.md) ·
 [`ARCHITECTURE_REVIEW.md`](ARCHITECTURE_REVIEW.md) ·
@@ -29,13 +29,13 @@ Related docs: [`docs/DATABASE.md`](docs/DATABASE.md) ·
 [`BEHAVIOUR_BASELINE.md`](BEHAVIOUR_BASELINE.md) ·
 [`MIGRATION_RISKS.md`](MIGRATION_RISKS.md) ·
 [`DOCUMENT_2_COMPLIANCE_REVIEW.md`](DOCUMENT_2_COMPLIANCE_REVIEW.md) ·
-[`docs/SECURITY_REVIEW.md`](docs/SECURITY_REVIEW.md) ·
-[`docs/ENVIRONMENT_VARIABLES.md`](docs/ENVIRONMENT_VARIABLES.md) ·
-[`docs/STORAGE_MIGRATION_INVENTORY.md`](docs/STORAGE_MIGRATION_INVENTORY.md) ·
+[`docs/SECURITY_REVIEW.md`](../SECURITY_REVIEW.md) ·
+[`docs/ENVIRONMENT_VARIABLES.md`](../ENVIRONMENT_VARIABLES.md) ·
+[`docs/STORAGE_MIGRATION_INVENTORY.md`](../STORAGE_MIGRATION_INVENTORY.md) ·
 [`DOCUMENT_3_PRODUCTION_READINESS_REVIEW.md`](DOCUMENT_3_PRODUCTION_READINESS_REVIEW.md) ·
 [`BUG_INVENTORY.md`](BUG_INVENTORY.md) ·
-[`TECHNICAL_DEBT.md`](TECHNICAL_DEBT.md) ·
-[`QA_STATUS.md`](QA_STATUS.md) ·
+[`TECHNICAL_DEBT.md`](../../TECHNICAL_DEBT.md) ·
+[`QA_STATUS.md`](../../QA_STATUS.md) ·
 [`REPOSITORY_FILE_CLASSIFICATION.md`](REPOSITORY_FILE_CLASSIFICATION.md)
 
 > **2026-07-18 authoritative verification:** the earlier entries below are
@@ -646,7 +646,7 @@ gates.
 ## Phase 2A — Auth cutover: session management, login, logout
 
 **Date:** 2026-07-07
-**Plan:** [`docs/AUTH_MIGRATION_PLAN.md`](docs/AUTH_MIGRATION_PLAN.md) —
+**Plan:** [`docs/AUTH_MIGRATION_PLAN.md`](../AUTH_MIGRATION_PLAN.md) —
 written and reviewed before any auth file was touched, per the checkpoint
 discipline agreed for this phase.
 

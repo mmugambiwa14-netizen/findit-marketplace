@@ -16,6 +16,18 @@ node_modules
 dist
 dist-ssr
 *.local
+coverage
+
+# Generated audit and certification output.
+#
+# artifacts/product-audit stays tracked: release-candidate-gates.yml regenerates
+# it and restores the tracked copy, so the committed snapshot is the diff
+# baseline. Everything else under artifacts/ is script output that was being
+# committed after each run -- regenerate it with the matching npm script instead.
+artifacts/certification/
+artifacts/extensive-audit/
+artifacts/milestone-*
+artifacts/preview/
 
 # Editor directories and files
 .vscode/*

@@ -18,7 +18,7 @@ production launch gates remain in `PROJECT_STATUS.md`.
 
 ## Add a feature safely
 
-1. Check `FEATURE_INVENTORY.md`, `BEHAVIOUR_BASELINE.md`, feature flags, bugs,
+1. Check `docs/history/FEATURE_INVENTORY.md`, `docs/history/BEHAVIOUR_BASELINE.md`, feature flags, bugs,
    and the Base44 dependency map before changing a route or workflow.
 2. Preserve the current page contract. Add a narrow service/repository rather
    than calling Supabase directly from a page or component.
@@ -97,7 +97,7 @@ before switching traffic.
 
 ## Onboard a future engineer
 
-Start with `PROJECT_STATUS.md`, `ARCHITECTURE.md`, `MIGRATION.md`, and
+Start with `PROJECT_STATUS.md`, `ARCHITECTURE.md`, `docs/history/MIGRATION.md`, and
 `QA_STATUS.md`. Assign a bounded vertical slice, require an owner for its
 contract/data/RLS/rollback evidence, and keep any production-data or provider
 decision separate from ordinary source changes.

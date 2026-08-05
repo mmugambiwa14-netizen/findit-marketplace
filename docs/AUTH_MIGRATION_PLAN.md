@@ -11,10 +11,10 @@ deployed-browser confirmation/recovery/refresh/revocation acceptance remain
 launch gates. The remainder of this document is retained as the historical
 cutover plan and evidence trail.
 See
-`../PHASE_0_TO_2B_VERIFICATION.md`, `../QA_STATUS.md`, and
-`../BUG_INVENTORY.md` before advancing beyond this checkpoint.
+`history/PHASE_0_TO_2B_VERIFICATION.md`, `../QA_STATUS.md`, and
+`history/BUG_INVENTORY.md` before advancing beyond this checkpoint.
 
-Related docs: [`../MIGRATION.md`](../MIGRATION.md) ·
+Related docs: [`history/MIGRATION.md`](history/MIGRATION.md) ·
 [`DATABASE.md`](DATABASE.md) · [`FEATURE_FLAGS.md`](FEATURE_FLAGS.md)
 
 ---

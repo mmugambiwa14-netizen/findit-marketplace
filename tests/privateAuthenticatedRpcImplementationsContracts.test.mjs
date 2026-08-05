@@ -54,8 +54,13 @@ test('0101 rollback restores the exact original catalog fingerprint', () => {
 });
 
 test('database certification covers the full wrapper and grant matrix', () => {
-  assert.match(databaseTest, /57 public compatibility wrappers/);
-  assert.match(databaseTest, /53-function matrix/);
+  // These previously pinned the exact prose ("57 public compatibility
+  // wrappers"). Inserting the word "original" into the pgTAP description broke
+  // the assertion without changing any behaviour. The counts are the contract;
+  // the wording around them is not, so match the count next to its subject and
+  // let the sentence be rephrased freely.
+  assert.match(databaseTest, /\b57\b[^\n]*compatibility wrappers/);
+  assert.match(databaseTest, /\b53\b-function matrix/);
   assert.match(databaseTest, /four authenticated-only recommendation admin RPCs/);
   assert.match(databaseTest, /owner_listing_notes/);
   assert.match(databaseTest, /message_inbox_page/);
