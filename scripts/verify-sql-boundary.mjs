@@ -55,18 +55,22 @@ function dollarQuoteBalance(content) {
   return [...counts.entries()].filter(([, count]) => count % 2 !== 0);
 }
 
-for (const name of migrationFiles) {
-  const content = await readFile(join(migrationsDirectory, name), 'utf8');
+function inspectSqlText(name, content) {
+  if (content.includes('\0')) failures.push(`${name} contains a null byte that PostgreSQL cannot receive`);
   if (/^(?:<<<<<<<|=======|>>>>>>>)(?:\s|$)/m.test(content)) failures.push(`${name} contains a merge-conflict marker`);
   for (const [tag, count] of dollarQuoteBalance(content)) failures.push(`${name} has unbalanced ${tag} delimiters (${count})`);
+}
+
+for (const name of migrationFiles) {
+  const content = await readFile(join(migrationsDirectory, name), 'utf8');
+  inspectSqlText(name, content);
 }
 
 for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) >= 40).sort()) {
   const content = await readFile(join(rollbackDirectory, name), 'utf8');
   const executable = stripPublicationMembershipChanges(stripNonExecutableSql(content));
   if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(executable)) failures.push(`${name} contains destructive table/data rollback statements`);
-  if (/^(?:<<<<<<<|=======|>>>>>>>)(?:\s|$)/m.test(content)) failures.push(`${name} contains a merge-conflict marker`);
-  for (const [tag, count] of dollarQuoteBalance(content)) failures.push(`${name} has unbalanced ${tag} delimiters (${count})`);
+  inspectSqlText(name, content);
 }
 
 // Previous reviewed release tips:
