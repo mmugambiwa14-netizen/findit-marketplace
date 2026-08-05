@@ -10,12 +10,12 @@ declare global {
     validationErrors?: Array<{ field: string; message: string }>;
     resumeUpload?: {
       intentId: string;
-      tourId: string | null;
+      tourId?: string | null;
       path: string;
       uploadToken: string;
-      expiresAt: string;
+      expiresAt: string | null;
       idempotencyKey: string;
-      peekKind: 'response';
+      peekKind?: 'response';
     };
   }
 
