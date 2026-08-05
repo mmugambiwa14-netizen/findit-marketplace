@@ -7,6 +7,7 @@ const REPORT_STATUSES = new Set(['all', 'pending', 'reviewed', 'dismissed', 'act
 const REPORT_KINDS = new Set(['all', 'property', 'vehicle', 'machinery', 'service', 'tour', 'message']);
 const SUPPORT_STATUSES = new Set(['all', 'open', 'resolved']);
 const SUPPORT_CATEGORIES = new Set(['all', 'account', 'listing', 'report', 'safety', 'technical', 'other']);
+const TOUR_STATUSES = new Set(['all', 'pending', 'processing', 'ready', 'failed', 'approved', 'rejected', 'published']);
 
 function text(value, label, max, { required = false, min = 0 } = {}) {
   const normalized = typeof value === 'string' ? value.trim() : '';
@@ -143,6 +144,27 @@ export function normalizeSupportResolution(input) {
   return {
     requestId: normalizeAdminId(input?.requestId, 'Support request id'),
     note: normalizeAdminReason(input?.note),
+  };
+}
+
+export function normalizeAdminTourQueueRequest(input = {}) {
+  return {
+    query: text(input.query, 'Search query', 100),
+    status: oneOf(input.status ?? 'pending', TOUR_STATUSES, 'Peek status'),
+    limit: boundedLimit(input.limit, 25),
+    cursor: input.cursor == null ? null : {
+      reportedPriority: boundedInteger(input.cursor.reportedPriority, 'Reported priority', 0, 1_000_000, 0),
+      failedPriority: boundedInteger(input.cursor.failedPriority, 'Failed priority', 0, 1_000_000, 0),
+      ...normalizeCursor(input.cursor, 'Peek cursor'),
+    },
+  };
+}
+
+export function normalizeAdminTourDecision(input) {
+  return {
+    tourId: normalizeAdminId(input?.tourId, 'Peek id'),
+    action: oneOf(input?.action, new Set(['approve', 'reject']), 'Peek decision'),
+    reason: normalizeAdminReason(input?.reason),
   };
 }
 
