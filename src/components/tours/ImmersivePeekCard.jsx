@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { Bookmark, Flag, MapPin, MessageCircle, Pause, Play, RotateCcw, Share2, Volume2, VolumeX } from 'lucide-react';
+import { Bookmark, Flag, MapPin, MessageCircle, Play, RotateCcw, Share2, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { GuestPromptSheet } from '@/components/auth/GuestPromptSheet';
 import MessageDialog from '@/components/listings/MessageDialog';
