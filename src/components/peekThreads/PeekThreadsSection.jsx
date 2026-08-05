@@ -33,6 +33,16 @@ const FILTERS = [
   { value: 'all', label: 'Newest', sort: 'newest' },
 ];
 
+/** @param {{ requestId: string, supported: boolean }} input */
+function updatePeekRequestSupport({ requestId, supported }) {
+  return supported ? withdrawPeekRequestSupport(requestId) : supportPeekRequest(requestId);
+}
+
+/** @param {{ requestId: string, reason: string }} input */
+function declinePeekRequestWithReason({ requestId, reason }) {
+  return declinePeekRequest({ requestId, reason });
+}
+
 export default function PeekThreadsSection({ parentType = 'listing', parentId, listingKind = 'property', ownerId = null, guard }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -54,7 +64,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
 
   const items = data?.items || [];
   const duplicate = useMemo(() => body.trim().length >= 8 ? findDuplicateRequest(body, category, items.map((item) => ({
-    id: item.id,
+    id: item.requestId,
     body: item.body,
     category: item.category,
     status: item.status,
@@ -76,13 +86,13 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
   });
 
   const supportMutation = useMutation({
-    mutationFn: ({ requestId, supported }) => supported ? withdrawPeekRequestSupport(requestId) : supportPeekRequest(requestId),
+    mutationFn: updatePeekRequestSupport,
     onSuccess: refresh,
     onError: (mutationError) => toast.error(mutationError.message || 'Unable to update your interest'),
   });
 
   const declineMutation = useMutation({
-    mutationFn: ({ requestId, reason }) => declinePeekRequest({ requestId, reason }),
+    mutationFn: declinePeekRequestWithReason,
     onSuccess: () => {
       setDeclineTarget(null);
       setDeclineReason('');
@@ -149,7 +159,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
         {isLoading && <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading Peek Requests</div>}
         {error && <div className="p-6 text-center"><p className="text-sm text-destructive">Peek Requests could not be loaded.</p><Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>Try again</Button></div>}
         {!isLoading && !error && items.length === 0 && <div className="p-8 text-center"><Eye className="mx-auto h-7 w-7 text-muted-foreground" /><p className="mt-3 font-semibold">No Peek Requests here yet</p><p className="mt-1 text-sm text-muted-foreground">Be the first buyer to ask for useful visual evidence.</p></div>}
-        {items.map((item) => <ThreadCard key={item.id} item={item} isOwner={isOwner} busy={supportMutation.isPending || declineMutation.isPending} onSupport={() => guard?.('support this Peek Request', () => supportMutation.mutate({ requestId: item.id, supported: false }))} onDecline={() => { setDeclineTarget(item); setDeclineReason(''); }} />)}
+        {items.map((item) => <ThreadCard key={item.requestId} item={item} isOwner={isOwner} busy={supportMutation.isPending || declineMutation.isPending} onSupport={() => guard?.('support this Peek Request', () => supportMutation.mutate({ requestId: item.requestId, supported: false }))} onDecline={() => { setDeclineTarget(item); setDeclineReason(''); }} />)}
       </div>
 
       <AlertDialog open={Boolean(declineTarget)} onOpenChange={(open) => { if (!open && !declineMutation.isPending) { setDeclineTarget(null); setDeclineReason(''); } }}>
@@ -159,7 +169,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
           <label className="text-sm font-semibold" htmlFor={`peek-thread-decline-${parentId}`}>Reason</label>
           <textarea id={`peek-thread-decline-${parentId}`} autoFocus value={declineReason} onChange={(event) => setDeclineReason(event.target.value)} maxLength={280} rows={3} className="w-full rounded-xl border border-border bg-card p-3 text-sm outline-none focus:ring-2 focus:ring-primary" placeholder="For example: the vehicle is stored off-site until Friday" />
           <div className="text-right text-xs text-muted-foreground">{declineReason.trim().length}/280</div>
-          <AlertDialogFooter><AlertDialogCancel disabled={declineMutation.isPending}>Cancel</AlertDialogCancel><AlertDialogAction disabled={declineReason.trim().length < 4 || declineMutation.isPending} onClick={(event) => { event.preventDefault(); declineMutation.mutate({ requestId: declineTarget.id, reason: declineReason.trim() }); }}>{declineMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Declining</> : 'Decline request'}</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter><AlertDialogCancel disabled={declineMutation.isPending}>Cancel</AlertDialogCancel><AlertDialogAction disabled={declineReason.trim().length < 4 || declineMutation.isPending} onClick={(event) => { event.preventDefault(); if (declineTarget) declineMutation.mutate({ requestId: declineTarget.requestId, reason: declineReason.trim() }); }}>{declineMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Declining</> : 'Decline request'}</AlertDialogAction></AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </section>
@@ -167,7 +177,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
 }
 
 function ThreadCard({ item, isOwner, busy, onSupport, onDecline }) {
-  const answered = item.status === 'answered' && item.responsePeek;
+  const answered = item.status === 'answered' && item.currentResponseId;
   return (
     <article className="p-5 sm:p-6">
       <div className="min-w-0">
@@ -176,12 +186,12 @@ function ThreadCard({ item, isOwner, busy, onSupport, onDecline }) {
         <p className="mt-2 text-sm font-semibold text-primary">{item.supporterCount === 1 ? '1 buyer wants this' : `${item.supporterCount} buyers want this`}</p>
       </div>
       {answered ? (
-        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-success/20 bg-success/10 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Response Peek available</p><p className="mt-1 text-xs text-muted-foreground">Captured {new Date(item.responsePeek.capturedAt).toLocaleDateString()}</p></div><ResponsePeekWatchButton tourId={item.responsePeek.id} title={item.body} /></div>
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-success/20 bg-success/10 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Response Peek available</p><p className="mt-1 text-xs text-muted-foreground">Captured {new Date(item.answeredAt || item.createdAt).toLocaleDateString()}</p></div><ResponsePeekWatchButton tourId={item.currentResponseId} title={item.body} /></div>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
           {!isOwner && <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onSupport}><ThumbsUp className="mr-2 h-4 w-4" />I want this too</Button>}
           {isOwner && <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onDecline}><XCircle className="mr-2 h-4 w-4" />Decline</Button>}
-          {isOwner && <Button type="button" size="sm" onClick={() => window.location.assign(`/peek-requests?request=${encodeURIComponent(item.id)}`)}><Eye className="mr-2 h-4 w-4" />Record response</Button>}
+          {isOwner && <Button type="button" size="sm" onClick={() => window.location.assign(`/peek-requests?request=${encodeURIComponent(item.requestId)}`)}><Eye className="mr-2 h-4 w-4" />Record response</Button>}
         </div>
       )}
     </article>
