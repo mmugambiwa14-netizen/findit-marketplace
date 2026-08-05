@@ -54,3 +54,14 @@ export function removeStoredValue(kind, key) {
     return false;
   }
 }
+
+export function clearStoredValues(kind) {
+  try {
+    const storage = getStorage(kind);
+    if (!storage) return false;
+    storage.clear();
+    return true;
+  } catch {
+    return false;
+  }
+}
