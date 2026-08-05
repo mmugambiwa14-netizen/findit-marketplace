@@ -1,5 +1,5 @@
 {
-  "release": "2026-08-05-listing-seller-surface",
-  "sourceCommit": "ef4b56e502aed1c48e6e441573727609358d66f4",
-  "purpose": "Deploy shared listing seller profile surface and safe metadata fallbacks"
+  "release": "2026-08-05-staging-pwa-auto-update",
+  "sourceCommit": "4175274cb4c3e562f348abcffa94066e20374939",
+  "purpose": "Deploy staging service worker auto-activation so installed PWAs receive new builds immediately"
 }
