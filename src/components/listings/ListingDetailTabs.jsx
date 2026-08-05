@@ -117,12 +117,27 @@ export function ListingLocation({ label, latitude, longitude }) {
   );
 }
 
-export function ListingSeller({ name, sellerId, activeListingCount, joinedAt, actions }) {
+export function ListingSeller({
+  name,
+  sellerId,
+  avatarUrl,
+  activeListingCount,
+  joinedAt,
+  actions,
+  profilePath,
+  profileLabel = 'View listings',
+}) {
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const joined = joinedAt ? new Date(joinedAt) : null;
   const validJoined = joined && Number.isFinite(joined.getTime());
+  const resolvedProfilePath = profilePath || (sellerId ? `/seller/${encodeURIComponent(sellerId)}` : null);
   const profile = (
     <div className="flex items-center gap-4">
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted"><UserRound className="h-5 w-5 text-muted-foreground" /></span>
+      <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border">
+        {avatarUrl && !avatarFailed
+          ? <img src={avatarUrl} alt="" loading="lazy" className="h-full w-full object-cover" onError={() => setAvatarFailed(true)} />
+          : <UserRound className="h-6 w-6 text-muted-foreground" />}
+      </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-lg font-black">{name || 'FindIt seller'}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -135,8 +150,15 @@ export function ListingSeller({ name, sellerId, activeListingCount, joinedAt, ac
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-      {sellerId ? <Link to={`/seller/${encodeURIComponent(sellerId)}`} className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{profile}</Link> : profile}
-      {actions && <div className="mt-5">{actions}</div>}
+      {resolvedProfilePath ? <Link to={resolvedProfilePath} className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{profile}</Link> : profile}
+      <div className="mt-5 space-y-3">
+        {actions}
+        {resolvedProfilePath && (
+          <Link to={resolvedProfilePath} className="flex min-h-11 w-full items-center justify-center rounded-xl border border-border px-4 text-sm font-bold transition hover:border-primary/45 hover:bg-primary/8">
+            {profileLabel}
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
