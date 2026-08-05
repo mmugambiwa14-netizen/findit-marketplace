@@ -2,7 +2,12 @@ import { useRef, useState } from 'react';
 import { Camera, ChevronRight, Film, RotateCcw, Trash2, Upload } from 'lucide-react';
 import CameraPermissionDialog from '@/components/permissions/CameraPermissionDialog';
 import { Button } from '@/components/ui/button';
-import { readStoredString, writeStoredString } from '@/lib/browserStorage';
+import {
+  PERMISSION_KINDS,
+  hasSeenPermissionIntro,
+  markPermissionIntroSeen,
+  readBrowserPermissionState,
+} from '@/lib/contextualPermissions';
 import { featureFlags } from '@/lib/featureFlags';
 import { userFacingError } from '@/lib/userFacingErrors';
 import {
@@ -15,8 +20,6 @@ import { uploadListingTour } from '@/services/listingToursService';
 import { uploadResponsePeek } from '@/services/responsePeekUploadService';
 import TourRecordingGuide from './TourRecordingGuide';
 import TourUploadProgress from './TourUploadProgress';
-
-const CAMERA_EXPLANATION_KEY = 'findit.camera-explanation-seen';
 
 function durationLabel(seconds) {
   const total = Math.max(0, Math.round(Number(seconds) || 0));
@@ -119,8 +122,14 @@ export default function TourUploader({
     }
   };
 
-  const openCamera = () => {
-    if (readStoredString('local', CAMERA_EXPLANATION_KEY) === '1') {
+  const openCamera = async () => {
+    setError('');
+    const permissionState = await readBrowserPermissionState(PERMISSION_KINDS.CAMERA);
+    if (permissionState === 'denied') {
+      setError('Camera access is blocked for FindIt. Allow camera access in your browser or device settings, then try again. You can still upload an existing video.');
+      return;
+    }
+    if (permissionState === 'granted' || hasSeenPermissionIntro(PERMISSION_KINDS.CAMERA)) {
       recordInputRef.current?.click();
       return;
     }
@@ -128,7 +137,7 @@ export default function TourUploader({
   };
 
   const continueToCamera = () => {
-    writeStoredString('local', CAMERA_EXPLANATION_KEY, '1');
+    markPermissionIntroSeen(PERMISSION_KINDS.CAMERA);
     setCameraExplanationOpen(false);
     window.requestAnimationFrame(() => recordInputRef.current?.click());
   };
