@@ -5,27 +5,27 @@ import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 const projectRoot = resolve(import.meta.dirname, '..');
-const [providerSource, authSource, loginSource, registerSource, topNavSource] =
+const [providerSource, featureFlagSource, stagingPolicySource, authSource, loginSource, registerSource, topNavSource] =
   await Promise.all([
     readFile(new URL('../src/lib/oauthProviders.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/lib/featureFlags.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/lib/stagingCapabilityPolicy.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/services/authService.js', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/Login.jsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/Register.jsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/layout/TopNav.jsx', import.meta.url), 'utf8'),
   ]);
 
-test('OAuth providers default off and use explicit browser flags', () => {
-  assert.match(
-    providerSource,
-    /enabled\(import\.meta\.env\.VITE_AUTH_GOOGLE_ENABLED\)/,
-  );
-  assert.match(providerSource, /VITE_VERCEL_GIT_COMMIT_REF/);
-  assert.match(providerSource, /googleEnabledForStaging/);
-  assert.match(
-    providerSource,
-    /enabled\(import\.meta\.env\.VITE_AUTH_APPLE_ENABLED\)/,
-  );
+test('OAuth providers default off and use centralized explicit browser flags', () => {
+  assert.match(providerSource, /google: featureFlags\.googleOAuth/);
+  assert.match(providerSource, /apple: enabled\(import\.meta\.env\.VITE_AUTH_APPLE_ENABLED\)/);
   assert.match(providerSource, /=== 'true'/);
+  assert.match(
+    featureFlagSource,
+    /googleOAuth: stagingProviderFlag\('VITE_FEATURE_GOOGLE_OAUTH', 'VITE_AUTH_GOOGLE_ENABLED'\)/,
+  );
+  assert.match(stagingPolicySource, /export function resolveStagingProviderFlag/);
+  assert.match(stagingPolicySource, /isTrustedStagingEnvironment\(env\)/);
   assert.doesNotMatch(providerSource, /import\.meta\??\.env\??\.\?\[name\]/);
 });
 
