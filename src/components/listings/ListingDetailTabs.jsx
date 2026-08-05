@@ -111,7 +111,7 @@ export function ListingLocation({ label, latitude, longitude }) {
           <p className="mt-1 truncate font-bold">{label || 'Location not supplied'}</p>
           <p className="mt-1 text-xs text-muted-foreground">The map shows the public listing area, not a seller’s private live location.</p>
         </div>
-        {mapsUrl && <a href={mapsUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"><ExternalLink className="h-4 w-4" />Open map</a>}
+        {mapsUrl && <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"><ExternalLink className="h-4 w-4" />Open map</a>}
       </div>
     </div>
   );
