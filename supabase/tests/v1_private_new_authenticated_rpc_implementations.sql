@@ -4,14 +4,22 @@ select extensions.no_plan();
 
 select extensions.is(
   (
-    select count(*)::bigint
-    from pg_proc p
-    join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public'
-      and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
-  ),
+    select (
+      select count(*)
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'public'
+        and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
+    ) + (
+      select count(*)
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = 'private'
+        and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-trigger-boundary'
+    )
+  )::bigint,
   22::bigint,
-  'all 22 newer public compatibility wrappers exist'
+  'all 22 newer privileged functions are classified as RPCs or internal triggers'
 );
 
 select extensions.is(
@@ -28,8 +36,14 @@ select extensions.is(
       and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
       and implementation.prosecdef
   ),
-  22::bigint,
-  'all newer wrappers have private privileged implementations'
+  (
+    select count(*)::bigint
+    from pg_proc wrapper
+    join pg_namespace n on n.oid = wrapper.pronamespace
+    where n.nspname = 'public'
+      and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
+  ),
+  'every newer RPC wrapper has a private privileged implementation'
 );
 
 select extensions.is(
@@ -45,8 +59,14 @@ select extensions.is(
       and wrapper.proconfig = array['search_path=""']::text[]
       and position('private.' || wrapper.proname || '(' in wrapper.prosrc) > 0
   ),
-  22::bigint,
-  'all newer public wrappers are invoker SQL functions with an empty search path'
+  (
+    select count(*)::bigint
+    from pg_proc wrapper
+    join pg_namespace n on n.oid = wrapper.pronamespace
+    where n.nspname = 'public'
+      and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
+  ),
+  'all newer public RPC wrappers are invoker SQL functions with an empty search path'
 );
 
 select extensions.is(
@@ -70,8 +90,14 @@ select extensions.is(
       and wrapper.prorows = implementation.prorows
       and wrapper.pronargdefaults = implementation.pronargdefaults
   ),
-  22::bigint,
-  'newer wrapper results, defaults and planner attributes match implementations'
+  (
+    select count(*)::bigint
+    from pg_proc wrapper
+    join pg_namespace n on n.oid = wrapper.pronamespace
+    where n.nspname = 'public'
+      and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
+  ),
+  'newer RPC wrapper results, defaults and planner attributes match implementations'
 );
 
 select extensions.is(
@@ -83,29 +109,14 @@ select extensions.is(
       and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
       and has_function_privilege('authenticated', wrapper.oid, 'EXECUTE')
   ),
-  22::bigint,
-  'authenticated can execute every newer public wrapper'
-);
-
-select extensions.is(
   (
     select count(*)::bigint
-    from pg_proc implementation
-    join pg_namespace implementation_schema on implementation_schema.oid = implementation.pronamespace
-    where implementation_schema.nspname = 'private'
-      and has_function_privilege('authenticated', implementation.oid, 'EXECUTE')
-      and exists (
-        select 1
-        from pg_proc wrapper
-        join pg_namespace wrapper_schema on wrapper_schema.oid = wrapper.pronamespace
-        where wrapper_schema.nspname = 'public'
-          and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
-          and wrapper.proname = implementation.proname
-          and pg_get_function_identity_arguments(wrapper.oid) = pg_get_function_identity_arguments(implementation.oid)
-      )
+    from pg_proc wrapper
+    join pg_namespace n on n.oid = wrapper.pronamespace
+    where n.nspname = 'public'
+      and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
   ),
-  22::bigint,
-  'authenticated can traverse every newer wrapper implementation'
+  'authenticated can execute every newer public RPC wrapper'
 );
 
 select extensions.is(
@@ -127,45 +138,42 @@ select extensions.is(
       )
   ),
   0::bigint,
-  'newer wrapper and implementation named-role grants match'
+  'newer RPC wrapper and implementation named-role grants match'
 );
 
 select extensions.is(
   (
     select count(*)::bigint
-    from pg_proc wrapper
-    join pg_namespace wrapper_schema on wrapper_schema.oid = wrapper.pronamespace
-    cross join lateral aclexplode(coalesce(wrapper.proacl, acldefault('f', wrapper.proowner))) privilege
-    where wrapper_schema.nspname = 'public'
-      and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
-      and privilege.grantee = 0
-      and privilege.privilege_type = 'EXECUTE'
-  ),
-  0::bigint,
-  'PUBLIC has no execute privilege on newer wrappers'
-);
-
-select extensions.is(
-  (
-    select count(*)::bigint
-    from pg_proc implementation
-    join pg_namespace implementation_schema on implementation_schema.oid = implementation.pronamespace
-    cross join lateral aclexplode(coalesce(implementation.proacl, acldefault('f', implementation.proowner))) privilege
-    where implementation_schema.nspname = 'private'
-      and privilege.grantee = 0
-      and privilege.privilege_type = 'EXECUTE'
-      and exists (
-        select 1
-        from pg_proc wrapper
-        join pg_namespace wrapper_schema on wrapper_schema.oid = wrapper.pronamespace
-        where wrapper_schema.nspname = 'public'
-          and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
-          and wrapper.proname = implementation.proname
-          and pg_get_function_identity_arguments(wrapper.oid) = pg_get_function_identity_arguments(implementation.oid)
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private'
+      and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-trigger-boundary'
+      and (
+        has_function_privilege('anon', p.oid, 'EXECUTE')
+        or has_function_privilege('authenticated', p.oid, 'EXECUTE')
+        or has_function_privilege('service_role', p.oid, 'EXECUTE')
       )
   ),
   0::bigint,
-  'PUBLIC has no execute privilege on newer private implementations'
+  'internal trigger implementations are closed to all client roles'
+);
+
+select extensions.is(
+  (
+    select count(*)::bigint
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) privilege
+    where n.nspname in ('public', 'private')
+      and obj_description(p.oid, 'pg_proc') in (
+        'findit:20260805073000-authenticated-boundary',
+        'findit:20260805073000-trigger-boundary'
+      )
+      and privilege.grantee = 0
+      and privilege.privilege_type = 'EXECUTE'
+  ),
+  0::bigint,
+  'PUBLIC has no execute privilege on newer wrappers or implementations'
 );
 
 select extensions.is(
