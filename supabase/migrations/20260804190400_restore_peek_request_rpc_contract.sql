@@ -135,7 +135,7 @@ end;
 $$;
 
 create or replace function public.decline_peek_request(p_request_id uuid, p_reason text)
-returns boolean
+returns void
 language plpgsql
 security definer
 set search_path = public, pg_temp
@@ -153,12 +153,11 @@ begin
     or exists(select 1 from public.services s where s.id=r.service_id and s.provider_id=v_user)
   );
   if not found then raise exception 'You cannot decline this Peek Request'; end if;
-  return true;
 end;
 $$;
 
 create or replace function public.merge_peek_request(p_source_request_id uuid, p_target_request_id uuid)
-returns boolean
+returns void
 language plpgsql
 security definer
 set search_path = public, pg_temp
@@ -184,7 +183,6 @@ begin
   on conflict do nothing;
   update public.peek_requests set status='merged', merged_into_id=p_target_request_id, updated_at=now() where id=p_source_request_id;
   update public.peek_requests r set supporter_count=(select count(*) from public.peek_request_supporters ps where ps.request_id=r.id),updated_at=now() where r.id=p_target_request_id;
-  return true;
 end;
 $$;
 
