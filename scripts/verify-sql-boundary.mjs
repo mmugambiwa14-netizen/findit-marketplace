@@ -37,6 +37,16 @@ function stripNonExecutableSql(content) {
     .replace(/'(?:''|[^'])*'/g, "''");
 }
 
+// ALTER PUBLICATION ... DROP TABLE removes a table from logical replication;
+// it does not drop the table or delete rows. Strip only that complete statement
+// before applying the destructive table/data rollback scan.
+function stripPublicationMembershipChanges(content) {
+  return content.replace(
+    /\balter\s+publication\s+(?:"[^"]+"|[a-z_][\w$]*)\s+drop\s+table\s+(?:only\s+)?(?:"[^"]+"|[a-z_][\w$]*)(?:\.(?:"[^"]+"|[a-z_][\w$]*))?\s*;/gi,
+    ' ',
+  );
+}
+
 function dollarQuoteBalance(content) {
   const counts = new Map();
   for (const match of content.matchAll(/\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$/g)) {
@@ -53,7 +63,8 @@ for (const name of migrationFiles) {
 
 for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) >= 40).sort()) {
   const content = await readFile(join(rollbackDirectory, name), 'utf8');
-  if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(stripNonExecutableSql(content))) failures.push(`${name} contains destructive table/data rollback statements`);
+  const executable = stripPublicationMembershipChanges(stripNonExecutableSql(content));
+  if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(executable)) failures.push(`${name} contains destructive table/data rollback statements`);
   if (/^(?:<<<<<<<|=======|>>>>>>>)(?:\s|$)/m.test(content)) failures.push(`${name} contains a merge-conflict marker`);
   for (const [tag, count] of dollarQuoteBalance(content)) failures.push(`${name} has unbalanced ${tag} delimiters (${count})`);
 }
@@ -87,8 +98,15 @@ for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) 
 // - 0114_listing_category_attributes.sql
 // - 0115_owner_contact_access_boundary.sql
 // - 0116_peek_threads_foundation.sql
+// - 0117_peek_request_read_boundary.sql
+// - 0118_response_peeks_and_request_bindings.sql
+// - 0119_peek_request_read_boundary_pagination.sql
+// - 0120_admin_peek_request_moderation.sql
+// - 0121_response_peek_lifecycle.sql
+// - 0122_response_peek_upload_authorization.sql
+// - 0123_response_peek_binding_and_notifications.sql
 // Release-tip anchor: bump this deliberately when a migration is added.
-const RELEASE_TIP_MIGRATION = '0117_peek_request_read_boundary.sql';
+const RELEASE_TIP_MIGRATION = '0124_live_conversation_updates.sql';
 if (basename(migrationFiles.at(-1) ?? '') !== RELEASE_TIP_MIGRATION) {
   failures.push(
     `latest expected migration is ${RELEASE_TIP_MIGRATION}, found ${migrationFiles.at(-1) ?? 'none'}`,
