@@ -173,3 +173,40 @@ describe('degraded transport still yields a renderable shape', () => {
     expect(result.items).toHaveLength(1);
   });
 });
+
+describe('deploy-order tolerance', () => {
+  // The multiplexed function and the frontend ship separately. A build can reach
+  // a project that does not have `recommendations` yet, so a 404 must fall back
+  // to the endpoint that used to serve the service rather than render empty.
+  const notFound = { data: null, error: { context: { status: 404 } } };
+
+  test('a 404 from the multiplexed endpoint retries the legacy endpoint', async () => {
+    invoke
+      .mockResolvedValueOnce(notFound)
+      .mockResolvedValueOnce(okPayload('similar_listings_service'));
+
+    const result = await services.getSimilarListings({ subjectListingId: SUBJECT });
+
+    expect(invoke.mock.calls[0][0]).toBe('recommendations');
+    expect(invoke.mock.calls[1][0]).toBe('similar-listings');
+    expect(result.degraded).toBe(false);
+  });
+
+  test('a non-404 failure is NOT retried against a second endpoint', async () => {
+    invoke.mockResolvedValue({ data: null, error: { context: { status: 500 } } });
+
+    const result = await services.getRecentlyListed({});
+
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(result.reason).toBe('service_unavailable');
+  });
+
+  test('a client timeout is not retried either', async () => {
+    invoke.mockResolvedValue({ data: null, error: { code: 'client_timeout' } });
+
+    const result = await services.getRecentlyListed({});
+
+    expect(invoke).toHaveBeenCalledTimes(1);
+    expect(result.reason).toBe('client_timeout');
+  });
+});
