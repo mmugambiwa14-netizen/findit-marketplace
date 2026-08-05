@@ -1,4 +1,5 @@
 import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js';
+import { sanitizeText } from '../lib/sanitizeText.js';
 
 const PROFILE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -13,6 +14,8 @@ export const V1_BUSINESS_TYPES = Object.freeze([
 export const SOCIAL_LINK_KEYS = Object.freeze(['facebook', 'instagram', 'linkedin', 'x']);
 
 function text(value, label, maximum, required = false) {
+  // Strip null bytes, control, zero-width and bidi characters before validating.
+  if (typeof value === 'string') value = sanitizeText(value, { collapseWhitespace: false });
   if (value == null && !required) return null;
   if (typeof value !== 'string') throw new TypeError(`${label} must be text`);
   const normalized = value.trim();

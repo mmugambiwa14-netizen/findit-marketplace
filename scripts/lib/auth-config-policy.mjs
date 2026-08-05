@@ -257,6 +257,28 @@ export function evaluateHostedAuthConfig(config, environment = process.env) {
     summary,
   });
 
+  // Rate limiting for login / reset / signup. Supabase enforces these per IP;
+  // this catches a project where the limits have been removed or set so high
+  // they no longer bite. The ceiling is deliberately coarse -- it flags
+  // "effectively disabled" (e.g. a limit of 10000), not fine-grained policy,
+  // which is pinned for the local stack in tests/authHardeningConfigContracts.
+  const rateLimitMax = readExpectedInteger(environment, 'FINDIT_EXPECT_AUTH_RATE_LIMIT_MAX', problems, production);
+  const rateLimitFields = Object.entries(config).filter(([key]) => /^rate_limit_/.test(key));
+  summary.rateLimitFieldCount = rateLimitFields.length;
+  if (rateLimitMax !== undefined) {
+    if (production && rateLimitFields.length === 0) {
+      problems.push('no rate_limit_* fields were returned; cannot confirm auth rate limiting is active');
+    }
+    for (const [key, value] of rateLimitFields) {
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric) || numeric < 1) {
+        problems.push(`${key} is not a positive rate limit`);
+      } else if (numeric > rateLimitMax) {
+        problems.push(`${key} is ${numeric}; exceeds the ${rateLimitMax} ceiling, so auth rate limiting is effectively disabled`);
+      }
+    }
+  }
+
   const expectedCustomSmtp = readExpectedBoolean(environment, 'FINDIT_EXPECT_CUSTOM_SMTP', problems, production);
   const smtpHost = firstField(config, ['smtp_host']);
   const smtpSender = firstField(config, ['smtp_admin_email', 'smtp_sender_name']);

@@ -1,8 +1,11 @@
+import { sanitizeText } from '../lib/sanitizeText.js';
 const SUPPORT_CATEGORIES = new Set(['account', 'listing', 'report', 'safety', 'technical', 'other']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function normalizedText(value) {
-  return typeof value === 'string' ? value.trim() : '';
+  // Strip null bytes, control, zero-width and bidi characters. A newline is kept
+  // so a multi-line support message is preserved.
+  return typeof value === 'string' ? sanitizeText(value, { collapseWhitespace: false }) : '';
 }
 
 export function normalizeSupportRequest(input = {}) {

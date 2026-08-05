@@ -27,6 +27,7 @@ const productionEnvironment = {
   FINDIT_EXPECT_APPLE_OAUTH: 'false',
   FINDIT_EXPECT_ANONYMOUS_AUTH: 'false',
   FINDIT_EXPECT_PHONE_SIGNUP: 'false',
+  FINDIT_EXPECT_AUTH_RATE_LIMIT_MAX: '200',
 };
 
 const hardenedConfiguration = {
@@ -45,6 +46,9 @@ const hardenedConfiguration = {
   external_apple_enabled: false,
   external_anonymous_users_enabled: false,
   external_phone_enabled: false,
+  rate_limit_verify: 30,
+  rate_limit_email_sent: 30,
+  rate_limit_token_refresh: 150,
 };
 
 test('production Auth policy accepts a complete hardened configuration', () => {
@@ -87,6 +91,32 @@ test('production Auth policy fails closed when expected values or API fields are
   assert.ok(result.problems.length >= 10);
   assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_AUTH_SITE_URL')));
   assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION')));
+  assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_AUTH_RATE_LIMIT_MAX')));
+});
+
+test('production Auth policy flags a project that returns no rate-limit fields at all', () => {
+  const { rate_limit_verify, rate_limit_email_sent, rate_limit_token_refresh, ...noRateLimits } =
+    hardenedConfiguration;
+  const result = evaluateHostedAuthConfig(noRateLimits, productionEnvironment);
+
+  assert.equal(result.status, 'failed');
+  assert.ok(
+    result.problems.some((problem) => problem.includes('rate limiting is active')),
+    'missing rate-limit fields must be flagged',
+  );
+});
+
+test('production Auth policy flags rate limits set so high they no longer bite', () => {
+  const result = evaluateHostedAuthConfig(
+    { ...hardenedConfiguration, rate_limit_verify: 100000 },
+    productionEnvironment,
+  );
+
+  assert.equal(result.status, 'failed');
+  assert.ok(
+    result.problems.some((problem) => problem.includes('rate_limit_verify') && problem.includes('effectively disabled')),
+    'a neutered rate limit must be flagged',
+  );
 });
 
 test('hosted Auth preflight is read-only, exact-target guarded and never prints the access token', () => {
