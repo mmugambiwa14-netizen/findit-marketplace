@@ -212,8 +212,6 @@ export default function Tours() {
             <ImmersivePeekSlide
               key={item.tourId}
               item={item}
-              index={index}
-              total={items.length}
               active={activeTourId === item.tourId}
               nearby={activeIndex < 0 ? index < 2 : Math.abs(index - activeIndex) <= 1}
               autoplay={autoplay}
