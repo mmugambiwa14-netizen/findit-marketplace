@@ -1,5 +1,21 @@
 /* FindIt Web Push handlers. Loaded by the stamped service worker. */
 
+const STAGING_HOST_PREFIX = 'findit-marketplace-stagi';
+
+function isFindItStagingOrigin() {
+  return self.location.hostname.startsWith(STAGING_HOST_PREFIX);
+}
+
+// The staging project uses Vercel's production target so its stable alias can
+// behave like an installed app. Production-style waiting is useful for the real
+// product, but it makes the installed staging PWA appear frozen on an older
+// build. Activate staging workers immediately; the main worker's activate
+// handler claims clients and the page reloads through controllerchange.
+self.addEventListener('install', (event) => {
+  if (!isFindItStagingOrigin()) return;
+  event.waitUntil(self.skipWaiting());
+});
+
 function safePushPayload(event) {
   try {
     return event.data?.json() || {};
