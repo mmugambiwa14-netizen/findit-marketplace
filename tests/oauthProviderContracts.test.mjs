@@ -22,7 +22,7 @@ test('OAuth providers default off and use centralized explicit browser flags', (
   assert.match(providerSource, /=== 'true'/);
   assert.match(
     featureFlagSource,
-    /googleOAuth: stagingProviderFlag\('VITE_FEATURE_GOOGLE_OAUTH', 'VITE_AUTH_GOOGLE_ENABLED'\)/,
+    /googleOAuth:\s*stagingProviderFlag\(\s*'VITE_FEATURE_GOOGLE_OAUTH',\s*'VITE_AUTH_GOOGLE_ENABLED',?\s*\)/,
   );
   assert.match(stagingPolicySource, /export function resolveStagingProviderFlag/);
   assert.match(stagingPolicySource, /isTrustedStagingEnvironment\(env\)/);
