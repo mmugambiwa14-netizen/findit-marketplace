@@ -27,7 +27,7 @@ test('manifest declares the fields browsers require for installability', () => {
   assert.equal(manifest.start_url, '/');
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.display, 'standalone');
-  assert.equal(manifest.orientation, 'portrait');
+  assert.equal(manifest.orientation, 'any');
   assert.ok(manifest.description);
   assert.ok(manifest.id, 'a stable id keeps app identity across start_url changes');
 });
