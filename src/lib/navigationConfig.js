@@ -5,6 +5,7 @@ import {
   Flag,
   FolderTree,
   LayoutDashboard,
+  LifeBuoy,
   MessageCircle,
   Plus,
   ScrollText,
@@ -56,8 +57,10 @@ export const PRIMARY_NAV_ITEMS = [
 export const ADMIN_NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, path: '/admin' },
   { label: 'Marketplace', icon: Store, path: '/admin/listings' },
+  { label: 'Peek moderation', icon: CirclePlay, path: '/admin/peeks' },
   { label: 'Users', icon: Users, path: '/admin/users' },
   { label: 'Reports', icon: Flag, path: '/admin/reports', countKey: 'reports' },
+  { label: 'Support', icon: LifeBuoy, path: '/admin/support' },
   { label: 'Categories', icon: FolderTree, path: '/admin/categories' },
   { label: 'Audit Log', icon: ScrollText, path: '/admin/audit-log' },
 ];
