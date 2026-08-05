@@ -21,7 +21,7 @@ begin
       raise exception 'missing function required for variable-conflict repair: %', target_signature;
     end if;
 
-    select pg_get_functiondef(target_oid::oid)
+    select replace(pg_get_functiondef(target_oid::oid), E'\r\n', E'\n')
     into original_definition;
 
     if position('#variable_conflict use_column' in original_definition) = 0 then
@@ -46,7 +46,7 @@ begin
       raise exception 'missing function required for Peek alert repair: %', target_signature;
     end if;
 
-    select pg_get_functiondef(target_oid::oid)
+    select replace(pg_get_functiondef(target_oid::oid), E'\r\n', E'\n')
     into original_definition;
 
     corrected_definition := replace(original_definition, '''info''', '''system''');
