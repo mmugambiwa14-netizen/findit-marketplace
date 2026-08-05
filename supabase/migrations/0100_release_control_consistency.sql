@@ -3,13 +3,28 @@
 -- Make operational metadata reflect the active recommendation service layer and
 -- the certified MapLibre/MapTiler browser contract. Remove redundant browser
 -- table privileges from the fail-closed recommendation event default partition.
-
 do $migration$
 declare
   service_count integer;
   recommendation_configuration jsonb;
   maps_configuration jsonb;
 begin
+  -- Migration 0059 creates the complete policy catalog with every service
+  -- disabled. This migration is the reviewed release-control activation point,
+  -- so enable the exact catalog before certifying that all seven policies exist.
+  update public.recommendation_service_policies
+  set enabled = true,
+      updated_at = now()
+  where service_name in (
+    'nearby_service',
+    'personalized_recommendation_service',
+    'recently_listed_service',
+    'related_products_service',
+    'related_services_service',
+    'seller_recommendations_service',
+    'similar_listings_service'
+  );
+
   select count(*)::integer
   into service_count
   from public.recommendation_service_policies
