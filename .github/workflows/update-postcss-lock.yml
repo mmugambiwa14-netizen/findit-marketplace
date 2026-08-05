@@ -1,0 +1,42 @@
+name: Update patched PostCSS lock
+
+on:
+  push:
+    branches:
+      - feature/listing-intelligence-foundation
+    paths:
+      - .github/workflows/update-postcss-lock.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update-lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/listing-intelligence-foundation
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Update PostCSS and lockfile
+        run: npm install --save-dev postcss@^8.5.24 --ignore-scripts
+
+      - name: Verify patched version
+        run: node -e "const version=require('./node_modules/postcss/package.json').version; const [major,minor,patch]=version.split('.').map(Number); if (major !== 8 || minor < 5 || (minor === 5 && patch < 18)) process.exit(1); console.log('postcss', version)"
+
+      - name: Commit dependency metadata
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(deps): update PostCSS past security advisories"
+          git push origin HEAD:feature/listing-intelligence-foundation
