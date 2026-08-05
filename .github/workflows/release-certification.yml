@@ -1,0 +1,76 @@
+name: Release Certification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - feature/listing-intelligence-foundation
+  push:
+    branches:
+      - main
+      - feature/listing-intelligence-foundation
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-certification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certify:
+    name: Repository release gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate repository and production boundaries
+        run: |
+          npm run audit:production
+          npm run verify:hygiene
+          npm run verify:source-graph
+          npm run verify:sql-boundary
+          npm run verify:base44-elimination
+
+      - name: Run static and contract gates
+        run: |
+          npm run lint
+          npm run typecheck
+          npm run typecheck:migration
+          npm run typecheck:active
+          npm run test:contracts
+          npm run test:tours-contracts
+          npm run test:product-audit
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Generate release-candidate evidence
+        run: npm run certify:release-candidate
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-certification-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            artifacts/**
+            dist/**
+            FINDIT_EXTENSIVE_PRODUCT_AUDIT_2026-07-27.md
+            PROJECT_STATUS.md
+            PRODUCTION_READINESS_REPORT.md
