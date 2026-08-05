@@ -1,5 +1,5 @@
 {
-  "release": "2026-08-04-image-upload-fix",
-  "sourceCommit": "04ef071f81e126dc612daee1b502fb6b0b0417fa",
-  "purpose": "Deploy listing image upload origin and customer-error fixes"
+  "release": "2026-08-05-listing-seller-surface",
+  "sourceCommit": "ef4b56e502aed1c48e6e441573727609358d66f4",
+  "purpose": "Deploy shared listing seller profile surface and safe metadata fallbacks"
 }
