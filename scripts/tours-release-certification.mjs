@@ -65,7 +65,6 @@ async function validateJsonTree() {
   console.log(`JSON configuration validation passed: ${files.length} files.`);
 }
 
-
 const testFiles = (await readdir(resolve(root, 'tests')))
   .filter((name) => name.endsWith('.test.mjs'))
   .sort()
@@ -81,9 +80,15 @@ const productionBase = {
   VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: 'true',
   VITE_AUTH_GOOGLE_ENABLED: 'true',
   VITE_FEATURE_GOOGLE_OAUTH: 'true',
-  VITE_FEATURE_INTERNATIONAL_LISTING: 'true',
+  VITE_FEATURE_MAPS: 'true',
+  VITE_MAPTILER_PUBLIC_KEY: 'release-validation-maptiler-key',
+  VITE_MAPTILER_STYLE_ID: 'streets-v4',
+  VITE_FEATURE_INTERNATIONAL_LISTING: 'false',
   VITE_FEATURE_MANUAL_LOCATION: 'true',
   VITE_FEATURE_CURRENT_LOCATION: 'true',
+  VITE_FEATURE_CURRENCY_CONVERSION: 'false',
+  VITE_FEATURE_PHONE_VERIFICATION: 'false',
+  VITE_FEATURE_SERVICE_RADIUS: 'false',
   VITE_FEATURE_REPORTING: 'true',
   VITE_FEATURE_PAYMENTS: 'false',
   VITE_FEATURE_SUBSCRIPTIONS: 'false',
@@ -98,6 +103,8 @@ const productionBase = {
   VITE_FEATURE_LISTING_EXPIRY: 'false',
   VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: 'false',
   VITE_FEATURE_TOURS_PREVIEW: 'false',
+  VITE_FEATURE_PREVIEW_FIXTURES: 'false',
+  VITE_PREVIEW_AUTH_BYPASS: 'false',
   FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
   FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: 'release-notification-fanout-secret',
   FINDIT_RECOMMENDATION_WORKERS_ENABLED: 'true',
