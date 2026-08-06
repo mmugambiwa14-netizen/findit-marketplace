@@ -24,20 +24,16 @@ Repository assets:
 External requirements preventing hosted execution:
 
 1. A protected GitHub Environment named `staging`.
-2. Environment secrets:
-   - `SUPABASE_URL`
-   - `SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+2. Environment secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 3. Manual dispatch of **Buyer Journey Certification**.
 
 Separate non-blocking provider condition:
 
-- Vercel reported `api-deployments-free-per-day` after more than 100 free-plan deployments. This blocks another preview deployment until the limit resets or the plan changes, but it does not invalidate the repository certification runner.
+- Vercel reported `api-deployments-free-per-day` after more than 100 free-plan deployments.
 
 Release rule:
 
-- Stage 1 must not be called hosted-certified until the workflow completes successfully and its JSON artifact reports `status: passed`.
-- This item remains a launch blocker until that evidence exists.
+- Stage 1 remains a launch blocker until the hosted workflow artifact reports `status: passed`.
 
 ## Stage 2 — Verified business journey
 
@@ -49,7 +45,6 @@ Implemented journey:
 
 Repository assets:
 
-- existing curated application and admin-review system
 - `supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql`
 - `supabase/migrations/20260807011000_verified_business_profile_bootstrap.sql`
 - `supabase/tests/v1_verified_business_journey.sql`
@@ -58,15 +53,12 @@ Repository assets:
 
 External evidence still required:
 
-1. Apply all migrations to a clean staging database.
-2. Run `supabase/tests/v1_verified_business_journey.sql` and the complete pgTAP suite.
-3. Complete browser acceptance with separate applicant, admin and public sessions.
-4. Confirm existing business application/category notifications arrive in the hosted notification center.
-5. Confirm public profiles show the approved marker only after an approved category and remove it after the final approved category is suspended.
+1. Apply all migrations to a clean staging database and run the complete pgTAP suite.
+2. Complete browser acceptance with separate applicant, admin and public sessions.
+3. Confirm application/category notifications and public approved-state synchronization.
 
 Release rule:
 
-- Stage 2 must not be called hosted-certified until the clean migration, pgTAP and browser matrix pass on staging.
 - Pending/rejected verification state and registration evidence must remain absent from the public projection.
 
 ## Stage 3 — Peek fulfilment journey
@@ -83,7 +75,6 @@ Failure and recovery coverage:
 
 Repository assets:
 
-- existing Response Peek upload, automated processing, automatic publication, binding, notification and playback pipeline
 - `supabase/migrations/20260804193300_auto_publish_successful_peeks.sql`
 - `supabase/migrations/20260807020000_peek_request_fulfilment_lifecycle.sql`
 - `supabase/migrations/20260807020500_peek_fulfilment_seller_queue.sql`
@@ -93,17 +84,12 @@ Repository assets:
 
 External evidence still required:
 
-1. Apply all migrations to a clean staging database and run the complete pgTAP suite.
+1. Run the complete pgTAP suite on clean staging.
 2. Complete browser acceptance with separate buyer and seller sessions.
-3. Upload a real Response Peek through storage and confirm automated processing transitions persist in the seller queue.
-4. Force one processing failure, retry with a replacement upload and confirm the abandoned binding intent cannot answer the request.
-5. Confirm a successfully processed Peek auto-publishes, answers the request once, notifies requester and supporters once, and opens playable evidence.
-6. Run the expiry operation under the hosted service role and confirm stale fulfilments remain recoverable without closing the buyer request.
+3. Exercise real storage, processing, retry, automatic publication, binding, notification and playback.
 
 Release rule:
 
-- Stage 3 must not be called hosted-certified until database, object-storage, processor, notification and playback evidence all pass on staging.
-- A request must remain pending until an automatically validated and published Response Peek is atomically bound.
 - No human Peek review or approval is part of this MVP.
 
 ## Stage 4 — Listing publication journey
@@ -116,12 +102,9 @@ Implemented journey:
 
 Repository assets:
 
-- existing listing creation, media-intent and owner-management implementation
-- `supabase/migrations/0021_v1_listing_creation_and_media.sql`
 - `supabase/migrations/20260807030000_remove_listing_content_review_from_mvp.sql`
 - `supabase/rollback/20260807030000_remove_listing_content_review_from_mvp.rollback.sql`
 - `supabase/tests/v1_listing_creation_and_media.sql`
-- `scripts/phase4-listing-creation-smoke-local.mjs`
 - `scripts/certify-listing-publication-journey.mjs`
 - `tests/listingPublicationJourneyContracts.test.mjs`
 - `.github/workflows/listing-publication-journey-gates.yml`
@@ -129,16 +112,52 @@ Repository assets:
 
 External evidence still required:
 
-1. Apply all migrations to a clean staging database and run the complete pgTAP suite.
-2. Run the listing publication certification workflow with staging Supabase credentials.
-3. Upload real JPEG, PNG, WebP and phone-origin images and confirm private signed delivery on cards and detail pages.
-4. Complete browser acceptance with seller and public sessions.
-5. Confirm a validated submission appears immediately in search, cards, details and public seller inventory without a review step.
-6. Confirm valid live edits remain public and managed fields cannot be changed outside trusted operations.
-7. Confirm pause, resume, relist, unavailable and delete transitions update public discovery and media access consistently.
+1. Run the complete pgTAP suite on clean staging.
+2. Exercise real image upload and signed delivery across cards and details.
+3. Confirm immediate publication, live edits, pause/resume, relist, unavailable and delete in browser sessions.
 
 Release rule:
 
-- Stage 4 must not be called hosted-certified until database, storage, search, cards, details and owner-management evidence all pass on staging.
-- Validated listings and relists must become `available` immediately.
 - No human listing review or approval is part of this MVP.
+
+## Stage 5 — Safety operations journey
+
+Status: **Implemented and repository-certified; hosted database/browser certification pending**
+
+Implemented journey:
+
+`Verified-business decision → user report → reviewed/dismissed/actioned decision → target-specific takedown or restoration → owner/user notification → immutable audit record`
+
+MVP boundary:
+
+- Verified-business/category decisions remain the only pre-publication approval flow.
+- Listings and Peeks are handled only through post-publication reports, suspension, removal, restoration or takedown.
+- There is no routine listing or Peek approval queue.
+
+Repository assets:
+
+- `src/pages/admin/AdminReports.jsx`
+- `src/services/adminService.js`
+- `src/repositories/adminRepository.js`
+- `supabase/migrations/0016_v1_admin_operations.sql`
+- `supabase/migrations/0019_v1_essential_notifications.sql`
+- `supabase/migrations/0039_v1_tour_reporting_and_admin.sql`
+- `supabase/tests/v1_admin_operations.sql`
+- `supabase/tests/v1_essential_notifications.sql`
+- `supabase/tests/v1_verified_business_journey.sql`
+- `scripts/certify-safety-operations-journey.mjs`
+- `tests/safetyOperationsJourneyContracts.test.mjs`
+- `.github/workflows/safety-operations-journey-gates.yml`
+- expected report: `artifacts/certification/safety-operations-journey.json`
+
+External evidence still required:
+
+1. Apply all migrations to a clean staging database and run the complete pgTAP suite.
+2. Complete browser acceptance with reporter, affected owner/user and admin sessions.
+3. Confirm listing, service, Peek and conversation report decisions affect only the intended target.
+4. Confirm dismissal/restoration, takedown notifications and audit rows are emitted once.
+5. Confirm verified-business approval/rejection remains independent from content-report operations.
+
+Release rule:
+
+- Stage 5 must not be called hosted-certified until report, notification, target-state and audit evidence all pass on staging.
