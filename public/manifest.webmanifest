@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "FindIt Marketplace",
-  "short_name": "FindIt",
-  "description": "Discover products and services, advertise offers, evaluate details, and contact sellers directly on FindIt.",
+  "name": "PeekaListing Marketplace",
+  "short_name": "PeekaListing",
+  "description": "Browse local listings, view public Peeks, and request current evidence before you commit.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/",
@@ -19,52 +19,40 @@
   },
   "icons": [
     {
-      "src": "/brand/findit-icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/brand/peekalisting-binoculars.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "/brand/findit-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/brand/findit-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ],
   "shortcuts": [
     {
       "name": "Search listings",
       "short_name": "Search",
-      "description": "Browse property, vehicles and machinery",
+      "description": "Browse property, vehicles, machinery and services",
       "url": "/search",
-      "icons": [{ "src": "/brand/findit-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/brand/peekalisting-binoculars.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
       "name": "Post a listing",
       "short_name": "Post",
       "description": "Create a new listing",
       "url": "/post",
-      "icons": [{ "src": "/brand/findit-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/brand/peekalisting-binoculars.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
       "name": "Saved",
       "short_name": "Saved",
       "description": "Your saved listings",
       "url": "/saved",
-      "icons": [{ "src": "/brand/findit-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/brand/peekalisting-binoculars.svg", "sizes": "any", "type": "image/svg+xml" }]
     },
     {
       "name": "Chats",
       "short_name": "Chats",
       "description": "Your conversations",
       "url": "/chats",
-      "icons": [{ "src": "/brand/findit-icon-192.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [{ "src": "/brand/peekalisting-binoculars.svg", "sizes": "any", "type": "image/svg+xml" }]
     }
   ]
 }

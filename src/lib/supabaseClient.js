@@ -15,6 +15,7 @@ const STAGING_BRANCHES = new Set([
   'feature/listing-intelligence-foundation',
   'claude/findit-hardening-listing-012cf0',
   'feature/peek-threads-phase-3',
+  'brand/peekalisting-binoculars',
 ]);
 const STAGING_SUPABASE_URL = 'https://bwgklpxoetrrkutottdb.supabase.co';
 const STAGING_SUPABASE_PUBLISHABLE_KEY =
