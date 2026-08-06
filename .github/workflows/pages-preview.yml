@@ -54,10 +54,14 @@ jobs:
       VITE_FEATURE_MARKETING_EMAILS: "false"
       VITE_FEATURE_LISTING_EXPIRY: "false"
       VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
-      VITE_FEATURE_PREVIEW_FIXTURES: "false"
+      # The staging catalogue includes repository-backed demo records with no
+      # storage rows. Keep their media fallbacks enabled in the public preview.
+      VITE_FEATURE_PREVIEW_FIXTURES: "true"
       VITE_PREVIEW_AUTH_BYPASS: "false"
-      VITE_FEATURE_TOURS: ${{ vars.FINDIT_STAGING_TOURS_ENABLED }}
-      VITE_FEATURE_TOURS_PREVIEW: ${{ vars.FINDIT_STAGING_TOURS_PREVIEW }}
+      # Peeks are implemented and migrated in FindIt Staging. Do not make the
+      # canonical preview depend on optional repository variables.
+      VITE_FEATURE_TOURS: "true"
+      VITE_FEATURE_TOURS_PREVIEW: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
