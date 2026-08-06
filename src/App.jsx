@@ -33,6 +33,7 @@ const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
 const Home = lazy(() => import('@/pages/Home'));
 const Search = lazy(() => import('@/pages/Search'));
 const CreateListing = lazy(() => import('@/pages/CreateListing'));
+const CuratedCreateService = lazy(() => import('@/pages/CuratedCreateService'));
 const Saved = lazy(() => import('@/pages/Saved'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const PropertyDetail = lazy(() => import('@/pages/PropertyDetail'));
@@ -52,6 +53,7 @@ const AdminReports = lazy(() => import('@/pages/admin/AdminReports'));
 const AdminSupportRequests = lazy(() => import('@/pages/admin/AdminSupportRequests'));
 const AdminAuditLog = lazy(() => import('@/pages/admin/AdminAuditLog'));
 const AdminCategories = lazy(() => import('@/pages/admin/AdminCategories'));
+const AdminBusinessApplications = lazy(() => import('@/pages/admin/AdminBusinessApplications'));
 const NotificationCenter = lazy(() => import('@/pages/NotificationCenter'));
 const SellerProfile = lazy(() => import('@/pages/SellerProfile'));
 const FAQs = lazy(() => import('@/pages/FAQs'));
@@ -59,7 +61,6 @@ const ContactSupport = lazy(() => import('@/pages/ContactSupport'));
 const LegalPage = lazy(() => import('@/pages/LegalPage'));
 const Services = lazy(() => import('@/pages/Services'));
 const ServiceDetail = lazy(() => import('@/pages/ServiceDetail'));
-const CreateService = lazy(() => import('@/pages/CreateService'));
 const MyServices = lazy(() => import('@/pages/MyServices'));
 const Tours = lazy(() => import('@/pages/Tours'));
 const ToursPlaceholder = lazy(() => import('@/pages/ToursPlaceholder'));
@@ -152,7 +153,7 @@ const AuthenticatedApp = () => {
         <Route element={<ProtectedRoute unauthenticatedElement={<SignInRedirect />} />}>
           <Route element={<AppLayout />}>
             <Route path="/post" element={<CreateListing />} />
-            <Route path="/create-service" element={<CreateService />} />
+            <Route path="/create-service" element={<CuratedCreateService />} />
             <Route path="/my-services" element={<MyServices />} />
             <Route path="/saved" element={<Saved />} />
             <Route path="/profile" element={<Profile />} />
@@ -175,6 +176,7 @@ const AuthenticatedApp = () => {
             <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/admin/support" element={<AdminSupportRequests />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
+            <Route path="/admin/business-applications" element={<AdminBusinessApplications />} />
             <Route path="/admin/audit-log" element={<AdminAuditLog />} />
           </Route>
         </Route>
