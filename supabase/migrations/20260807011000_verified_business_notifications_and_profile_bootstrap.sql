@@ -37,19 +37,25 @@ set search_path = ''
 as $$
 declare
   v_application public.business_applications;
+  v_application_id uuid;
   v_approved_categories integer;
   v_title text;
   v_message text;
   v_state text;
 begin
+  if tg_table_name = 'business_applications' then
+    v_application_id := case when tg_op = 'DELETE' then old.id else new.id end;
+  else
+    v_application_id := case when tg_op = 'DELETE' then old.business_application_id else new.business_application_id end;
+  end if;
+
   select * into v_application
   from public.business_applications
-  where id = case
-    when tg_table_name = 'business_applications' then coalesce(new.id, old.id)
-    else coalesce(new.business_application_id, old.business_application_id)
-  end;
+  where id = v_application_id;
 
-  if v_application.id is null then return coalesce(new, old); end if;
+  if v_application.id is null then
+    return case when tg_op = 'DELETE' then old else new end;
+  end if;
 
   select count(*) into v_approved_categories
   from public.business_category_approvals
@@ -74,7 +80,7 @@ begin
       v_title := 'Business application under review';
       v_message := 'The business application is now being reviewed.';
     else
-      return coalesce(new, old);
+      return case when tg_op = 'DELETE' then old else new end;
   end case;
 
   perform public.create_essential_notification(
@@ -87,7 +93,7 @@ begin
     null
   );
 
-  return coalesce(new, old);
+  return case when tg_op = 'DELETE' then old else new end;
 end;
 $$;
 
