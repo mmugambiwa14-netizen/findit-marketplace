@@ -16,18 +16,25 @@ on:
       - 'supabase/migrations/0021_v1_listing_creation_and_media.sql'
       - 'supabase/tests/v1_listing_creation_and_media.sql'
       - 'scripts/phase4-listing-creation-smoke-local.mjs'
+      - 'scripts/certify-listing-publication-journey.mjs'
       - 'tests/listingPublicationJourneyContracts.test.mjs'
       - '.github/workflows/listing-publication-journey-gates.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  contracts:
+  repository-contracts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 23
-      - run: node --test tests/listingPublicationJourneyContracts.test.mjs
+      - run: node scripts/certify-listing-publication-journey.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: listing-publication-certification
+          path: artifacts/certification/listing-publication-journey.json
+          if-no-files-found: error
