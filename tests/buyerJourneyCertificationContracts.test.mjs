@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const runnerUrl = new URL('../scripts/certify-buyer-journey.mjs', import.meta.url);
+const blockerLedgerUrl = new URL('../docs/certification/EXTERNAL_CERTIFICATION_BLOCKERS.md', import.meta.url);
 
 async function source() {
   return readFile(runnerUrl, 'utf8');
@@ -38,4 +39,12 @@ test('buyer certification fails fast and persists a machine-readable report', as
 test('missing smoke programs prevent a false certification start', async () => {
   const runner = await source();
   assert.match(runner, /access\(resolve\(script\), constants\.R_OK\)/);
+});
+
+test('hosted certification remains explicitly recorded as pending until executed', async () => {
+  const ledger = await readFile(blockerLedgerUrl, 'utf8');
+  assert.match(ledger, /Stage 1 — Buyer journey/);
+  assert.match(ledger, /Implemented; hosted certification pending/);
+  assert.match(ledger, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(ledger, /must not be called hosted-certified/);
 });
