@@ -22,8 +22,9 @@ test('seller acceptance is owner-only, request-scoped and retry-bounded', async 
   assert.match(sql, /v_request\.status <> 'pending'/);
   assert.match(sql, /v_request\.moderation_status <> 'approved'/);
   assert.match(sql, /tour_processing_max_attempts/);
-  assert.match(sql, /attempt_count >= v_max_attempts/);
-  assert.match(sql, /status in \('failed', 'cancelled', 'expired'\)/);
+  assert.match(sql, /v_existing\.attempt_count >= v_max_attempts/);
+  assert.match(sql, /v_existing\.status in \('accepted', 'uploading', 'processing'\)/);
+  assert.match(sql, /attempt_count = public\.peek_request_fulfilments\.attempt_count \+ 1/);
 });
 
 test('binding requires acceptance and persists upload or processing state', async () => {
@@ -35,13 +36,14 @@ test('binding requires acceptance and persists upload or processing state', asyn
   assert.match(sql, /started_at = coalesce\(started_at, now\(\)\)/);
 });
 
-test('processing failure and cancellation remove abandoned binding intents', async () => {
+test('processing failure cancellation retry and expiry remove abandoned binding intents', async () => {
   const sql = await read('supabase/migrations/20260807020000_peek_request_fulfilment_lifecycle.sql');
   assert.match(sql, /new\.status = 'failed' or new\.moderation_status = 'rejected'/);
   assert.match(sql, /delete from public\.peek_response_binding_intents where tour_id = new\.id/);
   assert.match(sql, /cancel_peek_request_fulfilment/);
   assert.match(sql, /delete from public\.peek_response_binding_intents[\s\S]*request_id = p_request_id/);
-  assert.match(sql, /delete from public\.peek_response_binding_intents[\s\S]*v_existing\.status/);
+  assert.match(sql, /if found then[\s\S]*delete from public\.peek_response_binding_intents/);
+  assert.match(sql, /f\.status = 'expired'/);
 });
 
 test('request terminal states close the fulfilment record consistently', async () => {
@@ -53,7 +55,7 @@ test('request terminal states close the fulfilment record consistently', async (
   assert.match(sql, /peek_request_fulfilment_terminal_consistency/);
 });
 
-test('expiry is service-role-only, bounded and uses skip-locked batches', async () => {
+test('expiry is service-role-only bounded and uses skip-locked batches', async () => {
   const sql = await read('supabase/migrations/20260807020000_peek_request_fulfilment_lifecycle.sql');
   assert.match(sql, /expire_stale_peek_request_fulfilments/);
   assert.match(sql, /auth\.role\(\) <> 'service_role'/);
@@ -89,6 +91,19 @@ test('client queue exposes Accept Retry Cancel Record and fixes successful-uploa
   assert.match(service, /cancelPeekRequestFulfilment/);
   assert.match(repository, /accept_peek_request/);
   assert.match(repository, /cancel_peek_request_fulfilment/);
+});
+
+test('database journey exercises authorization failure retry completion notification cancellation and expiry', async () => {
+  const sql = await read('supabase/tests/v1_peek_fulfilment_journey.sql');
+  assert.match(sql, /a non-owner cannot accept a seller Peek Request/);
+  assert.match(sql, /queue_response_peek_binding/);
+  assert.match(sql, /processing failure becomes a recoverable fulfilment failure/);
+  assert.match(sql, /retry increments the persisted attempt counter/);
+  assert.match(sql, /approved publication remains the only operation that answers the request/);
+  assert.match(sql, /peek_request_answered/);
+  assert.match(sql, /cancel_peek_request_fulfilment/);
+  assert.match(sql, /expire_stale_peek_request_fulfilments/);
+  assert.match(sql, /seller queue reloads the persisted expiry state/);
 });
 
 test('fulfilment migrations have complete rollback capsules', async () => {
