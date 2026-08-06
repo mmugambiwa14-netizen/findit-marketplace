@@ -1,18 +1,13 @@
-/* FindIt Web Push handlers. Loaded by the stamped service worker. */
+/* PeekaListing Web Push handlers. Loaded by the stamped service worker. */
 
-const STAGING_HOST_PREFIX = 'findit-marketplace-stagi';
+const STAGING_HOST_PREFIXES = ['peekalisting-stagi', 'findit-marketplace-stagi'];
 
-function isFindItStagingOrigin() {
-  return self.location.hostname.startsWith(STAGING_HOST_PREFIX);
+function isStagingOrigin() {
+  return STAGING_HOST_PREFIXES.some((prefix) => self.location.hostname.startsWith(prefix));
 }
 
-// The staging project uses Vercel's production target so its stable alias can
-// behave like an installed app. Production-style waiting is useful for the real
-// product, but it makes the installed staging PWA appear frozen on an older
-// build. Activate staging workers immediately; the main worker's activate
-// handler claims clients and the page reloads through controllerchange.
 self.addEventListener('install', (event) => {
-  if (!isFindItStagingOrigin()) return;
+  if (!isStagingOrigin()) return;
   event.waitUntil(self.skipWaiting());
 });
 
@@ -20,17 +15,17 @@ function safePushPayload(event) {
   try {
     return event.data?.json() || {};
   } catch {
-    return { title: 'FindIt', body: event.data?.text() || 'You have a new update.' };
+    return { title: 'PeekaListing', body: event.data?.text() || 'You have a new update.' };
   }
 }
 
 self.addEventListener('push', (event) => {
   const payload = safePushPayload(event);
-  const title = String(payload.title || 'FindIt');
+  const title = String(payload.title || 'PeekaListing');
   const options = {
     body: String(payload.body || payload.message || 'You have a new update.'),
-    icon: payload.icon || '/brand/findit-icon-192.png',
-    badge: payload.badge || '/brand/findit-icon-192.png',
+    icon: payload.icon || '/brand/peekalisting-binoculars.svg',
+    badge: payload.badge || '/brand/peekalisting-binoculars.svg',
     tag: payload.tag || payload.alertId || undefined,
     renotify: Boolean(payload.renotify),
     requireInteraction: Boolean(payload.requireInteraction),
