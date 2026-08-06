@@ -10,6 +10,14 @@ case "$ENVIRONMENT" in
   *) echo "Environment must be preview, staging, or production" >&2; exit 2 ;;
 esac
 
+for command_name in curl jq; do
+  command -v "$command_name" >/dev/null || {
+    echo "$command_name is required" >&2
+    exit 1
+  }
+done
+
+API_BASE="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}"
 PREFIX="peekalisting-${ENVIRONMENT}"
 R2_BUCKETS=(
   "${PREFIX}-peek-source"
@@ -20,34 +28,64 @@ QUEUES=(
   "${PREFIX}-lightweight-jobs"
   "${PREFIX}-lightweight-jobs-dlq"
 )
+KV_TITLE="${PREFIX}-platform-config"
 
-command -v npx >/dev/null || { echo "npx is required" >&2; exit 1; }
+api_request() {
+  local method="$1"
+  local path="$2"
+  local body="${3:-}"
+  local response
 
-r2_existing="$(npx --yes wrangler@4 r2 bucket list --json 2>/dev/null || printf '[]')"
+  if [[ -n "$body" ]]; then
+    response="$(curl --fail-with-body --silent --show-error \
+      --request "$method" \
+      --url "${API_BASE}${path}" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+      --header 'Content-Type: application/json' \
+      --data "$body")"
+  else
+    response="$(curl --fail-with-body --silent --show-error \
+      --request "$method" \
+      --url "${API_BASE}${path}" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+      --header 'Content-Type: application/json')"
+  fi
+
+  if [[ "$(jq -r '.success // false' <<<"$response")" != "true" ]]; then
+    echo "Cloudflare API request failed: ${method} ${path}" >&2
+    jq -c '{errors, messages}' <<<"$response" >&2
+    return 1
+  fi
+
+  printf '%s' "$response"
+}
+
+r2_existing="$(api_request GET '/r2/buckets?per_page=1000')"
 for bucket in "${R2_BUCKETS[@]}"; do
-  if printf '%s' "$r2_existing" | grep -Fq '"name":"'"$bucket"'"'; then
+  if jq -e --arg name "$bucket" '.result.buckets[]? | select(.name == $name)' <<<"$r2_existing" >/dev/null; then
     echo "R2 bucket exists: $bucket"
   else
-    npx --yes wrangler@4 r2 bucket create "$bucket"
+    echo "Creating R2 bucket: $bucket"
+    api_request POST '/r2/buckets' "$(jq -cn --arg name "$bucket" '{name: $name}')" >/dev/null
   fi
 done
 
-queue_existing="$(npx --yes wrangler@4 queues list --json 2>/dev/null || printf '[]')"
+queue_existing="$(api_request GET '/queues?per_page=100')"
 for queue in "${QUEUES[@]}"; do
-  if printf '%s' "$queue_existing" | grep -Fq '"queue_name":"'"$queue"'"'; then
+  if jq -e --arg name "$queue" '.result[]? | select(.queue_name == $name)' <<<"$queue_existing" >/dev/null; then
     echo "Queue exists: $queue"
   else
-    npx --yes wrangler@4 queues create "$queue"
+    echo "Creating Queue: $queue"
+    api_request POST '/queues' "$(jq -cn --arg queue_name "$queue" '{queue_name: $queue_name}')" >/dev/null
   fi
 done
 
-kv_output="$(npx --yes wrangler@4 kv namespace list 2>/dev/null || true)"
-kv_title="${PREFIX}-platform-config"
-if printf '%s' "$kv_output" | grep -Fq "$kv_title"; then
-  echo "KV namespace exists: $kv_title"
+kv_existing="$(api_request GET '/storage/kv/namespaces?per_page=1000')"
+if jq -e --arg title "$KV_TITLE" '.result[]? | select(.title == $title)' <<<"$kv_existing" >/dev/null; then
+  echo "KV namespace exists: $KV_TITLE"
 else
-  echo "Creating KV namespace: $kv_title"
-  npx --yes wrangler@4 kv namespace create PLATFORM_CONFIG --preview false
+  echo "Creating KV namespace: $KV_TITLE"
+  api_request POST '/storage/kv/namespaces' "$(jq -cn --arg title "$KV_TITLE" '{title: $title}')" >/dev/null
 fi
 
 cat <<EOF
