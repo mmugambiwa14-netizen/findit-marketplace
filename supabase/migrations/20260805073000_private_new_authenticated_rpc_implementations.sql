@@ -1,7 +1,7 @@
 begin;
 
 -- Extend the authenticated RPC implementation boundary established by 0101.
--- Later feature migrations added 23 authenticated-callable SECURITY DEFINER
+-- Later feature migrations added 22 authenticated-callable SECURITY DEFINER
 -- RPCs in public plus one service-only trigger function. Move the RPC
 -- implementations behind invoker wrappers while preserving signatures,
 -- defaults, result shapes, planner attributes and named-role grants. Move the
@@ -17,7 +17,9 @@ values
   ('public.create_peek_request(uuid,uuid,public.peek_request_category,text)'::regprocedure),
   ('public.decline_peek_request(uuid,text)'::regprocedure),
   ('public.disable_web_push_subscription(text)'::regprocedure),
-  ('public.discover_category_counts()'::regprocedure),
+  -- public.discover_category_counts() is deliberately absent: it is a SECURITY
+  -- INVOKER aggregate over public.listings, so RLS must keep applying to the
+  -- caller. It never enters the snapshot below, which selects prosecdef only.
   ('public.merge_peek_request(uuid,uuid)'::regprocedure),
   ('public.my_peek_request_ids(uuid[])'::regprocedure),
   ('public.owner_listing_contacts(uuid[])'::regprocedure),
@@ -94,7 +96,7 @@ begin
     select function_oid::oid from findit_20260805073000_expected
   ) then
     raise exception
-      '20260805073000 authenticated SECURITY DEFINER catalog does not match the locked 23-RPC boundary';
+      '20260805073000 authenticated SECURITY DEFINER catalog does not match the locked 22-RPC boundary';
   end if;
 
   if trigger_oid is null
@@ -287,7 +289,7 @@ begin
     and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
     and position('private.' || expected.function_name || '(' in p.prosrc) > 0;
 
-  if private_count <> 23 or wrapper_count <> 23 then
+  if private_count <> 22 or wrapper_count <> 22 then
     raise exception
       '20260805073000 boundary mismatch: private %, wrappers %',
       private_count,

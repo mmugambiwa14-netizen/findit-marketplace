@@ -17,10 +17,13 @@ select is(
   'exactly seven service policies are installed'
 );
 
+-- 0059 installs the catalog disabled and 0100 is the reviewed release-control
+-- activation point that enables all seven, so an installed catalog is an
+-- enabled catalog. The degraded paths below disable their own subjects.
 select is(
   (select count(*)::integer from public.recommendation_service_policies where enabled),
-  0,
-  'all recommendation services are disabled by default'
+  7,
+  'the reviewed release control leaves every service policy enabled'
 );
 
 select ok(
@@ -66,6 +69,17 @@ select throws_ok(
   'authenticated browser callers cannot execute personalized database API directly'
 );
 reset role;
+
+-- Disable the three subjects of the degraded-path assertions. service_role is
+-- deliberately barred from mutating this table, so the switch is thrown here,
+-- before the role is assumed.
+update public.recommendation_service_policies
+set enabled = false, updated_at = now()
+where service_name in (
+  'similar_listings_service',
+  'recently_listed_service',
+  'personalized_recommendation_service'
+);
 
 set local role service_role;
 select is(

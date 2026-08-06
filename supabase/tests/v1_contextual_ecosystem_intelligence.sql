@@ -1,5 +1,5 @@
 begin;
-select plan(43);
+select plan(44);
 
 select has_table('public', 'recommendation_contexts', 'context catalogue exists');
 select has_table('public', 'recommendation_context_rules', 'context rule table exists');
@@ -170,13 +170,28 @@ select is(
   'contextual health counts the active contexts'
 );
 
--- Every seeded rule targets a service that is disabled by default, so a plan can
--- never advertise a section whose service would refuse to answer.
+-- The point of this metric is that a plan never advertises a section whose
+-- service would refuse to answer. 0100 activates the whole catalog, so the
+-- healthy reading is zero, and disabling one service must surface its rules.
 select is(
   (public.contextual_ecosystem_health_v1() ->> 'rulesReferencingDisabledServices'),
-  '7',
-  'rules are reported against their disabled services'
+  '0',
+  'no rule references a disabled service once release control has activated them'
 );
+
+update public.recommendation_service_policies
+set enabled = false
+where service_name = 'similar_listings_service';
+
+select isnt(
+  (public.contextual_ecosystem_health_v1() ->> 'rulesReferencingDisabledServices'),
+  '0',
+  'disabling a service surfaces the rules that still reference it'
+);
+
+update public.recommendation_service_policies
+set enabled = true
+where service_name = 'similar_listings_service';
 
 select ok(
   not has_function_privilege('anon', 'public.contextual_ecosystem_health_v1()', 'EXECUTE')

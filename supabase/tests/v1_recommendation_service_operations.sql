@@ -79,9 +79,13 @@ select ok(
 );
 reset role;
 
+-- 0100 is the reviewed release-control activation point and enables the whole
+-- catalog. What matters here is that the operations layer leaves that decision
+-- to release control rather than flipping policies on its own, so the expected
+-- state after migration is the activated one.
 select ok(
-  (select bool_and(not enabled) from public.recommendation_service_policies),
-  'operational controls do not enable services during migration'
+  (select bool_and(enabled) from public.recommendation_service_policies),
+  'operational controls leave the release-control activation intact'
 );
 select ok(
   exists (

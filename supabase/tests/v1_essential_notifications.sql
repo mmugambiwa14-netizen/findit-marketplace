@@ -150,17 +150,19 @@ select extensions.throws_ok(
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003002', true);
 set local role authenticated;
+-- The owner also holds a newer-class event. 20260806130000 stopped the offset
+-- projection filtering those out, so this list now matches the unread counter.
 select extensions.is(
   (select count(*)::bigint from public.notification_rows('all', false, 50, 0)),
-  5::bigint,
-  'an owner sees only their five trusted fixture notifications'
+  6::bigint,
+  'an owner sees every trusted fixture notification the counter reports'
 );
-select extensions.is(public.notification_unread_count(), 5::bigint, 'unread count is calculated at the server boundary');
+select extensions.is(public.notification_unread_count(), 6::bigint, 'unread count is calculated at the server boundary');
 select extensions.ok(
   public.mark_notification_read((select notification_id from public.notification_rows('listing_approved', false, 1, 0))),
   'an owner can mark one notification read through the trusted RPC'
 );
-select extensions.is(public.mark_all_notifications_read(), 4, 'an owner can mark all remaining notifications read');
+select extensions.is(public.mark_all_notifications_read(), 5, 'an owner can mark all remaining notifications read');
 select extensions.is(public.notification_unread_count(), 0::bigint, 'read-state changes update the unread count');
 select extensions.throws_ok(
   $$insert into public.app_alerts (
