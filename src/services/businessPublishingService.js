@@ -42,6 +42,25 @@ export async function submitBusinessApplication(input) {
   return data;
 }
 
+export async function respondToBusinessApplication(applicationId, message) {
+  const response = String(message || '').trim();
+  if (response.length < 5) throw new Error('Provide the requested information.');
+  const { error } = await supabase.rpc('respond_to_business_application', {
+    p_application_id: applicationId,
+    p_message: response,
+  });
+  if (error) throw error;
+}
+
+export async function requestAdditionalBusinessCategories(categories) {
+  const requested = normalizeCategories(categories);
+  if (requested.length === 0) throw new Error('Choose at least one additional category.');
+  const { error } = await supabase.rpc('request_additional_business_categories', {
+    p_categories: requested,
+  });
+  if (error) throw error;
+}
+
 export async function submitManagedListingRequest(input) {
   if (!CATEGORY_KEYS.includes(input.category)) throw new Error('Choose a supported category.');
 
@@ -57,6 +76,12 @@ export async function submitManagedListingRequest(input) {
   });
   if (error) throw error;
   return data;
+}
+
+export async function getMyManagedListingRequests() {
+  const { data, error } = await supabase.rpc('get_my_managed_listing_requests');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
 }
 
 export function isCategoryApproved(access, category) {
