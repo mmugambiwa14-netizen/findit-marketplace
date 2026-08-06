@@ -25,7 +25,8 @@ insert into public.business_category_approvals (
   id, business_application_id, user_id, category, status
 ) values
   ('41000000-0000-4000-8000-000000000201', '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000001', 'car', 'approved'),
-  ('41000000-0000-4000-8000-000000000202', '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000001', 'property', 'pending');
+  ('41000000-0000-4000-8000-000000000202', '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000001', 'property', 'pending'),
+  ('41000000-0000-4000-8000-000000000203', '41000000-0000-4000-8000-000000000101', '41000000-0000-4000-8000-000000000001', 'service', 'approved');
 
 select extensions.ok(
   not has_function_privilege('anon', 'public.submit_business_application(text,text,text,text,text,text,text,text,text,text,text[])', 'EXECUTE'),
@@ -48,17 +49,113 @@ select set_config('request.jwt.claim.sub', '41000000-0000-4000-8000-000000000001
 set local role authenticated;
 select extensions.ok(public.can_publish_in_category('car'), 'approved Cars publisher passes the category gate');
 select extensions.ok(not public.can_publish_in_category('property'), 'pending Property category does not pass the gate');
-select extensions.ok(not public.can_publish_in_category('service'), 'unrequested Services category does not pass the gate');
+select extensions.ok(public.can_publish_in_category('service'), 'approved Services publisher passes the category gate');
 reset role;
 
+-- Real listing insert through the authoritative table boundary.
+select set_config('request.jwt.claim.sub', '41000000-0000-4000-8000-000000000001', true);
+select extensions.lives_ok(
+  $$insert into public.listings (
+      id, kind, seller_id, seller_name, title, description, price, currency,
+      native_price, native_currency, photos, category, listing_type, status
+    ) values (
+      '41000000-0000-4000-8000-000000000401', 'car',
+      '41000000-0000-4000-8000-000000000001', 'Approved Publisher',
+      'Approved curated vehicle',
+      'A complete certification listing proving that an approved Cars publisher can cross the authoritative database boundary.',
+      15000, 'USD', 15000, 'USD', '[]'::jsonb, 'cars', 'sale', 'draft'
+    )$$,
+  'approved matching-category listing insert succeeds'
+);
+
+select extensions.throws_ok(
+  $$insert into public.listings (
+      id, kind, seller_id, seller_name, title, description, price, currency,
+      native_price, native_currency, photos, category, listing_type, status
+    ) values (
+      '41000000-0000-4000-8000-000000000402', 'property',
+      '41000000-0000-4000-8000-000000000001', 'Approved Publisher',
+      'Blocked curated property',
+      'A complete certification listing that must fail because Property remains pending for this publisher.',
+      90000, 'USD', 90000, 'USD', '[]'::jsonb, 'houses', 'sale', 'draft'
+    )$$,
+  '42501',
+  'Business category is not approved for publishing',
+  'cross-category listing insert is rejected'
+);
+
+select extensions.throws_ok(
+  $$insert into public.listings (
+      id, kind, seller_id, seller_name, title, description, price, currency,
+      native_price, native_currency, photos, category, listing_type, status
+    ) values (
+      '41000000-0000-4000-8000-000000000403', 'car',
+      '41000000-0000-4000-8000-000000000002', 'Spoofed Publisher',
+      'Spoofed curated vehicle',
+      'A complete certification listing that must fail because the authenticated actor is impersonating another seller.',
+      14000, 'USD', 14000, 'USD', '[]'::jsonb, 'cars', 'sale', 'draft'
+    )$$,
+  '42501',
+  'Listing publisher identity mismatch',
+  'spoofed listing owner is rejected'
+);
+
+-- Real service insert through the direct service table path.
+select extensions.lives_ok(
+  $$insert into public.services (
+      id, provider_id, provider_name, title, description, category,
+      subcategories, currency, photos, status
+    ) values (
+      '41000000-0000-4000-8000-000000000501',
+      '41000000-0000-4000-8000-000000000001', 'Approved Publisher',
+      'Approved mechanic service',
+      'A complete certification service proving an approved Services publisher can use the direct insert path.',
+      'mechanic', '[]'::jsonb, 'USD', '[]'::jsonb, 'active'
+    )$$,
+  'approved Services publisher insert succeeds'
+);
+
+select set_config('request.jwt.claim.sub', '41000000-0000-4000-8000-000000000002', true);
+select extensions.throws_ok(
+  $$insert into public.services (
+      id, provider_id, provider_name, title, description, category,
+      subcategories, currency, photos, status
+    ) values (
+      '41000000-0000-4000-8000-000000000502',
+      '41000000-0000-4000-8000-000000000002', 'Unapproved Publisher',
+      'Blocked mechanic service',
+      'A complete certification service that must fail because this user has no Services approval.',
+      'mechanic', '[]'::jsonb, 'USD', '[]'::jsonb, 'active'
+    )$$,
+  '42501',
+  'Business category is not approved for publishing',
+  'unapproved Services publisher insert is rejected'
+);
+
+select set_config('request.jwt.claim.sub', '41000000-0000-4000-8000-000000000001', true);
 update public.business_category_approvals
 set status = 'suspended', reviewer_message = 'Certification suspension', updated_at = clock_timestamp()
 where id = '41000000-0000-4000-8000-000000000201';
 
-select set_config('request.jwt.claim.sub', '41000000-0000-4000-8000-000000000001', true);
 set local role authenticated;
 select extensions.ok(not public.can_publish_in_category('car'), 'suspended category immediately loses publishing access');
 reset role;
+
+select extensions.throws_ok(
+  $$insert into public.listings (
+      id, kind, seller_id, seller_name, title, description, price, currency,
+      native_price, native_currency, photos, category, listing_type, status
+    ) values (
+      '41000000-0000-4000-8000-000000000404', 'car',
+      '41000000-0000-4000-8000-000000000001', 'Approved Publisher',
+      'Suspended curated vehicle',
+      'A complete certification listing that must fail immediately after the Cars category is suspended.',
+      13000, 'USD', 13000, 'USD', '[]'::jsonb, 'cars', 'sale', 'draft'
+    )$$,
+  '42501',
+  'Business category is not approved for publishing',
+  'suspended category cannot publish a new listing'
+);
 
 select extensions.is(
   (select count(*)::bigint from public.app_alerts
