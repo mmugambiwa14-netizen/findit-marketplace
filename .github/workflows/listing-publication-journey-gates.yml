@@ -14,10 +14,13 @@ on:
       - 'src/repositories/ownerListingsRepository.js'
       - 'src/repositories/publicListingsRepository.js'
       - 'supabase/migrations/0021_v1_listing_creation_and_media.sql'
+      - 'supabase/migrations/20260807030000_remove_listing_content_review_from_mvp.sql'
+      - 'supabase/rollback/20260807030000_remove_listing_content_review_from_mvp.rollback.sql'
       - 'supabase/tests/v1_listing_creation_and_media.sql'
       - 'scripts/phase4-listing-creation-smoke-local.mjs'
       - 'scripts/certify-listing-publication-journey.mjs'
       - 'tests/listingPublicationJourneyContracts.test.mjs'
+      - 'docs/certification/EXTERNAL_CERTIFICATION_BLOCKERS.md'
       - '.github/workflows/listing-publication-journey-gates.yml'
   workflow_dispatch:
 
@@ -34,6 +37,7 @@ jobs:
           node-version: 23
       - run: node scripts/certify-listing-publication-journey.mjs
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: listing-publication-certification
           path: artifacts/certification/listing-publication-journey.json
