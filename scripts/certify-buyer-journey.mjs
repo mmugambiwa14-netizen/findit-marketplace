@@ -1,80 +1,57 @@
+#!/usr/bin/env node
+import { mkdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
-import { access, mkdir, writeFile } from 'node:fs/promises';
-import { constants } from 'node:fs';
-import { resolve } from 'node:path';
+import process from 'node:process';
 
 const stages = [
-  ['search', 'scripts/phase7-search-scale-smoke-local.mjs'],
-  ['public-peek-catalogue', 'scripts/tours-public-catalogue-smoke-local.mjs'],
-  ['listing-peek-integration', 'scripts/tours-listing-integration-smoke-local.mjs'],
-  ['notifications', 'scripts/phase3-notifications-smoke-local.mjs'],
-  ['messaging', 'scripts/phase3-messaging-smoke-local.mjs'],
+  { id: 'repository-contracts', args: ['--test', 'tests/buyerJourneyCertificationContracts.test.mjs'], hosted: false },
+  { id: 'search', args: ['scripts/phase7-search-scale-smoke-local.mjs'], hosted: true },
+  { id: 'public-peek-catalogue', args: ['scripts/tours-public-catalogue-smoke-local.mjs'], hosted: true },
+  { id: 'listing-peek-integration', args: ['scripts/tours-listing-integration-smoke-local.mjs'], hosted: true },
+  { id: 'notifications', args: ['scripts/phase3-notifications-smoke-local.mjs'], hosted: true },
+  { id: 'messaging', args: ['scripts/phase3-messaging-smoke-local.mjs'], hosted: true },
 ];
 
-function runStage(name, script) {
-  return new Promise((resolveStage) => {
-    const startedAt = new Date();
-    const child = spawn(process.execPath, [script], {
-      cwd: process.cwd(),
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let stdout = '';
-    let stderr = '';
-    child.stdout.on('data', (chunk) => { stdout += chunk; process.stdout.write(chunk); });
-    child.stderr.on('data', (chunk) => { stderr += chunk; process.stderr.write(chunk); });
-    child.on('close', (code, signal) => {
-      resolveStage({
-        name,
-        script,
-        status: code === 0 ? 'passed' : 'failed',
-        exitCode: code,
-        signal,
-        startedAt: startedAt.toISOString(),
-        finishedAt: new Date().toISOString(),
-        stdout: stdout.slice(-20_000),
-        stderr: stderr.slice(-20_000),
-      });
-    });
+function run(args) {
+  return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const child = spawn(process.execPath, args, { env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    const append = (chunk) => {
+      output += chunk.toString();
+      if (output.length > 40000) output = output.slice(-40000);
+    };
+    child.stdout.on('data', append);
+    child.stderr.on('data', append);
+    child.on('error', (error) => resolve({ status: 'failed', exitCode: null, durationMs: Date.now() - startedAt, error: error.message, output }));
+    child.on('close', (code) => resolve({ status: code === 0 ? 'passed' : 'failed', exitCode: code, durationMs: Date.now() - startedAt, output }));
   });
 }
 
-async function main() {
-  for (const [, script] of stages) {
-    await access(resolve(script), constants.R_OK);
+const hosted = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY);
+const report = {
+  journey: 'buyer-discovery-to-peek-request-notification-chat',
+  generatedAt: new Date().toISOString(),
+  hostedEnvironmentAvailable: hosted,
+  status: 'running',
+  stages: [],
+};
+
+for (const stage of stages) {
+  if (stage.hosted && !hosted) {
+    report.stages.push({ id: stage.id, status: 'skipped', reason: 'Hosted Supabase credentials are unavailable.' });
+    continue;
   }
-
-  const report = {
-    journey: 'buyer-discovery-to-peek-request-notification-chat',
-    startedAt: new Date().toISOString(),
-    status: 'running',
-    stages: [],
-  };
-
-  for (const [name, script] of stages) {
-    console.log(`\n=== Buyer journey stage: ${name} ===`);
-    const result = await runStage(name, script);
-    report.stages.push(result);
-    if (result.status !== 'passed') {
-      report.status = 'failed';
-      break;
-    }
+  const result = await run(stage.args);
+  report.stages.push({ id: stage.id, ...result });
+  if (result.status === 'failed') {
+    report.status = 'failed';
+    break;
   }
-
-  report.finishedAt = new Date().toISOString();
-  if (report.status === 'running') report.status = 'passed';
-  await mkdir('artifacts/certification', { recursive: true });
-  await writeFile(
-    'artifacts/certification/buyer-journey.json',
-    `${JSON.stringify(report, null, 2)}\n`,
-    'utf8',
-  );
-
-  console.log(`\nBuyer journey certification: ${report.status.toUpperCase()}`);
-  if (report.status !== 'passed') process.exitCode = 1;
 }
 
-main().catch((error) => {
-  console.error('Buyer journey certification could not start:', error);
-  process.exitCode = 1;
-});
+if (report.status === 'running') report.status = report.stages.some((stage) => stage.status === 'skipped') ? 'repository-passed-hosted-pending' : 'passed';
+await mkdir('artifacts/certification', { recursive: true });
+await writeFile('artifacts/certification/buyer-journey.json', `${JSON.stringify(report, null, 2)}\n`);
+console.log(JSON.stringify(report, null, 2));
+process.exitCode = report.status === 'failed' ? 1 : 0;
