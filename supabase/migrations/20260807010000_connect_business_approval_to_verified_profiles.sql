@@ -82,7 +82,9 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  if auth.uid() = old.user_id and not public.is_admin() then
+  if current_user = 'authenticated'
+     and auth.uid() = old.user_id
+     and not public.is_admin() then
     if new.verified is distinct from old.verified
        or new.verification_status is distinct from old.verification_status
        or new.registration_number is distinct from old.registration_number
