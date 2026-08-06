@@ -68,3 +68,38 @@ Release rule:
 
 - Stage 2 must not be called hosted-certified until the clean migration, pgTAP and browser matrix pass on staging.
 - Pending/rejected moderation state and registration evidence must remain absent from the public projection.
+
+## Stage 3 — Peek fulfilment journey
+
+Status: **Implemented and repository-certified; hosted media/database/browser certification pending**
+
+Implemented journey:
+
+`Buyer request → seller accepts or declines → capture/upload → processing/moderation → automatic binding → buyer notification → playback`
+
+Failure and recovery coverage:
+
+`Cancel → retry → processing failure → bounded retry → expiry → successful replacement → completion`
+
+Repository assets:
+
+- existing Response Peek upload, processing, moderation, binding, notification and playback pipeline
+- `supabase/migrations/20260807020000_peek_request_fulfilment_lifecycle.sql`
+- `supabase/migrations/20260807020500_peek_fulfilment_seller_queue.sql`
+- `supabase/tests/v1_peek_fulfilment_journey.sql`
+- `tests/peekFulfilmentJourneyContracts.test.mjs`
+- `.github/workflows/peek-fulfilment-journey-gates.yml`
+
+External evidence still required:
+
+1. Apply all migrations to a clean staging database and run the complete pgTAP suite.
+2. Complete browser acceptance with separate buyer and seller sessions.
+3. Upload a real Response Peek through storage and confirm processing and moderation transitions persist in the seller queue.
+4. Force one processing failure, retry with a replacement upload and confirm the abandoned binding intent cannot answer the request.
+5. Confirm successful approval answers the request once, notifies the requester and supporters once, and opens playable evidence.
+6. Run the expiry operation under the hosted service role and confirm stale fulfilments remain recoverable without closing the buyer request.
+
+Release rule:
+
+- Stage 3 must not be called hosted-certified until database, object-storage, processor, moderation, notification and playback evidence all pass on staging.
+- A request must remain pending until an approved published Response Peek is atomically bound.
