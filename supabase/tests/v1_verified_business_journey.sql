@@ -7,7 +7,12 @@ insert into auth.users (id, email, raw_user_meta_data, created_at, updated_at)
 values
   ('82000000-0000-4000-8000-000000000001', 'verified-owner@example.test', '{"full_name":"Verified Owner"}', now(), now()),
   ('82000000-0000-4000-8000-000000000002', 'late-profile@example.test', '{"full_name":"Late Profile Owner"}', now(), now()),
-  ('82000000-0000-4000-8000-000000000003', 'rejected-owner@example.test', '{"full_name":"Rejected Owner"}', now(), now());
+  ('82000000-0000-4000-8000-000000000003', 'rejected-owner@example.test', '{"full_name":"Rejected Owner"}', now(), now()),
+  ('82000000-0000-4000-8000-000000000004', 'verified-admin@example.test', '{"full_name":"Verified Admin"}', now(), now());
+
+update public.users
+set role = 'admin'
+where id = '82000000-0000-4000-8000-000000000004';
 
 insert into public.business_profiles (
   id, user_id, company_name, business_type, phone, email, city, description,
@@ -70,9 +75,14 @@ select extensions.is(
   'submitted application synchronizes an existing profile to pending'
 );
 
-update public.business_category_approvals
-set status = 'approved', updated_at = clock_timestamp()
-where id = '82000000-0000-4000-8000-000000000301';
+select set_config('request.jwt.claim.sub', '82000000-0000-4000-8000-000000000004', true);
+set local role authenticated;
+select public.admin_review_business_category(
+  '82000000-0000-4000-8000-000000000301',
+  'approve',
+  null
+);
+reset role;
 
 select extensions.ok(
   (select verified from public.business_profiles where id = '82000000-0000-4000-8000-000000000101'),
@@ -109,9 +119,14 @@ select extensions.ok(
   'a profile created after approval is bootstrapped to verified'
 );
 
-update public.business_applications
-set status = 'rejected', reviewer_message = 'Certification rejection', updated_at = clock_timestamp()
-where id = '82000000-0000-4000-8000-000000000203';
+select set_config('request.jwt.claim.sub', '82000000-0000-4000-8000-000000000004', true);
+set local role authenticated;
+select public.admin_review_business_application(
+  '82000000-0000-4000-8000-000000000203',
+  'reject',
+  'Certification rejection'
+);
+reset role;
 
 select extensions.is(
   (select verification_status::text from public.business_profiles where id = '82000000-0000-4000-8000-000000000103'),
@@ -136,6 +151,8 @@ select extensions.ok(
   (select verified from public.business_profiles_public where id = '82000000-0000-4000-8000-000000000101'),
   'public callers can see the approved boolean'
 );
+reset role;
+
 select extensions.is(
   (select count(*)::bigint from information_schema.columns
    where table_schema = 'public'
@@ -144,11 +161,15 @@ select extensions.is(
   0::bigint,
   'public callers cannot inspect moderation status or registration evidence'
 );
-reset role;
 
-update public.business_category_approvals
-set status = 'suspended', reviewer_message = 'Certification suspension', updated_at = clock_timestamp()
-where id = '82000000-0000-4000-8000-000000000301';
+select set_config('request.jwt.claim.sub', '82000000-0000-4000-8000-000000000004', true);
+set local role authenticated;
+select public.admin_review_business_category(
+  '82000000-0000-4000-8000-000000000301',
+  'suspend',
+  'Certification suspension'
+);
+reset role;
 
 select extensions.ok(
   not (select verified from public.business_profiles where id = '82000000-0000-4000-8000-000000000101'),
@@ -157,8 +178,8 @@ select extensions.ok(
 
 select extensions.is(
   (select verification_status::text from public.business_profiles where id = '82000000-0000-4000-8000-000000000101'),
-  'none',
-  'a business with no approved or pending category returns to no verified state'
+  'rejected',
+  'a business with no approved or pending categories follows the rejected application state'
 );
 
 select * from extensions.finish();
