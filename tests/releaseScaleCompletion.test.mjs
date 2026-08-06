@@ -132,7 +132,10 @@ test('fanout alerting and completed-job retention stay aggregate and bounded', (
 test('scale smoke and hosted acceptance include notification pagination and fanout', () => {
   const pkg = JSON.parse(packageJson);
   assert.equal(pkg.scripts['test:notification-scale-local'], 'node ./scripts/notification-scale-smoke-local.mjs');
-  assert.equal(pkg.scripts['test:notification-scale-hosted'], 'node ./scripts/notification-scale-smoke-local.mjs');
+  assert.equal(
+    pkg.scripts['test:notification-scale-hosted'],
+    'node ./scripts/run-hosted-smoke.mjs ./scripts/notification-scale-smoke-local.mjs',
+  );
   assert.match(smoke, /notification keyset traversal must contain no duplicates or skips/);
   assert.match(smoke, /ordinary users cannot read fan-out jobs/);
   assert.match(smoke, /update\(\{ next_attempt_at: '-infinity' \}\)/);

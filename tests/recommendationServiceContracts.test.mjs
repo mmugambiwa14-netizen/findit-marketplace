@@ -7,22 +7,40 @@ const isolation = await readFile('supabase/migrations/0060_recommendation_global
 const cacheHardening = await readFile('supabase/migrations/0061_recommendation_service_runtime_policy_and_cache.sql', 'utf8');
 const runtime = await readFile('supabase/functions/_shared/recommendation-service.ts', 'utf8');
 
-const services = [
-  ['similar-listings', 'similar_listings_service'],
-  ['seller-recommendations', 'seller_recommendations_service'],
-  ['related-services', 'related_services_service'],
-  ['related-products', 'related_products_service'],
-  ['nearby-listings', 'nearby_service'],
-  ['recently-listed', 'recently_listed_service'],
-  ['personalized-recommendations', 'personalized_recommendation_service'],
+// The six unauthenticated services are served by supabase/functions/recommendations
+// and dispatched from the request body. They were six deployment units whose
+// entry points differed only in the constant passed to the shared runtime.
+const publicServices = [
+  'similar_listings_service',
+  'seller_recommendations_service',
+  'related_services_service',
+  'related_products_service',
+  'nearby_service',
+  'recently_listed_service',
 ];
 
-test('Phase 2 exposes seven independently deployable service entry points', async () => {
-  for (const [directory, service] of services) {
-    const entry = await readFile(`supabase/functions/${directory}/index.ts`, 'utf8');
-    assert.match(entry, new RegExp(`serveRecommendationService\\("${service}"\\)`));
+test('every service still has a database contract', () => {
+  for (const service of [...publicServices, 'personalized_recommendation_service']) {
     assert.match(migration, new RegExp(service));
   }
+});
+
+test('the public services are served by one multiplexed entry point', async () => {
+  const entry = await readFile('supabase/functions/recommendations/index.ts', 'utf8');
+  assert.match(entry, /servePublicRecommendationServices\(\)/);
+
+  const allowlist = runtime.match(/const PUBLIC_SERVICES[\s\S]*?\];/)?.[0] ?? '';
+  for (const service of publicServices) {
+    assert.ok(allowlist.includes(`"${service}"`), `${service} must be in PUBLIC_SERVICES`);
+  }
+});
+
+test('personalized keeps its own entry point so the gateway still verifies the JWT', async () => {
+  const entry = await readFile('supabase/functions/personalized-recommendations/index.ts', 'utf8');
+  assert.match(entry, /serveRecommendationService\("personalized_recommendation_service"\)/);
+
+  const allowlist = runtime.match(/const PUBLIC_SERVICES[\s\S]*?\];/)?.[0] ?? '';
+  assert.doesNotMatch(allowlist, /personalized_recommendation_service/);
 });
 
 test('service contracts are cursor-only, versioned and reason-code based', () => {

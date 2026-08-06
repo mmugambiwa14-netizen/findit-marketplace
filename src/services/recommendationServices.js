@@ -15,15 +15,49 @@ function bucketedLimit(limit) {
   return LIMIT_BUCKETS.find((bucket) => limit <= bucket) ?? MAX_PAGE_SIZE;
 }
 
+// Every unauthenticated service is served by one Edge Function and selects
+// itself through the request body. personalized_recommendation_service keeps a
+// dedicated function so the gateway's verify_jwt check still rejects an
+// unauthenticated caller before any function code runs.
+const PUBLIC_RECOMMENDATIONS_ENDPOINT = 'recommendations';
+const PERSONALIZED_ENDPOINT = 'personalized-recommendations';
+
 const SERVICE_ENDPOINTS = Object.freeze({
+  similar_listings_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  seller_recommendations_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  related_services_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  related_products_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  nearby_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  recently_listed_service: PUBLIC_RECOMMENDATIONS_ENDPOINT,
+  personalized_recommendation_service: PERSONALIZED_ENDPOINT,
+});
+
+// The per-service functions the multiplexed endpoint replaced.
+//
+// They remain deployed on the Supabase project until the retired functions are
+// removed, and a browser build can reach a project where `recommendations` is
+// not deployed yet. Rather than requiring the function to ship strictly before
+// the frontend, fall back to the endpoint that used to serve each service, and
+// only when the multiplexed one answers 404 -- any other failure is a real
+// failure and must not be retried against a second endpoint.
+const LEGACY_SERVICE_ENDPOINTS = Object.freeze({
   similar_listings_service: 'similar-listings',
   seller_recommendations_service: 'seller-recommendations',
   related_services_service: 'related-services',
   related_products_service: 'related-products',
   nearby_service: 'nearby-listings',
   recently_listed_service: 'recently-listed',
-  personalized_recommendation_service: 'personalized-recommendations',
 });
+
+// Resolved once per page load. The answer cannot change mid-session without a
+// deploy, so one 404 is enough to stop paying for the extra round-trip.
+let multiplexedEndpointMissing = false;
+
+function isEndpointMissing(error) {
+  if (!error) return false;
+  const status = error.context?.status ?? error.status;
+  return status === 404;
+}
 
 function emptyResult(service, reason = 'unavailable') {
   return {
@@ -186,12 +220,17 @@ async function fetchRecommendationService(service, {
   const normalizedLimit = bucketedLimit(requestedLimit);
 
   /** @type {{
+   *   service: keyof typeof SERVICE_ENDPOINTS,
    *   subjectListingId?: string,
    *   cursor: string | null,
    *   limit: number,
    *   maxDistanceMeters?: number,
    * }} */
   const body = {
+    // The multiplexed endpoint dispatches on this; the dedicated personalized
+    // function ignores it and uses its own deploy-time constant, so sending it
+    // unconditionally keeps one request shape.
+    service,
     ...(subjectRequired ? { subjectListingId } : {}),
     cursor: normalizedCursor,
     limit: normalizedLimit,
@@ -204,7 +243,28 @@ async function fetchRecommendationService(service, {
   }
 
   try {
-    const { data, error } = await invokeWithTimeout(endpoint, body, normalizedTimeout, signal);
+    let { data, error } = await invokeWithTimeout(
+      multiplexedEndpointMissing && LEGACY_SERVICE_ENDPOINTS[service]
+        ? LEGACY_SERVICE_ENDPOINTS[service]
+        : endpoint,
+      body,
+      normalizedTimeout,
+      signal,
+    );
+
+    // A 404 means this project has not been given the multiplexed function yet.
+    // Retry once against the endpoint that used to serve this service so the
+    // frontend can be deployed before or after the function, in either order.
+    if (isEndpointMissing(error) && !multiplexedEndpointMissing && LEGACY_SERVICE_ENDPOINTS[service]) {
+      multiplexedEndpointMissing = true;
+      ({ data, error } = await invokeWithTimeout(
+        LEGACY_SERVICE_ENDPOINTS[service],
+        body,
+        normalizedTimeout,
+        signal,
+      ));
+    }
+
     if (error) return emptyResult(service, error.code === 'client_timeout' ? 'client_timeout' : 'service_unavailable');
     return normalizeResponse(service, data, normalizedLimit);
   } catch {

@@ -1,9 +1,21 @@
 import { supabase } from '@/lib/supabaseClient';
 
-const STAGING_PUBLIC_KEY = 'BLuirAxWgQ7PVQ2EyEORk_oSeN2N5jwwxBQjIM_5UrdHQmGoGFLZ_0zyDNcRQ0fInqZdgcH6_efeFy6tu478xJ4';
-
 function applicationServerKey() {
-  return String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || STAGING_PUBLIC_KEY).trim();
+  // Every deployment supplies its own VAPID public key through the environment.
+  // There is deliberately no in-source fallback, mirroring src/lib/supabaseClient.js.
+  //
+  // A previous revision fell back to a hardcoded staging key. That put key
+  // material in git, and worse, it failed silently: a production build with the
+  // variable unset would encrypt every push subscription against staging's
+  // keypair, so the production dispatcher -- holding a different private key --
+  // could never deliver to those subscribers. The UI would report "enabled"
+  // while nothing ever arrived. Fail closed instead: subscribing without a
+  // configured key throws, and the caller surfaces it to the user.
+  const key = String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY ?? '').trim();
+  if (!key) {
+    throw new Error('Push notifications are not configured for this deployment yet.');
+  }
+  return key;
 }
 
 function urlBase64ToUint8Array(value) {

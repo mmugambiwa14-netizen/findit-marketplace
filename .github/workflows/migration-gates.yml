@@ -84,6 +84,9 @@ jobs:
       - name: Run source contracts
         run: npm run test:contracts
 
+      - name: Run behavioural tests
+        run: npm run test:behaviour
+
       - name: Verify Base44 elimination
         run: npm run verify:base44-elimination
 

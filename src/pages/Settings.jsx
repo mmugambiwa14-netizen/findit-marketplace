@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BellRing, Check, Eye, EyeOff, Lock, ShieldCheck, Trash2, User } from "lucide-react";
+import { ArrowLeft, BellRing, Check, Eye, EyeOff, KeyRound, Lock, ShieldCheck, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
 import * as authService from "@/services/authService";
@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import SellerProfileFields from "@/components/settings/SellerProfileFields";
 import PersonalizationSettings from "@/components/settings/PersonalizationSettings";
 import PushNotificationSettings from "@/components/settings/PushNotificationSettings";
+import MfaSettings from "@/components/settings/MfaSettings";
 import DeleteAccountSection from "@/components/settings/DeleteAccountSection";
 
 export default function Settings() {
@@ -95,6 +96,8 @@ export default function Settings() {
             </div>
           )}
         </Section>
+
+        <Section icon={KeyRound} title="Two-step verification"><MfaSettings /></Section>
 
         <Section icon={User} title="Seller profile"><SellerProfileFields user={user} onSaved={checkUserAuth} /></Section>
         <Section icon={ShieldCheck} title="Recommendation privacy"><PersonalizationSettings userId={user?.id} /></Section>

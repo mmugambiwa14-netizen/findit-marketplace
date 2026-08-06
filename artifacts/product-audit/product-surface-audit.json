@@ -1,31 +1,31 @@
 {
-  "generatedAt": "2026-08-02T03:31:17.208Z",
+  "generatedAt": "2026-08-05T04:33:36.479Z",
   "scope": {
-    "sourceModules": 249,
-    "routedPatterns": 43,
-    "pageModules": 34,
-    "uniqueControlInstances": 581,
-    "pageExpandedControlInstances": 892
+    "sourceModules": 297,
+    "routedPatterns": 46,
+    "pageModules": 37,
+    "uniqueControlInstances": 640,
+    "pageExpandedControlInstances": 1031
   },
   "controlsByElement": {
-    "a": 5,
-    "AlertDialog": 6,
-    "button": 98,
-    "Button": 187,
+    "a": 6,
+    "AlertDialog": 12,
+    "button": 107,
+    "Button": 216,
     "Checkbox": 1,
-    "Dialog": 19,
+    "Dialog": 22,
     "DropdownMenuTrigger": 2,
     "form": 9,
-    "Input": 75,
-    "Link": 93,
+    "Input": 79,
+    "Link": 89,
     "PopoverTrigger": 1,
-    "Select": 25,
-    "SelectTrigger": 25,
-    "Sheet": 4,
+    "Select": 28,
+    "SelectTrigger": 28,
+    "Sheet": 5,
     "Slider": 1,
-    "Switch": 5,
+    "Switch": 7,
     "TabsTrigger": 5,
-    "Textarea": 20
+    "Textarea": 22
   },
   "routes": [
     {
@@ -33,279 +33,300 @@
       "kind": "public",
       "component": "Login",
       "source": "src/pages/Login",
-      "line": 124
+      "line": 123
     },
     {
       "path": "/register",
       "kind": "public",
       "component": "Register",
       "source": "src/pages/Register",
-      "line": 125
+      "line": 124
     },
     {
       "path": "/forgot-password",
       "kind": "public",
       "component": "ForgotPassword",
       "source": "src/pages/ForgotPassword",
-      "line": 126
+      "line": 125
     },
     {
       "path": "/reset-password",
       "kind": "public",
       "component": "ResetPassword",
       "source": "src/pages/ResetPassword",
-      "line": 127
+      "line": 126
     },
     {
       "path": "/",
       "kind": "public",
       "component": "Home",
       "source": "src/pages/Home",
-      "line": 130
+      "line": 129
     },
     {
       "path": "/search",
       "kind": "public",
       "component": "Search",
       "source": "src/pages/Search",
-      "line": 131
+      "line": 130
     },
     {
       "path": "/property/:id",
       "kind": "public",
       "component": "PropertyDetail",
       "source": "src/pages/PropertyDetail",
-      "line": 132
+      "line": 131
     },
     {
       "path": "/car/:id",
       "kind": "public",
       "component": "CarDetail",
       "source": "src/pages/CarDetail",
-      "line": 133
+      "line": 132
     },
     {
       "path": "/machinery/:id",
       "kind": "public",
       "component": "MachineryDetail",
       "source": "src/pages/MachineryDetail",
-      "line": 134
+      "line": 133
     },
     {
       "path": "/seller/:sellerId",
       "kind": "public",
       "component": "SellerProfile",
       "source": "src/pages/SellerProfile",
-      "line": 135
+      "line": 134
     },
     {
       "path": "/business/:id",
       "kind": "public",
       "component": "PublicBusinessProfile",
       "source": "src/pages/PublicBusinessProfile",
-      "line": 136
+      "line": 135
     },
     {
       "path": "/dealer/:id",
       "kind": "public",
       "component": "PublicBusinessProfile",
       "source": "src/pages/PublicBusinessProfile",
-      "line": 137
+      "line": 136
     },
     {
       "path": "/services",
       "kind": "public",
       "component": "Services",
       "source": "src/pages/Services",
-      "line": 138
+      "line": 137
     },
     {
       "path": "/service/:id",
       "kind": "public",
       "component": "ServiceDetail",
       "source": "src/pages/ServiceDetail",
-      "line": 139
+      "line": 138
     },
     {
       "path": "/peek",
       "kind": "public",
       "component": "",
       "source": "",
-      "line": 141
+      "line": 139
     },
     {
       "path": "/tours",
       "kind": "public",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 143
+      "line": 140
     },
     {
       "path": "/help",
       "kind": "public",
       "component": "FAQs",
       "source": "src/pages/FAQs",
-      "line": 144
+      "line": 141
     },
     {
       "path": "/help/contact",
       "kind": "public",
       "component": "ContactSupport",
       "source": "src/pages/ContactSupport",
-      "line": 145
+      "line": 142
     },
     {
       "path": "/legal",
       "kind": "public",
       "component": "LegalPage",
       "source": "src/pages/LegalPage",
-      "line": 146
+      "line": 143
     },
     {
       "path": "/legal/:document",
       "kind": "public",
       "component": "LegalPage",
       "source": "src/pages/LegalPage",
-      "line": 147
+      "line": 144
     },
     {
       "path": "/faqs",
       "kind": "compatibility",
       "component": "Navigate",
       "source": "",
-      "line": 148
+      "line": 145
     },
     {
       "path": "/support",
       "kind": "compatibility",
       "component": "Navigate",
       "source": "",
-      "line": 149
+      "line": 146
     },
     {
       "path": "/create",
       "kind": "compatibility",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 150
+      "line": 147
     },
     {
       "path": "/messages",
       "kind": "compatibility",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 151
+      "line": 148
     },
     {
       "path": "/messages/:conversationId",
       "kind": "compatibility",
       "component": "LegacyConversationRedirect",
       "source": "",
-      "line": 152
+      "line": 149
     },
     {
       "path": "/post",
       "kind": "protected",
       "component": "CreateListing",
       "source": "src/pages/CreateListing",
-      "line": 157
+      "line": 154
     },
     {
       "path": "/create-service",
       "kind": "protected",
       "component": "CreateService",
       "source": "src/pages/CreateService",
-      "line": 158
+      "line": 155
     },
     {
       "path": "/my-services",
       "kind": "protected",
       "component": "MyServices",
       "source": "src/pages/MyServices",
-      "line": 159
+      "line": 156
     },
     {
       "path": "/saved",
       "kind": "protected",
       "component": "Saved",
       "source": "src/pages/Saved",
-      "line": 160
+      "line": 157
     },
     {
       "path": "/profile",
       "kind": "protected",
       "component": "Profile",
       "source": "src/pages/Profile",
-      "line": 161
+      "line": 158
     },
     {
       "path": "/my-listings",
       "kind": "protected",
       "component": "MyListings",
       "source": "src/pages/MyListings",
-      "line": 162
+      "line": 159
+    },
+    {
+      "path": "/peek-requests",
+      "kind": "public",
+      "component": "BuyerPeekRequests",
+      "source": "src/pages/BuyerPeekRequests",
+      "line": 160
     },
     {
       "path": "/settings",
       "kind": "protected",
       "component": "Settings",
       "source": "src/pages/Settings",
-      "line": 163
+      "line": 161
     },
     {
       "path": "/chats",
       "kind": "protected",
       "component": "Inquiries",
       "source": "src/pages/Inquiries",
-      "line": 164
+      "line": 162
     },
     {
       "path": "/chats/:conversationId",
       "kind": "protected",
       "component": "Inquiries",
       "source": "src/pages/Inquiries",
-      "line": 165
+      "line": 163
     },
     {
       "path": "/business-profiles",
       "kind": "protected",
       "component": "BusinessProfiles",
       "source": "src/pages/BusinessProfiles",
-      "line": 166
+      "line": 164
     },
     {
       "path": "/notifications",
       "kind": "protected",
       "component": "NotificationCenter",
       "source": "src/pages/NotificationCenter",
-      "line": 167
+      "line": 165
     },
     {
       "path": "/admin",
       "kind": "admin",
       "component": "AdminDashboard",
       "source": "src/pages/admin/AdminDashboard",
-      "line": 173
+      "line": 171
     },
     {
       "path": "/admin/listings",
       "kind": "admin",
       "component": "AdminListings",
       "source": "src/pages/admin/AdminListings",
-      "line": 174
+      "line": 172
+    },
+    {
+      "path": "/admin/peeks",
+      "kind": "admin",
+      "component": "AdminPeeks",
+      "source": "src/pages/admin/AdminPeeks",
+      "line": 173
     },
     {
       "path": "/admin/users",
       "kind": "admin",
       "component": "AdminUsers",
       "source": "src/pages/admin/AdminUsers",
-      "line": 175
+      "line": 174
     },
     {
       "path": "/admin/reports",
       "kind": "admin",
       "component": "AdminReports",
       "source": "src/pages/admin/AdminReports",
+      "line": 175
+    },
+    {
+      "path": "/admin/support",
+      "kind": "admin",
+      "component": "AdminSupportRequests",
+      "source": "src/pages/admin/AdminSupportRequests",
       "line": 176
     },
     {

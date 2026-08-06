@@ -1,3 +1,4 @@
+import { sanitizeText } from '../lib/sanitizeText.js';
 function normalizedUserId(value) {
   if (typeof value !== 'string' || !value.trim()) throw new TypeError('User is required');
   return value.trim();
@@ -5,7 +6,10 @@ function normalizedUserId(value) {
 
 function normalizedText(value, label, maximum, required = false) {
   if (typeof value !== 'string') throw new TypeError(`${label} must be text`);
-  const normalized = value.trim();
+  // Strip null bytes, control, zero-width and bidi characters. The bidi strip in
+  // particular stops a display name from rendering as something other than what
+  // is stored.
+  const normalized = sanitizeText(value, { collapseWhitespace: false });
   if (required && !normalized) throw new TypeError(`${label} is required`);
   if (normalized.length > maximum) throw new RangeError(`${label} is too long`);
   return normalized;

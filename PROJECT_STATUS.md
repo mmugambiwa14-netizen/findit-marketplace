@@ -16,7 +16,7 @@ Repository status: **Milestone 7 implementation plus extensive product-surface r
 
 ## Current verification
 
-Run `npm run certify:release-candidate` for the machine-readable release result and review `FINDIT_EXTENSIVE_PRODUCT_AUDIT_2026-07-27.md` plus `artifacts/product-audit/` for the route/control audit evidence.
+Run `npm run certify:release-candidate` for the machine-readable release result and review `docs/history/FINDIT_EXTENSIVE_PRODUCT_AUDIT_2026-07-27.md` plus `artifacts/product-audit/` for the route/control audit evidence.
 
 Current dependency-independent evidence:
 

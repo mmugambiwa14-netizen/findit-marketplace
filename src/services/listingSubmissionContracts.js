@@ -1,3 +1,5 @@
+import { sanitizeText } from '../lib/sanitizeText.js';
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
 const KINDS = new Set(['property', 'car', 'machinery']);
@@ -12,7 +14,10 @@ const OWNER_ACTIONS = new Set(['submit', 'pause', 'resume', 'unavailable']);
 const SUPPORTED_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
 
 function text(value, label, min, max, { optional = false } = {}) {
-  const normalized = typeof value === 'string' ? value.trim() : '';
+  // Strip null bytes, control, zero-width and bidi characters before validating.
+  // A newline is preserved (multi-line descriptions are legitimate); the length
+  // check then runs on the cleaned value.
+  const normalized = sanitizeText(value, { collapseWhitespace: false });
   if (optional && !normalized) return '';
   if (normalized.length < min) throw new TypeError(`${label} is too short`);
   if (normalized.length > max) throw new TypeError(`${label} is too long`);

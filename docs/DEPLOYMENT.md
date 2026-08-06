@@ -7,8 +7,11 @@ Actions executes the migration, recommendation database, release and Pages
 workflows. All four PR checks and the Pages deployment passed on listing
 intelligence head `cdba0ce`.
 
-Staging frontend:
-`https://mmugambiwa14-netizen.github.io/findit-marketplace/`
+Staging frontend (current live target):
+`https://findit-marketplace-staging.vercel.app/` — the installable Vercel PWA,
+and the Supabase Auth Site URL (`supabase/config.toml`). The earlier GitHub
+Pages preview (`https://mmugambiwa14-netizen.github.io/findit-marketplace/`) is
+superseded and retained only as a legacy allow-listed redirect.
 
 Staging Supabase: `FindIt Staging` (`bwgklpxoetrrkutottdb`). The production
 project `FindIt Marketplace` (`jvbpxnfxkptuexgssplj`) was inspected only and

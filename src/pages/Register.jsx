@@ -13,6 +13,7 @@ import { toast } from "@/components/ui/use-toast";
 import { hasEnabledOAuthProvider, oauthProviders } from "@/lib/oauthProviders";
 import { createLoginPath, sanitizeReturnTo } from "@/lib/authNavigation";
 import { PASSWORD_MIN_LENGTH, passwordPolicyError } from "@/lib/passwordPolicy";
+import { emailPolicyError } from "@/lib/emailPolicy";
 
 // Phase 2B. Replaces the Base44 register -> custom 6-digit OTP screen flow
 // with Supabase's standard signUp -> email confirmation link flow, per the
@@ -36,6 +37,11 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const emailError = emailPolicyError(email);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
     const policyError = passwordPolicyError(password);
     if (policyError) {
       setError(policyError);

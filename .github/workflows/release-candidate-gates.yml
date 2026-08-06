@@ -122,7 +122,9 @@ jobs:
           set +e
           npm run test:contracts 2>&1 | tee artifacts/certification/contract-test.log
           status=${PIPESTATUS[0]}
-          exit "$status"
+          if [ "$status" -ne 0 ]; then exit "$status"; fi
+          npm run test:behaviour 2>&1 | tee artifacts/certification/behaviour-test.log
+          exit "${PIPESTATUS[0]}"
 
       - name: Upload contract test evidence
         if: always()

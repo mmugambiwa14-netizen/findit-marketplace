@@ -31,10 +31,24 @@ npm run lint
 npm run typecheck
 npm run typecheck:migration
 npm run typecheck:active
-npm run test:contracts
+npm run test            # contract suite + behavioural suite
+npm run verify:hygiene
+npm run verify:source-graph
+npm run test:pgtap-local   # pgTAP without Docker; see the doc for its limits
 npm run verify:base44-elimination
 npm run build
 ```
+
+`npm test` runs two suites with different jobs:
+
+- `npm run test:contracts` (`node --test tests/*.test.mjs`) reads source files
+  as text and asserts on their structure, wiring and migration boundaries.
+- `npm run test:behaviour` (`vitest run tests/behaviour/`) imports the real
+  modules and renders the real components, so it catches regressions that leave
+  the source text intact. Use `npm run test:behaviour:watch` while developing.
+
+New product behaviour belongs in the behavioural suite. A text assertion cannot
+tell a working component from a deleted one.
 
 Hosted disposable acceptance is run through
 `scripts/run-hosted-acceptance.ps1`; worker credentials and schedules are set
@@ -59,6 +73,9 @@ Read these before deployment:
 - [Project status](PROJECT_STATUS.md)
 - [Production readiness](PRODUCTION_READINESS_REPORT.md)
 - [Migration completion](MIGRATION_COMPLETION_REPORT.md)
+- [Architecture snapshot (generated)](docs/ARCHITECTURE_SNAPSHOT.md)
+- [Recommendation endpoint migration](docs/RECOMMENDATION_ENDPOINT_MIGRATION.md)
+- [Clean-database findings, 2026-08-05](docs/CLEAN_DATABASE_FINDINGS_2026-08-05.md)
 - [Architecture](ARCHITECTURE.md)
 - [Database](docs/DATABASE.md)
 - [Supabase setup](docs/SUPABASE_SETUP.md)
@@ -67,13 +84,21 @@ Read these before deployment:
 - [Environment variables](docs/ENVIRONMENT_VARIABLES.md)
 - [Google and Apple OAuth setup](docs/OAUTH_SETUP.md)
 - [FindIt authentication email templates](docs/EMAIL_TEMPLATES.md)
+- [Custom SMTP setup](docs/SMTP_SETUP.md)
 - [QA](QA_STATUS.md) and [security review](docs/SECURITY_REVIEW.md)
 - [Solo founder guide](SOLO_FOUNDER_GUIDE.md)
 
-The accepted staging release is deployed at
-`https://mmugambiwa14-netizen.github.io/findit-marketplace/`. Peek is enabled in
-the bottom navigation and backend, its workers are active, and all seven
-recommendation policies are enabled on staging. Production remains a separate,
-explicit rollout: its Supabase project is intentionally unchanged and still
-requires a named migration/function window, production secrets and domain,
-SMTP, monitoring, recovery ownership, and final browser/device acceptance.
+Completed migration, milestone and audit records are archived under
+[`docs/history/`](docs/history/).
+
+The accepted staging release is the installable PWA deployed on Vercel at
+`https://findit-marketplace-staging.vercel.app/`, which is also the Supabase
+Auth Site URL (`supabase/config.toml`). Peek is enabled in the bottom
+navigation and backend, its workers are active, and all seven recommendation
+policies are enabled on staging. The earlier GitHub Pages preview
+(`https://mmugambiwa14-netizen.github.io/findit-marketplace/`) is superseded and
+kept only as a legacy allow-listed redirect; it is not the live staging target.
+Production remains a separate, explicit rollout: its Supabase project is
+intentionally unchanged and still requires a named migration/function window,
+production secrets and domain, SMTP, monitoring, recovery ownership, and final
+browser/device acceptance.

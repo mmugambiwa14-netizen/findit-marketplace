@@ -923,3 +923,136 @@ suspected key compromise.
 These are proposals. Several — duplicate detection, verification retention
 design, DPA compliance — are product and policy decisions rather than security
 fixes, and picking defaults unilaterally would be the wrong call.
+
+## Addendum — 2026-08-05: services contact grant for `authenticated` (High)
+
+An adversarial re-audit, run against a from-scratch database, found that the
+seller-contact boundary closed for `anon` on 2026-08-02 was still open for
+`authenticated` on `public.services` — and that a later migration meant to close
+it never took effect.
+
+### The exploit
+
+Acting as an ordinary signed-in user (not the provider, not a buyer, no reveal
+request), against the real migrated schema:
+
+```sql
+set role authenticated;
+select contact_phone, contact_whatsapp, contact_email from public.services;  -- returned every row
+select count(contact_phone) from public.services where contact_phone is not null;  -- bulk harvest
+```
+
+Every service provider's raw phone, WhatsApp and email was readable in a single
+query, with no rate limit and no `contact_reveal_events` row — bypassing the
+`reveal_service_contact` RPC and its 40/day cap entirely.
+
+### Root cause — a no-op revoke, twice
+
+The 2026-08-02 addendum (§1) noted `authenticated` retained the contact column
+grant and that closing it "remains open". Migration `0115` then tried to close
+it:
+
+```sql
+revoke select (contact_phone, contact_whatsapp, contact_email)
+  on public.services from authenticated;   -- 0115, lines 187-188
+```
+
+That revoke was a no-op. `authenticated` still held the **table-level** SELECT
+grant from `0047` (`0111` removed only `anon`'s), and a table-level grant covers
+every column and cannot be narrowed by revoking individual columns — the exact
+behaviour `0111` had documented one migration earlier. `public.listings` was
+never exposed this way because `0049` removed its table-level grant from both
+roles and replaced it with a column allowlist, so `0115`'s revoke took effect
+there.
+
+The gap was invisible because the application already behaved as if it were
+closed: `servicesRepository.js` selects only the `has_contact_*` flags and reads
+owner values through the `owner_service_contacts` RPC. The code comment even
+reads "Contact columns are no longer selectable by `authenticated` -- see
+migration 0115." The frontend stopped selecting the columns; the database never
+stopped serving them.
+
+### Fix
+
+`20260805100000_services_contact_column_allowlist_authenticated.sql` applies to
+`authenticated` the treatment `0111` applied to `anon`: revoke the table-level
+SELECT and grant a column allowlist rebuilt from the live column list minus the
+three contact columns (so a column added later is not silently exposed). It
+fails closed if the contact columns stay readable, if a table-level grant
+survives, or if a safe column is lost.
+
+### Verified (executed, from-scratch database)
+
+- Before: harvester reads phone/WhatsApp/email of any service, plus the bulk
+  form. After: all four denied (`42501 permission denied for table services`).
+- Marketplace browsing intact: the active service row stays visible and `title`
+  / `has_contact_phone` stay readable.
+- Owner self-read intact: `owner_service_contacts` (SECURITY DEFINER, filtered
+  on `provider_id = auth.uid()`) still returns the provider's own values.
+- `listings` parity confirmed: `authenticated` cannot read `listings.contact_phone`.
+
+Regression guard: `supabase/tests/v1_services_contact_column_boundary.sql`
+(15 assertions — grant shape plus live role-switched harvest attempts), added to
+the migration certification list. A future migration that re-grants a
+table-level SELECT fails this suite.
+
+## Addendum — 2026-08-05: signup email integrity, auth rate limiting, text input hardening
+
+Three requested hardening items, each implemented with the enforcement in the
+right layer and verified.
+
+### 1. Fake / disposable signup emails are rejected
+
+`src/lib/emailPolicy.js` validates format and rejects a curated set of disposable
+domains (and their subdomains) in the browser for immediate feedback. That is UX
+only, so the same blocklist is enforced server-side: migration
+`20260805110000` adds `public.before_user_created_hook`, wired in via
+`[auth.hook.before_user_created]`. GoTrue calls it before it inserts the
+`auth.users` row, so a caller that talks to the signup endpoint directly is still
+refused with no user created. The blocklist lives in
+`public.disposable_email_domains` (RLS-enabled, no browser grant; the hook reaches
+it as SECURITY DEFINER). Combined with the already-enabled email confirmation
+requirement, an unconfirmed, fake, or throwaway address cannot be used to sign in.
+
+Verified by execution: `mailinator.com` and `x.guerrillamail.com` rejected;
+`gmail.com` and `company.co.zw` accepted; phone-only signups pass through.
+Regression guard: `supabase/tests/v1_disposable_signup_email_hook.sql` (12
+assertions) and `tests/behaviour/emailPolicy.test.js` (21).
+
+### 2. Login / reset / signup rate limiting
+
+Supabase (GoTrue) enforces per-IP rate limits on sign-in/sign-up
+(`sign_in_sign_ups`), OTP/recovery verifications (`token_verifications`),
+confirmation/reset emails (`email_sent`) and session refresh. These were already
+configured for the local stack; two gaps are now closed:
+
+- `tests/authHardeningConfigContracts.test.mjs` pins the limits within safe upper
+  bounds, keeps email confirmations on, holds the password floor at 10, and
+  asserts the disposable-email hook stays enabled — so the posture cannot regress
+  silently.
+- `scripts/lib/auth-config-policy.mjs` (the hosted-project auditor) now flags a
+  production project whose rate limits are absent or set so high they no longer
+  bite, gated by `FINDIT_EXPECT_AUTH_RATE_LIMIT_MAX`.
+
+Captcha remains the strongest anti-automation control and is already audited via
+`FINDIT_EXPECT_AUTH_CAPTCHA`; enabling it needs a provider key and a CSP entry and
+is a deployment decision, not a code change.
+
+### 3. Text-field input hardening
+
+SQL injection is not reachable (all writes are parameterised RPCs; the search RPC
+concatenates a bound value with an explicit LIKE `ESCAPE`) and XSS is not reachable
+(React escapes; there is no `dangerouslySetInnerHTML`). The residual vectors are
+null bytes, control, zero-width and bidirectional-override characters in stored
+text. The project already had a strong sanitizer (`src/lib/sanitizeText.js`) but
+only three of fifteen text contracts used it. It is now applied in the
+create-listing, profile, business-profile and support contracts as well, so every
+high-traffic free-text field strips those characters before the value is sent.
+`tests/behaviour/textInjectionHardening.test.js` (6 tests) drives the real
+contracts and asserts the hostile characters are gone while ordinary text and
+emoji survive.
+
+Residual, documented: the sanitizer is client-side; the database backstops length
+via CHECK constraints and rejects null bytes natively, but does not reject
+zero-width/bidi on a direct RPC call. That is a display-spoofing risk, not code
+execution, and is the same client-enforced boundary the codebase already chose.

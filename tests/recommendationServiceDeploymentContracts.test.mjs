@@ -7,15 +7,9 @@ const smoke = await readFile('scripts/recommendation-services-smoke.mjs', 'utf8'
 const phase3Certification = await readFile('scripts/recommendation-phase3-staging-certification.mjs', 'utf8');
 const config = await readFile('supabase/config.toml', 'utf8');
 
-const publicFunctions = [
-  'similar-listings',
-  'seller-recommendations',
-  'related-services',
-  'related-products',
-  'nearby-listings',
-  'recently-listed',
-  'personalized-recommendations',
-];
+// The six unauthenticated services now share one function and select themselves
+// through the request body; personalized keeps its own so verify_jwt still runs.
+const publicFunctions = ['recommendations', 'personalized-recommendations'];
 
 test('anonymous browser recommendation functions accept opaque publishable keys at the gateway', () => {
   for (const functionName of publicFunctions.filter((name) => name !== 'personalized-recommendations')) {
@@ -26,6 +20,35 @@ test('anonymous browser recommendation functions accept opaque publishable keys 
     );
   }
   assert.match(config, /\[functions\.contextual-ecosystem\][\s\S]*?verify_jwt = false/);
+});
+
+test('the retired per-service functions are gone from config and disk', async () => {
+  for (const retired of [
+    'similar-listings', 'seller-recommendations', 'related-services',
+    'related-products', 'nearby-listings', 'recently-listed',
+  ]) {
+    assert.doesNotMatch(
+      config,
+      new RegExp(`\\[functions\\.${retired}\\]`),
+      `${retired} was collapsed into functions.recommendations`,
+    );
+    await assert.rejects(
+      readFile(`supabase/functions/${retired}/index.ts`, 'utf8'),
+      `supabase/functions/${retired} should no longer exist`,
+    );
+  }
+});
+
+test('the multiplexed function refuses a service outside the public allowlist', async () => {
+  const runtime = await readFile('supabase/functions/_shared/recommendation-service.ts', 'utf8');
+
+  // personalized must not be reachable through the unauthenticated endpoint --
+  // that is the whole reason it kept its own function.
+  const allowlist = runtime.match(/const PUBLIC_SERVICES[\s\S]*?\];/)?.[0] ?? '';
+  assert.ok(allowlist, 'PUBLIC_SERVICES allowlist must exist');
+  assert.doesNotMatch(allowlist, /personalized_recommendation_service/);
+  assert.match(runtime, /function isPublicService/);
+  assert.match(runtime, /code: "unknown_service"/);
 });
 
 test('personalized recommendations still require authenticated gateway access', () => {
