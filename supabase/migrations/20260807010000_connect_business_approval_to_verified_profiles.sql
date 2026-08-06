@@ -101,7 +101,10 @@ create trigger prevent_owner_business_verification_mutation
 before update on public.business_profiles
 for each row execute function public.prevent_owner_business_verification_mutation();
 
-create or replace function private.public_business_profiles()
+drop view if exists public.business_profiles_public;
+drop function if exists private.public_business_profiles();
+
+create function private.public_business_profiles()
 returns table (
   id uuid,
   user_id uuid,
@@ -141,7 +144,7 @@ $$;
 revoke all on function private.public_business_profiles() from public;
 grant execute on function private.public_business_profiles() to anon, authenticated, service_role;
 
-create or replace view public.business_profiles_public
+create view public.business_profiles_public
 with (security_barrier = true, security_invoker = true)
 as select * from private.public_business_profiles();
 
