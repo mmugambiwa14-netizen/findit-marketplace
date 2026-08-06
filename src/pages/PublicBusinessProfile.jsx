@@ -4,6 +4,7 @@ import { Building2, ExternalLink, Loader2, Mail, MapPin, MessageCircle, Phone, S
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import DealerListings from '@/components/dealers/DealerListings';
 import ServiceCard from '@/components/services/ServiceCard';
+import VerifiedBusinessBadge from '@/components/business/VerifiedBusinessBadge';
 import { Button } from '@/components/ui/button';
 import { safeExternalUrl } from '@/lib/safeUrl';
 import { Card, CardContent } from '@/components/ui/card';
@@ -68,18 +69,15 @@ export default function PublicBusinessProfile() {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">We could not load this profile</h1><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="mt-5" onClick={() => profileQuery.refetch()}>Try again</Button></div>;
   }
   if (!profile) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">Profile not found</h1><p className="mt-2 text-sm text-muted-foreground">This business is unavailable or no longer active.</p><Button asChild variant="outline" className="mt-5"><Link to="/search">Browse FindIt</Link></Button></div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">Profile not found</h1><p className="mt-2 text-sm text-muted-foreground">This business is unavailable or no longer active.</p><Button asChild variant="outline" className="mt-5"><Link to="/search">Browse PeekaListing</Link></Button></div>;
   }
 
   const whatsapp = contactNumber(profile.phone);
-  // Scheme-checked at render. Write-time validation in
-  // businessProfileContracts.js runs in the browser and can be bypassed by
-  // calling PostgREST directly, so anything that fails the http(s) check here
-  // is dropped rather than rendered as a clickable link.
   const websiteUrl = safeExternalUrl(profile.website);
   const socialLinks = Object.entries(profile.social_links ?? {})
     .map(([network, url]) => [network, safeExternalUrl(url)])
     .filter(([, url]) => url !== null);
+
   return (
     <div className="min-h-screen bg-muted/20">
       <section className="border-b bg-card px-4 py-8">
@@ -89,7 +87,10 @@ export default function PublicBusinessProfile() {
               {profile.avatar_url ? <img src={profile.avatar_url} alt={`${profile.company_name} logo`} loading="eager" decoding="async" className="h-full w-full object-cover" /> : <Building2 className="h-11 w-11 text-primary" />}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-primary">{dealer ? 'Vehicle dealer' : 'Business'}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-medium text-primary">{dealer ? 'Vehicle dealer' : 'Business'}</p>
+                <VerifiedBusinessBadge verified={profile.verified} status={profile.verification_status} publicView />
+              </div>
               <h1 className="mt-1 text-3xl font-bold tracking-tight">{profile.company_name}</h1>
               {profile.city && <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{profile.city}</p>}
               {profile.description && <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">{profile.description}</p>}

@@ -83,8 +83,8 @@ values
     'public-business@example.test',
     'Harare',
     'Active public business-profile projection fixture.',
-    false,
-    'none'
+    true,
+    'verified'
   ),
   (
     '81000000-0000-4000-8000-000000000102',
@@ -111,6 +111,12 @@ select extensions.is(
   ),
   1::bigint,
   'anonymous callers can read an active public business profile'
+);
+
+select extensions.ok(
+  (select verified from public.business_profiles_public
+   where id = '81000000-0000-4000-8000-000000000101'),
+  'anonymous callers can see whether an active business is approved'
 );
 
 select extensions.is(
@@ -140,7 +146,7 @@ select extensions.is(
       and column_name in ('registration_number', 'issuing_body', 'verification_status')
   ),
   0::bigint,
-  'private registration and verification fields are absent from the projection'
+  'private registration and moderation fields are absent from the projection'
 );
 
 select extensions.finish();
