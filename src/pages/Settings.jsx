@@ -14,6 +14,7 @@ import SellerProfileFields from "@/components/settings/SellerProfileFields";
 import PersonalizationSettings from "@/components/settings/PersonalizationSettings";
 import PushNotificationSettings from "@/components/settings/PushNotificationSettings";
 import DeleteAccountSection from "@/components/settings/DeleteAccountSection";
+import MfaSettings from "@/components/settings/MfaSettings";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ export default function Settings() {
           )}
         </Section>
 
+        <Section icon={ShieldCheck} title="Account security"><MfaSettings /></Section>
         <Section icon={User} title="Seller profile"><SellerProfileFields user={user} onSaved={checkUserAuth} /></Section>
         <Section icon={ShieldCheck} title="Recommendation privacy"><PersonalizationSettings userId={user?.id} /></Section>
         <Section icon={Trash2} title="Delete account"><DeleteAccountSection user={user} /></Section>
