@@ -38,3 +38,33 @@ Release rule:
 
 - Stage 1 must not be called hosted-certified until the workflow completes successfully and its JSON artifact reports `status: passed`.
 - This item remains a launch blocker until that evidence exists.
+
+## Stage 2 — Verified business journey
+
+Status: **Implemented and repository-certified; hosted database/browser certification pending**
+
+Implemented journey:
+
+`Application → category review → approval/rejection → verified profile synchronization → public approved marker → inventory/services → owner notification`
+
+Repository assets:
+
+- existing curated application and admin-review system
+- `supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql`
+- `supabase/migrations/20260807011000_verified_business_profile_bootstrap.sql`
+- `supabase/tests/v1_verified_business_journey.sql`
+- `tests/verifiedBusinessJourneyContracts.test.mjs`
+- `.github/workflows/verified-business-journey-gates.yml`
+
+External evidence still required:
+
+1. Apply all migrations to a clean staging database.
+2. Run `supabase/tests/v1_verified_business_journey.sql` and the complete pgTAP suite.
+3. Complete browser acceptance with separate applicant, admin and public sessions.
+4. Confirm existing business application/category notifications arrive in the hosted notification center.
+5. Confirm public profiles show the approved marker only after an approved category and remove it after the final approved category is suspended.
+
+Release rule:
+
+- Stage 2 must not be called hosted-certified until the clean migration, pgTAP and browser matrix pass on staging.
+- Pending/rejected moderation state and registration evidence must remain absent from the public projection.
