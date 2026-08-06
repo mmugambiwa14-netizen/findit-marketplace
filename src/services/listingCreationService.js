@@ -13,12 +13,22 @@ import {
   normalizeListingSubmission,
   normalizeOwnerListingAction,
 } from '@/services/listingSubmissionContracts';
+import { supabase } from '@/lib/supabaseClient';
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const MAX_COMPATIBILITY_DIMENSION = 4096;
 const COMPATIBILITY_CODES = new Set(['unsupported_image', 'mime_mismatch']);
 
-export function submitListing(ownerId, input) {
+export async function submitListing(ownerId, input) {
+  const { data: allowed, error } = await supabase.rpc('can_publish_in_category', {
+    p_category: input.kind,
+  });
+  if (error) throw error;
+  if (!allowed) {
+    const failure = new Error('Your business is not approved to publish in this category.');
+    failure.code = 'BUSINESS_CATEGORY_NOT_APPROVED';
+    throw failure;
+  }
   return insertListingSubmission(normalizeListingSubmission(ownerId, input));
 }
 
