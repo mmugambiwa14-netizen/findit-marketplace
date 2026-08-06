@@ -42,7 +42,6 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
   for (const requiredFlag of [
     'VITE_FEATURE_GOOGLE_OAUTH',
-    'VITE_FEATURE_INTERNATIONAL_LISTING',
     'VITE_FEATURE_MANUAL_LOCATION',
     'VITE_FEATURE_CURRENT_LOCATION',
     'VITE_FEATURE_REPORTING',
@@ -52,6 +51,9 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
     'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
     'VITE_FEATURE_PREVIEW_FIXTURES',
     'VITE_PREVIEW_AUTH_BYPASS',
+    // validate-env refuses to build with this enabled until the international
+    // listing contract exists, so the workflows must agree with that gate.
+    'VITE_FEATURE_INTERNATIONAL_LISTING',
   ]) assert.match(acceptanceWorkflow, new RegExp(`${closedFlag}: "false"`));
   assert.match(acceptanceWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
   assert.match(acceptanceWorkflow, /apt-get install --yes --no-install-recommends ffmpeg/);
@@ -86,7 +88,6 @@ test('staging deployment can expose preview or public Tours without weakening pr
   assert.match(stagingWorkflow, /FINDIT_TOURS_ACCEPTANCE_ID: \$\{\{ vars\.FINDIT_TOURS_ACCEPTANCE_ID \}\}/);
   for (const requiredFlag of [
     'VITE_FEATURE_GOOGLE_OAUTH',
-    'VITE_FEATURE_INTERNATIONAL_LISTING',
     'VITE_FEATURE_MANUAL_LOCATION',
     'VITE_FEATURE_CURRENT_LOCATION',
     'VITE_FEATURE_REPORTING',
@@ -96,6 +97,7 @@ test('staging deployment can expose preview or public Tours without weakening pr
     'VITE_PREVIEW_AUTH_BYPASS',
     'VITE_FEATURE_LISTING_EXPIRY',
     'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
+    'VITE_FEATURE_INTERNATIONAL_LISTING',
   ]) assert.match(stagingWorkflow, new RegExp(`${closedFlag}: "false"`));
   assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: \$\{\{ vars\.FINDIT_RECOMMENDATION_WORKERS_ENABLED \}\}/);
   assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);

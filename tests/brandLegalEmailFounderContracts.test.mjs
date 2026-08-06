@@ -50,25 +50,27 @@ test('desktop top navigation omits the redundant Browse and Services links', () 
   assert.match(topNav, /\bPost\b/);
 });
 
-test('the polished FindIt identity is present across app shells and install metadata', async () => {
-  assert.match(brandLogo, /findit-brand-mark/);
+test('the PeekaListing identity is present across app shells and install metadata', async () => {
+  // The mark is the binoculars SVG, resolved through the deployment base path so
+  // it survives being served from a subdirectory.
+  assert.match(brandLogo, /peekalisting-binoculars\.svg/);
+  assert.match(brandLogo, /import\.meta\.env\.BASE_URL/);
+  assert.match(brandLogo, /Peeka/);
   for (const shell of [topNav, footer, authLayout, adminSidebar]) {
     assert.match(shell, /BrandLogo/);
   }
 
   for (const filename of [
-    'findit-mark.png',
-    'findit-icon-32.png',
-    'findit-icon-64.png',
-    'findit-icon-180.png',
-    'findit-icon-192.png',
-    'findit-icon-512.png',
+    'peekalisting-binoculars.svg',
+    'peekalisting-icon-192.png',
+    'peekalisting-icon-512.png',
+    'peekalisting-maskable-512.png',
   ]) {
-    const asset = await readFile(new URL(`../src/assets/brand/${filename}`, import.meta.url));
+    const asset = await readFile(new URL(`../public/brand/${filename}`, import.meta.url));
     assert.ok(asset.byteLength > 0);
   }
 
-  assert.match(pageMetadata, /findit-icon-32\.png/);
+  assert.match(pageMetadata, /peekalisting-icon-192\.png/);
   assert.match(pageMetadata, /apple-touch-icon/);
 });
 

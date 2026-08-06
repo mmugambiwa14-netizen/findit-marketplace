@@ -12,14 +12,14 @@ Derived from the repository on each run of `npm run docs:architecture`.
 
 | Measure | Count |
 |---|---|
-| Migrations | 141 |
-| Tables created | 91 |
-| Tables with RLS enabled | 91 |
+| Migrations | 154 |
+| Tables created | 96 |
+| Tables with RLS enabled | 96 |
 | Views | 5 |
-| `create policy` statements | 218 |
-| `security definer` functions | 321 |
-| `set search_path` pins | 375 |
-| pgTAP suites | 48 |
+| `create policy` statements | 223 |
+| `security definer` functions | 346 |
+| `set search_path` pins | 399 |
+| pgTAP suites | 50 |
 
 Every table created in a migration has row level security enabled.
 
@@ -63,4 +63,4 @@ Every table created in a migration has row level security enabled.
 ## First and last migration
 
 - First: `0001_extensions_and_enums.sql`
-- Last: `20260805110000_reject_disposable_signup_emails.sql`
+- Last: `20260806140000_close_default_public_execute_and_table_grants.sql`

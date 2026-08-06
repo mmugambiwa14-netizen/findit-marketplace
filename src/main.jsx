@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import '@/index.css'
 import '@/findit-locked-design.css'
 import '@/pwa-viewport.css'
+import { readStoredString, writeStoredString } from '@/lib/browserStorage'
 
 const rootElement = document.getElementById('root')
 const PREVIEW_RECOVERY_PREFIX = '__peekalisting_preview_boot_recovery:'
@@ -28,8 +29,11 @@ async function recoverPreviewBootOnce() {
   if (!isPreviewDeployment()) return false
 
   const recoveryKey = `${PREVIEW_RECOVERY_PREFIX}${currentBootAssetId()}`
-  if (window.sessionStorage.getItem(recoveryKey) === '1') return false
-  window.sessionStorage.setItem(recoveryKey, '1')
+  // Browser storage can throw outright in private modes and locked-down
+  // browsers. The recovery guard must never be the reason the app fails to
+  // boot, so it goes through the safe helpers in @/lib/browserStorage.
+  if (readStoredString('session', recoveryKey) === '1') return false
+  writeStoredString('session', recoveryKey, '1')
 
   try {
     if ('serviceWorker' in navigator) {

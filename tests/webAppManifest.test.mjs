@@ -22,8 +22,8 @@ const manifest = JSON.parse(
 const resolveAsset = (url) => join(publicRoot, url.replace(/^\//, ''));
 
 test('manifest declares the fields browsers require for installability', () => {
-  assert.equal(manifest.name, 'FindIt Marketplace');
-  assert.equal(manifest.short_name, 'FindIt');
+  assert.equal(manifest.name, 'PeekaListing Marketplace');
+  assert.equal(manifest.short_name, 'PeekaListing');
   assert.equal(manifest.start_url, '/');
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.display, 'standalone');
