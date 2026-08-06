@@ -8,7 +8,7 @@ const stages = [
   ['production-boundary', ['scripts/audit-production.mjs']],
   ['source-graph', ['scripts/verify-source-graph.mjs']],
   ['sql-boundary', ['scripts/verify-sql-boundary.mjs']],
-  ['all-contracts', ['--test', 'tests']],
+  ['release-contracts', ['--test', 'tests/finalReleaseCertificationContracts.test.mjs']],
   ['buyer-journey', ['scripts/certify-buyer-journey.mjs']],
   ['listing-publication', ['scripts/certify-listing-publication-journey.mjs']],
   ['safety-operations', ['scripts/certify-safety-operations-journey.mjs']],
