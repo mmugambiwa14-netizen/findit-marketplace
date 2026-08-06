@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Camera, Clock3, Eye, Loader2, MessageSquareMore, Users, XCircle } from 'lucide-react';
+import { Camera, CheckCircle2, Clock3, Eye, Loader2, MessageSquareMore, RotateCcw, Users, XCircle } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,12 @@ import {
 } from '@/components/ui/dialog';
 import TourUploader from '@/components/tours/TourUploader';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
-import { declinePeekRequest, getSellerPeekRequestQueue } from '@/services/peekThreadsService';
+import {
+  acceptPeekRequest,
+  cancelPeekRequestFulfilment,
+  declinePeekRequest,
+  getSellerPeekRequestQueue,
+} from '@/services/peekThreadsService';
 import { queueResponsePeekBinding } from '@/services/responsePeekBindingIntentService';
 
 function parentPath(item) {
@@ -41,12 +46,24 @@ function waitingLabel(seconds) {
   return `${Math.floor(hours / 24)}d waiting`;
 }
 
+function fulfilmentLabel(status) {
+  return {
+    accepted: 'Accepted',
+    uploading: 'Upload started',
+    processing: 'Processing',
+    failed: 'Needs retry',
+    cancelled: 'Cancelled',
+    expired: 'Expired',
+  }[status] || null;
+}
+
 export default function BuyerPeekRequestsQueue() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedId = searchParams.get('request');
   const [declineTarget, setDeclineTarget] = useState(null);
   const [declineReason, setDeclineReason] = useState('');
+  const [cancelTarget, setCancelTarget] = useState(null);
   const [responseTarget, setResponseTarget] = useState(null);
   const [responseDraft, setResponseDraft] = useState(null);
   const [responseBusy, setResponseBusy] = useState(false);
@@ -69,7 +86,7 @@ export default function BuyerPeekRequestsQueue() {
   useEffect(() => {
     if (!requestedId || responseTarget) return;
     const match = items.find((item) => item.requestId === requestedId);
-    if (match) {
+    if (match && ['accepted', 'uploading'].includes(match.fulfilment?.status)) {
       setResponseDraft(null);
       setResponseTarget(match);
       return;
@@ -77,13 +94,51 @@ export default function BuyerPeekRequestsQueue() {
     if (queue.hasNextPage && !queue.isFetchingNextPage) queue.fetchNextPage();
   }, [items, queue, requestedId, responseTarget]);
 
+  const invalidateQueue = () => {
+    queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
+    queryClient.invalidateQueries({ queryKey: ['peek-threads'] });
+  };
+
+  const resetResponse = () => {
+    if (responseDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(responseDraft.previewUrl);
+    setResponseDraft(null);
+    setResponseTarget(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete('request');
+    setSearchParams(next, { replace: true });
+  };
+
+  const accept = useMutation({
+    mutationFn: (item) => acceptPeekRequest(item.requestId),
+    onSuccess: (_result, item) => {
+      invalidateQueue();
+      toast.success(item.fulfilment?.status === 'failed' ? 'Peek Request ready to retry' : 'Peek Request accepted');
+      setResponseDraft(null);
+      setResponseTarget({ ...item, fulfilment: { ...item.fulfilment, status: 'accepted' } });
+      const next = new URLSearchParams(searchParams);
+      next.set('request', item.requestId);
+      setSearchParams(next, { replace: true });
+    },
+    onError: (error) => toast.error(error.message || 'Unable to accept this request'),
+  });
+
+  const cancel = useMutation({
+    mutationFn: (item) => cancelPeekRequestFulfilment(item.requestId, 'Seller cancelled the current fulfilment attempt'),
+    onSuccess: () => {
+      setCancelTarget(null);
+      resetResponse();
+      invalidateQueue();
+      toast.success('Fulfilment attempt cancelled');
+    },
+    onError: (error) => toast.error(error.message || 'Unable to cancel this fulfilment'),
+  });
+
   const decline = useMutation({
     mutationFn: () => declinePeekRequest({ requestId: declineTarget.requestId, reason: declineReason.trim() }),
     onSuccess: () => {
       setDeclineTarget(null);
       setDeclineReason('');
-      queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
-      queryClient.invalidateQueries({ queryKey: ['peek-threads'] });
+      invalidateQueue();
       toast.success('Peek Request declined');
     },
     onError: (error) => toast.error(error.message || 'Unable to decline this request'),
@@ -99,12 +154,7 @@ export default function BuyerPeekRequestsQueue() {
 
   const closeResponse = () => {
     if (responseBusy || bindingBusy) return;
-    if (responseDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(responseDraft.previewUrl);
-    setResponseDraft(null);
-    setResponseTarget(null);
-    const next = new URLSearchParams(searchParams);
-    next.delete('request');
-    setSearchParams(next, { replace: true });
+    resetResponse();
   };
 
   const completeResponseUpload = async (result) => {
@@ -113,9 +163,8 @@ export default function BuyerPeekRequestsQueue() {
     try {
       await queueResponsePeekBinding(result.tourId, responseTarget.requestId);
       toast.success('Response Peek uploaded. It will answer this request automatically after approval.');
-      queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
-      queryClient.invalidateQueries({ queryKey: ['peek-threads'] });
-      closeResponse();
+      invalidateQueue();
+      resetResponse();
     } catch (error) {
       toast.error(error.message || 'The Response Peek uploaded but could not be attached to this request.');
     } finally {
@@ -142,26 +191,35 @@ export default function BuyerPeekRequestsQueue() {
         <div className="p-7 text-center"><MessageSquareMore className="mx-auto h-7 w-7 text-muted-foreground" /><p className="mt-3 font-semibold">No pending Peek Requests</p><p className="mt-1 text-sm text-muted-foreground">New buyer requests across your live listings will appear here.</p></div>
       ) : (
         <div className="divide-y divide-border">
-          {items.map((item) => (
-            <article key={item.requestId} className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary">{peekRequestCategoryLabel(item.category)}</Badge>
-                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary"><Users className="h-3.5 w-3.5" />{item.supporterCount} interested</span>
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />{waitingLabel(item.pendingSeconds)}</span>
+          {items.map((item) => {
+            const status = item.fulfilment?.status;
+            const active = ['accepted', 'uploading', 'processing'].includes(status);
+            return (
+              <article key={item.requestId} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary">{peekRequestCategoryLabel(item.category)}</Badge>
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary"><Users className="h-3.5 w-3.5" />{item.supporterCount} interested</span>
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />{waitingLabel(item.pendingSeconds)}</span>
+                      {fulfilmentLabel(status) && <Badge variant={status === 'failed' ? 'destructive' : 'outline'}>{fulfilmentLabel(status)}</Badge>}
+                    </div>
+                    <h3 className="mt-2 text-sm font-bold leading-5">{item.body}</h3>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">{item.parentTitle}</p>
+                    {item.fulfilment?.failureReason && <p className="mt-2 text-xs text-destructive">{item.fulfilment.failureReason}</p>}
                   </div>
-                  <h3 className="mt-2 text-sm font-bold leading-5">{item.body}</h3>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">{item.parentTitle}</p>
                 </div>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button asChild size="sm" variant="outline"><Link to={`${parentPath(item)}#peek-threads`}><Eye className="mr-2 h-4 w-4" />View listing</Link></Button>
-                <Button size="sm" onClick={() => openResponse(item)}><Camera className="mr-2 h-4 w-4" />Record response</Button>
-                <Button size="sm" variant="ghost" onClick={() => { setDeclineTarget(item); setDeclineReason(''); }}><XCircle className="mr-2 h-4 w-4" />Decline</Button>
-              </div>
-            </article>
-          ))}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button asChild size="sm" variant="outline"><Link to={`${parentPath(item)}#peek-threads`}><Eye className="mr-2 h-4 w-4" />View listing</Link></Button>
+                  {!status && <Button size="sm" disabled={accept.isPending} onClick={() => accept.mutate(item)}><CheckCircle2 className="mr-2 h-4 w-4" />Accept</Button>}
+                  {['accepted', 'uploading'].includes(status) && <Button size="sm" onClick={() => openResponse(item)}><Camera className="mr-2 h-4 w-4" />{status === 'uploading' ? 'Continue upload' : 'Record response'}</Button>}
+                  {['failed', 'cancelled', 'expired'].includes(status) && <Button size="sm" disabled={accept.isPending} onClick={() => accept.mutate(item)}><RotateCcw className="mr-2 h-4 w-4" />Retry</Button>}
+                  {active && <Button size="sm" variant="ghost" disabled={cancel.isPending} onClick={() => setCancelTarget(item)}><XCircle className="mr-2 h-4 w-4" />Cancel attempt</Button>}
+                  {!active && status !== 'processing' && <Button size="sm" variant="ghost" onClick={() => { setDeclineTarget(item); setDeclineReason(''); }}><XCircle className="mr-2 h-4 w-4" />Decline</Button>}
+                </div>
+              </article>
+            );
+          })}
           {queue.hasNextPage && <div className="flex justify-center p-4"><Button variant="outline" disabled={queue.isFetchingNextPage} onClick={() => queue.fetchNextPage()}>{queue.isFetchingNextPage ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading</> : 'Load more requests'}</Button></div>}
         </div>
       )}
@@ -171,7 +229,7 @@ export default function BuyerPeekRequestsQueue() {
           <DialogHeader>
             <DialogTitle>Record Response Peek</DialogTitle>
             <DialogDescription>
-              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. FindIt will attach the approved video to this request automatically.` : 'Record visual evidence for this buyer request.'}
+              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. PeekaListing will attach the approved video to this request automatically.` : 'Record visual evidence for this buyer request.'}
             </DialogDescription>
           </DialogHeader>
           {responseTarget && (
@@ -188,9 +246,24 @@ export default function BuyerPeekRequestsQueue() {
             />
           )}
           {(bindingBusy || responseBusy) && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Finishing the Response Peek…</p>}
-          <p className="text-xs leading-5 text-muted-foreground">The request remains pending while the video is processed and moderated. It becomes answered automatically after approval.</p>
+          <p className="text-xs leading-5 text-muted-foreground">The accepted request remains open while the video is uploaded, processed and moderated. It becomes answered only after approval.</p>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(cancelTarget)} onOpenChange={(open) => { if (!open && !cancel.isPending) setCancelTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this fulfilment attempt?</AlertDialogTitle>
+            <AlertDialogDescription>The buyer request stays open, but the current upload or processing attempt will no longer be attached automatically. You can retry later.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancel.isPending}>Keep attempt</AlertDialogCancel>
+            <AlertDialogAction disabled={cancel.isPending} onClick={(event) => { event.preventDefault(); cancel.mutate(cancelTarget); }}>
+              {cancel.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cancelling</> : 'Cancel attempt'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={Boolean(declineTarget)} onOpenChange={(open) => { if (!open && !decline.isPending) setDeclineTarget(null); }}>
         <AlertDialogContent>
