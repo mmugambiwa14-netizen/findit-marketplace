@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
-import { extname, join, relative } from 'node:path';
+import { extname, relative } from 'node:path';
+import { safeExternalUrl } from '../../src/lib/safeUrl.js';
 
 const ROOT = new URL('../../src/', import.meta.url);
 const SOURCE_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx']);
@@ -27,6 +28,24 @@ async function sourceMatches(pattern) {
   }
   return matches;
 }
+
+test('user-supplied external links allow only absolute HTTP and HTTPS URLs', () => {
+  assert.equal(safeExternalUrl('https://example.com/path'), 'https://example.com/path');
+  assert.equal(safeExternalUrl(' HTTP://EXAMPLE.COM '), 'http://example.com/');
+  for (const value of [
+    'javascript:alert(1)',
+    'JaVaScRiPt:alert(1)',
+    'java\tscript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'vbscript:msgbox(1)',
+    '//attacker.example/path',
+    '/relative/path',
+    'not a url',
+    null,
+  ]) {
+    assert.equal(safeExternalUrl(value), null);
+  }
+});
 
 test('application source does not bypass React escaping with raw HTML injection', async () => {
   const matches = await sourceMatches(/dangerouslySetInnerHTML\s*=/);
