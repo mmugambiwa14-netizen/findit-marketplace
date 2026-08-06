@@ -3,9 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "engines": {
-    "node": ">=23.6.0"
-  },
+  "engines": { "node": ">=23.6.0" },
   "scripts": {
     "dev": "vite",
     "build": "vite build && node ./scripts/stamp-service-worker.mjs && node ./scripts/verify-base44-elimination.mjs && node ./scripts/verify-built-boundary.mjs && node ./scripts/verify-bundle-secrets.mjs && node ./scripts/verify-build-budget.mjs",
@@ -115,7 +113,7 @@
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-select": "^2.1.6",
-    "@radix-ui/react-separator": "^1.1.2",
+    "@radix-ui/react-separator": "^2.0.3",
     "@radix-ui/react-slider": "^1.2.3",
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-switch": "^1.1.3",
