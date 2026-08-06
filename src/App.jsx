@@ -54,6 +54,7 @@ const AdminSupportRequests = lazy(() => import('@/pages/admin/AdminSupportReques
 const AdminAuditLog = lazy(() => import('@/pages/admin/AdminAuditLog'));
 const AdminCategories = lazy(() => import('@/pages/admin/AdminCategories'));
 const AdminBusinessApplications = lazy(() => import('@/pages/admin/AdminBusinessApplications'));
+const AdminManagedListings = lazy(() => import('@/pages/admin/AdminManagedListings'));
 const NotificationCenter = lazy(() => import('@/pages/NotificationCenter'));
 const SellerProfile = lazy(() => import('@/pages/SellerProfile'));
 const FAQs = lazy(() => import('@/pages/FAQs'));
@@ -177,6 +178,7 @@ const AuthenticatedApp = () => {
             <Route path="/admin/support" element={<AdminSupportRequests />} />
             <Route path="/admin/categories" element={<AdminCategories />} />
             <Route path="/admin/business-applications" element={<AdminBusinessApplications />} />
+            <Route path="/admin/managed-listings" element={<AdminManagedListings />} />
             <Route path="/admin/audit-log" element={<AdminAuditLog />} />
           </Route>
         </Route>
