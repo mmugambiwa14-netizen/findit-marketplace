@@ -110,6 +110,7 @@ jobs:
       # explicit while the shell runner remains the single execution entrypoint:
       # v1_contact_support.sql
       # v1_contextual_ecosystem_intelligence.sql
+      # v1_curated_business_marketplace.sql
       # v1_essential_notifications.sql
       # v1_extension_schema_security.sql
       # v1_foreign_key_index_coverage.sql

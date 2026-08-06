@@ -157,6 +157,36 @@ select extensions.throws_ok(
   'suspended category cannot publish a new listing'
 );
 
+-- A suspension is a moderation decision: the applicant must not be able to
+-- clear it, or erase the reviewer message explaining it, by re-requesting the
+-- category through the additional-category flow.
+set local role authenticated;
+select extensions.throws_ok(
+  $$select public.request_additional_business_categories(array['car'])$$,
+  '42501',
+  'Suspended categories cannot be re-requested',
+  'a suspended category cannot be re-requested by the applicant'
+);
+select extensions.ok(
+  'car' = any ((select suspended_categories from public.get_my_publishing_access())),
+  'publishing access reports the suspended category so it is never offered back'
+);
+reset role;
+
+select extensions.is(
+  (select status from public.business_category_approvals
+   where id = '41000000-0000-4000-8000-000000000201'),
+  'suspended',
+  'the suspended category survives an additional-category request'
+);
+
+select extensions.is(
+  (select reviewer_message from public.business_category_approvals
+   where id = '41000000-0000-4000-8000-000000000201'),
+  'Certification suspension',
+  'the suspension reviewer message is preserved'
+);
+
 select extensions.is(
   (select count(*)::bigint from public.app_alerts
    where user_id = '41000000-0000-4000-8000-000000000001'

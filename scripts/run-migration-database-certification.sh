@@ -41,6 +41,7 @@ TEST_FILES=(
   supabase/tests/v1_recommendation_personalization.sql
   supabase/tests/v1_recommendation_analytics.sql
   supabase/tests/v1_recommendation_related_services.sql
+  supabase/tests/v1_curated_business_marketplace.sql
 )
 
 cleanup() {

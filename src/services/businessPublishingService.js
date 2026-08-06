@@ -16,6 +16,7 @@ export async function getMyPublishingAccess() {
     applicationId: row?.application_id || null,
     approvedCategories: normalizeCategories(row?.approved_categories),
     pendingCategories: normalizeCategories(row?.pending_categories),
+    suspendedCategories: normalizeCategories(row?.suspended_categories),
     needsInformation: Boolean(row?.needs_information),
     reviewerMessage: row?.reviewer_message || '',
   };

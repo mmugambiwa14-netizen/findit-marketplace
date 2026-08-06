@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock3, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock3, Loader2, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,9 +33,12 @@ export default function PublishingOperationsPanel({ access, onRefresh }) {
   const [managedRequests, setManagedRequests] = useState([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
 
+  // A suspended category is a moderation decision and is never requestable.
   const unavailable = useMemo(
-    () => CATEGORY_OPTIONS.filter(([key]) => !access.approvedCategories.includes(key) && !access.pendingCategories.includes(key)),
-    [access.approvedCategories, access.pendingCategories],
+    () => CATEGORY_OPTIONS.filter(([key]) => !access.approvedCategories.includes(key)
+      && !access.pendingCategories.includes(key)
+      && !access.suspendedCategories?.includes(key)),
+    [access.approvedCategories, access.pendingCategories, access.suspendedCategories],
   );
 
   const loadManagedRequests = async () => {
@@ -96,11 +99,12 @@ export default function PublishingOperationsPanel({ access, onRefresh }) {
         {CATEGORY_OPTIONS.map(([key, label]) => {
           const approved = access.approvedCategories.includes(key);
           const pending = access.pendingCategories.includes(key);
+          const suspended = access.suspendedCategories?.includes(key);
           return (
             <div key={key} className="flex items-center justify-between rounded-xl border border-border px-3 py-2 text-sm">
               <span className="font-semibold">{label}</span>
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                {approved ? <><CheckCircle2 className="h-4 w-4 text-primary" /> Approved</> : pending ? <><Clock3 className="h-4 w-4" /> Pending</> : 'Not requested'}
+                {approved ? <><CheckCircle2 className="h-4 w-4 text-primary" /> Approved</> : pending ? <><Clock3 className="h-4 w-4" /> Pending</> : suspended ? <><ShieldAlert className="h-4 w-4 text-destructive" /> Suspended</> : 'Not requested'}
               </span>
             </div>
           );

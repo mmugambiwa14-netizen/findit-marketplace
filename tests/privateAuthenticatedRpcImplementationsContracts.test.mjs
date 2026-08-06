@@ -54,7 +54,7 @@ test('0101 rollback restores the exact original catalog fingerprint', () => {
 });
 
 test('database certification covers the full wrapper and grant matrix', () => {
-  assert.match(databaseTest, /57 public compatibility wrappers/);
+  assert.match(databaseTest, /57 original public compatibility wrappers/);
   assert.match(databaseTest, /53-function matrix/);
   assert.match(databaseTest, /four authenticated-only recommendation admin RPCs/);
   assert.match(databaseTest, /owner_listing_notes/);
