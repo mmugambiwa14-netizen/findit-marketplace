@@ -49,9 +49,17 @@ select extensions.throws_ok(
 
 reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009002', true);
+-- 20260805033000 retired the offset admin RPCs, so the founder inbox is served
+-- by the keyset page function. The legacy entrypoint must stay unreachable, and
+-- the live one must still refuse a caller who is not an admin.
 set local role authenticated;
 select extensions.throws_ok(
   $$select * from public.admin_support_request_rows('', 'all', 'all', 25, 0)$$,
+  '42501', 'permission denied for function admin_support_request_rows',
+  'the retired offset founder inbox entrypoint is no longer callable'
+);
+select extensions.throws_ok(
+  $$select * from public.admin_support_request_rows_page('', 'all', 'all', 25, null, null)$$,
   '42501', 'admin access required',
   'ordinary users cannot read the founder inbox projection'
 );
@@ -60,18 +68,18 @@ reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
 set local role authenticated;
 select extensions.is(
-  (select count(*)::bigint from public.admin_support_request_rows('guest@example.test', 'open', 'safety', 25, 0)),
+  (select count(*)::bigint from public.admin_support_request_rows_page('guest@example.test', 'open', 'safety', 25, null, null)),
   1::bigint,
   'admin support search returns the matching open request'
 );
 select extensions.is(
-  (select total_count from public.admin_support_request_rows('', 'open', 'all', 1, 0)),
+  (select count(*)::bigint from public.admin_support_request_rows_page('', 'open', 'all', 25, null, null)),
   4::bigint,
-  'the founder inbox returns a server-side total count'
+  'the founder inbox returns every open request on the first page'
 );
 select extensions.lives_ok(
   $$select public.admin_resolve_support_request(
-      (select request_id from public.admin_support_request_rows('guest@example.test', 'open', 'safety', 1, 0)),
+      (select request_id from public.admin_support_request_rows_page('guest@example.test', 'open', 'safety', 1, null, null)),
       'Reviewed the safety concern and recorded the outcome'
     )$$,
   'an admin can resolve a request with an auditable note'
