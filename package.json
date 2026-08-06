@@ -21,6 +21,7 @@
     "audit:production": "node ./scripts/audit-production.mjs",
     "test:contracts": "node --test ./tests/*.test.mjs",
     "test:recommendation-contracts": "node --test ./tests/recommendation*Contracts.test.mjs",
+    "test:curated-business-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_curated_business_marketplace.sql --local",
     "test:recommendation-foundation-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_foundation.sql --local",
     "test:recommendation-projection-queue-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_projection_queue.sql --local",
     "test:recommendation-eligibility-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_eligibility_geospatial.sql --local",
