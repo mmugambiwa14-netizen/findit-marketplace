@@ -60,3 +60,7 @@ export function withdrawPeekRequestSupportRow(requestId) { return invoke('withdr
 export function declinePeekRequestRow(args) { return invoke('decline_peek_request', args, 'Unable to decline the Peek Request'); }
 export function mergePeekRequestRows(args) { return invoke('merge_peek_request', args, 'Unable to merge the Peek Requests'); }
 export function bindResponsePeekRows(args) { return invoke('bind_response_peek', args, 'Unable to attach the Response Peek'); }
+export function acceptPeekRequestRow(requestId) { return invoke('accept_peek_request', { p_request_id: requestId }, 'Unable to accept this Peek Request'); }
+export function cancelPeekRequestFulfilmentRow(requestId, reason = null) {
+  return invoke('cancel_peek_request_fulfilment', { p_request_id: requestId, p_reason: reason }, 'Unable to cancel this Peek Request fulfilment');
+}
