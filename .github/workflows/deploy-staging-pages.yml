@@ -36,7 +36,9 @@ jobs:
       VITE_FEATURE_MAPS: ${{ vars.FINDIT_MAPS_ENABLED }}
       VITE_MAPTILER_PUBLIC_KEY: ${{ secrets.FINDIT_MAPTILER_PUBLIC_KEY }}
       VITE_MAPTILER_STYLE_ID: ${{ vars.FINDIT_MAPTILER_STYLE_ID }}
-      VITE_FEATURE_INTERNATIONAL_LISTING: "true"
+      # validate-env keeps this false until the international listing contract
+      # is implemented, so the staging Pages build has to agree with it.
+      VITE_FEATURE_INTERNATIONAL_LISTING: "false"
       VITE_FEATURE_MANUAL_LOCATION: "true"
       VITE_FEATURE_CURRENT_LOCATION: "true"
       VITE_FEATURE_CURRENCY_CONVERSION: "false"
