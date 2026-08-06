@@ -1,0 +1,39 @@
+name: Safety Operations Journey Gates
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/AdminReports.jsx'
+      - 'src/components/admin/SupportRequestInbox.jsx'
+      - 'src/services/adminService.js'
+      - 'src/services/adminContracts.js'
+      - 'src/repositories/adminRepository.js'
+      - 'supabase/migrations/0016_v1_admin_operations.sql'
+      - 'supabase/migrations/0019_v1_essential_notifications.sql'
+      - 'supabase/migrations/0039_v1_tour_reporting_and_admin.sql'
+      - 'supabase/tests/v1_admin_operations.sql'
+      - 'supabase/tests/v1_essential_notifications.sql'
+      - 'supabase/tests/v1_verified_business_journey.sql'
+      - 'scripts/certify-safety-operations-journey.mjs'
+      - 'tests/safetyOperationsJourneyContracts.test.mjs'
+      - '.github/workflows/safety-operations-journey-gates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23
+      - run: node scripts/certify-safety-operations-journey.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safety-operations-certification
+          path: artifacts/certification/safety-operations-journey.json
+          if-no-files-found: error
