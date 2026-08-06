@@ -110,6 +110,13 @@ values
     false
   );
 
+-- 0100 activates the whole catalog, so the disabled-path assertion below has to
+-- switch its own subject off first. service_role cannot mutate this table, so
+-- the switch is thrown before the role is assumed.
+update public.recommendation_service_policies
+set enabled = false
+where service_name = 'related_services_service';
+
 set local role service_role;
 select extensions.is(
   (select succeeded_count from public.process_listing_recommendation_projection_jobs(20, 8)),
@@ -123,7 +130,7 @@ select extensions.is(
     6
   )->>'reason',
   'service_disabled',
-  'related services remains disabled by default'
+  'a disabled related-services policy degrades before ranking'
 );
 reset role;
 
