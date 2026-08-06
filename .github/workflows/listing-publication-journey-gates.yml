@@ -1,0 +1,44 @@
+name: Listing Publication Journey Gates
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/CreateListing.jsx'
+      - 'src/pages/MyListings.jsx'
+      - 'src/components/create-listing/**'
+      - 'src/components/listings/**'
+      - 'src/services/listingCreationService.js'
+      - 'src/services/ownerListingsService.js'
+      - 'src/services/publicListingsService.js'
+      - 'src/repositories/listingCreationRepository.js'
+      - 'src/repositories/ownerListingsRepository.js'
+      - 'src/repositories/publicListingsRepository.js'
+      - 'supabase/migrations/0021_v1_listing_creation_and_media.sql'
+      - 'supabase/migrations/20260807030000_remove_listing_content_review_from_mvp.sql'
+      - 'supabase/rollback/20260807030000_remove_listing_content_review_from_mvp.rollback.sql'
+      - 'supabase/tests/v1_listing_creation_and_media.sql'
+      - 'scripts/phase4-listing-creation-smoke-local.mjs'
+      - 'scripts/certify-listing-publication-journey.mjs'
+      - 'tests/listingPublicationJourneyContracts.test.mjs'
+      - 'docs/certification/EXTERNAL_CERTIFICATION_BLOCKERS.md'
+      - '.github/workflows/listing-publication-journey-gates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23
+      - run: node scripts/certify-listing-publication-journey.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: listing-publication-certification
+          path: artifacts/certification/listing-publication-journey.json
+          if-no-files-found: error
