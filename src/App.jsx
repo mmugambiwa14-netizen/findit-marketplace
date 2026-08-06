@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   BrowserRouter as Router,
@@ -12,6 +12,7 @@ import {
 import { Toaster as SonnerToaster } from 'sonner';
 import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import * as authService from '@/services/authService';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
 import { PwaProvider } from '@/components/pwa/PwaProvider';
 import PwaStatusBar from '@/components/pwa/PwaStatusBar';
@@ -21,6 +22,7 @@ import { createLoginPath } from '@/lib/authNavigation';
 import { featureFlags } from '@/lib/featureFlags';
 import { queryClientInstance } from '@/lib/query-client';
 import AccountBlocked from '@/components/auth/AccountBlocked';
+import MfaChallengeScreen from '@/components/auth/MfaChallengeScreen';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AdminLayout from '@/components/layout/AdminLayout';
@@ -68,7 +70,7 @@ const ToursPlaceholder = lazy(() => import('@/pages/ToursPlaceholder'));
 const PageNotFound = lazy(() => import('@/lib/PageNotFound'));
 
 const LoadingScreen = () => (
-  <div className="fixed inset-0 flex items-center justify-center bg-background" role="status" aria-label="Loading FindIt">
+  <div className="fixed inset-0 flex items-center justify-center bg-background" role="status" aria-label="Loading PeekaListing">
     <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
   </div>
 );
@@ -110,13 +112,42 @@ function LegacyConversationRedirect() {
 
 const DarkSonner = () => <SonnerToaster position="top-center" richColors theme="dark" />;
 
+function useMfaGate({ isAuthenticated, authChecked }) {
+  const [status, setStatus] = useState('checking');
+  const [attempt, setAttempt] = useState(0);
+  const recheck = useCallback(() => setAttempt((value) => value + 1), []);
+
+  useEffect(() => {
+    if (!authChecked) { setStatus('checking'); return undefined; }
+    if (!isAuthenticated) { setStatus('clear'); return undefined; }
+    let cancelled = false;
+    setStatus('checking');
+    authService.mfaChallengeRequired()
+      .then((required) => { if (!cancelled) setStatus(required ? 'required' : 'clear'); })
+      .catch(() => { if (!cancelled) setStatus('error'); });
+    return () => { cancelled = true; };
+  }, [isAuthenticated, authChecked, attempt]);
+
+  return { status, recheck };
+}
+
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, blockedAccount, checkUserAuth, logout } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, blockedAccount, isAuthenticated, authChecked, checkUserAuth, logout } = useAuth();
+  const location = useLocation();
+  const mfaGate = useMfaGate({ isAuthenticated, authChecked });
+
   if (isLoadingPublicSettings || isLoadingAuth) return <LoadingScreen />;
   if (blockedAccount) return <AccountBlocked status={blockedAccount.status} reason={blockedAccount.reason} banUntil={blockedAccount.banUntil} />;
   if (authError) {
     if (authError.type === 'profile_missing') return <UserNotRegisteredError onRetry={checkUserAuth} onSignOut={logout} />;
     return <AuthUnavailable message={authError.message} onRetry={checkUserAuth} onSignOut={logout} />;
+  }
+
+  const isRecoveryRoute = location.pathname.replace(/\/+$/, '').endsWith('/reset-password');
+  if (isAuthenticated && !isRecoveryRoute) {
+    if (mfaGate.status === 'checking') return <LoadingScreen />;
+    if (mfaGate.status === 'required') return <MfaChallengeScreen onVerified={mfaGate.recheck} />;
+    if (mfaGate.status === 'error') return <AuthUnavailable message="We could not confirm your two-step verification status." onRetry={mfaGate.recheck} onSignOut={logout} />;
   }
 
   return (
@@ -126,7 +157,6 @@ const AuthenticatedApp = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-
         <Route element={<AppLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<Search />} />
@@ -150,7 +180,6 @@ const AuthenticatedApp = () => {
           {featureFlags.messaging && <Route path="/messages" element={<LegacyPathRedirect to="/chats" />} />}
           {featureFlags.messaging && <Route path="/messages/:conversationId" element={<LegacyConversationRedirect />} />}
         </Route>
-
         <Route element={<ProtectedRoute unauthenticatedElement={<SignInRedirect />} />}>
           <Route element={<AppLayout />}>
             <Route path="/post" element={<CreateListing />} />
@@ -167,7 +196,6 @@ const AuthenticatedApp = () => {
             {featureFlags.essentialNotifications && <Route path="/notifications" element={<NotificationCenter />} />}
           </Route>
         </Route>
-
         <Route element={<ProtectedRoute unauthenticatedElement={<SignInRedirect />} requiredRole="admin" />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
@@ -182,7 +210,6 @@ const AuthenticatedApp = () => {
             <Route path="/admin/audit-log" element={<AdminAuditLog />} />
           </Route>
         </Route>
-
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </Suspense>
