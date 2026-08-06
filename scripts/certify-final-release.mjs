@@ -10,6 +10,8 @@ const stages = [
   ['sql-boundary', ['scripts/verify-sql-boundary.mjs']],
   ['release-contracts', ['--test', 'tests/finalReleaseCertificationContracts.test.mjs']],
   ['buyer-journey', ['scripts/certify-buyer-journey.mjs']],
+  ['verified-business-journey', ['scripts/certify-verified-business-journey.mjs']],
+  ['peek-fulfilment-journey', ['scripts/certify-peek-fulfilment-journey.mjs']],
   ['listing-publication', ['scripts/certify-listing-publication-journey.mjs']],
   ['safety-operations', ['scripts/certify-safety-operations-journey.mjs']],
 ];
