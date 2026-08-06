@@ -24,16 +24,17 @@ begin
     where business_application_id = p_application_id and status = 'approved'
   ), exists (
     select 1 from public.business_category_approvals
-    where business_application_id = p_application_id and status in ('pending', 'reviewing')
+    where business_application_id = p_application_id and status = 'pending'
   ) into v_has_approved, v_has_pending;
 
   update public.business_profiles
   set verified = v_has_approved,
       verification_status = case
-        when v_has_approved then 'approved'
-        when v_application_status = 'rejected' then 'rejected'
-        when v_application_status in ('submitted', 'reviewing', 'needs_information') or v_has_pending then 'pending'
-        else 'none'
+        when v_has_approved then 'verified'::public.business_verification_status
+        when v_application_status = 'rejected' then 'rejected'::public.business_verification_status
+        when v_application_status in ('submitted', 'reviewing', 'needs_information') or v_has_pending
+          then 'pending'::public.business_verification_status
+        else 'none'::public.business_verification_status
       end,
       updated_at = now()
   where user_id = v_user_id;
@@ -49,12 +50,17 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  v_application_id uuid;
 begin
-  perform public.sync_business_profile_verification(
-    case when tg_table_name = 'business_applications' then coalesce(new.id, old.id)
-         else coalesce(new.business_application_id, old.business_application_id) end
-  );
-  return coalesce(new, old);
+  if tg_table_name = 'business_applications' then
+    v_application_id := case when tg_op = 'DELETE' then old.id else new.id end;
+  else
+    v_application_id := case when tg_op = 'DELETE' then old.business_application_id else new.business_application_id end;
+  end if;
+
+  perform public.sync_business_profile_verification(v_application_id);
+  return case when tg_op = 'DELETE' then old else new end;
 end;
 $$;
 
@@ -103,7 +109,7 @@ returns table (
   business_type public.business_type,
   profile_type text,
   verified boolean,
-  verification_status text,
+  verification_status public.business_verification_status,
   phone text,
   email text,
   website text,
