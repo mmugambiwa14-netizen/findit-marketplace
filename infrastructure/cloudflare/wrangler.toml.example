@@ -1,0 +1,56 @@
+name = "peekalisting-platform"
+main = "workers/edge/src/index.ts"
+compatibility_date = "2026-08-01"
+
+[vars]
+APP_ENV = "staging"
+MEDIA_DELIVERY_HOST = "media-staging.peekalisting.example"
+
+[[r2_buckets]]
+binding = "PEEK_SOURCE_MEDIA"
+bucket_name = "peekalisting-staging-peek-source"
+preview_bucket_name = "peekalisting-preview-peek-source"
+
+[[r2_buckets]]
+binding = "PEEK_DERIVATIVE_MEDIA"
+bucket_name = "peekalisting-staging-peek-derivatives"
+preview_bucket_name = "peekalisting-preview-peek-derivatives"
+
+[[r2_buckets]]
+binding = "LISTING_MEDIA"
+bucket_name = "peekalisting-staging-listing-media"
+preview_bucket_name = "peekalisting-preview-listing-media"
+
+[[queues.producers]]
+binding = "LIGHTWEIGHT_JOBS"
+queue = "peekalisting-staging-lightweight-jobs"
+
+[[queues.consumers]]
+queue = "peekalisting-staging-lightweight-jobs"
+max_batch_size = 20
+max_batch_timeout = 5
+max_retries = 5
+dead_letter_queue = "peekalisting-staging-lightweight-jobs-dlq"
+
+[[kv_namespaces]]
+binding = "PLATFORM_CONFIG"
+id = "REPLACE_WITH_STAGING_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_PREVIEW_NAMESPACE_ID"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITS"
+class_name = "RateLimitCoordinator"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimitCoordinator"]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+# Configure secrets with `wrangler secret put`, never in this file:
+# SUPABASE_URL
+# SUPABASE_SERVICE_ROLE_KEY
+# TURNSTILE_SECRET_KEY
+# MEDIA_SIGNING_SECRET
