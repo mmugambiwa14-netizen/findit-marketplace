@@ -64,6 +64,10 @@ select extensions.is(
   'no PUBLIC execute grant remains on a country helper identity'
 );
 
+-- 0101 moved every authenticated-callable SECURITY DEFINER function out of
+-- public and left invoker wrappers behind, so these caller implementations now
+-- live in private. What matters is that each still reaches the country helpers
+-- through their public-compatible names, not which schema holds the caller.
 select extensions.is(
   (
     select count(*)::bigint
@@ -71,7 +75,7 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname in ('public', 'private')
         and caller.proname = 'public_listing_search_page'
         and position('public.is_country_browsable(' in caller.prosrc) > 0
 
@@ -80,7 +84,7 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname in ('public', 'private')
         and caller.proname = 'create_v1_listing_submission'
         and position('public.is_country_publishable(' in caller.prosrc) > 0
 
@@ -89,7 +93,7 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname in ('public', 'private')
         and caller.proname = 'create_v1_listing_submission'
         and position('public.is_supported_listing_currency(' in caller.prosrc) > 0
 
@@ -98,7 +102,7 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname in ('public', 'private')
         and caller.proname = 'owner_transition_listing'
         and position('public.is_country_publishable(' in caller.prosrc) > 0
     ) expected_callers
