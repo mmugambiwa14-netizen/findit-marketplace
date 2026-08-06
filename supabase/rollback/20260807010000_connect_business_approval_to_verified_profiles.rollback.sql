@@ -7,7 +7,10 @@ drop trigger if exists sync_verified_profile_from_application on public.business
 drop function if exists public.sync_business_profile_verification_trigger();
 drop function if exists public.sync_business_profile_verification(uuid);
 
-create or replace function private.public_business_profiles()
+drop view if exists public.business_profiles_public;
+drop function if exists private.public_business_profiles();
+
+create function private.public_business_profiles()
 returns table (
   id uuid,
   user_id uuid,
@@ -41,8 +44,14 @@ as $$
     and profile.business_type <> 'legal_firm'::public.business_type;
 $$;
 
-create or replace view public.business_profiles_public
+revoke all on function private.public_business_profiles() from public;
+grant execute on function private.public_business_profiles() to anon, authenticated, service_role;
+
+create view public.business_profiles_public
 with (security_barrier = true, security_invoker = true)
 as select * from private.public_business_profiles();
+
+revoke all on table public.business_profiles_public from public, anon, authenticated, service_role;
+grant select on table public.business_profiles_public to anon, authenticated, service_role;
 
 commit;
