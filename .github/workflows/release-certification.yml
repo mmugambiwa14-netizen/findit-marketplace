@@ -5,11 +5,9 @@ on:
   pull_request:
     branches:
       - main
-      - feature/listing-intelligence-foundation
   push:
     branches:
       - main
-      - feature/listing-intelligence-foundation
 
 permissions:
   contents: read
@@ -19,10 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  certify:
-    name: Repository release gates
+  repository-certification:
+    name: Repository, build and PWA gates
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -37,8 +35,6 @@ jobs:
           node-version: 24
           cache: npm
 
-      # Use the repository-approved immutable Deno setup action so Edge Function
-      # typechecking never falls back to an unpinned network install through npx.
       - name: Set up Deno
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
         with:
@@ -47,7 +43,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 
-      - name: Validate repository and production boundaries
+      - name: Validate production boundaries
         run: |
           npm run audit:production
           npm run verify:hygiene
@@ -55,11 +51,7 @@ jobs:
           npm run verify:sql-boundary
           npm run verify:base44-elimination
 
-      # The repository is migrating legacy JavaScript incrementally. The active
-      # production graph is the enforced release boundary; the broad migration
-      # typecheck remains a separate backlog gate and must not block staging for
-      # inactive files outside that graph.
-      - name: Run active static and contract gates
+      - name: Run static and contract gates
         run: |
           npm run lint
           npm run typecheck:active
@@ -68,22 +60,102 @@ jobs:
           npm run test:tours-contracts
           npm run test:product-audit
 
-      - name: Build production bundle
+      - name: Build production PWA
         run: npm run build
 
-      - name: Generate release-candidate evidence
-        run: npm run certify:release-candidate
+      - name: Compose final journey evidence
+        run: node ./scripts/certify-final-release.mjs
 
-      - name: Upload release evidence
+      - name: Upload repository release evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: release-certification-${{ github.sha }}
+          name: repository-release-certification-${{ github.sha }}
           if-no-files-found: warn
           retention-days: 30
           path: |
             artifacts/**
             dist/**
-            FINDIT_EXTENSIVE_PRODUCT_AUDIT_2026-07-27.md
             PROJECT_STATUS.md
             PRODUCTION_READINESS_REPORT.md
+
+  clean-database-certification:
+    name: Clean database migration and pgTAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+
+      - name: Start local Supabase
+        run: npx --yes supabase@2.84.2 start
+
+      - name: Apply every migration from empty state
+        run: npx --yes supabase@2.84.2 db reset
+
+      - name: Run complete pgTAP suite
+        run: npx --yes supabase@2.84.2 test db
+
+      - name: Capture database diagnostics
+        if: always()
+        run: |
+          mkdir -p artifacts/certification
+          npx --yes supabase@2.84.2 status -o env > artifacts/certification/local-supabase-status.txt || true
+          npx --yes supabase@2.84.2 migration list > artifacts/certification/migration-list.txt || true
+
+      - name: Upload database evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: clean-database-certification-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: artifacts/certification/**
+
+  hosted-release-certification:
+    name: Hosted journeys and bounded scale
+    if: github.event_name == 'workflow_dispatch'
+    needs:
+      - repository-certification
+      - clean-database-certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: staging
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run hosted journey certification
+        run: node ./scripts/certify-final-release.mjs
+
+      - name: Run bounded hosted scale certification
+        run: node ./scripts/certify-release-scale.mjs
+
+      - name: Upload hosted release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: hosted-release-certification-${{ github.sha }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: artifacts/certification/**

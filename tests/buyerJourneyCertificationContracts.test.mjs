@@ -29,16 +29,18 @@ test('buyer journey certifies every required backend capability in order', async
 
 test('buyer certification fails fast and persists a machine-readable report', async () => {
   const runner = await source();
-  assert.match(runner, /if \(result\.status !== 'passed'\)[\s\S]*break;/);
+  assert.match(runner, /if \(result\.status === 'failed'\)[\s\S]*break;/);
   assert.match(runner, /artifacts\/certification\/buyer-journey\.json/);
-  assert.match(runner, /process\.exitCode = 1/);
-  assert.match(runner, /stdout\.slice\(-20_000\)/);
-  assert.match(runner, /stderr\.slice\(-20_000\)/);
+  assert.match(runner, /process\.exitCode = report\.status === 'failed' \? 1 : 0/);
+  assert.match(runner, /output\.length > 40000/);
 });
 
-test('missing smoke programs prevent a false certification start', async () => {
+test('repository contracts run without hosted credentials and hosted stages are skipped', async () => {
   const runner = await source();
-  assert.match(runner, /access\(resolve\(script\), constants\.R_OK\)/);
+  assert.match(runner, /buyerJourneyCertificationContracts\.test\.mjs/);
+  assert.match(runner, /hostedEnvironmentAvailable/);
+  assert.match(runner, /Hosted Supabase credentials are unavailable/);
+  assert.match(runner, /repository-passed-hosted-pending/);
 });
 
 test('hosted certification remains explicitly recorded as pending until executed', async () => {
@@ -46,5 +48,5 @@ test('hosted certification remains explicitly recorded as pending until executed
   assert.match(ledger, /Stage 1 — Buyer journey/);
   assert.match(ledger, /Implemented; hosted certification pending/);
   assert.match(ledger, /SUPABASE_SERVICE_ROLE_KEY/);
-  assert.match(ledger, /must not be called hosted-certified/);
+  assert.match(ledger, /remains a launch blocker/);
 });

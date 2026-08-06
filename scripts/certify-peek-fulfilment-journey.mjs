@@ -4,38 +4,30 @@ import { spawn } from 'node:child_process';
 import process from 'node:process';
 
 const stages = [
-  { id: 'repository-contracts', args: ['--test', 'tests/buyerJourneyCertificationContracts.test.mjs'], hosted: false },
-  { id: 'search', args: ['scripts/phase7-search-scale-smoke-local.mjs'], hosted: true },
-  { id: 'public-peek-catalogue', args: ['scripts/tours-public-catalogue-smoke-local.mjs'], hosted: true },
-  { id: 'listing-peek-integration', args: ['scripts/tours-listing-integration-smoke-local.mjs'], hosted: true },
-  { id: 'notifications', args: ['scripts/phase3-notifications-smoke-local.mjs'], hosted: true },
-  { id: 'messaging', args: ['scripts/phase3-messaging-smoke-local.mjs'], hosted: true },
+  { id: 'repository-contracts', args: ['--test', 'tests/peekFulfilmentJourneyContracts.test.mjs'], hosted: false },
+  { id: 'hosted-seller-workflow', args: ['scripts/tours-seller-workflow-smoke-local.mjs'], hosted: true },
+  { id: 'hosted-processing', args: ['scripts/tours-processing-smoke-local.mjs'], hosted: true },
+  { id: 'hosted-listing-integration', args: ['scripts/tours-listing-integration-smoke-local.mjs'], hosted: true },
+  { id: 'hosted-notifications', args: ['scripts/phase3-notifications-smoke-local.mjs'], hosted: true },
 ];
 
 function run(args) {
   return new Promise((resolve) => {
-    const startedAt = Date.now();
     const child = spawn(process.execPath, args, { env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     const append = (chunk) => {
       output += chunk.toString();
-      if (output.length > 40000) output = output.slice(-40000);
+      if (output.length > 50000) output = output.slice(-50000);
     };
     child.stdout.on('data', append);
     child.stderr.on('data', append);
-    child.on('error', (error) => resolve({ status: 'failed', exitCode: null, durationMs: Date.now() - startedAt, error: error.message, output }));
-    child.on('close', (code) => resolve({ status: code === 0 ? 'passed' : 'failed', exitCode: code, durationMs: Date.now() - startedAt, output }));
+    child.on('error', (error) => resolve({ status: 'failed', exitCode: null, error: error.message, output }));
+    child.on('close', (code) => resolve({ status: code === 0 ? 'passed' : 'failed', exitCode: code, output }));
   });
 }
 
 const hosted = Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY);
-const report = {
-  journey: 'buyer-discovery-to-peek-request-notification-chat',
-  generatedAt: new Date().toISOString(),
-  hostedEnvironmentAvailable: hosted,
-  status: 'running',
-  stages: [],
-};
+const report = { journey: 'peek-fulfilment', generatedAt: new Date().toISOString(), hostedEnvironmentAvailable: hosted, status: 'running', stages: [] };
 
 for (const stage of stages) {
   if (stage.hosted && !hosted) {
@@ -52,6 +44,6 @@ for (const stage of stages) {
 
 if (report.status === 'running') report.status = report.stages.some((stage) => stage.status === 'skipped') ? 'repository-passed-hosted-pending' : 'passed';
 await mkdir('artifacts/certification', { recursive: true });
-await writeFile('artifacts/certification/buyer-journey.json', `${JSON.stringify(report, null, 2)}\n`);
+await writeFile('artifacts/certification/peek-fulfilment-journey.json', `${JSON.stringify(report, null, 2)}\n`);
 console.log(JSON.stringify(report, null, 2));
 process.exitCode = report.status === 'failed' ? 1 : 0;
