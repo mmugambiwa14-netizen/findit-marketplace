@@ -3,14 +3,13 @@ import { PUBLIC_LISTING_SELECT } from '@/repositories/publicListingsRepository';
 import { PUBLIC_SERVICE_SELECT } from '@/repositories/servicesRepository';
 import { applyDescendingCreatedAtCursor } from '@/services/keysetPagination';
 
-const PROFILE_SELECT = `
+const PUBLIC_PROFILE_SELECT = `
   id,
   user_id,
   company_name,
   business_type,
   profile_type,
   verified,
-  verification_status,
   phone,
   email,
   website,
@@ -22,6 +21,11 @@ const PROFILE_SELECT = `
   avatar_storage_path,
   created_at,
   updated_at
+`;
+
+const OWNER_PROFILE_SELECT = `
+  ${PUBLIC_PROFILE_SELECT},
+  verification_status
 `;
 
 function failure(message, error) {
@@ -37,7 +41,7 @@ function escapeLikePattern(value) {
 export async function findOwnerBusinessProfile(ownerId) {
   const { data, error } = await supabase
     .from('business_profiles')
-    .select(PROFILE_SELECT)
+    .select(OWNER_PROFILE_SELECT)
     .eq('user_id', ownerId)
     .maybeSingle();
 
@@ -49,7 +53,7 @@ export async function insertOwnerBusinessProfile(row) {
   const { data, error } = await supabase
     .from('business_profiles')
     .insert(row)
-    .select(PROFILE_SELECT)
+    .select(OWNER_PROFILE_SELECT)
     .single();
 
   if (error) throw failure('Unable to create the business profile', error);
@@ -62,7 +66,7 @@ export async function updateOwnerBusinessProfile(ownerId, profileId, updates) {
     .update(updates)
     .eq('user_id', ownerId)
     .eq('id', profileId)
-    .select(PROFILE_SELECT)
+    .select(OWNER_PROFILE_SELECT)
     .single();
 
   if (error) throw failure('Unable to update the business profile', error);
@@ -72,7 +76,7 @@ export async function updateOwnerBusinessProfile(ownerId, profileId, updates) {
 export async function findPublicBusinessProfile(profileId) {
   const { data, error } = await supabase
     .from('business_profiles_public')
-    .select(PROFILE_SELECT)
+    .select(PUBLIC_PROFILE_SELECT)
     .eq('id', profileId)
     .maybeSingle();
 
