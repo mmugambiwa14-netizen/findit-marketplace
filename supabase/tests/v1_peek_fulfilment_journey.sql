@@ -9,15 +9,39 @@ values
   ('83000000-0000-4000-8000-000000000002', 'peek-buyer@example.test', '{"full_name":"Peek Buyer"}', now(), now()),
   ('83000000-0000-4000-8000-000000000003', 'peek-other@example.test', '{"full_name":"Other User"}', now(), now());
 
-insert into public.listings (
-  id, kind, seller_id, seller_name, title, description, price, currency,
-  native_price, native_currency, photos, category, listing_type, status
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
 ) values (
-  '83000000-0000-4000-8000-000000000101', 'car',
-  '83000000-0000-4000-8000-000000000001', 'Peek Owner',
-  'Peek fulfilment test vehicle',
-  'A complete listing fixture used to certify the Response Peek fulfilment lifecycle.',
-  12000, 'USD', 12000, 'USD', '[]'::jsonb, 'cars', 'sale', 'available'
+  '83000000-0000-4000-8000-000000000401',
+  '83000000-0000-4000-8000-000000000001',
+  'Peek Owner Motors', 'Peek Owner', 'peek-owner@example.test', '+263700000001',
+  'ZW', 'Harare', 'Approved Cars publisher used for Peek fulfilment certification.',
+  '1-10', 'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+) values (
+  '83000000-0000-4000-8000-000000000402',
+  '83000000-0000-4000-8000-000000000401',
+  '83000000-0000-4000-8000-000000000001',
+  'car', 'approved'
+);
+
+select set_config('request.jwt.claim.sub', '83000000-0000-4000-8000-000000000001', true);
+select extensions.lives_ok(
+  $$insert into public.listings (
+      id, kind, seller_id, seller_name, title, description, price, currency,
+      native_price, native_currency, photos, category, listing_type, status
+    ) values (
+      '83000000-0000-4000-8000-000000000101', 'car',
+      '83000000-0000-4000-8000-000000000001', 'Peek Owner',
+      'Peek fulfilment test vehicle',
+      'A complete listing fixture used to certify the Response Peek fulfilment lifecycle.',
+      12000, 'USD', 12000, 'USD', '[]'::jsonb, 'cars', 'sale', 'available'
+    )$$,
+  'the approved Cars owner can create the listing fixture through the authoritative boundary'
 );
 
 insert into public.peek_requests (
@@ -129,7 +153,7 @@ select extensions.is(
 
 insert into public.listing_tours (
   id, owner_id, listing_id, source_storage_path, playback_storage_path,
-  thumbnail_storage_path, status, moderation_status, peek_kind, published_at
+  thumbnail_storage_path, status, moderation_status, peek_kind
 ) values (
   '83000000-0000-4000-8000-000000000302',
   '83000000-0000-4000-8000-000000000001',
@@ -137,7 +161,7 @@ insert into public.listing_tours (
   'listing/83000000-0000-4000-8000-000000000101/response-attempt-two.mp4',
   'listing/83000000-0000-4000-8000-000000000101/response-attempt-two-playback.mp4',
   'listing/83000000-0000-4000-8000-000000000101/response-attempt-two.webp',
-  'published', 'approved', 'response', now()
+  'ready', 'approved', 'response'
 );
 
 select set_config('request.jwt.claim.sub', '83000000-0000-4000-8000-000000000001', true);
@@ -151,10 +175,8 @@ select extensions.lives_ok(
 );
 reset role;
 
--- Re-touch publication after the binding intent exists, matching the real
--- processing/moderation transition that invokes the existing binding trigger.
 update public.listing_tours
-set published_at = clock_timestamp()
+set status = 'published', published_at = clock_timestamp()
 where id = '83000000-0000-4000-8000-000000000302';
 
 select extensions.is(
@@ -198,6 +220,7 @@ update public.peek_request_fulfilments
 set status = 'accepted', cancelled_at = null, expires_at = now() - interval '1 minute'
 where request_id = '83000000-0000-4000-8000-000000000202';
 
+select set_config('request.jwt.claim.role', 'service_role', true);
 set local role service_role;
 select extensions.is(
   public.expire_stale_peek_request_fulfilments(100),
@@ -205,6 +228,7 @@ select extensions.is(
   'the bounded service worker expires stale active fulfilments'
 );
 reset role;
+select set_config('request.jwt.claim.role', '', true);
 
 select extensions.is(
   (select status from public.peek_request_fulfilments where request_id = '83000000-0000-4000-8000-000000000202'),
