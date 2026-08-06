@@ -1,0 +1,60 @@
+name: Provision Cloudflare Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Cloudflare environment to provision
+        required: true
+        type: choice
+        options:
+          - preview
+          - staging
+      confirmation:
+        description: Type PROVISION to continue
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+environment: cloudflare-staging
+
+concurrency:
+  group: cloudflare-provision-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  provision:
+    if: inputs.confirmation == 'PROVISION'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate required secrets
+        run: |
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test -n "$CLOUDFLARE_API_TOKEN"
+      - name: Provision base Cloudflare resources
+        run: bash infrastructure/cloudflare/provision-staging.sh "${{ inputs.environment }}"
+      - name: Record provisioning summary
+        run: |
+          {
+            echo '## Cloudflare provisioning complete'
+            echo ''
+            echo "Environment: ${{ inputs.environment }}"
+            echo ''
+            echo 'Created or confirmed:'
+            echo '- three R2 buckets'
+            echo '- primary lightweight-jobs queue'
+            echo '- dead-letter queue'
+            echo '- platform configuration KV namespace'
+            echo ''
+            echo 'Worker deployment, Turnstile widget creation, secrets, routes, and traffic activation remain separate approval-gated steps.'
+          } >> "$GITHUB_STEP_SUMMARY"
