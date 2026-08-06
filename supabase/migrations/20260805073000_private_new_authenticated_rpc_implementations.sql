@@ -94,7 +94,23 @@ begin
     select function_oid::oid from findit_20260805073000_expected
   ) then
     raise exception
-      '20260805073000 authenticated SECURITY DEFINER catalog does not match the locked 23-RPC boundary';
+      '20260805073000 authenticated SECURITY DEFINER catalog does not match the locked 23-RPC boundary. missing=[%] unexpected=[%]',
+      coalesce(
+        (
+          select string_agg(expected.function_oid::text, ', ' order by expected.function_oid::text)
+          from findit_20260805073000_expected expected
+          where expected.function_oid::oid not in (select oid from findit_20260805073000_snapshot)
+        ),
+        'none'
+      ),
+      coalesce(
+        (
+          select string_agg(snapshot.regprocedure_text, ', ' order by snapshot.regprocedure_text)
+          from findit_20260805073000_snapshot snapshot
+          where snapshot.oid not in (select function_oid::oid from findit_20260805073000_expected)
+        ),
+        'none'
+      );
   end if;
 
   if trigger_oid is null
