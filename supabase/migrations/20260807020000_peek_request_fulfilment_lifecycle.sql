@@ -69,6 +69,7 @@ as $$
 declare
   v_request public.peek_requests;
   v_owner uuid;
+  v_existing public.peek_request_fulfilments;
   v_row public.peek_request_fulfilments;
   v_max_attempts integer := public.tour_processing_max_attempts();
 begin
@@ -85,6 +86,24 @@ begin
   if v_request.status <> 'pending' or v_request.moderation_status <> 'approved'
      or v_request.merged_into_id is not null then
     raise exception 'This Peek Request cannot be accepted' using errcode = '22023';
+  end if;
+
+  select * into v_existing from public.peek_request_fulfilments
+  where request_id = p_request_id for update;
+
+  if found and v_existing.status in ('accepted', 'uploading', 'processing') then
+    return v_existing;
+  end if;
+  if found and v_existing.status = 'completed' then
+    raise exception 'This Peek Request is already completed' using errcode = '22023';
+  end if;
+  if found and v_existing.attempt_count >= v_max_attempts then
+    raise exception 'Peek Request fulfilment retry limit reached' using errcode = '22023';
+  end if;
+
+  if found then
+    delete from public.peek_response_binding_intents
+    where request_id = p_request_id and owner_id = auth.uid();
   end if;
 
   insert into public.peek_request_fulfilments (
@@ -104,15 +123,7 @@ begin
     cancelled_at = null,
     expires_at = now() + interval '48 hours',
     updated_at = now()
-  where public.peek_request_fulfilments.status in ('failed', 'cancelled', 'expired')
-    and public.peek_request_fulfilments.attempt_count < v_max_attempts
   returning * into v_row;
-
-  if v_row.request_id is null then
-    select * into v_row from public.peek_request_fulfilments where request_id = p_request_id;
-    if v_row.status in ('accepted', 'uploading', 'processing') then return v_row; end if;
-    raise exception 'Peek Request fulfilment retry limit reached' using errcode = '22023';
-  end if;
 
   return v_row;
 end;
@@ -129,10 +140,15 @@ set search_path = ''
 as $$
 declare
   v_row public.peek_request_fulfilments;
+  v_reason text := nullif(btrim(coalesce(p_reason, '')), '');
 begin
+  if v_reason is not null and char_length(v_reason) not between 3 and 500 then
+    raise exception 'Cancellation reason must be between 3 and 500 characters' using errcode = '22023';
+  end if;
+
   update public.peek_request_fulfilments
   set status = 'cancelled',
-      failure_reason = nullif(btrim(coalesce(p_reason, '')), ''),
+      failure_reason = v_reason,
       cancelled_at = now(),
       completed_at = null,
       updated_at = now()
@@ -239,6 +255,10 @@ begin
         cancelled_at = null,
         updated_at = now()
     where tour_id = new.id and status in ('uploading', 'processing');
+
+    if v_status = 'failed' then
+      delete from public.peek_response_binding_intents where tour_id = new.id;
+    end if;
   end if;
   return new;
 end;
@@ -295,7 +315,8 @@ begin
     for update skip locked
   ), changed as (
     update public.peek_request_fulfilments f
-    set status = 'expired', failure_reason = 'Fulfilment window expired', updated_at = now()
+    set status = 'expired', failure_reason = 'Fulfilment window expired',
+        completed_at = null, cancelled_at = null, updated_at = now()
     from due where f.request_id = due.request_id
     returning f.request_id
   )
