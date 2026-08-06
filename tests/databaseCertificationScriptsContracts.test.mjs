@@ -20,7 +20,7 @@ test('migration certification is pinned, exhaustive and self-cleaning', () => {
   assert.match(migration, /db lint --local --level error/);
   assert.match(migration, /v1_private_authenticated_rpc_implementations\.sql/);
   assert.match(migration, /v1_security_advisor_baseline\.sql/);
-  assert.equal(suiteCount(migration), 34);
+  assert.equal(suiteCount(migration), 36);
   assert.match(migrationWorkflow, /bash \.\/scripts\/run-migration-database-certification\.sh/);
   assert.doesNotMatch(migrationWorkflow, /test db supabase\/tests\//);
 });
@@ -32,7 +32,7 @@ test('recommendation certification uses the same clean database contract', () =>
   assert.match(recommendation, /v1_private_authenticated_rpc_implementations\.sql/);
   assert.match(recommendation, /v1_security_advisor_baseline\.sql/);
   assert.match(recommendation, /v1_recommendation_related_services\.sql/);
-  assert.equal(suiteCount(recommendation), 13);
+  assert.equal(suiteCount(recommendation), 15);
   assert.match(recommendationWorkflow, /bash \.\/scripts\/run-recommendation-database-certification\.sh/);
   assert.doesNotMatch(recommendationWorkflow, /test db supabase\/tests\//);
 });
