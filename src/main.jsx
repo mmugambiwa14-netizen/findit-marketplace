@@ -7,7 +7,7 @@ import '@/pwa-viewport.css'
 const rootElement = document.getElementById('root')
 
 if (!rootElement) {
-  throw new Error('FindIt startup failed: root element is unavailable')
+  throw new Error('PeekaListing startup failed: root element is unavailable')
 }
 
 const root = ReactDOM.createRoot(rootElement)
@@ -16,7 +16,7 @@ function StartupFailure() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-center shadow-lg" aria-labelledby="startup-error-title">
-        <h1 id="startup-error-title" className="text-2xl font-bold">FindIt preview could not start</h1>
+        <h1 id="startup-error-title" className="text-2xl font-bold">PeekaListing preview could not start</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           This preview is missing required staging configuration or could not load one of its application files. No marketplace data has been changed.
         </p>
@@ -45,7 +45,7 @@ async function bootstrap() {
       </AppErrorBoundary>
     )
   } catch (error) {
-    console.error('FindIt application bootstrap failed:', error)
+    console.error('PeekaListing application bootstrap failed:', error)
     root.render(<StartupFailure />)
   }
 }
