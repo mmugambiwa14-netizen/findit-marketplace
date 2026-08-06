@@ -1,5 +1,7 @@
 import {
+  acceptPeekRequestRow,
   bindResponsePeekRows,
+  cancelPeekRequestFulfilmentRow,
   createPeekRequestRow,
   declinePeekRequestRow,
   invokeResponsePeekPlayback,
@@ -68,3 +70,9 @@ export function withdrawPeekRequestSupport(requestId) { return withdrawPeekReque
 export function declinePeekRequest(input) { return declinePeekRequestRow(requireValid(normalizeDeclinePeekRequest(input))); }
 export function mergePeekRequests(input) { return mergePeekRequestRows(requireValid(normalizeMergePeekRequests(input))); }
 export function bindResponsePeek(input) { return bindResponsePeekRows(requireValid(normalizeResponseBinding(input))); }
+export function acceptPeekRequest(requestId) { return acceptPeekRequestRow(requireValid(normalizeRequestId(requestId))); }
+export function cancelPeekRequestFulfilment(requestId, reason = null) {
+  const id = requireValid(normalizeRequestId(requestId));
+  const normalizedReason = typeof reason === 'string' ? reason.trim().slice(0, 500) || null : null;
+  return cancelPeekRequestFulfilmentRow(id, normalizedReason);
+}
