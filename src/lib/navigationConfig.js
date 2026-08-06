@@ -1,4 +1,5 @@
 import {
+  Building2,
   CirclePlay,
   CircleUserRound,
   Compass,
@@ -57,6 +58,7 @@ export const PRIMARY_NAV_ITEMS = [
 export const ADMIN_NAV_ITEMS = [
   { label: 'Overview', icon: LayoutDashboard, path: '/admin' },
   { label: 'Marketplace', icon: Store, path: '/admin/listings' },
+  { label: 'Business applications', icon: Building2, path: '/admin/business-applications' },
   { label: 'Peek moderation', icon: CirclePlay, path: '/admin/peeks' },
   { label: 'Users', icon: Users, path: '/admin/users' },
   { label: 'Reports', icon: Flag, path: '/admin/reports', countKey: 'reports' },
