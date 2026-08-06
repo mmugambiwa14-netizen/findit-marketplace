@@ -8,7 +8,7 @@ const stages = [
   ['production-boundary', ['scripts/audit-production.mjs']],
   ['source-graph', ['scripts/verify-source-graph.mjs']],
   ['sql-boundary', ['scripts/verify-sql-boundary.mjs']],
-  ['all-contracts', ['--test', 'tests/*.test.mjs']],
+  ['all-contracts', ['--test', 'tests']],
   ['buyer-journey', ['scripts/certify-buyer-journey.mjs']],
   ['listing-publication', ['scripts/certify-listing-publication-journey.mjs']],
   ['safety-operations', ['scripts/certify-safety-operations-journey.mjs']],
@@ -16,7 +16,11 @@ const stages = [
 
 function run(args) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, args, { env: process.env, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, args, {
+      env: process.env,
+      shell: false,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     let output = '';
     const append = (chunk) => {
       output += chunk.toString();
