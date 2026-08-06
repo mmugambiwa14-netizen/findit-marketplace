@@ -80,8 +80,8 @@ $$;
 revoke all on function public.enforce_curated_listing_publisher() from public;
 revoke all on function public.enforce_curated_service_publisher() from public;
 
--- These triggers are the authoritative enforcement boundary. They apply to
--- direct table writes and security-definer publication functions alike.
+-- Authoritative enforcement: these triggers cover both the private listing
+-- publication function and any direct insert path that survives RLS/grants.
 drop trigger if exists listings_enforce_curated_publisher on public.listings;
 create trigger listings_enforce_curated_publisher
 before insert on public.listings
