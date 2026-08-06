@@ -4,6 +4,8 @@ Updated: 2026-08-07
 
 This ledger records certification work that is implemented in the repository but cannot be truthfully marked as passed until an external account, hosted environment, secret, or provider limit is available.
 
+Repository-only work may continue past a recorded external gate. Every affected stage must remain marked pending and may not be represented as hosted-certified or release-complete.
+
 ## Stage 1 — Buyer journey
 
 Status: **Implemented; hosted certification pending**
@@ -35,4 +37,4 @@ Separate non-blocking provider condition:
 Release rule:
 
 - Stage 1 must not be called hosted-certified until the workflow completes successfully and its JSON artifact reports `status: passed`.
-- Work may continue on later repository-only stages, but this item remains a launch blocker.
+- This item remains a launch blocker until that evidence exists.
