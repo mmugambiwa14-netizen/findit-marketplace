@@ -1,0 +1,52 @@
+name: Cloudflare Provisioning Gates
+
+on:
+  pull_request:
+    paths:
+      - 'infrastructure/cloudflare/**'
+      - 'workers/edge/**'
+      - 'workers/media/**'
+      - '.github/workflows/cloudflare-provisioning-gates.yml'
+      - '.github/workflows/provision-cloudflare-staging.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-provisioning-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Validate shell provisioning script
+        run: |
+          command -v curl
+          command -v jq
+          bash -n infrastructure/cloudflare/provision-staging.sh
+      - name: Validate infrastructure contracts
+        run: node --test tests/criticalInfrastructureContracts.test.mjs
+      - name: Validate Edge Functions
+        run: npm run typecheck:edge-functions
+      - name: Validate Wrangler configuration shape
+        run: |
+          sed \
+            -e 's/REPLACE_WITH_STAGING_NAMESPACE_ID/00000000000000000000000000000000/' \
+            -e 's/REPLACE_WITH_PREVIEW_NAMESPACE_ID/11111111111111111111111111111111/' \
+            infrastructure/cloudflare/wrangler.toml.example > /tmp/wrangler.toml
+          npx --yes wrangler@4 deploy --dry-run --config /tmp/wrangler.toml
+      - name: Build media worker image
+        run: docker build -f workers/media/Dockerfile -t peekalisting-media-worker:test .
+      - name: Verify FFmpeg and non-root runtime
+        run: |
+          docker run --rm --entrypoint ffmpeg peekalisting-media-worker:test -version
+          test "$(docker run --rm --entrypoint id peekalisting-media-worker:test -u)" != "0"
