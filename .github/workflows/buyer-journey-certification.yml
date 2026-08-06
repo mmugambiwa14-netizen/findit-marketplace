@@ -2,15 +2,6 @@ name: Buyer Journey Certification
 
 on:
   workflow_dispatch:
-    inputs:
-      target:
-        description: Certification target
-        required: true
-        default: staging
-        type: choice
-        options:
-          - local
-          - staging
   pull_request:
     paths:
       - 'scripts/certify-buyer-journey.mjs'
@@ -30,10 +21,10 @@ jobs:
           node-version: 23
       - run: node --test tests/buyerJourneyCertificationContracts.test.mjs
 
-  certify:
+  certify-staging:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target == 'staging' && 'staging' || '' }}
+    environment: staging
     timeout-minutes: 30
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -45,9 +36,6 @@ jobs:
         with:
           node-version: 23
       - run: npm ci
-      - name: Start local Supabase
-        if: inputs.target == 'local'
-        run: npx --yes supabase@2.84.2 start
       - name: Run buyer certification
         run: node scripts/certify-buyer-journey.mjs
       - uses: actions/upload-artifact@v4
