@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Building2, CheckCircle2, ClipboardList, Loader2, Megaphone } from 'lucide-react';
+import { Building2, CheckCircle2, Loader2, Megaphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   getMyPublishingAccess,
+  requestAdditionalBusinessCategories,
+  respondToBusinessApplication,
   submitBusinessApplication,
   submitManagedListingRequest,
 } from '@/services/businessPublishingService';
@@ -39,17 +41,14 @@ export default function BusinessPublishingGate({ children }) {
   };
 
   useEffect(() => { void refresh(); }, []);
-
   const value = useMemo(() => ({ access, refresh }), [access]);
 
   if (loading) return <GateLoading />;
   if (access?.approvedCategories?.length > 0) {
     return <PublishingAccessContext.Provider value={value}>{children}</PublishingAccessContext.Provider>;
   }
-
   if (mode === 'business') return <BusinessApplication access={access} onBack={() => setMode(null)} onSubmitted={refresh} />;
   if (mode === 'managed') return <ManagedListingRequest onBack={() => setMode(null)} />;
-
   return <PublishingChoice access={access} onBusiness={() => setMode('business')} onManaged={() => setMode('managed')} />;
 }
 
@@ -79,9 +78,28 @@ function ChoiceCard({ icon: Icon, title, description, action, onClick }) {
 
 function BusinessApplication({ access, onBack, onSubmitted }) {
   const [form, setForm] = useState({ businessName: '', contactName: '', businessEmail: '', businessPhone: '', countryCode: 'ZW', city: '', description: '', websiteUrl: '', socialUrl: '', expectedInventoryBand: '1-10', requestedCategories: [] });
+  const [response, setResponse] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const toggleCategory = (category) => update('requestedCategories', form.requestedCategories.includes(category) ? form.requestedCategories.filter((item) => item !== category) : [...form.requestedCategories, category]);
+
+  if (access?.applicationStatus === 'needs_information') {
+    const submitResponse = async (event) => {
+      event.preventDefault();
+      setSubmitting(true);
+      try {
+        await respondToBusinessApplication(access.applicationId, response);
+        toast.success('Information sent for review');
+        await onSubmitted();
+        onBack();
+      } catch (error) {
+        toast.error(error.message || 'Your response could not be submitted.');
+      } finally {
+        setSubmitting(false);
+      }
+    };
+    return <main className="mx-auto max-w-2xl px-4 py-8"><button className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">More information required</h1><div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4 text-sm">{access.reviewerMessage || 'PeekaListing requested more information about your application.'}</div><form className="mt-5 space-y-4" onSubmit={submitResponse}><Field label="Your response"><Textarea required minLength={5} rows={6} value={response} onChange={(event) => setResponse(event.target.value)} /></Field><Button className="w-full" disabled={submitting}>{submitting ? 'Sending…' : 'Send information'}</Button></form></main>;
+  }
 
   if (['submitted', 'reviewing'].includes(access?.applicationStatus)) return <StatusPage title="Application under review" description="You can continue using PeekaListing as a buyer. Direct publishing will unlock only after at least one requested category is approved." onBack={onBack} />;
 
@@ -94,6 +112,27 @@ function BusinessApplication({ access, onBack, onSubmitted }) {
   };
 
   return <main className="mx-auto max-w-2xl px-4 py-8"><button className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">Business application</h1><p className="mt-2 text-sm text-muted-foreground">Approval is category-specific. You will only be able to publish in categories approved by PeekaListing.</p><form className="mt-6 space-y-4" onSubmit={submit}><Field label="Business name"><Input required value={form.businessName} onChange={(e) => update('businessName', e.target.value)} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Contact person"><Input required value={form.contactName} onChange={(e) => update('contactName', e.target.value)} /></Field><Field label="City"><Input required value={form.city} onChange={(e) => update('city', e.target.value)} /></Field><Field label="Business email"><Input required type="email" value={form.businessEmail} onChange={(e) => update('businessEmail', e.target.value)} /></Field><Field label="Business phone"><Input required value={form.businessPhone} onChange={(e) => update('businessPhone', e.target.value)} /></Field></div><Field label="Business description"><Textarea required rows={4} value={form.description} onChange={(e) => update('description', e.target.value)} /></Field><fieldset><legend className="text-sm font-bold">Requested categories</legend><div className="mt-2 grid grid-cols-2 gap-2">{CATEGORY_OPTIONS.map(([key, label]) => <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3"><input type="checkbox" checked={form.requestedCategories.includes(key)} onChange={() => toggleCategory(key)} />{label}</label>)}</div></fieldset><Button className="w-full" disabled={submitting}>{submitting ? 'Submitting…' : 'Submit application'}</Button></form></main>;
+}
+
+export function AdditionalCategoryRequest({ access, onComplete }) {
+  const unavailable = CATEGORY_OPTIONS.filter(([key]) => !access.approvedCategories.includes(key) && !access.pendingCategories.includes(key));
+  const [selected, setSelected] = useState([]);
+  const [busy, setBusy] = useState(false);
+  if (unavailable.length === 0) return null;
+  const submit = async () => {
+    setBusy(true);
+    try {
+      await requestAdditionalBusinessCategories(selected);
+      toast.success('Additional category request submitted');
+      await onComplete?.();
+      setSelected([]);
+    } catch (error) {
+      toast.error(error.message || 'Additional categories could not be requested.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return <section className="mt-5 rounded-2xl border border-border bg-card p-4"><h2 className="font-extrabold">Request another category</h2><p className="mt-1 text-sm text-muted-foreground">Each category is reviewed separately before publishing is enabled.</p><div className="mt-3 grid grid-cols-2 gap-2">{unavailable.map(([key, label]) => <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3"><input type="checkbox" checked={selected.includes(key)} onChange={() => setSelected((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key])} />{label}</label>)}</div><Button className="mt-3" onClick={submit} disabled={busy || selected.length === 0}>{busy ? 'Submitting…' : 'Request categories'}</Button></section>;
 }
 
 function ManagedListingRequest({ onBack }) {
