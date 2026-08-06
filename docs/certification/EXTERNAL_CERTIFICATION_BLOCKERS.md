@@ -103,3 +103,37 @@ Release rule:
 
 - Stage 3 must not be called hosted-certified until database, object-storage, processor, moderation, notification and playback evidence all pass on staging.
 - A request must remain pending until an approved published Response Peek is atomically bound.
+
+## Stage 4 — Listing publication journey
+
+Status: **Implemented and repository-certified; hosted database/storage/browser certification pending**
+
+Implemented journey:
+
+`Local resumable draft → validated private image upload → category-specific validation → atomic submission → moderation publication → public search/cards/details → edit → pause/resume → relist → unavailable/delete`
+
+Repository assets:
+
+- existing listing creation, media-intent, moderation and owner-management implementation
+- `supabase/migrations/0021_v1_listing_creation_and_media.sql`
+- `supabase/tests/v1_listing_creation_and_media.sql`
+- `scripts/phase4-listing-creation-smoke-local.mjs`
+- `scripts/certify-listing-publication-journey.mjs`
+- `tests/listingPublicationJourneyContracts.test.mjs`
+- `.github/workflows/listing-publication-journey-gates.yml`
+- expected report: `artifacts/certification/listing-publication-journey.json`
+
+External evidence still required:
+
+1. Apply all migrations to a clean staging database and run the complete pgTAP suite.
+2. Run the listing publication certification workflow with staging Supabase credentials.
+3. Upload real JPEG, PNG, WebP and phone-origin images and confirm private signed delivery on cards and detail pages.
+4. Complete browser acceptance with seller, moderator and public sessions.
+5. Confirm pending and rejected listings never appear publicly; approved listings appear in search, cards and details.
+6. Confirm editing a live listing returns it to moderation and removes it from public discovery until approved again.
+7. Confirm pause, resume, relist, unavailable and delete transitions update public discovery and media access consistently.
+
+Release rule:
+
+- Stage 4 must not be called hosted-certified until database, storage, moderation, search, cards, details and owner-management evidence all pass on staging.
+- “Submit” must never be represented as publicly live before moderation changes the canonical status to `available`.
