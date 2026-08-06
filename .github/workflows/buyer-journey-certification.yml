@@ -7,6 +7,7 @@ on:
       - 'scripts/certify-buyer-journey.mjs'
       - 'tests/buyerJourneyCertificationContracts.test.mjs'
       - '.github/workflows/buyer-journey-certification.yml'
+      - 'docs/certification/EXTERNAL_CERTIFICATION_BLOCKERS.md'
 
 permissions:
   contents: read
