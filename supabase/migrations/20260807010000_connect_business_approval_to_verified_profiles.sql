@@ -114,7 +114,6 @@ returns table (
   business_type public.business_type,
   profile_type text,
   verified boolean,
-  verification_status public.business_verification_status,
   phone text,
   email text,
   website text,
@@ -133,7 +132,7 @@ security definer
 set search_path = ''
 as $$
   select profile.id, profile.user_id, profile.company_name, profile.business_type,
-         profile.profile_type, profile.verified, profile.verification_status,
+         profile.profile_type, profile.verified,
          profile.phone, profile.email, profile.website, profile.social_links,
          profile.city, profile.address, profile.description, profile.avatar_url,
          profile.avatar_storage_path, profile.created_at, profile.updated_at
