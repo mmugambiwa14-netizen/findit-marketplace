@@ -27,6 +27,15 @@ export function normalizeSellerPeekQueuePage(rows = [], limit = 20) {
     createdAt: row.created_at,
     pendingSeconds: Number(row.pending_seconds) || 0,
     queueScore: Number(row.queue_score) || 0,
+    fulfilment: row.fulfilment_status
+      ? {
+          status: row.fulfilment_status,
+          attemptCount: Number(row.fulfilment_attempt_count) || 1,
+          tourId: row.fulfilment_tour_id || null,
+          expiresAt: row.fulfilment_expires_at || null,
+          failureReason: row.fulfilment_failure_reason || null,
+        }
+      : null,
   }));
   const source = rows[0];
   return {
