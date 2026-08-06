@@ -8,7 +8,10 @@ values
   ('00000000-0000-4000-8000-000000009001', 'support-admin@example.test', '{"full_name":"Support Admin"}', now(), now()),
   ('00000000-0000-4000-8000-000000009002', 'support-user@example.test', '{"full_name":"Support User"}', now(), now());
 
-update public.users set role = 'admin'
+-- 0030 locked is_admin() to founder identities: role alone is not enough, the
+-- account must also carry super_admin. Under pgTAP the founder-identity clause
+-- is satisfied by session_user still being postgres after `set local role`.
+update public.users set role = 'admin', super_admin = true
 where id = '00000000-0000-4000-8000-000000009001';
 
 set local role anon;
