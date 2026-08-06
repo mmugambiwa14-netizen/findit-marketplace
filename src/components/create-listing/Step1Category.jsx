@@ -10,6 +10,7 @@ import {
   MachineryCategoryIcon,
   ServicesCategoryIcon,
 } from '@/components/discover/CategoryIcons';
+import BusinessPublishingGate, { usePublishingAccess } from '@/components/business/BusinessPublishingGate';
 import StepNav from './StepNav';
 
 const CATEGORIES = [
@@ -26,14 +27,27 @@ function groupOptions(options) {
   }, {});
 }
 
-export default function Step1Category({ formData, update, onContinue }) {
+export default function Step1Category(props) {
+  return <BusinessPublishingGate><ApprovedCategorySelection {...props} /></BusinessPublishingGate>;
+}
+
+function ApprovedCategorySelection({ formData, update, onContinue }) {
   const navigate = useNavigate();
+  const { access } = usePublishingAccess();
   const [error, setError] = useState('');
-  const selected = CATEGORIES.find((category) => category.key === formData.listing_category);
+  const categories = useMemo(
+    () => CATEGORIES.filter((category) => access.approvedCategories.includes(category.key)),
+    [access.approvedCategories],
+  );
+  const selected = categories.find((category) => category.key === formData.listing_category);
   const grouped = useMemo(() => selected?.options ? groupOptions(selected.options) : {}, [selected]);
 
   const choose = (category) => {
     setError('');
+    if (!access.approvedCategories.includes(category.key)) {
+      setError('Your business is not approved to publish in this category.');
+      return;
+    }
     if (category.key === 'service') {
       navigate('/create-service');
       return;
@@ -46,6 +60,7 @@ export default function Step1Category({ formData, update, onContinue }) {
 
   const continueToDetails = () => {
     if (!formData.listing_category) return setError('Select what you are posting.');
+    if (!access.approvedCategories.includes(formData.listing_category)) return setError('Your business is not approved for this category.');
     if (!formData.category) return setError('Select a subcategory to continue.');
     setError('');
     onContinue();
@@ -56,11 +71,11 @@ export default function Step1Category({ formData, update, onContinue }) {
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Create a listing</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight">What are you posting?</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Choose the category that best matches your item.</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">Only categories approved for your business are available.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {CATEGORIES.map((category) => {
+        {categories.map((category) => {
           const active = formData.listing_category === category.key;
           const Icon = category.icon;
           return (
