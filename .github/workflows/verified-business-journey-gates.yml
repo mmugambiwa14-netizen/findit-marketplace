@@ -1,0 +1,31 @@
+name: Verified Business Journey Gates
+
+on:
+  pull_request:
+    paths:
+      - 'src/components/business/**'
+      - 'src/pages/BusinessProfiles.jsx'
+      - 'src/pages/PublicBusinessProfile.jsx'
+      - 'src/pages/admin/AdminBusinessApplications.jsx'
+      - 'src/repositories/businessProfilesRepository.js'
+      - 'src/services/adminBusinessPublishingService.js'
+      - 'src/services/businessPublishingService.js'
+      - 'supabase/migrations/20260806*_curated_business_*.sql'
+      - 'supabase/migrations/2026080701*_verified_business_*.sql'
+      - 'supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql'
+      - 'supabase/rollback/2026080701*.sql'
+      - 'tests/verifiedBusinessJourneyContracts.test.mjs'
+      - '.github/workflows/verified-business-journey-gates.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23
+      - run: node --test tests/verifiedBusinessJourneyContracts.test.mjs
