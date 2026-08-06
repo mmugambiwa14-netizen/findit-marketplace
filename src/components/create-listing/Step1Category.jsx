@@ -10,7 +10,7 @@ import {
   MachineryCategoryIcon,
   ServicesCategoryIcon,
 } from '@/components/discover/CategoryIcons';
-import BusinessPublishingGate, { usePublishingAccess } from '@/components/business/BusinessPublishingGate';
+import BusinessPublishingGate, { AdditionalCategoryRequest, usePublishingAccess } from '@/components/business/BusinessPublishingGate';
 import StepNav from './StepNav';
 
 const CATEGORIES = [
@@ -33,7 +33,7 @@ export default function Step1Category(props) {
 
 function ApprovedCategorySelection({ formData, update, onContinue }) {
   const navigate = useNavigate();
-  const { access } = usePublishingAccess();
+  const { access, refresh } = usePublishingAccess();
   const [error, setError] = useState('');
   const categories = useMemo(
     () => CATEGORIES.filter((category) => access.approvedCategories.includes(category.key)),
@@ -98,6 +98,8 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
         })}
       </div>
 
+      {access.pendingCategories.length > 0 && <p className="rounded-xl border border-primary/25 bg-primary/5 px-3 py-2 text-sm">Pending review: {access.pendingCategories.join(', ')}</p>}
+
       {selected?.options && (
         <div className="locked-control rounded-2xl p-4">
           <label htmlFor="listing-subcategory" className="mb-2 block text-sm font-bold">Choose a {selected.label.toLowerCase()} type</label>
@@ -119,6 +121,7 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
 
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm font-medium text-destructive">{error}</p>}
       <StepNav showBack={false} onContinue={continueToDetails} />
+      <AdditionalCategoryRequest access={access} onComplete={refresh} />
     </div>
   );
 }
