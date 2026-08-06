@@ -36,12 +36,16 @@ test('trigger functions handle INSERT UPDATE and DELETE records explicitly', asy
   assert.doesNotMatch(notifications, /coalesce\(new, old\)/);
 });
 
-test('owners cannot assign their own verification state', async () => {
+test('owners cannot assign verification while trusted definer synchronization remains possible', async () => {
   const migration = await read('supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql');
   assert.match(migration, /prevent_owner_business_verification_mutation/);
+  assert.match(migration, /current_user = 'authenticated'/);
+  assert.match(migration, /auth\.uid\(\) = old\.user_id/);
+  assert.match(migration, /not public\.is_admin\(\)/);
   assert.match(migration, /new\.verified is distinct from old\.verified/);
   assert.match(migration, /new\.verification_status is distinct from old\.verification_status/);
   assert.match(migration, /Business verification fields are admin controlled/);
+  assert.match(migration, /security definer[\s\S]*update public\.business_profiles/);
 });
 
 test('profiles created after approval are bootstrapped and decisions notify the owner', async () => {
