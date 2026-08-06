@@ -13,11 +13,12 @@ test('release workflow targets canonical main only', async () => {
   assert.match(workflow, /hosted-release-certification/);
 });
 
-test('clean database certification starts empty and runs all pgTAP tests', async () => {
+test('clean database certification uses a locked CLI and runs all pgTAP tests', async () => {
   const workflow = await read('.github/workflows/release-certification.yml');
-  assert.match(workflow, /supabase start/);
-  assert.match(workflow, /supabase db reset/);
-  assert.match(workflow, /supabase test db/);
+  assert.match(workflow, /supabase@2\.84\.2 start/);
+  assert.match(workflow, /supabase@2\.84\.2 db reset/);
+  assert.match(workflow, /supabase@2\.84\.2 test db/);
+  assert.doesNotMatch(workflow, /supabase\/setup-cli@v1/);
 });
 
 test('production build includes PWA and security verification', async () => {
@@ -29,13 +30,27 @@ test('production build includes PWA and security verification', async () => {
   assert.match(pkg.scripts.build, /verify-build-budget/);
 });
 
-test('final orchestrator composes completed journey evidence', async () => {
+test('final orchestrator composes all five completed core journeys', async () => {
   const script = await read('scripts/certify-final-release.mjs');
   assert.match(script, /certify-buyer-journey/);
+  assert.match(script, /certify-verified-business-journey/);
+  assert.match(script, /certify-peek-fulfilment-journey/);
   assert.match(script, /certify-listing-publication-journey/);
   assert.match(script, /certify-safety-operations-journey/);
   assert.match(script, /repository-certified-hosted-pending/);
   assert.match(script, /final-release\.json/);
+});
+
+test('verified business and Peek fulfilment certifiers preserve hosted evidence boundaries', async () => {
+  const business = await read('scripts/certify-verified-business-journey.mjs');
+  const peek = await read('scripts/certify-peek-fulfilment-journey.mjs');
+  assert.match(business, /verifiedBusinessJourneyContracts/);
+  assert.match(business, /phase3-business-profiles-smoke/);
+  assert.match(business, /verified-business-journey\.json/);
+  assert.match(peek, /peekFulfilmentJourneyContracts/);
+  assert.match(peek, /tours-seller-workflow-smoke/);
+  assert.match(peek, /tours-processing-smoke/);
+  assert.match(peek, /peek-fulfilment-journey\.json/);
 });
 
 test('bounded scale certification covers critical traffic paths', async () => {
