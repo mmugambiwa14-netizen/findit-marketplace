@@ -1,0 +1,47 @@
+name: Critical Infrastructure Gates
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'workers/**'
+      - 'infrastructure/cloudflare/**'
+      - 'supabase/functions/verify-turnstile/**'
+      - 'src/lib/traceContext.js'
+      - 'tests/criticalHighInfrastructureContracts.test.mjs'
+      - '.github/workflows/critical-infrastructure-gates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: critical-infrastructure-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --include=dev --ignore-scripts
+      - run: node --test tests/criticalHighInfrastructureContracts.test.mjs
+      - run: npm run typecheck:edge-functions
+
+  media-worker-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build media worker image
+        run: docker build --file workers/media/Dockerfile --tag peekalisting-media-worker:ci .
+      - name: Verify FFmpeg toolchain
+        run: docker run --rm --entrypoint ffmpeg peekalisting-media-worker:ci -version
+      - name: Verify non-root runtime
+        run: test "$(docker inspect --format='{{.Config.User}}' peekalisting-media-worker:ci)" = "node"
