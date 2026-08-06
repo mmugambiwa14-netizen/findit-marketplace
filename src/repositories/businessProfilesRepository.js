@@ -9,6 +9,8 @@ const PROFILE_SELECT = `
   company_name,
   business_type,
   profile_type,
+  verified,
+  verification_status,
   phone,
   email,
   website,
