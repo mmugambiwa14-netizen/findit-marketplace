@@ -1,5 +1,5 @@
 begin;
-select plan(43);
+select plan(44);
 
 select has_table('public', 'recommendation_contexts', 'context catalogue exists');
 select has_table('public', 'recommendation_context_rules', 'context rule table exists');
