@@ -25,15 +25,11 @@ test('category approval synchronizes the public business verification state', as
   assert.match(migration, /sync_verified_profile_from_application/);
 });
 
-test('trigger functions handle INSERT UPDATE and DELETE records explicitly', async () => {
+test('state synchronization trigger handles INSERT UPDATE and DELETE records explicitly', async () => {
   const state = await read('supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql');
-  const notifications = await read('supabase/migrations/20260807011000_verified_business_notifications_and_profile_bootstrap.sql');
   assert.match(state, /tg_op = 'DELETE'/);
   assert.match(state, /return case when tg_op = 'DELETE' then old else new end/);
-  assert.match(notifications, /tg_op = 'DELETE'/);
-  assert.match(notifications, /return case when tg_op = 'DELETE' then old else new end/);
   assert.doesNotMatch(state, /coalesce\(new, old\)/);
-  assert.doesNotMatch(notifications, /coalesce\(new, old\)/);
 });
 
 test('owners cannot assign verification while trusted definer synchronization remains possible', async () => {
@@ -48,27 +44,38 @@ test('owners cannot assign verification while trusted definer synchronization re
   assert.match(migration, /security definer[\s\S]*update public\.business_profiles/);
 });
 
-test('profiles created after approval are bootstrapped and decisions notify the owner', async () => {
-  const migration = await read('supabase/migrations/20260807011000_verified_business_notifications_and_profile_bootstrap.sql');
-  assert.match(migration, /bootstrap_verified_business_profile/);
-  assert.match(migration, /notify_business_application_state/);
-  assert.match(migration, /create_essential_notification/);
-  assert.match(migration, /'account_status'/);
-  assert.match(migration, /business-application:/);
+test('profiles created after approval are bootstrapped from the existing application', async () => {
+  const migration = await read('supabase/migrations/20260807011000_verified_business_profile_bootstrap.sql');
+  assert.match(migration, /bootstrap_business_profile_verification/);
+  assert.match(migration, /order by submitted_at desc, id desc/);
+  assert.match(migration, /sync_business_profile_verification/);
+  assert.doesNotMatch(migration, /create_essential_notification/);
 });
 
-test('public projection is recreated with matching enum output and least public fields', async () => {
+test('existing curated notification system remains the only decision notification source', async () => {
+  const notifications = await read('supabase/migrations/20260806093000_curated_business_notifications.sql');
+  assert.match(notifications, /notify_business_application_change/);
+  assert.match(notifications, /notify_business_category_change/);
+  assert.match(notifications, /business_application_updated/);
+  assert.match(notifications, /business_category_updated/);
+});
+
+test('public projection exposes verified boolean but keeps moderation status private', async () => {
   const migration = await read('supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql');
   const repository = await read('src/repositories/businessProfilesRepository.js');
   assert.match(migration, /drop view if exists public\.business_profiles_public/);
   assert.match(migration, /drop function if exists private\.public_business_profiles/);
-  assert.match(migration, /verification_status public\.business_verification_status/);
+  assert.match(migration, /verified boolean/);
   assert.match(migration, /profile\.verified/);
-  assert.match(migration, /profile\.verification_status/);
+  const publicReturn = migration.slice(migration.indexOf('create function private.public_business_profiles()'));
+  assert.doesNotMatch(publicReturn, /verification_status public\.business_verification_status/);
+  assert.doesNotMatch(publicReturn, /profile\.verification_status/);
   assert.doesNotMatch(migration, /evidence_paths/);
   assert.doesNotMatch(migration, /reviewer_message/);
-  assert.match(repository, /verified,/);
-  assert.match(repository, /verification_status,/);
+  assert.match(repository, /const PUBLIC_PROFILE_SELECT/);
+  assert.match(repository, /const OWNER_PROFILE_SELECT/);
+  assert.match(repository, /verification_status/);
+  assert.match(repository, /\.select\(PUBLIC_PROFILE_SELECT\)/);
 });
 
 test('owner and public profile screens render the shared verified state component', async () => {
@@ -82,12 +89,21 @@ test('owner and public profile screens render the shared verified state componen
   assert.match(badge, /if \(publicView && normalized !== 'approved'\) return null/);
 });
 
+test('database journey test covers approval rejection tamper bootstrap and suspension', async () => {
+  const sql = await read('supabase/tests/v1_verified_business_journey.sql');
+  assert.match(sql, /marks the business profile verified/);
+  assert.match(sql, /profile created after approval is bootstrapped/);
+  assert.match(sql, /rejected application synchronizes/);
+  assert.match(sql, /cannot remove or assign verification directly/);
+  assert.match(sql, /suspending the final approved category removes/);
+});
+
 test('verified business migrations have rollback capsules', async () => {
   const first = await read('supabase/rollback/20260807010000_connect_business_approval_to_verified_profiles.rollback.sql');
-  const second = await read('supabase/rollback/20260807011000_verified_business_notifications_and_profile_bootstrap.rollback.sql');
+  const second = await read('supabase/rollback/20260807011000_verified_business_profile_bootstrap.rollback.sql');
   assert.match(first, /drop trigger if exists sync_verified_profile_from_category/);
   assert.match(first, /drop function if exists public\.sync_business_profile_verification/);
   assert.match(first, /drop view if exists public\.business_profiles_public/);
-  assert.match(second, /drop trigger if exists notify_business_category_state/);
-  assert.match(second, /drop function if exists public\.notify_business_application_state/);
+  assert.match(second, /drop trigger if exists bootstrap_verified_business_profile/);
+  assert.match(second, /drop function if exists public\.bootstrap_business_profile_verification/);
 });
