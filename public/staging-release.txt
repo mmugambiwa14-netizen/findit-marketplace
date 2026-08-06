@@ -1,5 +1,5 @@
 FindIt staging release
 Media actions moved beside Photos and Peek.
 Share and Save use compact controls; Save uses the bookmark icon.
-GitHub Pages preview refreshed from feature/listing-intelligence-foundation.
-Release generated: 2026-08-06T09:37:00+03:00
+Release generated: 2026-08-06T09:58:00+03:00
+Deployment source: feature/listing-intelligence-foundation promoted to main for GitHub Pages.
