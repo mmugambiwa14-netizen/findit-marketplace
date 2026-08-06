@@ -19,9 +19,21 @@ test('category approval synchronizes the public business verification state', as
   assert.match(migration, /sync_business_profile_verification/);
   assert.match(migration, /status = 'approved'/);
   assert.match(migration, /verified = v_has_approved/);
-  assert.match(migration, /verification_status = case/);
+  assert.match(migration, /'verified'::public\.business_verification_status/);
+  assert.doesNotMatch(migration, /then 'approved'::public\.business_verification_status/);
   assert.match(migration, /sync_verified_profile_from_category/);
   assert.match(migration, /sync_verified_profile_from_application/);
+});
+
+test('trigger functions handle INSERT UPDATE and DELETE records explicitly', async () => {
+  const state = await read('supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql');
+  const notifications = await read('supabase/migrations/20260807011000_verified_business_notifications_and_profile_bootstrap.sql');
+  assert.match(state, /tg_op = 'DELETE'/);
+  assert.match(state, /return case when tg_op = 'DELETE' then old else new end/);
+  assert.match(notifications, /tg_op = 'DELETE'/);
+  assert.match(notifications, /return case when tg_op = 'DELETE' then old else new end/);
+  assert.doesNotMatch(state, /coalesce\(new, old\)/);
+  assert.doesNotMatch(notifications, /coalesce\(new, old\)/);
 });
 
 test('owners cannot assign their own verification state', async () => {
@@ -41,9 +53,12 @@ test('profiles created after approval are bootstrapped and decisions notify the 
   assert.match(migration, /business-application:/);
 });
 
-test('public projection exposes status without exposing application evidence or reviewer notes', async () => {
+test('public projection is recreated with matching enum output and least public fields', async () => {
   const migration = await read('supabase/migrations/20260807010000_connect_business_approval_to_verified_profiles.sql');
   const repository = await read('src/repositories/businessProfilesRepository.js');
+  assert.match(migration, /drop view if exists public\.business_profiles_public/);
+  assert.match(migration, /drop function if exists private\.public_business_profiles/);
+  assert.match(migration, /verification_status public\.business_verification_status/);
   assert.match(migration, /profile\.verified/);
   assert.match(migration, /profile\.verification_status/);
   assert.doesNotMatch(migration, /evidence_paths/);
@@ -68,6 +83,7 @@ test('verified business migrations have rollback capsules', async () => {
   const second = await read('supabase/rollback/20260807011000_verified_business_notifications_and_profile_bootstrap.rollback.sql');
   assert.match(first, /drop trigger if exists sync_verified_profile_from_category/);
   assert.match(first, /drop function if exists public\.sync_business_profile_verification/);
+  assert.match(first, /drop view if exists public\.business_profiles_public/);
   assert.match(second, /drop trigger if exists notify_business_category_state/);
   assert.match(second, /drop function if exists public\.notify_business_application_state/);
 });
