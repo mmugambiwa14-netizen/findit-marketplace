@@ -97,4 +97,8 @@ comment on function public.enforce_curated_listing_publisher() is
 comment on function public.enforce_curated_service_publisher() is
   'Authoritative Services-category approval gate for service publication.';
 
+-- Verification must prove: unapproved inserts fail, approved matching-category
+-- inserts succeed, cross-category inserts fail, suspended approvals fail, and
+-- admins can publish managed listings while ordinary users cannot spoof owners.
+
 commit;
