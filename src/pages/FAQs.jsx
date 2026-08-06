@@ -6,63 +6,59 @@ import { useNavigate } from "react-router-dom";
 const FAQS = [
   {
     question: "How do I contact a seller?",
-    answer: "Open a published listing and use the available contact actions. You can call, use WhatsApp, or email when the seller permits it. Registered users will also be able to send a plain-text FindIt message once messaging has completed migration."
+    answer: "Open a published listing and use the available contact actions. You can call, use WhatsApp, email, or start a PeekaListing chat when the seller permits that channel."
   },
   {
     question: "Is it free to create listings?",
-    answer: "Yes. FindIt V1 is free to browse, contact, and post within reasonable anti-abuse limits. There are no premium packages or paid placement in Version 1."
+    answer: "Yes. PeekaListing is free to browse, contact, and post within reasonable anti-abuse limits. There are no premium packages or paid placement in this MVP."
   },
   {
     question: "How long do listings stay active?",
-    answer: "Listings remain active until you pause, remove, mark unavailable, sell, or rent them. Routine expiry is not enabled for the V1 launch."
+    answer: "Listings remain active until you pause, remove, mark unavailable, sell, or rent them. Routine expiry is not enabled for the MVP launch."
   },
   {
     question: "Can I edit my listing after publishing?",
-    answer: "Yes! Go to 'My Listings' from your profile, select the listing you want to edit, and click the edit button to make changes."
+    answer: "Yes. Go to My Listings from your profile, choose the listing, and edit its details or validated images. Valid edits remain live without a routine review queue."
   },
   {
     question: "How do I save listings for later?",
-    answer: "Select the heart on a listing card or detail page. Your saved items appear in Favourites. You need to sign in so they remain available across visits."
+    answer: "Select the heart on a listing card or detail page. Your saved items appear in Favourites. Sign in so they remain available across visits."
   },
   {
-    question: "Does FindIt process payments?",
-    answer: "No. FindIt V1 helps buyers evaluate offers and contact sellers, but it does not collect payments, hold funds, provide escrow, or guarantee a transaction. Never send money before you are satisfied that an offer is genuine."
+    question: "Does PeekaListing process payments?",
+    answer: "No. PeekaListing helps buyers evaluate offers and contact sellers, but it does not collect payments, hold funds, provide escrow, or guarantee a transaction. Never send money before you are satisfied that an offer is genuine."
   },
   {
-    question: "How do I report a suspicious listing?",
-    answer: "Use Report on the listing or seller page, choose the closest reason, and provide useful details. Reports are reviewed as quickly as the founder can safely assess them; FindIt does not promise emergency response."
+    question: "How do I report suspicious content?",
+    answer: "Use Report on a listing, Peek, message, service, or seller surface, choose the closest reason, and provide useful details. Reports support post-publication safety action; PeekaListing does not promise emergency response."
   },
   {
-    question: "Does FindIt verify sellers or businesses?",
-    answer: "No. Identity, document, business, and dealer verification are not part of Version 1. An email-confirmed account only proves control of that email address. Always evaluate the listing and seller yourself."
+    question: "Does PeekaListing verify businesses?",
+    answer: "Eligible businesses can apply for category-specific verification. An approved business marker reflects the approved business category only; it is not a guarantee of every listing, seller claim, transaction, or item condition."
+  },
+  {
+    question: "Are ordinary listings and Peeks manually approved?",
+    answer: "No. Validated listings publish immediately, and Peeks publish automatically after successful media processing. Reported content can later be suspended, removed, or restored through the safety process."
   },
   {
     question: "What notifications will I receive?",
-    answer: "FindIt V1 limits notifications to important operational events such as publication, listing availability changes, report resolution, and account suspension or restoration. It does not send price-drop or marketing alerts."
+    answer: "PeekaListing sends important operational updates such as business decisions, Peek requests and results, messages, report outcomes, and account-status changes. Marketing alerts are not part of this MVP."
   },
   {
     question: "How do I delete my listing?",
-    answer: "Navigate to 'My Listings', select the listing, and click the delete button. This action is permanent and cannot be undone."
+    answer: "Navigate to My Listings, select the listing, and choose delete. This action is permanent and cannot be undone."
   },
   {
     question: "How do I search for specific items?",
-    answer: "Use the search bar at the top of the homepage. You can filter by category, location, price range, and other criteria to find exactly what you're looking for."
-  },
-  {
-    question: "What is the verification process for sellers?",
-    answer: "There is no seller-document verification process in Version 1. FindIt does not collect identity or company-registration documents and does not display a generic verified-seller badge."
+    answer: "Use the search bar on Discover. You can filter by category, location, price range, and category-specific details."
   },
   {
     question: "Can I negotiate prices with sellers?",
-    answer: "Yes! Many listings are marked as 'Negotiable'. Contact the seller directly through call or WhatsApp to discuss pricing. Always follow safety guidelines when meeting."
+    answer: "Many listings are marked as negotiable. Contact the seller through an available channel to discuss pricing, and follow the safety guidance before meeting or paying."
   },
   {
     question: "How do I stay safe when buying?",
-    answer: "Meet in public places, bring a friend, inspect items before paying, and trust your instincts. Never share personal financial information. Report suspicious listings immediately."
-  },
-  {
-    question: "What happens when my listing expires?",
-    answer: "Routine listing expiry is disabled for the V1 launch. If expiry is enabled later, expired listings will be hidden from public search until renewed."
+    answer: "Use Peeks when available, meet in public places, bring someone you trust, inspect items before paying, and never share sensitive financial credentials. Report suspicious activity promptly."
   }
 ];
 
@@ -82,9 +78,7 @@ function FAQItem({ question, answer, isOpen, onToggle, index }) {
         <span className="text-sm font-medium">{question}</span>
         <ChevronDown
           aria-hidden="true"
-          className={`w-4 h-4 text-muted-foreground transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
       {isOpen && (
@@ -100,13 +94,8 @@ export default function FAQs() {
   const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState(null);
 
-  const handleToggle = (index) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
           <Button type="button" variant="ghost" size="icon" aria-label="Go back" onClick={() => navigate(-1)}>
@@ -116,7 +105,6 @@ export default function FAQs() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="px-4 py-6 space-y-3 max-w-3xl mx-auto">
         {FAQS.map((faq, index) => (
           <FAQItem
@@ -125,7 +113,7 @@ export default function FAQs() {
             question={faq.question}
             answer={faq.answer}
             isOpen={openIndex === index}
-            onToggle={() => handleToggle(index)}
+            onToggle={() => setOpenIndex(openIndex === index ? null : index)}
           />
         ))}
         <div className="pt-5 text-center">
@@ -134,12 +122,11 @@ export default function FAQs() {
             Contact Support
           </Button>
           <p className="mt-2 text-xs text-muted-foreground">
-            Send a structured request to the FindIt founder inbox. No attachments are accepted.
+            Send a structured request to the PeekaListing support inbox. No attachments are accepted.
           </p>
         </div>
       </div>
 
-      {/* Footer */}
       <div className="px-4 py-8 text-center">
         <p className="text-sm text-muted-foreground">
           If you are in immediate danger or believe a crime is taking place,
