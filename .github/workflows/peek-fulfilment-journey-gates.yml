@@ -1,0 +1,29 @@
+name: Peek Fulfilment Journey Gates
+
+on:
+  pull_request:
+    paths:
+      - 'src/components/peekThreads/**'
+      - 'src/domain/peekThreads/**'
+      - 'src/repositories/peekThreadsRepository.js'
+      - 'src/services/peekThreadsService.js'
+      - 'src/services/responsePeekBindingIntentService.js'
+      - 'supabase/migrations/20260807020000_peek_request_fulfilment_lifecycle.sql'
+      - 'supabase/migrations/20260807020500_peek_fulfilment_seller_queue.sql'
+      - 'supabase/rollback/20260807020*.sql'
+      - 'supabase/tests/v1_peek_fulfilment_journey.sql'
+      - 'tests/peekFulfilmentJourneyContracts.test.mjs'
+      - '.github/workflows/peek-fulfilment-journey-gates.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23
+      - run: node --test tests/peekFulfilmentJourneyContracts.test.mjs
