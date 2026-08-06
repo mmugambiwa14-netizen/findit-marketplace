@@ -10,7 +10,8 @@ import {
   MachineryCategoryIcon,
   ServicesCategoryIcon,
 } from '@/components/discover/CategoryIcons';
-import BusinessPublishingGate, { AdditionalCategoryRequest, usePublishingAccess } from '@/components/business/BusinessPublishingGate';
+import BusinessPublishingGate, { usePublishingAccess } from '@/components/business/BusinessPublishingGate';
+import PublishingOperationsPanel from '@/components/business/PublishingOperationsPanel';
 import StepNav from './StepNav';
 
 const CATEGORIES = [
@@ -121,7 +122,7 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
 
       {error && <p className="rounded-xl border border-destructive/30 bg-destructive/8 px-3 py-2 text-sm font-medium text-destructive">{error}</p>}
       <StepNav showBack={false} onContinue={continueToDetails} />
-      <AdditionalCategoryRequest access={access} onComplete={refresh} />
+      <PublishingOperationsPanel access={access} onRefresh={refresh} />
     </div>
   );
 }
