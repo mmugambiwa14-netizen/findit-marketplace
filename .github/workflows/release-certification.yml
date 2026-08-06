@@ -88,26 +88,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Set up Supabase CLI
-        uses: supabase/setup-cli@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
-          version: 2.84.2
+          node-version: 24
 
       - name: Start local Supabase
-        run: supabase start
+        run: npx --yes supabase@2.84.2 start
 
       - name: Apply every migration from empty state
-        run: supabase db reset
+        run: npx --yes supabase@2.84.2 db reset
 
       - name: Run complete pgTAP suite
-        run: supabase test db
+        run: npx --yes supabase@2.84.2 test db
 
       - name: Capture database diagnostics
         if: always()
         run: |
           mkdir -p artifacts/certification
-          supabase status -o env > artifacts/certification/local-supabase-status.txt || true
-          supabase migration list > artifacts/certification/migration-list.txt || true
+          npx --yes supabase@2.84.2 status -o env > artifacts/certification/local-supabase-status.txt || true
+          npx --yes supabase@2.84.2 migration list > artifacts/certification/migration-list.txt || true
 
       - name: Upload database evidence
         if: always()
