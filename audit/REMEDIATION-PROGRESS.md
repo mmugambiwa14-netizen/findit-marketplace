@@ -270,15 +270,57 @@ open**, as do the proof-chain closures that depend on them. Marking them done on
 database matrix would repeat exactly the F-002 failure mode the audit calls out: a control reporting success
 over a surface it does not cover.
 
+## Frontend and source-contract surface — LOCAL EVIDENCE
+
+Run locally after `npm ci` (this environment has no database, but the JS suites, lint, typechecks and the
+production build all run):
+
+| Gate | Before | After |
+|---|---|---|
+| `node --test ./tests/*.test.mjs` | 766/776, **10 red** | **775/776**, 1 red |
+| `node --test ./tests/security/*.test.mjs` | 41/41 | 41/41 |
+| `npm run lint` | pass | pass |
+| `npm run typecheck` / `typecheck:active` | pass | pass (293 modules) |
+| `npm run build` + 5 post-build gates | pass | pass |
+
+**The single remaining red is expected and must stay red:** test 158, *owner journey supports edit pause
+resume relist unavailable and permanent delete*. `REMEDIATION-PROMPT.md` §WP-09 names this a **correct test
+failing against a real defect**, owned by **F-029 / WP-15**. Do not touch it here.
+
+Closed on this surface: **F-080** (npm-ci workflow count drifted 8→12; also closes F-060's proving test),
+**F-081** (certification contracts bound to exact assertion wording that F-069/F-070 legitimately reworded),
+**F-042 image contract** (one remaining `<img>`), **F-017** (PWA raster set), **F-082** (brand contract
+contradicted the installability contract).
+
+### F-017 — the shortcut that was available and wrong
+
+A raster set already sat in `public/brand/findit-icon-*.png`, and pointing the manifest at it would have
+turned all five red assertions green in one line. Those files depict the **retired FindIt mark** — a
+magnifier and pin over a house and car — while the current identity is the binocular mark. Taking that
+shortcut would have shipped the old logo as the PeekaListing home-screen icon.
+
+Instead the set was rasterized from the approved `peekalisting-binoculars.svg` at 32/64/180/192/512 plus a
+dedicated maskable 512 (mark scaled to 60% on `#050914`, since Android crops maskables to the inscribed
+safe-zone circle and the test correctly refuses a maskable that reuses the plain file).
+
+`public/offline.html` was also still showing users the FindIt raster — a real brand regression on the page
+shown exactly when things are going wrong. Repointed.
+
+**F-082** is worth noting as a genuine contradiction, not staleness: `peekaListingBrandContracts` demanded
+every manifest icon be the SVG while `webAppManifest` demanded every icon be PNG. Mutually unsatisfiable.
+The brand contract now asserts brand *ownership* (every icon a PeekaListing asset, none a FindIt raster),
+which is strictly harder to pass and would have caught the shortcut above.
+
 ## Exact next action
 
-1. Run the full PR check set on this branch and take the **next exact failure on the frontend/source-contract
-   surface**, which is now the only unproven half of F-012.
-2. Repair only that boundary, then re-run. Same discipline as the database matrix: establish which side is
-   authoritative before changing either, and never weaken a contract to turn CI green.
-3. When all five workflows are green, close F-012/F-058/F-060 and record the final proof chain.
-4. Then proceed to WP-05/F-033 (EXIF/GPS stripping), which the prompt marks independent and startable.
-5. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken
+1. Push and run the full PR check set. The database matrix is green and the JS/lint/typecheck/build surface
+   is green locally; confirm both in CI together.
+2. Only then consider F-012 supported, and with it F-058/F-060. **F-029 will still be red** — that is
+   correct and is WP-15's to close, so F-012's gate must account for it explicitly rather than waiting for a
+   fully green suite that cannot exist until WP-15 lands.
+3. Then WP-15/F-029 (owner lifecycle action — extend `owner_transition_listing` without altering its
+   ownership predicate, per §3.3), or WP-05/F-033 (EXIF/GPS stripping), which the prompt marks independent.
+4. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken
    curated publishing, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or
    weaken a contract merely to turn CI green.
 
