@@ -100,10 +100,10 @@ export default function CarDetail() {
             </div>
             {car.accident_history && <div className="mt-5 rounded-2xl border border-destructive/25 bg-destructive/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold text-destructive"><AlertTriangle className="h-5 w-5" />Accident history has been declared</p></div>}
             <div className="mt-6 space-y-5">
+              <PeekThreadsSection parentType="listing" parentId={car.id} listingKind="car" ownerId={car.seller_id} guard={guard} />
               <VariantSelector variants={car.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
               <PriceBreakdown listing={car} />
               {car.accepts_offers && <MakeOfferButton listing={car} />}
-              <PeekThreadsSection parentType="listing" parentId={car.id} listingKind="car" ownerId={car.seller_id} guard={guard} />
               <SafetyPanel>Request a test drive, verify ownership documents and consider an independent mechanical inspection. Never send money before seeing the vehicle.</SafetyPanel>
             </div>
           </ListingTabSection>
