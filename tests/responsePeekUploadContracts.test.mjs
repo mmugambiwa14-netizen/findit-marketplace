@@ -37,9 +37,16 @@ test('seller queue reuses the existing uploader and promises no moderation step'
   // upload "remains pending ... and moderated" and "becomes answered automatically
   // after approval" (F-049).
   //
-  // Asserting the absence rather than deleting the assertion, because the copy is
+  // Asserting the absence rather than deleting the assertion, because the copy was
   // still in the component and promising sellers an approval step that does not
   // exist is a real defect, tracked as F-059. This is its proving test.
-  assert.doesNotMatch(queue, /moderat/i, 'seller queue must not promise a moderation step');
-  assert.doesNotMatch(queue, /after approval/i, 'seller queue must not promise an approval step');
+  //
+  // ResponsePeekBindingQueue is covered too: the same promise appeared there as
+  // "Ready after moderation" and "each approved Peek", which the original finding
+  // did not name.
+  const binding = await read('src/components/peekThreads/ResponsePeekBindingQueue.jsx');
+  for (const [name, source] of [['seller queue', queue], ['binding queue', binding]]) {
+    assert.doesNotMatch(source, /moderat/i, `${name} must not promise a moderation step`);
+    assert.doesNotMatch(source, /\bapprov/i, `${name} must not promise an approval step`);
+  }
 });

@@ -49,9 +49,9 @@ export default function ResponsePeekBindingQueue() {
   return (
     <section className="mx-4 mb-5 overflow-hidden rounded-2xl border border-primary/25 bg-card" aria-labelledby="ready-response-peeks-heading">
       <div className="border-b border-border p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Ready after moderation</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Ready to attach</p>
         <h2 id="ready-response-peeks-heading" className="mt-1 text-lg font-black">Publish Response Peeks</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Choose which buyer requests each approved Peek answers.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose which buyer requests each published Peek answers.</p>
       </div>
       <div className="divide-y divide-border">
         {ready.data.map((peek) => (

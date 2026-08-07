@@ -190,7 +190,7 @@ export default function BuyerPeekRequestsQueue() {
     setBindingBusy(true);
     try {
       await queueResponsePeekBinding(result.tourId, responseTarget.requestId);
-      toast.success('Response Peek uploaded. It will answer this request automatically after approval.');
+      toast.success('Response Peek uploaded. It will answer this request automatically once processing finishes.');
       invalidateQueue();
       resetResponse();
     } catch (error) {
@@ -257,7 +257,7 @@ export default function BuyerPeekRequestsQueue() {
           <DialogHeader>
             <DialogTitle>Record Response Peek</DialogTitle>
             <DialogDescription>
-              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. PeekaListing will attach the approved video to this request automatically.` : 'Record visual evidence for this buyer request.'}
+              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. PeekaListing attaches the video to this request automatically once it finishes processing.` : 'Record visual evidence for this buyer request.'}
             </DialogDescription>
           </DialogHeader>
           {responseTarget && (
@@ -274,7 +274,7 @@ export default function BuyerPeekRequestsQueue() {
             />
           )}
           {(bindingBusy || responseBusy) && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Finishing the Response Peek…</p>}
-          <p className="text-xs leading-5 text-muted-foreground">The accepted request remains open while the video is uploaded, processed and moderated. It becomes answered only after approval.</p>
+          <p className="text-xs leading-5 text-muted-foreground">The accepted request stays open while the video uploads and processes. It becomes answered automatically as soon as processing finishes.</p>
         </DialogContent>
       </Dialog>
 

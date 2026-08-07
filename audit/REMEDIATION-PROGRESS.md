@@ -98,8 +98,9 @@ All `NOT-STARTED` except as noted. Per-finding rows in `audit/findings-status.cs
 
 | WP | Findings | Status | Commit | Proving test | Result |
 |---|---|---|---|---|---|
-| WP-09 | F-049 | **DONE** | *next commit* | both `node --test` suites | `LOCAL-EXEC` **PASS** — contracts 14 → **11** fail; **security 41/41, fully green** |
+| WP-09 | F-049 | **DONE** | `051cf8a` | both `node --test` suites | `LOCAL-EXEC` **PASS** — contracts 14 → **11** fail; **security 41/41, fully green** |
 | WP-10 | F-014 | **DONE** | `8dc68fd` | `npm run typecheck` + `typecheck:active` | `LOCAL-EXEC` **PASS** — both exit 0 (were exit 2 / 10 errors) |
+| — | **F-059** | **DONE** | *next commit* | contract `508` | `LOCAL-EXEC` **PASS** — suite 11 → **10** fail |
 
 ### Findings discovered *after* the audit
 
@@ -109,7 +110,7 @@ made those steps run, and they immediately reported a defect the audit never had
 | ID | Sev | WP | Title |
 |---|---|---|---|
 | **F-058** | P2 | WP-02 | `src/lib/traceContext.js:15,18` calls `globalThis.sessionStorage` directly instead of going through the guarded `src/lib/browserStorage.js` boundary. Fails `npm run audit:product-surface` with `UNSAFE_BROWSER_STORAGE`. |
-| **F-059** | P2 | WP-09 | `BuyerPeekRequestsQueue.jsx:193,277` tells sellers a Response Peek *"remains open while … moderated"* and *"becomes answered only after approval"*. **The MVP has no Peek moderation** — this promises users a step that does not exist. Proving test already written (contract `508`). |
+| ~~**F-059**~~ **DONE** | P2 | WP-09 | `BuyerPeekRequestsQueue.jsx:193,277` tells sellers a Response Peek *"remains open while … moderated"* and *"becomes answered only after approval"*. **The MVP has no Peek moderation** — this promises users a step that does not exist. Proving test already written (contract `508`). |
 | **F-060** | P2 | WP-02 | `buyer-journey-certification.yml` does not normalize `package-lock.json` before install, unlike every other locked workflow. Supply-chain hygiene. |
 | **F-061** | P2 | WP-02 | `pages-preview.yml` pins `actions/checkout@v4` — a **mutable tag** — where every other workflow pins an immutable commit SHA. A moved tag silently changes what CI executes. |
 
@@ -118,7 +119,7 @@ made those steps run, and they immediately reported a defect the audit never had
 
 **F-060 and F-061 are pre-existing** — both name workflow files this branch has never modified.
 
-**Totals:** 60 findings — **3 DONE (F-013, F-014, F-049) · 0 PARTIAL · 0 BLOCKED · 57 NOT-STARTED**
+**Totals:** 60 findings — **4 DONE (F-013, F-014, F-049, F-059) · 0 PARTIAL · 0 BLOCKED · 56 NOT-STARTED**
 
 ### CI evidence so far
 
@@ -144,47 +145,47 @@ six real failures are now *reported* rather than hidden. Outstanding, in step or
 
 ## 4. NEXT ACTION
 
-> **F-059 — remove the moderation/approval promise from the seller-facing Peek queue.**
-> Its proving test is already written and already failing, on purpose.
+> **F-058 — route `traceContext.js` through the guarded storage boundary.**
+> It is the last thing failing CI step 11, and it is roughly two lines.
 
-### 4a. F-059 *(smallest next step; unblocks contract test 508)*
+### 4a. F-058
 
-`src/components/peekThreads/BuyerPeekRequestsQueue.jsx` still tells sellers about an approval step the MVP
-removed:
+`src/lib/traceContext.js:15,18` call browser storage directly:
 
-- `:277` — *"The accepted request remains open while the video is uploaded, processed and moderated.
-  It becomes answered only after approval."*
-- `:193` toast — *"Response Peek uploaded. It will answer this request automatically after approval."*
+```js
+const existing = globalThis.sessionStorage?.getItem(TRACE_STORAGE_KEY);
+globalThis.sessionStorage?.setItem(TRACE_STORAGE_KEY, next);
+```
 
-A Response Peek publishes when **processing succeeds**; safety is report-driven *after* publication
-(`REMEDIATION-PROMPT.md` §2.3). Rewrite both strings to describe processing only, with no approval or
-moderation language.
+The repository's guarded boundary is `src/lib/browserStorage.js`, which exports `readStoredString(kind, key,
+fallback)` and `writeStoredString(kind, key, value)` and degrades safely when storage throws (Safari private
+mode, quota exceeded, disabled cookies). Route both calls through it.
 
-Proving test, already in place and red:
-`node --test ./tests/responsePeekUploadContracts.test.mjs` — asserts `doesNotMatch(/moderat/i)` and
-`doesNotMatch(/after approval/i)` against the component.
+**Proving test:** `npm run audit:product-surface` exits 0. Currently:
+`UNSAFE_BROWSER_STORAGE: src/lib/traceContext.js`.
 
-### 4b. Then F-058, F-060, F-061 — the rest of what CI is reporting
+Related: contract `62` (*browser storage failures degrade safely instead of crashing page flows*) is red for
+the same underlying reason — check whether this fix closes it too.
 
-- **F-058** — `src/lib/traceContext.js:15,18` use `globalThis.sessionStorage` directly; route them through
-  `readStoredString` / `writeStoredString` in `src/lib/browserStorage.js`.
-  Proving test: `npm run audit:product-surface` exits 0.
-- **F-060** — add the `scripts/normalize-package-lock.mjs --write` step to
-  `.github/workflows/buyer-journey-certification.yml`, matching the other locked workflows.
+### 4b. Then F-060 and F-061 — two small workflow fixes
+
+- **F-060** — add the `node ./scripts/normalize-package-lock.mjs --write` step to
+  `.github/workflows/buyer-journey-certification.yml`, matching every other locked workflow.
   Proving test: contract `226`.
-- **F-061** — pin `actions/checkout` in `.github/workflows/pages-preview.yml` to the immutable SHA
-  `3d3c42e5aac5ba805825da76410c181273ba90b1` used everywhere else. Proving test: contract `767`.
+- **F-061** — pin `actions/checkout` in `.github/workflows/pages-preview.yml` to
+  `3d3c42e5aac5ba805825da76410c181273ba90b1`, the immutable SHA used everywhere else, instead of the
+  mutable `v4` tag. Proving test: contract `767`.
 
-### 4c. Re-run CI, then WP-02
+### 4c. Re-run CI, then close WP-02
 
-Manual dispatch (see §3), compare step conclusions, then close **WP-02 (F-012)** and hand off **B-7** so
-these become required checks on `main`.
+Manual dispatch (see §3), compare step conclusions. After F-058/F-060/F-061 the only remaining reds should
+be F-017 (blocked on assets), F-029, F-042. Then **WP-02 (F-012)** and hand off **B-7**.
 
 ---
 
 ### Current suite state, and why each red is still red
 
-`node --test ./tests/*.test.mjs` → **769 tests, 11 fail** · `node --test ./tests/security/*.test.mjs` →
+`node --test ./tests/*.test.mjs` → **769 tests, 10 fail** · `node --test ./tests/security/*.test.mjs` →
 **41/41, green**.
 
 **Every remaining red is accounted for. Do not "fix" one by deleting it.**
@@ -192,12 +193,11 @@ these become required checks on `main`.
 | Tests | Owner | Status |
 |---|---|---|
 | `760` `762` `763` `764` `765` | F-017 / WP-19 | **BLOCKED** — needs PeekaListing PNG rasters (192, 512, maskable, 180 apple-touch). No image tooling here; see §6. |
-| `508` | **F-059** | Proving test for the next step above |
 | `22` | F-042 | Image derivatives, Tranche 1 |
 | `155` | F-029 | `sold` transition, Tranche 1 |
-| `62` | resilience gap | Related to F-058 |
+| `62` | resilience gap | Likely closed by F-058 |
 | `226` | **F-060** | Workflow lockfile normalization |
-| `767` | **F-061** | Mutable action ref |
+| `768` | **F-061** | Mutable action ref |
 
 ---
 
