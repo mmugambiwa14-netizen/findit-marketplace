@@ -41,6 +41,12 @@ test('final orchestrator composes all five completed core journeys', async () =>
   assert.match(script, /final-release\.json/);
 });
 
+test('final orchestrator invokes the protected production audit through its npm entrypoint', async () => {
+  const script = await read('scripts/certify-final-release.mjs');
+  assert.match(script, /\['production-boundary',\s*npm,\s*\['run',\s*'audit:production',\s*'--silent'\]\]/);
+  assert.doesNotMatch(script, /\['production-boundary',\s*node,\s*\['scripts\/audit-production\.mjs'\]\]/);
+});
+
 test('verified business and Peek fulfilment certifiers preserve hosted evidence boundaries', async () => {
   const business = await read('scripts/certify-verified-business-journey.mjs');
   const peek = await read('scripts/certify-peek-fulfilment-journey.mjs');
