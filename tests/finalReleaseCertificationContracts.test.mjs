@@ -81,11 +81,13 @@ test('release report preserves no-review MVP boundary and external blockers', as
   assert.match(report, /Only `main` represents the product/);
 });
 
-test('branch cleanup keeps unique packages and marks merged branches disposable', async () => {
+test('branch cleanup preserves unique history while marking reconciled branches disposable', async () => {
   const ledger = await read('docs/certification/BRANCH_CLEANUP_LEDGER.md');
+  assert.match(ledger, /Canonical source of truth: `main`/);
+  assert.match(ledger, /integration\/complete-current-stage/);
+  assert.match(ledger, /Reconciled and safe to delete/);
   assert.match(ledger, /feature\/peek-threads-phase-3/);
   assert.match(ledger, /feature\/contextual-permissions/);
   assert.match(ledger, /brand\/peekalisting-binoculars/);
-  assert.match(ledger, /Safe to delete after Stage 6 merge/);
   assert.match(ledger, /develop/);
 });
