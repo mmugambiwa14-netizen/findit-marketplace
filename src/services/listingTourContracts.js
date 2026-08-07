@@ -71,7 +71,7 @@ export function normalizeTourUploadIntent(input) {
   const idempotencyKey = input?.idempotencyKey == null
     ? crypto.randomUUID()
     : uuid(input.idempotencyKey, 'Upload idempotency key');
-  const sha256 = input?.sha256 == null || input.sha256 === ''
+  const sha256 = input?.sha256 == null || input?.sha256 === ''
     ? null
     : String(input.sha256).trim().toLowerCase();
   if (sha256 && !/^[0-9a-f]{64}$/.test(sha256)) throw new TypeError('Video checksum is invalid');
@@ -94,7 +94,6 @@ export function normalizeTourIntentId(value) {
 export function normalizeTourId(value) {
   return uuid(value, 'Tour');
 }
-
 
 export const TOUR_ADMIN_QUEUE_STATUSES = Object.freeze([
   'all',
@@ -161,7 +160,6 @@ export function isTrustedTourSourcePath(value, ownerId, tourId) {
 export function normalizeTourPlaybackRequest(parentType, parentId) {
   return normalizeTourParent(parentType, parentId);
 }
-
 
 export const TOUR_FEED_CATEGORIES = Object.freeze([
   'all',
@@ -247,7 +245,7 @@ export function normalizeTourFeedResponse(value) {
         ? item.summaryAttributes.filter((attribute) => typeof attribute === 'string' && attribute.trim()).slice(0, 3)
         : [],
       sellerId: uuid(item?.sellerId, 'Tour seller'),
-      sellerDisplayName: boundedText(item?.sellerDisplayName, 160) || 'FindIt seller',
+      sellerDisplayName: boundedText(item?.sellerDisplayName, 160) || 'PeekaListing seller',
       sellerType: boundedText(item?.sellerType, 40) || 'seller',
       publishedAt: publishedAt.toISOString(),
     };
