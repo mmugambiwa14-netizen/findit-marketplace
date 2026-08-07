@@ -48,6 +48,27 @@ test('startup and push fallbacks never expose the former product name', async ()
   assert.match(push, /peekalisting-binoculars\.svg/);
 });
 
+test('live buyer-facing listing and seller surfaces never expose the former product name', async () => {
+  const paths = [
+    'src/pages/PropertyDetail.jsx',
+    'src/pages/CarDetail.jsx',
+    'src/pages/MachineryDetail.jsx',
+    'src/pages/SellerProfile.jsx',
+    'src/pages/Profile.jsx',
+    'src/pages/Tours.jsx',
+    'src/components/AuthLayout.jsx',
+    'src/components/listings/ListingDetailLayout.jsx',
+    'src/components/listings/ListingDetailTabs.jsx',
+    'src/components/tours/TourUploader.jsx',
+    'src/services/listingTourContracts.js',
+    'public/offline.html',
+  ];
+  const sources = await Promise.all(paths.map(read));
+  for (let index = 0; index < sources.length; index += 1) {
+    assert.doesNotMatch(sources[index], /\bFindIt\b/, `${paths[index]} must not expose the retired product name`);
+  }
+});
+
 test('service worker rotates PeekaListing caches and retires legacy caches', async () => {
   const worker = await read('public/sw.js');
   assert.match(worker, /peekalisting-shell-/);
