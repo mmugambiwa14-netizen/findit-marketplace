@@ -341,10 +341,15 @@ Read this before quoting the green result above.
 31165810890). That is what "recommendation database matrix green" means and all it means.
 
 The Migration Gates job *Clean database migration and pgTAP* runs the **full** set: `Files=54, Tests=657`.
-It is still red. Several of those 54 fail with the same signature already diagnosed four times this
-session — a hard SQL error before `plan()`, `Non-zero exit status: 3`, `Parse errors: No plan found in TAP
-output` — among them `v1_verified_business_journey.sql`. That is the curated-publisher fixture class
-(F-075 / F-077 / F-078 / F-079), still present in suites outside the recommendation runner.
+It is still red. Several of those 54 fail with the signature already diagnosed four times this session —
+a hard SQL error before `plan()`, `Non-zero exit status: 3`, `Parse errors: No plan found in TAP output`.
+
+> **Correction.** An earlier revision of this section named `v1_verified_business_journey.sql` as a member
+> of the curated-publisher fixture class. That was inferred from its failure *signature* and is **wrong**:
+> that suite never inserts into `public.listings` or `public.services`, only into `business_profiles`,
+> `business_applications` and `business_category_approvals`. Its hard error has a different, still
+> undiagnosed cause. The signature is shared by any pre-`plan()` SQL error, so it identifies a shape of
+> failure, not a cause — diagnose each suite rather than pattern-matching from the summary line.
 
 **Do not read the recommendation result as whole-database certification.** It is one runner of three.
 
@@ -378,11 +383,36 @@ a change to the contract can trigger the gate) and the structural one (`if: ${{ 
 steps.install.outcome == 'success' }}` on each independent validation, reusing WP-01's idiom; the
 FFmpeg check stays gated on the image build because it genuinely consumes it).
 
+## F-084 — verified inventory of the curated-publisher fixture class
+
+Rather than discover these one CI round-trip at a time, the whole class was identified statically: every
+`supabase/tests/*.sql` that inserts directly into `public.listings` or `public.services` with **no**
+`request.jwt.claim` set anywhere before that insert. Six suites match, and each was then read to confirm
+the insert is fixture setup rather than a deliberate negative test:
+
+| Suite | First unauthenticated insert | Confirmed |
+|---|---|---|
+| `database_auth_rls_smoke.sql` | `:118` listings | setup |
+| `mvp_listing_location_privacy.sql` | `:40` listings | setup |
+| `v1_admin_operations.sql` | `:18` listings | setup |
+| `v1_legal_domain_isolation.sql` | `:67` **services** | setup |
+| `v1_rls_matrix.sql` | `:24` listings | setup |
+| `v1_tour_foundation.sql` | `:74` listings | setup |
+
+None is asserting that an unauthenticated insert is rejected, so adding fixture auth to any of them removes
+no coverage. Each needs approvals matching the `kind` of **every** listing it inserts (and `'service'` for
+`v1_legal_domain_isolation.sql`, which crosses `enforce_curated_service_publisher`), per seller, with claims
+cleared before the assertions begin.
+
+Note `v1_admin_operations.sql` and `v1_legal_domain_isolation.sql` promote users to admin in their setup.
+`enforce_curated_listing_publisher()` short-circuits for admins, so those two may only need a JWT subject
+rather than category approvals — verify which, rather than adding approvals reflexively.
+
 ## Exact next action
 
-1. **F-084** — take the full 54-suite matrix to its next exact failure and apply the proven
-   curated-publisher fixture pattern (approved business + matching category approval + JWT claims scoped to
-   the insert, cleared before assertions). `v1_verified_business_journey.sql` is a known member.
+1. **F-084** — repair the six suites above with the proven pattern (approved business + matching category
+   approval + JWT claims scoped to the insert, cleared before assertions), then re-run the full matrix and
+   take its next exact failure.
 2. Diagnose `Repository, build and PWA gates` and `verify`, which have not been looked at yet.
 3. Confirm F-083 turns the Cloudflare gate green, and that its four previously-unreachable validations now
    actually execute rather than merely not-failing.
