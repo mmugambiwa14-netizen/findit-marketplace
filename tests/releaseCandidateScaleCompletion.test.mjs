@@ -13,6 +13,7 @@ import {
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
   migration,
+  searchV2Migration,
   rollback,
   observabilityMigration,
   observabilityRollback,
@@ -33,6 +34,7 @@ const [
   packageJson,
 ] = await Promise.all([
   read('supabase/migrations/0041_v1_public_search_and_notification_scale.sql'),
+  read('supabase/migrations/20260808020000_currency_safe_public_listing_search_v2.sql'),
   read('supabase/rollback/0041_v1_public_search_and_notification_scale.rollback.sql'),
   read('supabase/migrations/0042_v1_release_observability_completion.sql'),
   read('supabase/rollback/0042_v1_release_observability_completion.rollback.sql'),
@@ -56,17 +58,21 @@ const [
 const UUID_A = '11111111-1111-4111-8111-111111111111';
 const UUID_B = '22222222-2222-4222-8222-222222222222';
 
-test('public browse uses a generated search document and deterministic keyset indexes', () => {
+test('public browse keeps generated search indexing and promotes currency-safe deterministic keysets', () => {
   assert.match(migration, /search_document tsvector generated always/);
   assert.match(migration, /idx_listings_search_document/);
-  for (const index of ['idx_listings_public_newest', 'idx_listings_public_price_asc', 'idx_listings_public_price_desc', 'idx_listings_public_views']) {
+  for (const index of ['idx_listings_public_newest', 'idx_listings_public_views']) {
     assert.match(migration, new RegExp(index));
   }
-  const rpc = migration.match(/create or replace function public\.public_listing_search_page[\s\S]*?\n\$\$;/)?.[0] || '';
-  assert.match(rpc, /\(l\.created_at, l\.id\) < \(cursor_time, p_cursor_id\)/);
-  assert.match(rpc, /\(l\.price, l\.id\) > \(cursor_number, p_cursor_id\)/);
-  assert.match(rpc, /\(l\.price, l\.id\) < \(cursor_number, p_cursor_id\)/);
-  assert.match(rpc, /\(l\.views, l\.id\) < \(cursor_views, p_cursor_id\)/);
+  for (const index of ['idx_listings_public_currency_price_asc', 'idx_listings_public_currency_price_desc']) {
+    assert.match(searchV2Migration, new RegExp(index));
+  }
+  const rpc = searchV2Migration.match(/create or replace function private\.public_listing_search_page_v2[\s\S]*?\n\$\$;/)?.[0] || '';
+  assert.match(rpc, /\(listing\.created_at, listing\.id\) < \(cursor_time, p_cursor_id\)/);
+  assert.match(rpc, /\(coalesce\(listing\.native_price, listing\.price\), listing\.id\) > \(cursor_number, p_cursor_id\)/);
+  assert.match(rpc, /\(coalesce\(listing\.native_price, listing\.price\), listing\.id\) < \(cursor_number, p_cursor_id\)/);
+  assert.match(rpc, /\(listing\.views, listing\.id\) < \(cursor_views, p_cursor_id\)/);
+  assert.match(rpc, /listing\.content_suspended_at is null/);
   assert.match(rpc, /limit p_limit \+ 1/);
   assert.doesNotMatch(rpc, /offset|count\(\*\).*over|count\(\*\).*total/i);
 });
@@ -77,10 +83,11 @@ test('active Search page uses bounded infinite pages and no exact totals', () =>
   assert.match(searchPage, /getNextPageParam/);
   assert.match(searchPage, /useDebouncedValue/);
   assert.match(searchPage, /250/);
+  assert.match(searchPage, /currency/);
   assert.match(listingResults, /Load more/);
   assert.doesNotMatch(searchPage, /totalPages|setPage\(|pageSize\s*\*|count:\s*['"]exact['"]/);
   assert.doesNotMatch(listingResults, /total results|page \d|totalPages/i);
-  assert.match(searchRepository, /public_listing_search_page/);
+  assert.match(searchRepository, /public_listing_search_page_v2/);
   assert.match(searchService, /values\.length > request\.pageSize/);
   assert.match(searchService, /nextCursor/);
 });
@@ -98,8 +105,10 @@ test('executable search cursor contracts cover every supported sort', () => {
     id: UUID_A,
     value: '42',
   });
-  const request = normalizePublicSearchPageRequest({ kind: 'car', sort: 'price_desc', cursor: { id: UUID_A, value: 5000 } });
+  const request = normalizePublicSearchPageRequest({ kind: 'car', currency: 'USD', sort: 'price_desc', cursor: { id: UUID_A, value: 5000 } });
   assert.equal(request.pageSize, 24);
+  assert.equal(request.currency, 'USD');
+  assert.equal(request.sort, 'price_desc');
   assert.deepEqual(request.cursor, { id: UUID_A, value: '5000' });
   assert.throws(() => normalizePublicSearchCursor({ id: UUID_A, value: 1.5 }, 'most_viewed'), /views are invalid/);
   assert.throws(() => normalizePublicSearchCursor({ id: 'bad', value: 1 }, 'price_desc'), /id is invalid/);
