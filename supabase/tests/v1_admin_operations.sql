@@ -15,12 +15,55 @@ where id = '00000000-0000-4000-8000-000000002001';
 update public.users set role = 'admin'
 where id = '00000000-0000-4000-8000-000000002002';
 
+-- Fixture setup, but it still crosses the authoritative curated publisher
+-- boundary exactly as runtime does. Auth is opened only for this insert and
+-- cleared before any assertion runs.
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
+)
+values (
+  '00000000-0000-4000-8000-000000002501',
+  '00000000-0000-4000-8000-000000002003',
+  'Target User Motors',
+  'Target User',
+  'target-user@example.test',
+  '+263700000001',
+  'ZW',
+  'Harare',
+  'Approved fixture business used only to certify this suite''s boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+)
+values
+  (
+    '00000000-0000-4000-8000-000000002502',
+    '00000000-0000-4000-8000-000000002501',
+    '00000000-0000-4000-8000-000000002003',
+    'car',
+    'approved'
+  );
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000002003', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000002003","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (id, kind, seller_id, seller_name, title, category, price, status)
 values (
   '00000000-0000-4000-8000-000000002101', 'car',
   '00000000-0000-4000-8000-000000002003', 'Target User',
   'Admin operation vehicle', 'cars_sale', 12000, 'available'
 );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 insert into public.car_details (listing_id, brand, model)
 values ('00000000-0000-4000-8000-000000002101', 'Toyota', 'Corolla');
 insert into public.reports (
