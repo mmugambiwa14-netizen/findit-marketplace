@@ -21,6 +21,58 @@ values (
   true
 );
 
+-- This test needs one controlled public listing to exercise queue durability,
+-- not the end-to-end listing creation journey. Keep trusted SQL fixture setup,
+-- but cross the same authoritative curated Cars publisher boundary as runtime.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
+values (
+  '20000000-0000-4000-8000-000000000004',
+  '20000000-0000-4000-8000-000000000001',
+  'Recommendation Queue Motors',
+  'Recommendation Queue Owner',
+  'recommendation-queue-owner@example.test',
+  '+263700000004',
+  'ZW',
+  'Queue Test City',
+  'Approved fixture business used only to certify recommendation projection queue durability.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id,
+  business_application_id,
+  user_id,
+  category,
+  status
+)
+values (
+  '20000000-0000-4000-8000-000000000005',
+  '20000000-0000-4000-8000-000000000004',
+  '20000000-0000-4000-8000-000000000001',
+  'car',
+  'approved'
+);
+
+select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id,
   kind,
@@ -70,6 +122,9 @@ insert into public.car_details (
   'used'
 );
 
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
+
 select extensions.has_table(
   'public',
   'recommendation_projection_jobs',
@@ -93,6 +148,11 @@ alter table public.recommendation_projection_jobs
   check (false) not valid;
 
 select set_config('request.jwt.claim.sub', '20000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 
 select extensions.lives_ok(
@@ -124,13 +184,10 @@ reset role;
 alter table public.recommendation_projection_jobs
   drop constraint recommendation_projection_jobs_test_failure;
 
--- The title edit above is owner-managed and correctly re-queues the listing
--- for moderation (public.protect_listing_managed_fields), which is the
--- behaviour under test there. That side effect makes the listing ineligible
--- for projection, so it must be restored to a public status here as a
--- trusted role (bypassing the re-review guard) before exercising the
--- dead-letter path below, which is specifically about a public, eligible
--- listing whose projection write fails -- not about eligibility gating.
+-- Owner title edits no longer re-queue listings for human moderation in the
+-- current MVP. After the simulated queue dependency recovers, issue a trusted
+-- update to deterministically enqueue the still-public listing before testing
+-- the dead-letter path below.
 update public.listings
 set status = 'available', submitted_at = null
 where id = '20000000-0000-4000-8000-000000000003';
