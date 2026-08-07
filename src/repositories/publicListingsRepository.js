@@ -121,8 +121,8 @@ export async function findPublicListingsByIds(listingIds, signal) {
 
 const SEARCH_SORTS = {
   newest: { column: 'created_at', ascending: false },
-  price_asc: { column: 'price', ascending: true },
-  price_desc: { column: 'price', ascending: false },
+  price_asc: { column: 'native_price', ascending: true },
+  price_desc: { column: 'native_price', ascending: false },
   most_viewed: { column: 'views', ascending: false },
 };
 
@@ -140,12 +140,18 @@ export async function findPublicListings(request) {
   const to = from + request.pageSize - 1;
   let query = supabase
     .from('listings')
-    .select(`id, kind, seller_id, seller_name, title, description, price, currency, photos, category, listing_type, status, views, created_at, updated_at, location:locations!listings_location_id_fkey(id, name, type), ${detailSelect}`, { count: 'exact' })
+    .select(`id, kind, seller_id, seller_name, title, description, price, currency, native_price, native_currency, photos, category, listing_type, status, views, created_at, updated_at, location:locations!listings_location_id_fkey(id, name, type), ${detailSelect}`, { count: 'exact' })
     .eq('kind', request.kind)
-    .in('status', ['available', 'under_offer'])
-    .gte('price', request.minPrice)
-    .lte('price', request.maxPrice);
+    .eq('country_code', request.countryCode)
+    .in('status', ['available', 'under_offer']);
+
+  if (request.currency) {
+    query = query.eq('native_currency', request.currency);
+    if (request.minPrice !== null) query = query.gte('native_price', request.minPrice);
+    if (request.maxPrice !== null) query = query.lte('native_price', request.maxPrice);
+  }
   if (request.query) query = query.ilike('title', `%${escapeLikePattern(request.query)}%`);
+
   const { data, error, count } = await query
     .order(sort.column, { ascending: sort.ascending })
     .order('id', { ascending: sort.ascending })
@@ -155,14 +161,16 @@ export async function findPublicListings(request) {
 }
 
 /**
- * Reads one bounded public search page through the purpose-built keyset RPC.
- * The database returns limit+1 rows so the service can derive the next cursor
- * without requesting an exact count or using deep offsets.
+ * Reads one bounded public search page through the currency-safe, privacy-safe
+ * keyset RPC. The database returns limit+1 rows so the service can derive the
+ * next cursor without requesting an exact count or using deep offsets.
  */
 export async function findPublicListingsPage(request) {
   assertKind(request.kind);
-  const { data, error } = await supabase.rpc('public_listing_search_page', {
+  const { data, error } = await supabase.rpc('public_listing_search_page_v2', {
     p_kind: request.kind,
+    p_country_code: request.countryCode,
+    p_currency: request.currency,
     p_query: request.query,
     p_category: request.category,
     p_location_id: request.locationId,
