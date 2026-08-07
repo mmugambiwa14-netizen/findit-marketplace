@@ -28,7 +28,8 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - Recommendation publication-boundary certification: **BEHAVIOR PROVEN** — the fixture repair worked. Run 31160257131 passes `v1_recommendation_publication_boundary.sql` 14/14 through the authoritative curated Cars publisher trigger, with geospatial holding at 19/19.
 - F-073: **BEHAVIOR PROVEN** — Recommendation database-gates run 31162602508 passes `v1_recommendation_services.sql` **29/29**. The suite asserted the pre-activation disabled catalog and contradicted the authoritative release-control migration; it now certifies post-activation behavior and still proves the disabled degradation path.
 - F-074: **BEHAVIOR PROVEN** — run 31162845487 passes `v1_recommendation_service_operations.sql` **37/37** with services holding at 29/29. The stale pre-activation expectation is now a metadata/policy-table drift check.
-- F-075: **REPAIRED, AWAITING CI** — `v1_recommendation_scale.sql` fixture did not cross the curated publisher boundary. Same class as the publication-boundary repair; same proven pattern applied.
+- F-075: **BEHAVIOR PROVEN** — run 31163209835 passes `v1_recommendation_scale.sql` (9 tests, PASS) with the fixture crossing the curated publisher boundary through the authoritative trigger.
+- F-076: **REPAIRED, AWAITING CI** — `v1_contextual_ecosystem_intelligence.sql` test 41 expected 7 rules stranded against disabled services. Post-activation the correct value is 0; the counter's detection ability is now proved separately.
 - F-014, F-049, F-059: DONE.
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
@@ -168,16 +169,42 @@ assertion still run with no fixture auth in scope. The fixture writes **through*
 rather than around it — no trigger is disabled, no direct-table privilege is granted, and no curated
 publishing rule is weakened.
 
+## Evidence from Recommendation database-gates run 31163209835
+
+Dispatched on `claude/peekalisting-remediation-handoff-d1mr2x` @ `fd97873`.
+
+- `v1_recommendation_scale.sql` **PASSED** (9 tests, 3s), closing F-075. The 2,000-row fixture now writes
+  through `listings_enforce_curated_publisher` rather than aborting against it, so the projection drain,
+  index-plan assertions and cursor-stability assertions in that suite executed for the first time in CI.
+- `v1_recommendation_service_operations.sql` held at 37/37 and `v1_recommendation_services.sql` at 29/29.
+- Next exact failure: `v1_contextual_ecosystem_intelligence.sql`, **1 failed of 43** — test 41,
+  "rules are reported against their disabled services", have 0 / want 7.
+
+## F-076 — contextual health counter asserted the pre-activation reading
+
+Fourth instance of the pre-activation class. `contextual_ecosystem_health_v1()` derives
+`rulesReferencingDisabledServices` by joining active rules to `recommendation_service_policies` where
+`not policy.enabled` (`0068_contextual_ecosystem_completion.sql:274-279`). Before 0100 every service was
+disabled, so all seven active rules were counted and the suite asserted 7.
+
+The stated invariant in the test's own comment is that *a plan can never advertise a section whose service
+would refuse to answer*. Pre-0100 that held **vacuously** — everything was disabled. Post-0100 it holds in
+the useful direction: every active rule targets an enabled service, so the counter correctly reads 0.
+
+**Repair.** Asserted 0, and — because a bare 0 is also what a broken counter would report — added a second
+assertion that switches one service off inside the test transaction and requires the counter to detect the
+stranded rule, then restores it. The drift detector is now proved to actually detect drift, which the
+original 7-expectation never established.
+
 ## Exact next action
 
-1. Run Recommendation database gates with the F-075 scale-fixture repair.
-2. Require `v1_recommendation_scale.sql` to reach and complete its TAP output (it uses `no_plan()`, so the
-   pass condition is a clean run to `finish()`), while service-operations holds at 37/37 and services at
-   29/29.
+1. Run Recommendation database gates with the F-076 contextual-health repair.
+2. Require `v1_contextual_ecosystem_intelligence.sql` to complete its full 44-assertion TAP plan while
+   scale, service-operations (37/37) and services (29/29) all hold.
 3. Continue the database matrix to the next exact failure and repair only that boundary. Remaining unproven
    suites in runner order (`scripts/run-recommendation-database-certification.sh:8-22`):
-   `v1_contextual_ecosystem_intelligence.sql`, `v1_recommendation_personalization.sql`,
-   `v1_recommendation_analytics.sql`, `v1_recommendation_related_services.sql`.
+   `v1_recommendation_personalization.sql`, `v1_recommendation_analytics.sql`,
+   `v1_recommendation_related_services.sql`.
 
 **Two recurring classes to expect.** (a) *Pre-activation staleness* — assertions written before
 `0100_release_control_consistency.sql` enabled the service catalog; likely in

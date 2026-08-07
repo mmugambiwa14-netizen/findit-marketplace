@@ -1,5 +1,5 @@
 begin;
-select plan(43);
+select plan(44);
 
 select has_table('public', 'recommendation_contexts', 'context catalogue exists');
 select has_table('public', 'recommendation_context_rules', 'context rule table exists');
@@ -170,13 +170,33 @@ select is(
   'contextual health counts the active contexts'
 );
 
--- Every seeded rule targets a service that is disabled by default, so a plan can
--- never advertise a section whose service would refuse to answer.
+-- The invariant is that a plan can never advertise a section whose service would
+-- refuse to answer. Before 0100_release_control_consistency.sql that held
+-- vacuously, because every service was disabled and all seven rules were counted
+-- here. 0100 is the reviewed activation point, so it now holds in the useful
+-- direction: every active rule targets a service that is enabled and can answer,
+-- and this drift counter reads zero.
 select is(
   (public.contextual_ecosystem_health_v1() ->> 'rulesReferencingDisabledServices'),
-  '7',
-  'rules are reported against their disabled services'
+  '0',
+  'no active rule points at a service that would refuse to answer'
 );
+
+-- Zero on its own would also be what a broken counter reports, so prove the
+-- counter still detects a rule stranded against a switched-off service. The
+-- toggle is transaction-local and reverted immediately.
+update public.recommendation_service_policies
+set enabled = false
+where service_name = 'similar_listings_service';
+
+select ok(
+  (public.contextual_ecosystem_health_v1() ->> 'rulesReferencingDisabledServices')::integer > 0,
+  'the drift counter detects rules stranded against a switched-off service'
+);
+
+update public.recommendation_service_policies
+set enabled = true
+where service_name = 'similar_listings_service';
 
 select ok(
   not has_function_privilege('anon', 'public.contextual_ecosystem_health_v1()', 'EXECUTE')
