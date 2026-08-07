@@ -94,7 +94,7 @@ export default function SearchToolbar({
           aria-expanded={showSuggestions}
           aria-controls={showSuggestions ? SUGGESTIONS_ID : undefined}
           aria-activedescendant={activeIndex >= 0 ? `${SUGGESTIONS_ID}-${activeIndex}` : undefined}
-          placeholder="Search title, place or category"
+          placeholder="Search listings"
           value={queryInput}
           onChange={(event) => onQueryInputChange(event.target.value)}
           onKeyDown={handleKeyDown}
@@ -130,7 +130,7 @@ export default function SearchToolbar({
           aria-label={filterCount > 0 ? `Open filters, ${filterCount} active` : 'Open filters'}
           className={cn(
             'clay-control flex h-11 min-w-0 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:text-foreground',
-            hasFilters && 'border-primary/45 bg-primary/8 text-primary',
+            hasFilters && 'border-primary/45 bg-primary/10 text-primary',
           )}
         >
           <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
