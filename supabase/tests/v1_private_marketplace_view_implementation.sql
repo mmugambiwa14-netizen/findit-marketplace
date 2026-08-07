@@ -122,6 +122,66 @@ where id in (
 insert into public.locations (id, name, type, country_code)
 values ('92000000-0000-4000-8000-000000000010', 'View Counter Test City', 'city', 'ZW');
 
+-- These marketplace fixtures must cross the same curated publishing trigger as
+-- runtime. Give the owner approved Property and Services access and publish
+-- under the matching authenticated JWT rather than bypassing the trigger.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
+values (
+  '92000000-0000-4000-8000-000000000031',
+  '92000000-0000-4000-8000-000000000001',
+  'View Counter Test Business',
+  'View Owner',
+  'view-owner@example.test',
+  '+263700000031',
+  'ZW',
+  'View Counter Test City',
+  'Approved business fixture used only to exercise marketplace view counters.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id,
+  business_application_id,
+  user_id,
+  category,
+  status
+)
+values
+  (
+    '92000000-0000-4000-8000-000000000032',
+    '92000000-0000-4000-8000-000000000031',
+    '92000000-0000-4000-8000-000000000001',
+    'property',
+    'approved'
+  ),
+  (
+    '92000000-0000-4000-8000-000000000033',
+    '92000000-0000-4000-8000-000000000031',
+    '92000000-0000-4000-8000-000000000001',
+    'service',
+    'approved'
+  );
+
+select set_config('request.jwt.claim.sub', '92000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"92000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, title, price, currency, status, location_id, country_code, views
 )
@@ -135,6 +195,9 @@ insert into public.services (
 values
   ('92000000-0000-4000-8000-000000000021', '92000000-0000-4000-8000-000000000001', 'Active counter service', 'mechanic', 'active', '92000000-0000-4000-8000-000000000010', 7),
   ('92000000-0000-4000-8000-000000000022', '92000000-0000-4000-8000-000000000001', 'Paused counter service', 'mechanic', 'paused', '92000000-0000-4000-8000-000000000010', 11);
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 set local role anon;
 
