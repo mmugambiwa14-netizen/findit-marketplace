@@ -25,6 +25,12 @@ test('Cloudflare queue transport has retries, dead letters, R2 and consistent st
   assert.match(wrangler, /RateLimitCoordinator/);
 });
 
+test('Cloudflare validation pins the proven Wrangler release', async () => {
+  const workflow = await source('.github/workflows/cloudflare-provisioning-gates.yml');
+  assert.match(workflow, /wrangler@4\.119\.0 deploy --dry-run/);
+  assert.doesNotMatch(workflow, /wrangler@4(?:\s|\")/);
+});
+
 test('queue jobs carry immutable identity and distributed trace context', async () => {
   const worker = await source('workers/edge/src/index.ts');
   assert.match(worker, /jobId/);
