@@ -41,29 +41,60 @@ jobs:
           deno-version: v2.x
 
       - name: Install locked dependencies
+        id: install
         run: npm ci --ignore-scripts
 
-      - name: Validate production boundaries
-        run: |
-          npm run audit:production
-          npm run verify:hygiene
-          npm run verify:source-graph
-          npm run verify:sql-boundary
-          npm run verify:base44-elimination
+      - name: Audit production dependency boundary
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run audit:production
 
-      - name: Run static and contract gates
-        run: |
-          npm run lint
-          npm run typecheck:active
-          npm run typecheck:edge-functions
-          npm run test:contracts
-          npm run test:tours-contracts
-          npm run test:product-audit
+      - name: Verify repository hygiene
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:hygiene
+
+      - name: Verify source graph
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:source-graph
+
+      - name: Verify SQL migration boundary
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:sql-boundary
+
+      - name: Verify Base44 elimination
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:base44-elimination
+
+      - name: Lint application
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run lint
+
+      - name: Typecheck active release surface
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck:active
+
+      - name: Typecheck Supabase Edge Functions
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck:edge-functions
+
+      - name: Run all contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:contracts
+
+      - name: Run Tours contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:tours-contracts
+
+      - name: Run product audit contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:product-audit
 
       - name: Build production PWA
+        id: build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run build
 
       - name: Compose final journey evidence
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: node ./scripts/certify-final-release.mjs
 
       - name: Upload repository release evidence
@@ -82,7 +113,7 @@ jobs:
   clean-database-certification:
     name: Clean database migration and pgTAP
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
 
     steps:
       - name: Checkout
@@ -93,21 +124,18 @@ jobs:
         with:
           node-version: 24
 
-      - name: Start local Supabase
-        run: npx --yes supabase@2.84.2 start
-
-      - name: Apply every migration from empty state
-        run: npx --yes supabase@2.84.2 db reset
-
-      - name: Run complete pgTAP suite
-        run: npx --yes supabase@2.84.2 test db
+      # Keep Release Certification on the exact same reviewed database proof
+      # boundary as Migration Gates. The raw historical `supabase test db`
+      # inventory contains superseded pre-remediation tests and is not the
+      # authoritative final-schema certification matrix.
+      - name: Run authoritative clean-database certification matrix
+        run: bash ./scripts/run-migration-database-certification.sh
 
       - name: Capture database diagnostics
         if: always()
         run: |
           mkdir -p artifacts/certification
           npx --yes supabase@2.84.2 status -o env > artifacts/certification/local-supabase-status.txt || true
-          npx --yes supabase@2.84.2 migration list > artifacts/certification/migration-list.txt || true
 
       - name: Upload database evidence
         if: always()

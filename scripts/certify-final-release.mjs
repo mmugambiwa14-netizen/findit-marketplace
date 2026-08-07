@@ -3,22 +3,25 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import process from 'node:process';
 
+const node = process.execPath;
+const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
 const stages = [
-  ['repository-hygiene', ['scripts/verify-repository-hygiene.mjs']],
-  ['production-boundary', ['scripts/audit-production.mjs']],
-  ['source-graph', ['scripts/verify-source-graph.mjs']],
-  ['sql-boundary', ['scripts/verify-sql-boundary.mjs']],
-  ['release-contracts', ['--test', 'tests/finalReleaseCertificationContracts.test.mjs']],
-  ['buyer-journey', ['scripts/certify-buyer-journey.mjs']],
-  ['verified-business-journey', ['scripts/certify-verified-business-journey.mjs']],
-  ['peek-fulfilment-journey', ['scripts/certify-peek-fulfilment-journey.mjs']],
-  ['listing-publication', ['scripts/certify-listing-publication-journey.mjs']],
-  ['safety-operations', ['scripts/certify-safety-operations-journey.mjs']],
+  ['repository-hygiene', node, ['scripts/verify-repository-hygiene.mjs']],
+  ['production-boundary', npm, ['run', 'audit:production', '--silent']],
+  ['source-graph', node, ['scripts/verify-source-graph.mjs']],
+  ['sql-boundary', node, ['scripts/verify-sql-boundary.mjs']],
+  ['release-contracts', node, ['--test', 'tests/finalReleaseCertificationContracts.test.mjs']],
+  ['buyer-journey', node, ['scripts/certify-buyer-journey.mjs']],
+  ['verified-business-journey', node, ['scripts/certify-verified-business-journey.mjs']],
+  ['peek-fulfilment-journey', node, ['scripts/certify-peek-fulfilment-journey.mjs']],
+  ['listing-publication', node, ['scripts/certify-listing-publication-journey.mjs']],
+  ['safety-operations', node, ['scripts/certify-safety-operations-journey.mjs']],
 ];
 
-function run(args) {
+function run(command, args) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, args, {
+    const child = spawn(command, args, {
       env: process.env,
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -44,8 +47,8 @@ const report = {
   externalBlockerLedger: 'docs/certification/EXTERNAL_CERTIFICATION_BLOCKERS.md',
 };
 
-for (const [id, args] of stages) {
-  const result = await run(args);
+for (const [id, command, args] of stages) {
+  const result = await run(command, args);
   report.stages.push({ id, ...result });
   if (result.status === 'failed') {
     report.status = 'failed';
@@ -54,7 +57,7 @@ for (const [id, args] of stages) {
 }
 
 if (report.status === 'running') {
-  const journeyPending = report.stages.some((stage) => /repository-passed-hosted-pending/.test(stage.output || ''));
+  const journeyPending = report.stages.some((stage) => /repository-certified-hosted-pending/.test(stage.output || ''));
   report.hostedEvidenceComplete = !journeyPending;
   report.status = journeyPending ? 'repository-certified-hosted-pending' : 'passed';
 }

@@ -79,9 +79,20 @@ select ok(
 );
 reset role;
 
+-- Migration 0100_release_control_consistency.sql is the reviewed release-control
+-- activation point: it enables the seven-service catalog and records that fact
+-- on the recommendation_foundation control. The pre-activation expectation that
+-- every policy stays disabled is therefore obsolete. Certify instead that the
+-- operational-control metadata and the authoritative policy table still agree,
+-- so neither can silently drift away from the other.
 select ok(
-  (select bool_and(not enabled) from public.recommendation_service_policies),
-  'operational controls do not enable services during migration'
+  (select (configuration->>'service_policy_source') = 'recommendation_service_policies'
+      and (configuration->'services_enabled') = 'true'::jsonb
+      and (configuration->>'active_service_policy_count')::integer
+          = (select count(*)::integer from public.recommendation_service_policies where enabled)
+     from public.marketplace_operational_controls
+    where control_key = 'recommendation_foundation'),
+  'operational control metadata agrees with the authoritative service policy table'
 );
 select ok(
   exists (

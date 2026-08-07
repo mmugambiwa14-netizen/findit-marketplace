@@ -3,12 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [releaseWorkflow, acceptanceWorkflow, stagingWorkflow, validator, supabaseConfig] = await Promise.all([
+const [releaseWorkflow, acceptanceWorkflow, previewWorkflow, validator] = await Promise.all([
   read('.github/workflows/release-candidate-gates.yml'),
   read('.github/workflows/tours-staging-acceptance.yml'),
-  read('.github/workflows/deploy-staging-pages.yml'),
+  read('.github/workflows/peekalisting-preview.yml'),
   read('scripts/validate-env.mjs'),
-  read('supabase/config.toml'),
 ]);
 
 test('release candidate CI runs the complete locked static and build boundary', () => {
@@ -68,37 +67,31 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /retention-days: 90/);
 });
 
-test('staging deployment can expose preview or public Tours without weakening production gates', () => {
-  assert.match(stagingWorkflow, /VITE_MODE: staging/);
-  assert.match(stagingWorkflow, /npm ci --include=dev --ignore-scripts/);
-  assert.match(stagingWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
-  assert.match(supabaseConfig, /site_url = "https:\/\/findit-marketplace-staging\.vercel\.app\/"/);
-  assert.match(supabaseConfig, /"https:\/\/findit-marketplace-staging\.vercel\.app\/\*\*"/);
-  assert.doesNotMatch(`${stagingWorkflow}\n${supabaseConfig}`, /\/-findit-marketplace\//);
-  assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_ENABLED/);
-  assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_PREVIEW/);
-  assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_BACKEND_ENABLED/);
-  assert.match(stagingWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
-  assert.match(stagingWorkflow, /FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET/);
-  assert.match(stagingWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
-  assert.match(stagingWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED/);
-  assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: \$\{\{ vars\.FINDIT_TOURS_RELEASE_ACCEPTED \}\}/);
-  assert.match(stagingWorkflow, /FINDIT_TOURS_ACCEPTANCE_ID: \$\{\{ vars\.FINDIT_TOURS_ACCEPTANCE_ID \}\}/);
-  for (const requiredFlag of [
-    'VITE_FEATURE_GOOGLE_OAUTH',
-    'VITE_FEATURE_INTERNATIONAL_LISTING',
-    'VITE_FEATURE_MANUAL_LOCATION',
-    'VITE_FEATURE_CURRENT_LOCATION',
-    'VITE_FEATURE_REPORTING',
-  ]) assert.match(stagingWorkflow, new RegExp(`${requiredFlag}: "true"`));
-  for (const closedFlag of [
-    'VITE_FEATURE_PREVIEW_FIXTURES',
-    'VITE_PREVIEW_AUTH_BYPASS',
-    'VITE_FEATURE_LISTING_EXPIRY',
-    'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
-  ]) assert.match(stagingWorkflow, new RegExp(`${closedFlag}: "false"`));
-  assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: \$\{\{ vars\.FINDIT_RECOMMENDATION_WORKERS_ENABLED \}\}/);
-  assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
+test('canonical preview exposes Peeks and current business flows only against isolated staging', () => {
+  assert.match(previewWorkflow, /branches:\s*\n\s*- main/);
+  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(previewWorkflow, /test "\$GITHUB_REF_NAME" = "main"/);
+  assert.match(previewWorkflow, /VITE_MODE: staging/);
+  assert.match(previewWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
+  assert.match(previewWorkflow, /VITE_PREVIEW_DEPLOYMENT: "true"/);
+  assert.match(previewWorkflow, /npm ci --include=dev --ignore-scripts/);
+  assert.match(previewWorkflow, /VITE_FEATURE_CURATED_BUSINESS_MARKETPLACE: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_BUSINESS_PROFILES: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_MESSAGING: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_TOURS: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_TOURS_PREVIEW: "true"/);
+  assert.match(previewWorkflow, /TOURS_BACKEND_ENABLED: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_PREVIEW_FIXTURES: "true"/);
+  assert.match(previewWorkflow, /VITE_PREVIEW_AUTH_BYPASS: "false"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_INTERNATIONAL_LISTING: "false"/);
+  assert.match(previewWorkflow, /bwgklpxoetrrkutottdb/);
+  assert.match(previewWorkflow, /BusinessPublishingGate/);
+  assert.match(previewWorkflow, /BuyerPeekRequests/);
+  assert.match(previewWorkflow, /BusinessProfiles/);
+  assert.match(previewWorkflow, /preview-build\.json/);
+  assert.match(previewWorkflow, /"scope":"complete-current-stage"/);
+  assert.match(previewWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
 });
 
 test('preview access cannot be enabled without the complete backend worker boundary', () => {

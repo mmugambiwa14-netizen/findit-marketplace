@@ -36,7 +36,17 @@ test('missing authenticated profiles do not degrade into a guest session', () =>
 });
 
 test('admin routes are nested beneath a required admin role boundary', () => {
-  assert.match(app, /<ProtectedRoute[^>]+requiredRole="admin"/);
+  // The boundary is real and always was: src/App.jsx renders
+  //   <Route element={<ProtectedRoute unauthenticatedElement={<SignInRedirect />}
+  //                                   requiredRole="admin" />}>
+  // wrapping every /admin route. The previous pattern was /<ProtectedRoute[^>]+requiredRole="admin"/,
+  // whose [^>] cannot cross the '>' inside <SignInRedirect />, so it failed on a
+  // correctly guarded tree. A stale assertion, not a regression (F-049).
+  // The guard is "no other <ProtectedRoute may intervene", so requiredRole="admin"
+  // is proven to belong to the nearest preceding ProtectedRoute rather than to some
+  // later one. Bounding on '>' or '/>' does not work here, because the sibling prop
+  // unauthenticatedElement={<SignInRedirect />} contains both.
+  assert.match(app, /<ProtectedRoute(?:(?!<ProtectedRoute)[\s\S])*?requiredRole="admin"/);
   for (const path of [
     '/admin/listings',
     '/admin/peeks',

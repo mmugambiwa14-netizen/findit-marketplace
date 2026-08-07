@@ -18,6 +18,69 @@ values (
   true
 );
 
+-- The listing and the service are both fixture setup, but each must still cross
+-- its authoritative curated publisher boundary exactly as runtime does. The
+-- listing trigger matches on kind ('car'); the service trigger requires a
+-- 'service' approval for the provider. They are different users, so each insert
+-- gets its own fixture-auth window, cleared immediately after.
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
+)
+values
+  (
+    '73000000-0000-4000-8000-000000000401',
+    '73000000-0000-4000-8000-000000000001',
+    'Related Listing Motors',
+    'Related Listing Seller',
+    'related-service-seller@example.test',
+    '+263700000401',
+    'ZW',
+    'Related Service Test City',
+    'Approved fixture business used only to certify related-service boundaries.',
+    '1-10',
+    'approved'
+  ),
+  (
+    '73000000-0000-4000-8000-000000000403',
+    '73000000-0000-4000-8000-000000000002',
+    'Related Service Providers',
+    'Related Service Provider',
+    'related-service-provider@example.test',
+    '+263700000403',
+    'ZW',
+    'Related Service Test City',
+    'Approved fixture service business used only to certify related-service boundaries.',
+    '1-10',
+    'approved'
+  );
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+)
+values
+  (
+    '73000000-0000-4000-8000-000000000402',
+    '73000000-0000-4000-8000-000000000401',
+    '73000000-0000-4000-8000-000000000001',
+    'car',
+    'approved'
+  ),
+  (
+    '73000000-0000-4000-8000-000000000404',
+    '73000000-0000-4000-8000-000000000403',
+    '73000000-0000-4000-8000-000000000002',
+    'service',
+    'approved'
+  );
+
+select set_config('request.jwt.claim.sub', '73000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"73000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   native_price, native_currency, photos, location_id, country_code, category,
@@ -55,6 +118,15 @@ values (
   'petrol',
   'automatic',
   'used'
+);
+
+-- Switch fixture auth to the service provider for the services insert, which
+-- crosses enforce_curated_service_publisher rather than the listing trigger.
+select set_config('request.jwt.claim.sub', '73000000-0000-4000-8000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"73000000-0000-4000-8000-000000000002","role":"authenticated","aal":"aal1"}',
+  true
 );
 
 insert into public.services (
@@ -110,12 +182,37 @@ values
     false
   );
 
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
+
 set local role service_role;
 select extensions.is(
   (select succeeded_count from public.process_listing_recommendation_projection_jobs(20, 8)),
   1,
   'worker projects the related-service subject listing'
 );
+-- 0100_release_control_consistency.sql is the reviewed activation point, so the
+-- related-services service now answers instead of refusing. A live answer sets
+-- degraded false; only a disabled service or a timeout degrades.
+select extensions.is(
+  (public.related_services_service_v1(
+    '73000000-0000-4000-8000-000000000201',
+    null,
+    6
+  )->>'degraded')::boolean,
+  false,
+  'the activated related-services service answers instead of degrading'
+);
+reset role;
+
+-- Keep proving the disabled path rather than losing it with the stale
+-- expectation. The toggle is transaction-local and reverted immediately; the
+-- runtime service role deliberately cannot perform it.
+update public.recommendation_service_policies
+set enabled = false
+where service_name = 'related_services_service';
+
+set local role service_role;
 select extensions.is(
   public.related_services_service_v1(
     '73000000-0000-4000-8000-000000000201',
@@ -123,9 +220,13 @@ select extensions.is(
     6
   )->>'reason',
   'service_disabled',
-  'related services remains disabled by default'
+  'a disabled related-services service still degrades before any matching'
 );
 reset role;
+
+update public.recommendation_service_policies
+set enabled = true
+where service_name = 'related_services_service';
 
 update public.recommendation_service_policies
 set enabled = true

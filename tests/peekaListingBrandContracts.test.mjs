@@ -21,7 +21,21 @@ test('browser and PWA metadata identify PeekaListing', async () => {
   assert.match(html, /peekalisting-binoculars\.svg/);
   assert.equal(manifest.name, 'PeekaListing Marketplace');
   assert.equal(manifest.short_name, 'PeekaListing');
-  assert.ok(manifest.icons.every((icon) => icon.src === '/brand/peekalisting-binoculars.svg'));
+  // This previously required every manifest icon to be the binocular SVG, which
+  // was unsatisfiable alongside webAppManifest.test.mjs: browsers will not offer
+  // installation without PNG icons at 192 and 512 plus a maskable, so the two
+  // contracts contradicted each other. The intent here is brand ownership, not
+  // file format -- assert that install metadata carries PeekaListing assets and
+  // never the retired FindIt rasters, which is what actually matters and is
+  // strictly harder to pass than the old check.
+  assert.ok(
+    manifest.icons.every((icon) => icon.src.startsWith('/brand/peekalisting-')),
+    'every manifest icon must be a PeekaListing asset',
+  );
+  assert.ok(
+    manifest.icons.every((icon) => !/findit/i.test(icon.src)),
+    'install metadata must never reference a retired FindIt raster',
+  );
 });
 
 test('startup and push fallbacks never expose the former product name', async () => {

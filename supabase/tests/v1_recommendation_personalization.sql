@@ -20,6 +20,64 @@ values (
   true
 );
 
+-- These controlled public listings are fixture setup, but they must still cross
+-- the authoritative curated publisher boundary exactly as runtime does.
+-- enforce_curated_listing_publisher() matches on the listing's kind, so this
+-- seller needs approvals for both 'car' and 'property'. Fixture auth is opened
+-- only for the inserts and cleared before any assertion runs.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
+values (
+  '71000000-0000-4000-8000-000000000401',
+  '71000000-0000-4000-8000-000000000003',
+  'Personalization Test Traders',
+  'Personalization Seller',
+  'personalization-seller@example.test',
+  '+263700000401',
+  'ZW',
+  'Personalization Test City',
+  'Approved fixture business used only to certify personalization boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+)
+values
+  (
+    '71000000-0000-4000-8000-000000000402',
+    '71000000-0000-4000-8000-000000000401',
+    '71000000-0000-4000-8000-000000000003',
+    'car',
+    'approved'
+  ),
+  (
+    '71000000-0000-4000-8000-000000000403',
+    '71000000-0000-4000-8000-000000000401',
+    '71000000-0000-4000-8000-000000000003',
+    'property',
+    'approved'
+  );
+
+select set_config('request.jwt.claim.sub', '71000000-0000-4000-8000-000000000003', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"71000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   native_price, native_currency, photos, location_id, country_code, category,
@@ -89,6 +147,9 @@ values (
   2,
   140
 );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 set local role service_role;
 select extensions.is(

@@ -1,6 +1,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 
+import { hasDestructiveRollbackStatements } from './lib/sqlRollbackBoundary.mjs';
+
 const root = process.cwd();
 const migrationsDirectory = resolve(root, 'supabase/migrations');
 const rollbackDirectory = resolve(root, 'supabase/rollback');
@@ -24,28 +26,10 @@ for (const migration of migrationFiles.filter((name) => Number(name.slice(0, 4))
   if (!rollbackFiles.has(expectedRollback)) failures.push(`missing rollback pair for ${migration}`);
 }
 
-// The destructive-statement scan matches raw text, so a rollback was rejected
-// for the word TRUNCATE inside a has_table_privilege() argument, and an earlier
-// one for naming the banned statements in its own explanatory comment. Remove
-// only the places SQL cannot execute a statement -- comments and single-quoted
-// literals -- before scanning. Dollar-quoted blocks are deliberately left
-// intact: function bodies can contain genuinely destructive statements.
-function stripNonExecutableSql(content) {
-  return content
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/--[^\n]*/g, ' ')
-    .replace(/'(?:''|[^'])*'/g, "''");
-}
-
-// ALTER PUBLICATION ... DROP TABLE removes a table from logical replication;
-// it does not drop the table or delete rows. Strip only that complete statement
-// before applying the destructive table/data rollback scan.
-function stripPublicationMembershipChanges(content) {
-  return content.replace(
-    /\balter\s+publication\s+(?:"[^"]+"|[a-z_][\w$]*)\s+drop\s+table\s+(?:only\s+)?(?:"[^"]+"|[a-z_][\w$]*)(?:\.(?:"[^"]+"|[a-z_][\w$]*))?\s*;/gi,
-    ' ',
-  );
-}
+// The destructive-statement rules live in ./lib/sqlRollbackBoundary.mjs so they
+// can be exercised directly by tests/sqlRollbackBoundary.test.mjs. This gate is
+// the step whose failure skipped twelve later verification steps (F-013), so its
+// behaviour is pinned by tests rather than inferred from a green run.
 
 function dollarQuoteBalance(content) {
   const counts = new Map();
@@ -66,10 +50,23 @@ for (const name of migrationFiles) {
   inspectSqlText(name, content);
 }
 
+async function readPairedMigration(rollbackName) {
+  try {
+    return await readFile(
+      join(migrationsDirectory, rollbackName.replace(/\.rollback\.sql$/, '.sql')),
+      'utf8',
+    );
+  } catch {
+    // No pair means no exemption. Fail closed.
+    return null;
+  }
+}
+
 for (const name of [...rollbackFiles].filter((file) => Number(file.slice(0, 4)) >= 40).sort()) {
   const content = await readFile(join(rollbackDirectory, name), 'utf8');
-  const executable = stripPublicationMembershipChanges(stripNonExecutableSql(content));
-  if (/\bdrop\s+table\b|\btruncate\b|\bdelete\s+from\b/i.test(executable)) failures.push(`${name} contains destructive table/data rollback statements`);
+  if (hasDestructiveRollbackStatements(content, await readPairedMigration(name))) {
+    failures.push(`${name} contains destructive table/data rollback statements`);
+  }
   inspectSqlText(name, content);
 }
 

@@ -126,7 +126,7 @@ export default function TourUploader({
     setError('');
     const permissionState = await readBrowserPermissionState(PERMISSION_KINDS.CAMERA);
     if (permissionState === 'denied') {
-      setError('Camera access is blocked for FindIt. Allow camera access in your browser or device settings, then try again. You can still upload an existing video.');
+      setError('Camera access is blocked for PeekaListing. Allow camera access in your browser or device settings, then try again. You can still upload an existing video.');
       return;
     }
     if (permissionState === 'granted' || hasSeenPermissionIntro(PERMISSION_KINDS.CAMERA)) {

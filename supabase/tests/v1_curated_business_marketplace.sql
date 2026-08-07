@@ -168,7 +168,12 @@ select extensions.throws_ok(
   'a suspended category cannot be re-requested by the applicant'
 );
 select extensions.ok(
-  'car' = any ((select suspended_categories from public.get_my_publishing_access())),
+  exists (
+    select 1
+    from public.get_my_publishing_access() access
+    cross join lateral unnest(access.suspended_categories) as suspended_category
+    where suspended_category = 'car'
+  ),
   'publishing access reports the suspended category so it is never offered back'
 );
 reset role;

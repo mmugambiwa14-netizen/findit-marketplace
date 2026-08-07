@@ -7,7 +7,6 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
   app,
   home,
-  brandLogo,
   topNav,
   bottomNav,
   guestPrompt,
@@ -22,7 +21,6 @@ const [
 ] = await Promise.all([
   read('src/App.jsx'),
   read('src/pages/Home.jsx'),
-  read('src/components/BrandLogo.jsx'),
   read('src/components/layout/TopNav.jsx'),
   read('src/components/layout/BottomNav.jsx'),
   read('src/components/auth/GuestPromptSheet.jsx'),
@@ -50,26 +48,21 @@ test('desktop top navigation omits the redundant Browse and Services links', () 
   assert.match(topNav, /\bPost\b/);
 });
 
-test('the polished FindIt identity is present across app shells and install metadata', async () => {
-  assert.match(brandLogo, /findit-brand-mark/);
+// The former 'polished FindIt identity' test was removed here (F-049). It asserted
+// the pre-rebrand mark, six findit-*.png rasters and a findit-icon-32 favicon, so
+// it asserted the direct opposite of tests/peekaListingBrandContracts.test.mjs and
+// could not go green at the same time as it.
+//
+// Brand identity now has exactly one contract, in peekaListingBrandContracts.test.mjs.
+// Icon and install metadata have exactly one contract, in webAppManifest.test.mjs,
+// which is also where the apple-touch-icon requirement moved rather than being
+// dropped -- it is still unmet, and is owned by F-017.
+//
+// What survives is the part that was never about which brand it is:
+test('every app shell renders the shared brand component', () => {
   for (const shell of [topNav, footer, authLayout, adminSidebar]) {
     assert.match(shell, /BrandLogo/);
   }
-
-  for (const filename of [
-    'findit-mark.png',
-    'findit-icon-32.png',
-    'findit-icon-64.png',
-    'findit-icon-180.png',
-    'findit-icon-192.png',
-    'findit-icon-512.png',
-  ]) {
-    const asset = await readFile(new URL(`../src/assets/brand/${filename}`, import.meta.url));
-    assert.ok(asset.byteLength > 0);
-  }
-
-  assert.match(pageMetadata, /findit-icon-32\.png/);
-  assert.match(pageMetadata, /apple-touch-icon/);
 });
 
 test('guest prompts are compact, contextual, and include Google plus legal notice', () => {

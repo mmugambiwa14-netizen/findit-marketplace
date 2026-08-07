@@ -19,9 +19,10 @@ test('migration certification is pinned, exhaustive and self-cleaning', () => {
   assert.match(migration, /trap cleanup EXIT/);
   assert.match(migration, /db lint --local --level error/);
   assert.match(migration, /v1_private_authenticated_rpc_implementations\.sql/);
+  assert.match(migration, /v1_admin_mfa_assurance_boundary\.sql/);
   assert.match(migration, /v1_security_advisor_baseline\.sql/);
   assert.match(migration, /v1_curated_business_marketplace\.sql/);
-  assert.equal(suiteCount(migration), 37);
+  assert.equal(suiteCount(migration), 38);
   assert.match(migrationWorkflow, /bash \.\/scripts\/run-migration-database-certification\.sh/);
   assert.doesNotMatch(migrationWorkflow, /test db supabase\/tests\//);
 });

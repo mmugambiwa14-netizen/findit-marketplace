@@ -64,6 +64,46 @@ update public.users
 set role = 'admin'
 where id = '00000000-0000-4000-8000-000000009002';
 
+-- Fixture setup, but it still crosses the authoritative curated publisher
+-- boundary exactly as runtime does. Auth is opened only for this insert and
+-- cleared before any assertion runs.
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
+)
+values (
+  '00000000-0000-4000-8000-000000009501',
+  '00000000-0000-4000-8000-000000009001',
+  'Legal Domain Services',
+  'Legal Provider',
+  'legal-provider@example.test',
+  '+263700000001',
+  'ZW',
+  'Harare',
+  'Approved fixture business used only to certify this suite''s boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+)
+values
+  (
+    '00000000-0000-4000-8000-000000009502',
+    '00000000-0000-4000-8000-000000009501',
+    '00000000-0000-4000-8000-000000009001',
+    'service',
+    'approved'
+  );
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000009001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.services (
   id, provider_id, provider_name, title, category, status
 )
@@ -84,6 +124,9 @@ values
     'legal',
     'active'
   );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 set local role anon;
 

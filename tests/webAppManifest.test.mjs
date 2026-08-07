@@ -22,8 +22,13 @@ const manifest = JSON.parse(
 const resolveAsset = (url) => join(publicRoot, url.replace(/^\//, ''));
 
 test('manifest declares the fields browsers require for installability', () => {
-  assert.equal(manifest.name, 'FindIt Marketplace');
-  assert.equal(manifest.short_name, 'FindIt');
+  // These two asserted the pre-rebrand name and contradicted
+  // peekaListingBrandContracts.test.mjs, which is F-049 residue rather than a
+  // manifest defect: the manifest was already correct. Fixed here so install
+  // metadata has one brand answer, per the remediation plan's rule that when a
+  // test and a shipped decision disagree, the test is what gets examined first.
+  assert.equal(manifest.name, 'PeekaListing Marketplace');
+  assert.equal(manifest.short_name, 'PeekaListing');
   assert.equal(manifest.start_url, '/');
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.display, 'standalone');
@@ -70,6 +75,26 @@ test('a maskable icon is declared and is a distinct file from the plain one', ()
     'a maskable icon needs safe-zone padding, so reusing the plain icon would '
     + 'let Android crop the mark',
   );
+});
+
+test('index.html declares an apple-touch-icon, which iOS requires to install', () => {
+  // iOS ignores the manifest when choosing a home-screen icon and needs a PNG
+  // apple-touch-icon link instead, so without this "Add to Home Screen" yields a
+  // blank or screenshot icon on iPhone and iPad.
+  //
+  // Moved here from brandLegalEmailFounderContracts.test.mjs during F-049, so that
+  // install metadata has a single contract rather than two that disagreed about
+  // which brand the icon belongs to. F-017 (WP-19) has since shipped the
+  // PeekaListing raster set rendered from the approved binocular mark, so this
+  // now passes rather than standing as a known gap.
+  const html = readFileSync(join(projectRoot, 'index.html'), 'utf8');
+  const link = html.match(/<link[^>]+rel="apple-touch-icon"[^>]*>/);
+  assert.ok(link, 'index.html must declare <link rel="apple-touch-icon">');
+
+  const href = link[0].match(/href="([^"]+)"/)?.[1];
+  assert.ok(href, 'the apple-touch-icon link must have an href');
+  assert.ok(existsSync(resolveAsset(href)), `missing apple-touch-icon asset: ${href}`);
+  assert.match(href, /\.png$/, 'iOS does not accept an SVG apple-touch-icon');
 });
 
 test('every shortcut resolves to a real route and a real icon', () => {

@@ -25,6 +25,12 @@ test('Cloudflare queue transport has retries, dead letters, R2 and consistent st
   assert.match(wrangler, /RateLimitCoordinator/);
 });
 
+test('Cloudflare validation pins the proven Wrangler release', async () => {
+  const workflow = await source('.github/workflows/cloudflare-provisioning-gates.yml');
+  assert.match(workflow, /^\s*npx --yes wrangler@4\.119\.0 deploy --dry-run/m);
+  assert.doesNotMatch(workflow, /^\s*npx --yes wrangler@4(?:\s|$)/m);
+});
+
 test('queue jobs carry immutable identity and distributed trace context', async () => {
   const worker = await source('workers/edge/src/index.ts');
   assert.match(worker, /jobId/);
@@ -45,12 +51,14 @@ test('Turnstile is fail-closed for origin, hostname, action and missing configur
   assert.doesNotMatch(turnstile, /access-control-allow-origin['"]:\s*['"]\*['"]/);
 });
 
-test('trace helper creates request and session correlation headers', async () => {
+test('trace helper creates request and guarded session correlation headers', async () => {
   const trace = await source('src/lib/traceContext.js');
   assert.match(trace, /x-request-id/);
   assert.match(trace, /x-trace-session/);
   assert.match(trace, /randomUUID/);
-  assert.match(trace, /sessionStorage/);
+  assert.match(trace, /readStoredString\('session'/);
+  assert.match(trace, /writeStoredString\('session'/);
+  assert.doesNotMatch(trace, /\bsessionStorage\b/);
 });
 
 test('rollout contract preserves staged activation and rollback', async () => {

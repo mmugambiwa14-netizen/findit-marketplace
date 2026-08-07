@@ -13,11 +13,15 @@ test('release workflow targets canonical main only', async () => {
   assert.match(workflow, /hosted-release-certification/);
 });
 
-test('clean database certification uses a locked CLI and runs all pgTAP tests', async () => {
+test('release clean database certification reuses the authoritative migration matrix', async () => {
   const workflow = await read('.github/workflows/release-certification.yml');
-  assert.match(workflow, /supabase@2\.84\.2 start/);
-  assert.match(workflow, /supabase@2\.84\.2 db reset/);
-  assert.match(workflow, /supabase@2\.84\.2 test db/);
+  const runner = await read('scripts/run-migration-database-certification.sh');
+  assert.match(workflow, /bash \.\/scripts\/run-migration-database-certification\.sh/);
+  assert.doesNotMatch(workflow, /Run complete pgTAP suite[\s\S]*supabase@2\.84\.2 test db/);
+  assert.match(runner, /SUPABASE_CLI_VERSION="2\.84\.2"/);
+  assert.match(runner, /supabase\/tests\/v1_curated_business_marketplace\.sql/);
+  assert.match(runner, /supabase\/tests\/v1_recommendation_services\.sql/);
+  assert.match(runner, /supabase\/tests\/v1_admin_mfa_assurance_boundary\.sql/);
   assert.doesNotMatch(workflow, /supabase\/setup-cli@v1/);
 });
 
@@ -39,6 +43,12 @@ test('final orchestrator composes all five completed core journeys', async () =>
   assert.match(script, /certify-safety-operations-journey/);
   assert.match(script, /repository-certified-hosted-pending/);
   assert.match(script, /final-release\.json/);
+});
+
+test('final orchestrator invokes the protected production audit through its npm entrypoint', async () => {
+  const script = await read('scripts/certify-final-release.mjs');
+  assert.match(script, /\['production-boundary',\s*npm,\s*\['run',\s*'audit:production',\s*'--silent'\]\]/);
+  assert.doesNotMatch(script, /\['production-boundary',\s*node,\s*\['scripts\/audit-production\.mjs'\]\]/);
 });
 
 test('verified business and Peek fulfilment certifiers preserve hosted evidence boundaries', async () => {

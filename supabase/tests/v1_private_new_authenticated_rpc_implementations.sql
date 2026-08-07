@@ -13,7 +13,6 @@ values
   ('public.create_peek_request(uuid,uuid,public.peek_request_category,text)'::regprocedure, false),
   ('public.decline_peek_request(uuid,text)'::regprocedure, false),
   ('public.disable_web_push_subscription(text)'::regprocedure, false),
-  ('public.discover_category_counts()'::regprocedure, true),
   ('public.merge_peek_request(uuid,uuid)'::regprocedure, false),
   ('public.my_peek_request_ids(uuid[])'::regprocedure, false),
   ('public.owner_listing_contacts(uuid[])'::regprocedure, false),
@@ -41,8 +40,8 @@ select extensions.is(
     where n.nspname = 'public'
       and obj_description(p.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
   ),
-  23::bigint,
-  'all 23 newer public compatibility wrappers exist'
+  22::bigint,
+  'all 22 newer public compatibility wrappers exist'
 );
 
 select extensions.is(
@@ -51,8 +50,8 @@ select extensions.is(
     from expected_new_authenticated_rpcs expected
     where obj_description(expected.function_oid::oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
   ),
-  23::bigint,
-  'the exact locked RPC identities carry the newer boundary marker'
+  22::bigint,
+  'the exact locked 22 RPC identities carry the newer boundary marker'
 );
 
 select extensions.is(
@@ -69,7 +68,7 @@ select extensions.is(
       and obj_description(wrapper.oid, 'pg_proc') = 'findit:20260805073000-authenticated-boundary'
       and implementation.prosecdef
   ),
-  23::bigint,
+  22::bigint,
   'every newer RPC wrapper has a private privileged implementation'
 );
 
@@ -86,7 +85,7 @@ select extensions.is(
       and wrapper.proconfig = array['search_path=""']::text[]
       and position('private.' || wrapper.proname || '(' in wrapper.prosrc) > 0
   ),
-  23::bigint,
+  22::bigint,
   'all newer public RPC wrappers are invoker SQL functions with an empty search path'
 );
 
@@ -111,7 +110,7 @@ select extensions.is(
       and wrapper.prorows = implementation.prorows
       and wrapper.pronargdefaults = implementation.pronargdefaults
   ),
-  23::bigint,
+  22::bigint,
   'newer RPC wrapper results, defaults and planner attributes match implementations'
 );
 
@@ -121,7 +120,7 @@ select extensions.is(
     from expected_new_authenticated_rpcs expected
     where has_function_privilege('authenticated', expected.function_oid, 'EXECUTE')
   ),
-  23::bigint,
+  22::bigint,
   'authenticated can execute every newer public RPC wrapper'
 );
 
@@ -131,7 +130,7 @@ select extensions.is(
     from expected_new_authenticated_rpcs expected
     where has_function_privilege('service_role', expected.function_oid, 'EXECUTE')
   ),
-  23::bigint,
+  22::bigint,
   'service role can execute every newer public RPC wrapper'
 );
 
@@ -141,8 +140,8 @@ select extensions.is(
     from expected_new_authenticated_rpcs expected
     where has_function_privilege('anon', expected.function_oid, 'EXECUTE') = expected.anon_execute
   ),
-  23::bigint,
-  'anonymous grants match the locked five-function public read and view matrix'
+  22::bigint,
+  'anonymous grants match the locked four-function public read and view matrix'
 );
 
 select extensions.is(
@@ -165,6 +164,30 @@ select extensions.is(
   ),
   0::bigint,
   'newer RPC wrapper and implementation named-role grants match'
+);
+
+select extensions.ok(
+  to_regprocedure('public.discover_category_counts()') is not null
+  and to_regprocedure('private.discover_category_counts()') is null,
+  'discover category counts remains a direct public invoker read RPC rather than a privileged private implementation'
+);
+
+select extensions.is(
+  (
+    select count(*)::bigint
+    from pg_proc function
+    join pg_namespace namespace on namespace.oid = function.pronamespace
+    join pg_language language on language.oid = function.prolang
+    where function.oid = 'public.discover_category_counts()'::regprocedure::oid
+      and namespace.nspname = 'public'
+      and language.lanname = 'sql'
+      and not function.prosecdef
+      and function.proconfig = array['search_path=""']::text[]
+      and has_function_privilege('anon', function.oid, 'EXECUTE')
+      and has_function_privilege('authenticated', function.oid, 'EXECUTE')
+  ),
+  1::bigint,
+  'discover category counts keeps its least-privilege anonymous/authenticated invoker contract'
 );
 
 select extensions.ok(

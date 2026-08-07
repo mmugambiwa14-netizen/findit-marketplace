@@ -24,6 +24,57 @@ values (
   true
 );
 
+-- This controlled public Cars listing is fixture setup, but it must still cross
+-- the authoritative curated publisher boundary exactly as runtime does.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
+values (
+  '30000000-0000-4000-8000-000000000401',
+  '30000000-0000-4000-8000-000000000001',
+  'Publication Boundary Motors',
+  'Publication Seller',
+  'publication-seller@example.test',
+  '+263700000401',
+  'ZW',
+  'Publication Test City',
+  'Approved fixture business used only to certify recommendation publication boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id,
+  business_application_id,
+  user_id,
+  category,
+  status
+)
+values (
+  '30000000-0000-4000-8000-000000000402',
+  '30000000-0000-4000-8000-000000000401',
+  '30000000-0000-4000-8000-000000000001',
+  'car',
+  'approved'
+);
+
+select set_config('request.jwt.claim.sub', '30000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"30000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   native_price, native_currency, photos, location_id, country_code, category,
@@ -54,6 +105,9 @@ insert into public.car_details (
   '30000000-0000-4000-8000-000000000201',
   'Ford', 'Ranger', 2022, 25000, 'diesel', 'automatic', 'used'
 );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 set local role service_role;
 select extensions.is(

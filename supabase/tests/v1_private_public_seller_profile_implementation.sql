@@ -120,10 +120,113 @@ where id in (
 insert into public.locations (id, name, type, country_code)
 values ('90000000-0000-4000-8000-000000000010', 'Seller Profile Test City', 'city', 'ZW');
 
+-- The listing fixture must cross the same curated-business trigger as runtime.
+-- Give each listing owner an approved Property category, then insert under that
+-- owner's authenticated JWT instead of relying on a postgres-only bypass.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+) values
+  (
+    '90000000-0000-4000-8000-000000000021',
+    '90000000-0000-4000-8000-000000000001',
+    'Public Seller Test Business',
+    'Public Seller',
+    'public-seller@example.test',
+    '+263700000001',
+    'ZW',
+    'Seller Profile Test City',
+    'Approved business fixture for the public seller profile boundary test.',
+    '1-10',
+    'approved'
+  ),
+  (
+    '90000000-0000-4000-8000-000000000023',
+    '90000000-0000-4000-8000-000000000003',
+    'Suspended Seller Test Business',
+    'Suspended Seller',
+    'suspended-public-seller@example.test',
+    '+263700000003',
+    'ZW',
+    'Seller Profile Test City',
+    'Approved publishing fixture for the suspended seller visibility test.',
+    '1-10',
+    'approved'
+  );
+
+insert into public.business_category_approvals (
+  id,
+  business_application_id,
+  user_id,
+  category,
+  status
+) values
+  (
+    '90000000-0000-4000-8000-000000000022',
+    '90000000-0000-4000-8000-000000000021',
+    '90000000-0000-4000-8000-000000000001',
+    'property',
+    'approved'
+  ),
+  (
+    '90000000-0000-4000-8000-000000000024',
+    '90000000-0000-4000-8000-000000000023',
+    '90000000-0000-4000-8000-000000000003',
+    'property',
+    'approved'
+  );
+
+select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"90000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (id, kind, seller_id, title, price, currency, status, location_id, country_code)
-values
-  ('90000000-0000-4000-8000-000000000011', 'property', '90000000-0000-4000-8000-000000000001', 'Public seller listing', 100, 'USD', 'available', '90000000-0000-4000-8000-000000000010', 'ZW'),
-  ('90000000-0000-4000-8000-000000000012', 'property', '90000000-0000-4000-8000-000000000003', 'Suspended seller listing', 100, 'USD', 'available', '90000000-0000-4000-8000-000000000010', 'ZW');
+values (
+  '90000000-0000-4000-8000-000000000011',
+  'property',
+  '90000000-0000-4000-8000-000000000001',
+  'Public seller listing',
+  100,
+  'USD',
+  'available',
+  '90000000-0000-4000-8000-000000000010',
+  'ZW'
+);
+
+select set_config('request.jwt.claim.sub', '90000000-0000-4000-8000-000000000003', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"90000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal1"}',
+  true
+);
+
+insert into public.listings (id, kind, seller_id, title, price, currency, status, location_id, country_code)
+values (
+  '90000000-0000-4000-8000-000000000012',
+  'property',
+  '90000000-0000-4000-8000-000000000003',
+  'Suspended seller listing',
+  100,
+  'USD',
+  'available',
+  '90000000-0000-4000-8000-000000000010',
+  'ZW'
+);
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 set local role anon;
 

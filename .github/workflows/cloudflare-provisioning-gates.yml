@@ -6,6 +6,9 @@ on:
       - 'infrastructure/cloudflare/**'
       - 'workers/edge/**'
       - 'workers/media/**'
+      # The gate runs this contract, so a change to it must be able to trigger
+      # the gate. Without this the contract could drift unverified.
+      - 'tests/criticalHighInfrastructureContracts.test.mjs'
       - '.github/workflows/cloudflare-provisioning-gates.yml'
       - '.github/workflows/provision-cloudflare-staging.yml'
   workflow_dispatch:
@@ -22,31 +25,56 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Normalize lockfile
+        run: node ./scripts/normalize-package-lock.mjs --write
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
+        id: install
+      # Each validation below is independent, so one failure must not skip the
+      # rest. Same fail-closed-then-open-everything cascade WP-01 fixed in
+      # release-candidate-gates.yml, and the same idiom is reused here.
       - name: Validate shell provisioning script
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
           command -v curl
           command -v jq
           bash -n infrastructure/cloudflare/provision-staging.sh
       - name: Validate infrastructure contracts
-        run: node --test tests/criticalInfrastructureContracts.test.mjs
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: node --test tests/criticalHighInfrastructureContracts.test.mjs
       - name: Validate Edge Functions
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run typecheck:edge-functions
       - name: Validate Wrangler configuration shape
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
+          # wrangler resolves `main` relative to the config file's own
+          # directory, and the example declares main = "workers/edge/src/index.ts".
+          # Rendering to /tmp therefore validated the config somewhere its own
+          # entry point can never resolve, so the dry-run could only ever fail.
+          # Render at the repository root, which is where a real wrangler.toml
+          # made from this template is meant to live.
           sed \
             -e 's/REPLACE_WITH_STAGING_NAMESPACE_ID/00000000000000000000000000000000/' \
             -e 's/REPLACE_WITH_PREVIEW_NAMESPACE_ID/11111111111111111111111111111111/' \
-            infrastructure/cloudflare/wrangler.toml.example > /tmp/wrangler.toml
-          npx --yes wrangler@4 deploy --dry-run --config /tmp/wrangler.toml
+            infrastructure/cloudflare/wrangler.toml.example > ./wrangler.dry-run.toml
+          # Keep this exact. A floating wrangler@4 resolved to an unpublished
+          # 4.120.0 package and broke CI even though the configuration itself
+          # was unchanged. 4.119.0 is the last version proven by this gate.
+          npx --yes wrangler@4.119.0 deploy --dry-run --config ./wrangler.dry-run.toml
+          rm -f ./wrangler.dry-run.toml
       - name: Build media worker image
+        id: media-image
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: docker build -f workers/media/Dockerfile -t peekalisting-media-worker:test .
+      # This one genuinely depends on its predecessor: it runs the image the
+      # previous step builds, so it stays gated on that build succeeding.
       - name: Verify FFmpeg and non-root runtime
+        if: ${{ !cancelled() && steps.media-image.outcome == 'success' }}
         run: |
           docker run --rm --entrypoint ffmpeg peekalisting-media-worker:test -version
           test "$(docker run --rm --entrypoint id peekalisting-media-worker:test -u)" != "0"

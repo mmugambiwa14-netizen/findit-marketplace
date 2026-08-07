@@ -1,0 +1,9 @@
+from,to,type,evidence,status
+/tours,/peek,client Navigate replace,src/App.jsx:172,"active only when tours||toursPreview — absent in production (F-003)"
+/create,/post,client Navigate replace,src/App.jsx:179,active
+/messages,/chats,client Navigate replace,src/App.jsx:180,"active only when featureFlags.messaging"
+/messages/:conversationId,/chats/:conversationId,client Navigate replace,src/App.jsx:181,"preserves id via encodeURIComponent (App.jsx:107-111)"
+/faqs,/help,client Navigate replace,src/App.jsx:177,active
+/support,/help,client Navigate replace,src/App.jsx:178,active
+/dealer/:id,/business/:id,alias (same component),src/App.jsx:167-168,"two paths render PublicBusinessProfile; no canonical tag distinguishes them (F-043)"
+/(.*),/index.html,server rewrite,vercel.json:5-10,"SPA deep-link rewrite; returns HTTP 200 for removed listings (F-045)"

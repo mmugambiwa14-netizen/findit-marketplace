@@ -46,6 +46,34 @@ function waitingLabel(seconds) {
   return `${Math.floor(hours / 24)}d waiting`;
 }
 
+/**
+ * One row of the seller fulfilment queue, as built by normalizeSellerPeekQueuePage()
+ * in src/domain/peekThreads/sellerQueueContracts.js:18-39.
+ *
+ * Declared here because useMutation defaults TVariables to void when it cannot
+ * infer it from mutationFn, which silently turned every `item` below into void.
+ *
+ * @typedef {object} SellerQueueItem
+ * @property {string} requestId
+ * @property {string} parentType
+ * @property {string} parentId
+ * @property {string} parentKind
+ * @property {string} parentTitle
+ * @property {string} category
+ * @property {string} body
+ * @property {number} supporterCount
+ * @property {string} createdAt
+ * @property {number} pendingSeconds
+ * @property {number} queueScore
+ * @property {{
+ *   status: string,
+ *   attemptCount: number,
+ *   tourId: string | null,
+ *   expiresAt: string | null,
+ *   failureReason: string | null,
+ * } | null} fulfilment
+ */
+
 function fulfilmentLabel(status) {
   return {
     accepted: 'Accepted',
@@ -109,7 +137,7 @@ export default function BuyerPeekRequestsQueue() {
   };
 
   const accept = useMutation({
-    mutationFn: (item) => acceptPeekRequest(item.requestId),
+    mutationFn: (/** @type {SellerQueueItem} */ item) => acceptPeekRequest(item.requestId),
     onSuccess: (_result, item) => {
       invalidateQueue();
       toast.success(item.fulfilment?.status === 'failed' ? 'Peek Request ready to retry' : 'Peek Request accepted');
@@ -123,7 +151,7 @@ export default function BuyerPeekRequestsQueue() {
   });
 
   const cancel = useMutation({
-    mutationFn: (item) => cancelPeekRequestFulfilment(item.requestId, 'Seller cancelled the current fulfilment attempt'),
+    mutationFn: (/** @type {SellerQueueItem} */ item) => cancelPeekRequestFulfilment(item.requestId, 'Seller cancelled the current fulfilment attempt'),
     onSuccess: () => {
       setCancelTarget(null);
       resetResponse();
@@ -162,7 +190,7 @@ export default function BuyerPeekRequestsQueue() {
     setBindingBusy(true);
     try {
       await queueResponsePeekBinding(result.tourId, responseTarget.requestId);
-      toast.success('Response Peek uploaded. It will answer this request automatically after approval.');
+      toast.success('Response Peek uploaded. It will answer this request automatically once processing finishes.');
       invalidateQueue();
       resetResponse();
     } catch (error) {
@@ -229,7 +257,7 @@ export default function BuyerPeekRequestsQueue() {
           <DialogHeader>
             <DialogTitle>Record Response Peek</DialogTitle>
             <DialogDescription>
-              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. PeekaListing will attach the approved video to this request automatically.` : 'Record visual evidence for this buyer request.'}
+              {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. PeekaListing attaches the video to this request automatically once it finishes processing.` : 'Record visual evidence for this buyer request.'}
             </DialogDescription>
           </DialogHeader>
           {responseTarget && (
@@ -246,7 +274,7 @@ export default function BuyerPeekRequestsQueue() {
             />
           )}
           {(bindingBusy || responseBusy) && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Finishing the Response Peek…</p>}
-          <p className="text-xs leading-5 text-muted-foreground">The accepted request remains open while the video is uploaded, processed and moderated. It becomes answered only after approval.</p>
+          <p className="text-xs leading-5 text-muted-foreground">The accepted request stays open while the video uploads and processes. It becomes answered automatically as soon as processing finishes.</p>
         </DialogContent>
       </Dialog>
 

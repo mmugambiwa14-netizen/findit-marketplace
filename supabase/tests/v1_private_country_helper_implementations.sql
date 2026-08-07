@@ -64,6 +64,9 @@ select extensions.is(
   'no PUBLIC execute grant remains on a country helper identity'
 );
 
+-- Migrations 0097 and 0101 later moved the stored caller implementations into
+-- private while retaining public SECURITY INVOKER API wrappers. Inspect the
+-- authoritative private implementations rather than the compatibility wrappers.
 select extensions.is(
   (
     select count(*)::bigint
@@ -71,7 +74,7 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname = 'private'
         and caller.proname = 'public_listing_search_page'
         and position('public.is_country_browsable(' in caller.prosrc) > 0
 
@@ -80,7 +83,7 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname = 'private'
         and caller.proname = 'create_v1_listing_submission'
         and position('public.is_country_publishable(' in caller.prosrc) > 0
 
@@ -89,7 +92,7 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname = 'private'
         and caller.proname = 'create_v1_listing_submission'
         and position('public.is_supported_listing_currency(' in caller.prosrc) > 0
 
@@ -98,13 +101,13 @@ select extensions.is(
       select 1
       from pg_proc caller
       join pg_namespace caller_schema on caller_schema.oid = caller.pronamespace
-      where caller_schema.nspname = 'public'
+      where caller_schema.nspname = 'private'
         and caller.proname = 'owner_transition_listing'
         and position('public.is_country_publishable(' in caller.prosrc) > 0
     ) expected_callers
   ),
   4::bigint,
-  'all four stored country helper call paths remain public-compatible'
+  'all four private stored implementations retain public-compatible country helper calls'
 );
 
 select extensions.ok(

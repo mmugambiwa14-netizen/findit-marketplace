@@ -13,6 +13,7 @@ TEST_FILES=(
   supabase/tests/v1_rls_permissive_policy_consolidation.sql
   supabase/tests/v1_private_policy_helper_boundary.sql
   supabase/tests/v1_private_authorization_helper_implementations.sql
+  supabase/tests/v1_admin_mfa_assurance_boundary.sql
   supabase/tests/v1_private_country_helper_implementations.sql
   supabase/tests/v1_private_public_seller_profile_implementation.sql
   supabase/tests/v1_private_public_tour_summaries_implementation.sql

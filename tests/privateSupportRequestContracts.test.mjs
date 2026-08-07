@@ -67,7 +67,11 @@ test('existing database certification still proves support privacy, limits and a
   assert.match(contactSupportTest, /guests cannot read the founder inbox table/);
   assert.match(contactSupportTest, /a guest can submit one bounded support request/);
   assert.match(contactSupportTest, /the fourth request for one email inside fifteen minutes is rejected/);
-  assert.match(contactSupportTest, /ordinary users cannot read the founder inbox projection/);
+  // The F-069 keyset work distinguishes the live projection from the retired
+  // offset RPC, so the assertion now says "live founder inbox projection". Bind
+  // to the behaviour (ordinary users are denied the founder inbox projection)
+  // rather than to the exact phrasing.
+  assert.match(contactSupportTest, /ordinary users cannot read the .*founder inbox projection/);
   assert.match(contactSupportTest, /the privileged resolution is audited without copying sensitive request content/);
 });
 

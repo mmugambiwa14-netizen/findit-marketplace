@@ -13,78 +13,178 @@ values
 update public.users set role = 'admin', super_admin = true
 where id = '00000000-0000-4000-8000-000000003001';
 
-insert into public.listings (id, kind, seller_id, seller_name, title, category, price, status)
+-- Current MVP has no human listing approval/rejection step. Authorize the
+-- seller through the curated business/category boundary, then create the
+-- listing through the same private-media + authenticated submission path used
+-- by the product. Authenticated clients intentionally have no direct INSERT
+-- privilege on public.listings.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
 values (
-  '00000000-0000-4000-8000-000000003101', 'car',
-  '00000000-0000-4000-8000-000000003002', 'Notification Owner',
-  'Notification vehicle', 'cars_sale', 14000, 'pending_review'
+  '00000000-0000-4000-8000-000000003301',
+  '00000000-0000-4000-8000-000000003002',
+  'Notification Test Motors',
+  'Notification Owner',
+  'notification-owner@example.test',
+  '+263700003002',
+  'ZW',
+  'Harare',
+  'Approved fixture business used only to certify operational notifications.',
+  '1-10',
+  'approved'
 );
-insert into public.car_details (listing_id, brand, model)
-values ('00000000-0000-4000-8000-000000003101', 'Toyota', 'Fortuner');
 
+insert into public.business_category_approvals (
+  id,
+  business_application_id,
+  user_id,
+  category,
+  status
+)
+values (
+  '00000000-0000-4000-8000-000000003302',
+  '00000000-0000-4000-8000-000000003301',
+  '00000000-0000-4000-8000-000000003002',
+  'car',
+  'approved'
+);
+
+create temporary table notification_listing_fixture (
+  intent_id uuid,
+  storage_path text,
+  listing_id uuid
+) on commit drop;
+
+grant select, insert, update on notification_listing_fixture to service_role, authenticated;
+
+set local role service_role;
+insert into notification_listing_fixture(intent_id, storage_path)
+select
+  public.authorize_listing_image_upload(
+    '00000000-0000-4000-8000-000000003002',
+    '00000000-0000-4000-8000-000000003002/staging/00000000-0000-4000-8000-000000003401.png',
+    'image/png', 68, 1, 1, repeat('b', 64)
+  ),
+  '00000000-0000-4000-8000-000000003002/staging/00000000-0000-4000-8000-000000003401.png';
 reset role;
-select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003001', true);
-set local role authenticated;
 
+insert into storage.objects (id, bucket_id, name, owner, owner_id, metadata)
+values (
+  '00000000-0000-4000-8000-000000003402',
+  'listing-images',
+  '00000000-0000-4000-8000-000000003002/staging/00000000-0000-4000-8000-000000003401.png',
+  '00000000-0000-4000-8000-000000003002',
+  '00000000-0000-4000-8000-000000003002',
+  '{"mimetype":"image/png","size":68}'::jsonb
+);
+
+set local role service_role;
 select extensions.lives_ok(
-  $$select public.admin_moderate_marketplace_item(
-    '00000000-0000-4000-8000-000000003101', 'car', 'publish',
-    'Advert meets marketplace requirements'
+  $$select public.complete_listing_image_upload((select intent_id from notification_listing_fixture))$$,
+  'trusted upload completion accepts the validated notification fixture image'
+);
+reset role;
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003002', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000003002","role":"authenticated","aal":"aal1"}',
+  true
+);
+set local role authenticated;
+select extensions.lives_ok(
+  $$select public.create_v1_listing_submission(
+    '00000000-0000-4000-8000-000000003403',
+    '{"kind":"car","title":"2022 Toyota Fortuner notification vehicle","description":"A complete approved seller vehicle listing created through the real publication path for notification certification.","category":"cars_sale","listingType":"sale","price":14000,"currency":"USD","negotiable":false,"locationId":"00000000-0000-4000-8000-000000000101","contactPhone":"+263700003002"}'::jsonb,
+    '{"brand":"Toyota","model":"Fortuner","year":"2022","mileage":"32000","fuelType":"diesel","transmission":"automatic","condition":"used"}'::jsonb,
+    jsonb_build_array(jsonb_build_object(
+      'intentId', (select intent_id from notification_listing_fixture),
+      'path', (select storage_path from notification_listing_fixture)
+    ))
   )$$,
-  'admin approval uses the trusted moderation operation'
+  'an approved authenticated seller creates the notification fixture through the live listing submission RPC'
+);
+reset role;
+
+update notification_listing_fixture
+set listing_id = (
+  select id from public.listings
+  where submission_key = '00000000-0000-4000-8000-000000003403'
 );
 
-reset role;
+select extensions.is(
+  (select status::text from public.listings where id = (select listing_id from notification_listing_fixture)),
+  'available',
+  'validated approved-category listing auto-publishes without human listing review'
+);
 select extensions.is(
   (select count(*)::bigint from public.app_alerts
    where user_id = '00000000-0000-4000-8000-000000003002'
-     and event_type = 'listing_approved'),
-  1::bigint,
-  'listing approval creates one V1 notification'
+     and event_type in ('listing_approved', 'listing_rejected')),
+  0::bigint,
+  'the current MVP listing publication path emits no human approval or rejection notification'
 );
 select extensions.ok(
   (select expires_at is not null from public.listings
-   where id = '00000000-0000-4000-8000-000000003101'),
-  'publishing assigns a server-managed listing expiry'
+   where id = (select listing_id from notification_listing_fixture)),
+  'automatic publication still assigns a server-managed listing expiry'
 );
 
--- A separate review cycle is established as trusted test setup so this suite
--- can verify the rejection notification without weakening the production
--- state machine (only pending submissions may be rejected).
-update public.listings
-set status = 'pending_review', submitted_at = now(), moderation_reason = null
-where id = '00000000-0000-4000-8000-000000003101';
-
-select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003001', true);
+-- Owner lifecycle transitions are current marketplace behavior and create the
+-- owner-facing listing_status_changed notification when availability ends.
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003002', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000003002","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 select extensions.lives_ok(
-  $$select public.admin_moderate_marketplace_item(
-    '00000000-0000-4000-8000-000000003101', 'car', 'reject',
-    'Contact details require correction'
+  $$select public.owner_transition_listing(
+    (select listing_id from notification_listing_fixture), 'unavailable'
   )$$,
-  'admin can reject a product advert with an owner-visible reason'
+  'the owner can move a live listing to unavailable through the trusted lifecycle RPC'
 );
 
 reset role;
 select extensions.is(
   (select count(*)::bigint from public.app_alerts
    where user_id = '00000000-0000-4000-8000-000000003002'
-     and event_type = 'listing_rejected'),
+     and event_type = 'listing_status_changed'),
   1::bigint,
-  'listing rejection creates one V1 notification'
+  'owner unavailability creates one current listing-status notification'
 );
 
+-- Restore the fixture under trusted SQL setup, then place it two days from
+-- expiry. The second update keeps old/new status available so the expiry-default
+-- trigger does not replace the explicit due-soon timestamp.
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 update public.listings
-set status = 'available', expires_at = now() + interval '2 days', expiry_notice_sent_at = null
-where id = '00000000-0000-4000-8000-000000003101';
+set status = 'available'
+where id = (select listing_id from notification_listing_fixture);
+update public.listings
+set expires_at = now() + interval '2 days', expiry_notice_sent_at = null
+where id = (select listing_id from notification_listing_fixture);
 
 select extensions.is(
-  public.process_listing_expiry_notifications(now() + interval '28 days') ->> 'notices_created',
+  public.process_listing_expiry_notifications(now()) ->> 'notices_created',
   '1',
-  'the service-only expiry worker creates a due notice'
+  'the service-only expiry worker creates a due-soon notice'
 );
 select extensions.is(
-  public.process_listing_expiry_notifications(now() + interval '28 days') ->> 'notices_created',
+  public.process_listing_expiry_notifications(now()) ->> 'notices_created',
   '0',
   'the expiry worker is idempotent for an already-notified listing'
 );
@@ -93,12 +193,17 @@ insert into public.reports (
   id, listing_id, listing_type, listing_title, reason, reporter_id
 ) values (
   '00000000-0000-4000-8000-000000003201',
-  '00000000-0000-4000-8000-000000003101', 'vehicle',
-  'Notification vehicle', 'fake',
+  (select listing_id from notification_listing_fixture), 'vehicle',
+  '2022 Toyota Fortuner notification vehicle', 'fake',
   '00000000-0000-4000-8000-000000003003'
 );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000003001","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 select extensions.lives_ok(
   $$select public.admin_review_report(
@@ -149,18 +254,23 @@ select extensions.throws_ok(
 );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003002', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000003002","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 select extensions.is(
   (select count(*)::bigint from public.notification_rows('all', false, 50, 0)),
-  5::bigint,
-  'an owner sees only their five trusted fixture notifications'
+  4::bigint,
+  'an owner sees only the four current trusted fixture notifications'
 );
-select extensions.is(public.notification_unread_count(), 5::bigint, 'unread count is calculated at the server boundary');
+select extensions.is(public.notification_unread_count(), 4::bigint, 'unread count is calculated at the server boundary');
 select extensions.ok(
-  public.mark_notification_read((select notification_id from public.notification_rows('listing_approved', false, 1, 0))),
-  'an owner can mark one notification read through the trusted RPC'
+  public.mark_notification_read((select notification_id from public.notification_rows('listing_status_changed', false, 1, 0))),
+  'an owner can mark the current listing-status notification read through the trusted RPC'
 );
-select extensions.is(public.mark_all_notifications_read(), 4, 'an owner can mark all remaining notifications read');
+select extensions.is(public.mark_all_notifications_read(), 3, 'an owner can mark all remaining notifications read');
 select extensions.is(public.notification_unread_count(), 0::bigint, 'read-state changes update the unread count');
 select extensions.throws_ok(
   $$insert into public.app_alerts (
@@ -175,6 +285,11 @@ select extensions.throws_ok(
 
 reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003004', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000003004","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 select extensions.is(
   (select count(*)::bigint from public.notification_rows('all', false, 50, 0)),

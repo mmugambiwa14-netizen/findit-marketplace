@@ -12,8 +12,8 @@ const authSource = readFileSync(
 const registerSource = readFileSync(resolve(projectRoot, 'src/pages/Register.jsx'), 'utf8');
 const indexSource = readFileSync(resolve(projectRoot, 'index.html'), 'utf8');
 const documentBootstrapSource = readFileSync(resolve(projectRoot, 'src/documentBootstrap.js'), 'utf8');
-const pagesWorkflow = readFileSync(
-  resolve(projectRoot, '.github/workflows/deploy-staging-pages.yml'),
+const previewWorkflow = readFileSync(
+  resolve(projectRoot, '.github/workflows/peekalisting-preview.yml'),
   'utf8',
 );
 const pagesFallback = readFileSync(
@@ -35,9 +35,18 @@ test('all provider-driven auth callbacks use the deployment-aware URL helper', (
   assert.match(authSource, /redirectTo: appUrl\('\/reset-password'\)/);
 });
 
-test('Pages deep links redirect through a 200 shell and restore the route safely', () => {
-  assert.match(pagesWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
-  assert.doesNotMatch(pagesWorkflow, /cp dist\/index\.html dist\/404\.html/);
+test('the single Pages preview restores deep links and proves its exact canonical source', () => {
+  assert.match(previewWorkflow, /branches:\s*\n\s*- main/);
+  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(previewWorkflow, /test "\$GITHUB_REF_NAME" = "main"/);
+  assert.match(previewWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
+  assert.match(previewWorkflow, /VITE_PREVIEW_DEPLOYMENT: "true"/);
+  assert.match(previewWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
+  assert.doesNotMatch(previewWorkflow, /cp dist\/index\.html dist\/404\.html/);
+  assert.match(previewWorkflow, /test "\$\(git rev-parse HEAD\)" = "\$GITHUB_SHA"/);
+  assert.match(previewWorkflow, /preview-build\.json/);
+  assert.match(previewWorkflow, /"branch":"\$GITHUB_REF_NAME"/);
+  assert.match(previewWorkflow, /"sha":"\$GITHUB_SHA"/);
   assert.match(pagesFallback, /window\.location\.replace\(destination\.toString\(\)\)/);
   assert.match(pagesFallback, /currentPath\.startsWith\(basePath\)/);
   assert.match(indexSource, /src\/documentBootstrap\.js/);

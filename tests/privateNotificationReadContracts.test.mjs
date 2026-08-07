@@ -46,7 +46,11 @@ test('active notification repository preserves the exact three RPC calls and saf
 
 test('existing notification certification proves ownership, transitions and cross-user isolation', () => {
   assert.match(notificationTest, /unread count is calculated at the server boundary/);
-  assert.match(notificationTest, /an owner can mark one notification read through the trusted RPC/);
+  // The F-070 rewrite routed this fixture through the real listing-submission
+  // path, so the assertion now names the specific notification it marks. Bind to
+  // the behaviour (owner marks a notification read via the trusted RPC) rather
+  // than to the exact phrasing.
+  assert.match(notificationTest, /an owner can mark .*notification read through the trusted RPC/);
   assert.match(notificationTest, /an owner can mark all remaining notifications read/);
   assert.match(notificationTest, /read-state changes update the unread count/);
   assert.match(notificationTest, /authenticated clients cannot forge notifications/);

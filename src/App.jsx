@@ -18,6 +18,7 @@ import { PwaProvider } from '@/components/pwa/PwaProvider';
 import PwaStatusBar from '@/components/pwa/PwaStatusBar';
 import GlobalRefreshButton from '@/components/pwa/GlobalRefreshButton';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
+import BusinessPublishingGate from '@/components/business/BusinessPublishingGate';
 import { createLoginPath } from '@/lib/authNavigation';
 import { featureFlags } from '@/lib/featureFlags';
 import { queryClientInstance } from '@/lib/query-client';
@@ -182,7 +183,7 @@ const AuthenticatedApp = () => {
         </Route>
         <Route element={<ProtectedRoute unauthenticatedElement={<SignInRedirect />} />}>
           <Route element={<AppLayout />}>
-            <Route path="/post" element={<CreateListing />} />
+            <Route path="/post" element={<BusinessPublishingGate><CreateListing /></BusinessPublishingGate>} />
             <Route path="/create-service" element={<CuratedCreateService />} />
             <Route path="/my-services" element={<MyServices />} />
             <Route path="/saved" element={<Saved />} />
