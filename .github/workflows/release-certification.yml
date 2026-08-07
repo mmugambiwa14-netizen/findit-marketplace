@@ -41,29 +41,68 @@ jobs:
           deno-version: v2.x
 
       - name: Install locked dependencies
+        id: install
         run: npm ci --ignore-scripts
 
-      - name: Validate production boundaries
-        run: |
-          npm run audit:production
-          npm run verify:hygiene
-          npm run verify:source-graph
-          npm run verify:sql-boundary
-          npm run verify:base44-elimination
+      # These gates were previously two chained `run` blocks, so under `bash -e`
+      # the first failure hid every gate after it, and the step failing then
+      # skipped the PWA build and the evidence composer entirely. That is the
+      # RC-1 cascade WP-01 fixed in release-candidate-gates.yml; each independent
+      # gate is now its own step carrying the same condition, so one failure
+      # reports one failure instead of masking eight.
+      - name: Audit production dependency boundary
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run audit:production
 
-      - name: Run static and contract gates
-        run: |
-          npm run lint
-          npm run typecheck:active
-          npm run typecheck:edge-functions
-          npm run test:contracts
-          npm run test:tours-contracts
-          npm run test:product-audit
+      - name: Verify repository hygiene
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:hygiene
+
+      - name: Verify source graph
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:source-graph
+
+      - name: Verify SQL migration boundary
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:sql-boundary
+
+      - name: Verify Base44 elimination
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run verify:base44-elimination
+
+      - name: Lint application
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run lint
+
+      - name: Typecheck active release surface
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck:active
+
+      - name: Typecheck Supabase Edge Functions
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck:edge-functions
+
+      - name: Run all contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:contracts
+
+      - name: Run Tours contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:tours-contracts
+
+      - name: Run product audit contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:product-audit
 
       - name: Build production PWA
+        id: build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run build
 
+      # This one genuinely consumes the build output, so it stays gated on the
+      # build succeeding rather than made unconditional.
       - name: Compose final journey evidence
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: node ./scripts/certify-final-release.mjs
 
       - name: Upload repository release evidence

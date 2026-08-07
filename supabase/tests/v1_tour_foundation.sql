@@ -95,13 +95,21 @@ values (
 insert into public.business_category_approvals (
   id, business_application_id, user_id, category, status
 )
-values (
-  '00000000-0000-4000-8000-000000009502',
-  '00000000-0000-4000-8000-000000009501',
-  '00000000-0000-4000-8000-000000009001',
-  'car',
-  'approved'
-);
+values
+  (
+    '00000000-0000-4000-8000-000000009502',
+    '00000000-0000-4000-8000-000000009501',
+    '00000000-0000-4000-8000-000000009001',
+    'car',
+    'approved'
+  ),
+  (
+    '00000000-0000-4000-8000-000000009503',
+    '00000000-0000-4000-8000-000000009501',
+    '00000000-0000-4000-8000-000000009001',
+    'service',
+    'approved'
+  );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
 select set_config(
@@ -216,6 +224,14 @@ select extensions.is(
 );
 
 
+-- Reopen fixture auth for this publisher-crossing insert.
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000009001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   category, listing_type, status
@@ -232,6 +248,9 @@ insert into public.listings (
     'Unavailable Tour fixture', 'An unavailable listing used by the seller workflow denial gate.',
     14000, 'USD', 'cars_sale', 'sale', 'unavailable'
   );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 select extensions.lives_ok(
   $$
@@ -264,6 +283,14 @@ select extensions.throws_matching(
   'an unavailable listing remains closed to new Tour uploads'
 );
 
+-- Reopen fixture auth for this publisher-crossing insert.
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000009001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.services (
   id, provider_id, provider_name, contact_phone, title, description,
   category, subcategory, subcategories, pricing_type, status
@@ -289,6 +316,9 @@ insert into public.services (
     'legal', 'general', '["general"]'::jsonb,
     'starting_from', 'active'
   );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 select extensions.lives_ok(
   $$
@@ -338,6 +368,14 @@ select extensions.throws_matching(
 );
 
 
+-- Reopen fixture auth for this publisher-crossing insert.
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000009001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   category, listing_type, status
@@ -354,6 +392,9 @@ insert into public.listings (
     'Late Tour completion fixture', 'An exact-object late confirmation fixture.',
     16000, 'USD', 'cars_sale', 'sale', 'pending_review'
   );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 select * from public.authorize_tour_upload(
   '00000000-0000-4000-8000-000000009001',
