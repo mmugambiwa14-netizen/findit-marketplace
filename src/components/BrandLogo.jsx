@@ -17,6 +17,8 @@ export default function BrandLogo({
         alt=""
         className={cn('h-8 w-8 shrink-0 object-contain', markClassName)}
         aria-hidden="true"
+        loading="eager"
+        decoding="async"
       />
       {showWordmark && (
         <span className={cn('whitespace-nowrap text-xl font-black tracking-[-0.04em] text-foreground', wordmarkClassName)}>
