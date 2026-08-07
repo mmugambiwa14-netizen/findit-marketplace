@@ -49,6 +49,8 @@ test('listing summaries share one elevated hierarchy across every public detail 
     assert.match(source, /import ListingSummary from "@\/components\/listings\/ListingSummary"/);
     assert.match(source, /<ListingSummary/);
     assert.match(source, /grid grid-cols-1 gap-3 min-\[430px\]:grid-cols-2/);
+    assert.match(source, /tour\?\.status === "ready"/);
+    assert.match(source, />Public Peek<\/Badge>/);
   }
 });
 
