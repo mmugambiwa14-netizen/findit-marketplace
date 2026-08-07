@@ -3,8 +3,7 @@ name: Deploy staging to GitHub Pages
 on:
   push:
     branches:
-      - main
-      - feature/listing-intelligence-foundation
+      - claude/peekalisting-audit-ui0z6l
   workflow_dispatch:
 
 permissions:
@@ -13,11 +12,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: github-pages
+  group: github-pages-remediation-preview
   cancel-in-progress: true
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/claude/peekalisting-audit-ui0z6l'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: github-pages
@@ -36,8 +36,6 @@ jobs:
       VITE_FEATURE_MAPS: ${{ vars.FINDIT_MAPS_ENABLED }}
       VITE_MAPTILER_PUBLIC_KEY: ${{ secrets.FINDIT_MAPTILER_PUBLIC_KEY }}
       VITE_MAPTILER_STYLE_ID: ${{ vars.FINDIT_MAPTILER_STYLE_ID }}
-      # validate-env keeps this false until the international listing contract
-      # is implemented, so the staging Pages build has to agree with it.
       VITE_FEATURE_INTERNATIONAL_LISTING: "false"
       VITE_FEATURE_MANUAL_LOCATION: "true"
       VITE_FEATURE_CURRENT_LOCATION: "true"
@@ -59,9 +57,9 @@ jobs:
       VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
       VITE_FEATURE_PREVIEW_FIXTURES: "false"
       VITE_PREVIEW_AUTH_BYPASS: "false"
-      VITE_FEATURE_TOURS: ${{ vars.FINDIT_STAGING_TOURS_ENABLED }}
-      VITE_FEATURE_TOURS_PREVIEW: ${{ vars.FINDIT_STAGING_TOURS_PREVIEW }}
-      TOURS_BACKEND_ENABLED: ${{ vars.FINDIT_STAGING_TOURS_BACKEND_ENABLED }}
+      VITE_FEATURE_TOURS: "true"
+      VITE_FEATURE_TOURS_PREVIEW: "true"
+      TOURS_BACKEND_ENABLED: "true"
       FINDIT_TOURS_WORKERS_ENABLED: ${{ vars.FINDIT_TOURS_WORKERS_ENABLED }}
       FINDIT_TOUR_PROCESSOR_MODE: "github-actions"
       FINDIT_TOUR_CLEANUP_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
@@ -75,8 +73,32 @@ jobs:
       FINDIT_TOURS_ACCEPTANCE_ID: ${{ vars.FINDIT_TOURS_ACCEPTANCE_ID }}
 
     steps:
-      - name: Check out repository
+      - name: Check out exact triggering commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify preview source branch and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "claude/peekalisting-audit-ui0z6l"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "Preview source: $GITHUB_REF_NAME@$GITHUB_SHA"
+
+      - name: Verify staging Supabase isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$VITE_SUPABASE_URL" in
+            *bwgklpxoetrrkutottdb*)
+              echo "Preview is bound to FindIt Staging (bwgklpxoetrrkutottdb)."
+              ;;
+            *)
+              echo "::error::GitHub Pages preview is not bound to the confirmed staging Supabase project bwgklpxoetrrkutottdb."
+              exit 1
+              ;;
+          esac
 
       - name: Normalize locked dependency metadata
         run: node ./scripts/normalize-package-lock.mjs --write
@@ -104,6 +126,21 @@ jobs:
 
       - name: Add single-page application fallback
         run: node ./scripts/create-pages-spa-fallback.mjs dist "$VITE_BASE_PATH"
+
+      - name: Stamp exact preview head and force service-worker update
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > dist/preview-build.json <<EOF
+          {"branch":"$GITHUB_REF_NAME","sha":"$GITHUB_SHA","run_id":"$GITHUB_RUN_ID"}
+          EOF
+          printf '\n<!-- preview-branch:%s preview-sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/index.html
+          if [ -f dist/404.html ]; then
+            printf '\n<!-- preview-branch:%s preview-sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/404.html
+          fi
+          if [ -f dist/sw.js ]; then
+            printf '\n// preview-build-sha:%s\n' "$GITHUB_SHA" >> dist/sw.js
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
