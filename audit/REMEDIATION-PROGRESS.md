@@ -30,7 +30,11 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - F-074: **BEHAVIOR PROVEN** — run 31162845487 passes `v1_recommendation_service_operations.sql` **37/37** with services holding at 29/29. The stale pre-activation expectation is now a metadata/policy-table drift check.
 - F-075: **BEHAVIOR PROVEN** — run 31163209835 passes `v1_recommendation_scale.sql` (9 tests, PASS) with the fixture crossing the curated publisher boundary through the authoritative trigger.
 - F-076: **BEHAVIOR PROVEN** — run 31163529073 passes `v1_contextual_ecosystem_intelligence.sql` **44/44**.
-- F-077, F-078, F-079: **REPAIRED, AWAITING CI** — the final three suites. All three carried the curated-publisher fixture class; F-079 additionally carried the pre-activation class and is the only suite crossing the *service* publisher boundary.
+- F-077, F-078, F-079: **BEHAVIOR PROVEN** — run 31164127969 passes personalization 20/20, analytics 23/23 and related-services 14/14.
+- **RECOMMENDATION DATABASE MATRIX: GREEN.** Run 31164127969 reports
+  `Recommendation database certification passed: 15 suites completed.` — the first fully green run of this
+  matrix. The machine-readable register `audit/findings-status.csv` has now been appended with F-065…F-079,
+  per the convention that proof-chain statuses land once the full matrix closes.
 - F-014, F-049, F-059: DONE.
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
@@ -225,16 +229,56 @@ the success path; `degraded` is the precise discriminator, holding for a live an
 both `service_disabled` and `timeout`. The disabled path is retained by toggling the policy off inside the
 transaction and re-asserting `service_disabled`.
 
+## Evidence from Recommendation database-gates run 31164127969 — MATRIX GREEN
+
+Dispatched on `claude/peekalisting-remediation-handoff-d1mr2x` @ `1734823`.
+
+```
+Recommendation database certification passed: 15 suites completed.
+```
+
+| Suite | Result |
+|---|---|
+| `v1_private_authenticated_rpc_implementations` / `..._new_...` | PASS |
+| `v1_database_lint_runtime_contract_repairs` | 10/10 |
+| `v1_security_advisor_baseline` | 10/10 |
+| `v1_recommendation_foundation` | 62/62 |
+| `v1_recommendation_projection_queue` | 20/20 |
+| `v1_recommendation_eligibility_geospatial` | 19/19 |
+| `v1_recommendation_publication_boundary` | 14/14 |
+| `v1_recommendation_services` | 29/29 |
+| `v1_recommendation_service_operations` | 37/37 |
+| `v1_recommendation_scale` | PASS |
+| `v1_contextual_ecosystem_intelligence` | 44/44 |
+| `v1_recommendation_personalization` | 20/20 |
+| `v1_recommendation_analytics` | 23/23 |
+| `v1_recommendation_related_services` | 14/14 |
+
+Every suite passes on a clean `supabase db reset` across the full migration chain, with the SQL boundary and
+migration/rollback pairing checks green in the same job.
+
+## What this does and does not close
+
+**Closed.** The recommendation/contextual database certification chain: F-065…F-079, recorded in
+`audit/findings-status.csv`.
+
+**NOT closed — do not mark these supported yet.** F-012 requires *all five* workflows green, and this run
+proves only the database matrix. The frontend/source-contract surface was still red at the last full PR run
+(`Frontend and source contracts`, `Repository, build and PWA gates`, `validate`, `verify`,
+`repository-contracts`) and nothing in this session touched it. **F-012, F-058, F-060 therefore remain
+open**, as do the proof-chain closures that depend on them. Marking them done on the strength of a green
+database matrix would repeat exactly the F-002 failure mode the audit calls out: a control reporting success
+over a surface it does not cover.
+
 ## Exact next action
 
-1. Run Recommendation database gates with the F-077/F-078/F-079 repairs.
-2. Require `v1_recommendation_personalization.sql`, `v1_recommendation_analytics.sql` and
-   `v1_recommendation_related_services.sql` to each run clean to `finish()` (all three use `no_plan()`),
-   while every earlier suite holds.
-3. **These are the last three suites in the runner.** If they pass, the full recommendation database matrix
-   is green for the first time — at which point record the final CI evidence and close the proof-chain
-   findings plus reopened F-012/F-058/F-060 as supported, then proceed to WP-05/F-033.
-4. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken
+1. Run the full PR check set on this branch and take the **next exact failure on the frontend/source-contract
+   surface**, which is now the only unproven half of F-012.
+2. Repair only that boundary, then re-run. Same discipline as the database matrix: establish which side is
+   authoritative before changing either, and never weaken a contract to turn CI green.
+3. When all five workflows are green, close F-012/F-058/F-060 and record the final proof chain.
+4. Then proceed to WP-05/F-033 (EXIF/GPS stripping), which the prompt marks independent and startable.
+5. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken
    curated publishing, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or
    weaken a contract merely to turn CI green.
 
