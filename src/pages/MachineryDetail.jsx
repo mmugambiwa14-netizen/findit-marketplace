@@ -73,6 +73,7 @@ export default function MachineryDetail() {
           badges={(
             <>
               <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getMachineryLabel(item.category)}</Badge>
+              {item.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
               {item.status !== "available" && <Badge variant="destructive" className="capitalize">{String(item.status).replaceAll("_", " ")}</Badge>}
               {item.negotiable && <Badge variant="outline">Negotiable</Badge>}
             </>
