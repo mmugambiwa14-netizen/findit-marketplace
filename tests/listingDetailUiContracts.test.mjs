@@ -54,6 +54,18 @@ test('listing summaries share one elevated hierarchy across every public detail 
   }
 });
 
+test('asset listings prioritize Peek Requests before secondary pricing controls', () => {
+  for (const source of [propertyDetail, carDetail, machineryDetail]) {
+    const peekIndex = source.indexOf('<PeekThreadsSection');
+    const variantIndex = source.indexOf('<VariantSelector');
+    const priceIndex = source.indexOf('<PriceBreakdown');
+    assert.ok(peekIndex >= 0, 'Peek Requests must be present');
+    assert.ok(variantIndex > peekIndex, 'variant controls must follow Peek Requests');
+    assert.ok(priceIndex > peekIndex, 'price breakdown must follow Peek Requests');
+  }
+  assert.match(serviceDetail, /<PeekThreadsSection/);
+});
+
 test('listing section navigation is a sticky elevated segmented surface', () => {
   assert.match(detailTabs, /sticky top-\[calc\(env\(safe-area-inset-top,0px\)\+3\.75rem\)\]/);
   assert.match(detailTabs, /rounded-2xl border border-border\/80 bg-card\/90 p-1 shadow-floating/);
