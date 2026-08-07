@@ -11,7 +11,7 @@ import { readStoredString, writeStoredString } from '@/lib/browserStorage';
  * Three rules shape this, all from "never aggressively spam install prompts":
  *
  * 1. Engagement gating. The prompt never appears on a first page view. Someone
- *    who has not yet decided whether they care about FindIt is not going to
+ *    who has not yet decided whether they care about PeekaListing is not going to
  *    install it, and asking costs the one `beforeinstallprompt` event the
  *    browser gives us.
  * 2. Dismissal is remembered for 30 days (in PwaProvider), and a dismissal from
@@ -91,8 +91,6 @@ export default function InstallPrompt() {
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 4.75rem)' }}
     >
       <section
-        // A region rather than a dialog: this is an offer, not something that
-        // should trap focus or block what the user was doing.
         aria-labelledby="install-prompt-heading"
         className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-2xl border border-border bg-card/95 p-4 shadow-floating backdrop-blur"
       >
@@ -105,7 +103,7 @@ export default function InstallPrompt() {
 
         <div className="min-w-0 flex-1">
           <h2 id="install-prompt-heading" className="text-sm font-semibold">
-            Add FindIt to your home screen
+            Add PeekaListing to your home screen
           </h2>
 
           {showInstall ? (
