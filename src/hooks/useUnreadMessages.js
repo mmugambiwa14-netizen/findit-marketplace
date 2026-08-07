@@ -20,7 +20,9 @@ export function useUnreadMessages() {
     enabled: featureFlags.messaging && Boolean(user?.id),
     staleTime: 15_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
 
   return count;
