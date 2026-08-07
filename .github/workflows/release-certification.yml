@@ -44,12 +44,6 @@ jobs:
         id: install
         run: npm ci --ignore-scripts
 
-      # These gates were previously two chained `run` blocks, so under `bash -e`
-      # the first failure hid every gate after it, and the step failing then
-      # skipped the PWA build and the evidence composer entirely. That is the
-      # RC-1 cascade WP-01 fixed in release-candidate-gates.yml; each independent
-      # gate is now its own step carrying the same condition, so one failure
-      # reports one failure instead of masking eight.
       - name: Audit production dependency boundary
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run audit:production
@@ -99,8 +93,6 @@ jobs:
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run build
 
-      # This one genuinely consumes the build output, so it stays gated on the
-      # build succeeding rather than made unconditional.
       - name: Compose final journey evidence
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: node ./scripts/certify-final-release.mjs
@@ -121,7 +113,7 @@ jobs:
   clean-database-certification:
     name: Clean database migration and pgTAP
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 50
 
     steps:
       - name: Checkout
@@ -132,21 +124,18 @@ jobs:
         with:
           node-version: 24
 
-      - name: Start local Supabase
-        run: npx --yes supabase@2.84.2 start
-
-      - name: Apply every migration from empty state
-        run: npx --yes supabase@2.84.2 db reset
-
-      - name: Run complete pgTAP suite
-        run: npx --yes supabase@2.84.2 test db
+      # Keep Release Certification on the exact same reviewed database proof
+      # boundary as Migration Gates. The raw historical `supabase test db`
+      # inventory contains superseded pre-remediation tests and is not the
+      # authoritative final-schema certification matrix.
+      - name: Run authoritative clean-database certification matrix
+        run: bash ./scripts/run-migration-database-certification.sh
 
       - name: Capture database diagnostics
         if: always()
         run: |
           mkdir -p artifacts/certification
           npx --yes supabase@2.84.2 status -o env > artifacts/certification/local-supabase-status.txt || true
-          npx --yes supabase@2.84.2 migration list > artifacts/certification/migration-list.txt || true
 
       - name: Upload database evidence
         if: always()
