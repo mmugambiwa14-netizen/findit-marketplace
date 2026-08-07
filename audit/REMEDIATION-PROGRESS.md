@@ -408,11 +408,61 @@ Note `v1_admin_operations.sql` and `v1_legal_domain_isolation.sql` promote users
 `enforce_curated_listing_publisher()` short-circuits for admins, so those two may only need a JWT subject
 rather than category approvals — verify which, rather than adding approvals reflexively.
 
+## State after F-029, F-083, F-084 (partial) and F-085
+
+**The entire JS surface is green.** `tests/*.test.mjs` **776/776**, `tests/security/*.test.mjs` 41/41,
+lint clean, `typecheck` and `typecheck:active` clean, production build plus its five post-build gates clean.
+This is the first time the contract suite has been fully green.
+
+**F-029 is closed and was not what the audit thought.** At baseline it was a real defect; on this branch the
+owner lifecycle is fully implemented — `owner_transition_listing` allows submit/pause/resume/unavailable
+(`20260807030000:48`) each with per-action source-status guards (`:60-69`), and `MyListings.jsx` wires every
+action plus delete. The only failing assertion looked for the RPC name in
+`src/services/listingCreationService.js`; it lives one layer down in
+`src/repositories/listingCreationRepository.js:38`, which is this codebase's architecture. The contract now
+asserts both halves of the path. The §3.3-protected ownership predicate was read and left untouched.
+
+**F-029 was the single root cause of four failing CI jobs** — `Frontend and source contracts`,
+`repository-contracts`, `Repository, build and PWA gates`, and *both* failing steps of the `verify` job
+(Release candidate gates runs the contract suite twice: directly, and again inside
+`Run reproducible internal certification`). All four should now clear.
+
+**F-083 is confirmed working.** In the Cloudflare gate, five validations that had *never executed* now run
+and pass: shell provisioning, infrastructure contracts, Edge Functions typecheck, media worker image build,
+and the FFmpeg/non-root runtime check. It exposed exactly one genuine defect, **F-085**: the step rendered
+`wrangler.toml` to `/tmp`, but wrangler resolves `main` relative to the config's own directory, so the entry
+point could never resolve. Fixed by rendering at the repository root; reproduced both failure and fix
+locally, where the dry-run then validates the whole binding surface (Durable Object, KV, queue, 3× R2, vars).
+
+## F-084 — partial: the fixes worked and revealed the next layer
+
+The six fixture repairs are effective. Total executed assertions in the full matrix rose **657 → 694**, and
+`v1_rls_matrix` and `v1_tour_foundation` now get *past* their fixtures (4 and 13 assertions execute) before
+erroring later, where previously they died at the insert. Six suites still end in a pre-`plan()` hard error:
+
+| Suite | Assertions before the error |
+|---|---|
+| `v1_marketplace_profile_media.sql` | 9 (1 also failed) |
+| `v1_tour_foundation.sql` | 13 |
+| `v1_reconciled_privilege_and_notification_boundaries.sql` | 5 |
+| `v1_peek_fulfilment_journey.sql` | 4 |
+| `v1_rls_matrix.sql` | 4 |
+| `v1_verified_business_journey.sql` | 1 |
+
+These are **later** errors, not the original fixture class, so each needs its own diagnosis. Do not assume
+the curated-publisher pattern applies again — that assumption already produced one wrong call this session.
+
 ## Exact next action
 
-1. **F-084** — repair the six suites above with the proven pattern (approved business + matching category
-   approval + JWT claims scoped to the insert, cleared before assertions), then re-run the full matrix and
-   take its next exact failure.
+1. Confirm the F-029 and F-085 pushes turn `verify`, `Repository, build and PWA gates`,
+   `Frontend and source contracts`, `repository-contracts` and `validate` green.
+2. Continue F-084: take each of the six suites above to its exact error and repair only that boundary.
+3. `Repository, build and PWA gates` carries a smaller RC-1 cascade of its own — its contract-gate failure
+   skips `Build production PWA` and `Compose final journey evidence`. Apply WP-01's `if:` idiom there too so
+   those two stop hiding behind an unrelated failure.
+4. Then WP-05/F-033 (EXIF/GPS stripping — do the hosted geotag check first), and the Cloudflare migration
+   proper: `vercel.json`, `docs/deployment/vercel-staging-preview.md` and the Vercel assertions in
+   `scripts/verify-deployment-security.mjs` are the remaining legacy surface.
 2. Diagnose `Repository, build and PWA gates` and `verify`, which have not been looked at yet.
 3. Confirm F-083 turns the Cloudflare gate green, and that its four previously-unreachable validations now
    actually execute rather than merely not-failing.
