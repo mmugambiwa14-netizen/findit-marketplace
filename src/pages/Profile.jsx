@@ -37,7 +37,7 @@ export default function Profile() {
   return (
     <div className="findit-screen">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-4 pt-5">
-        <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Your FindIt</p><h1 className="mt-1 text-2xl font-black tracking-tight">Profile</h1></div>
+        <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Your PeekaListing</p><h1 className="mt-1 text-2xl font-black tracking-tight">Profile</h1></div>
         <Link to="/settings" aria-label="Open settings" className="clay-icon h-11 w-11"><Settings className="h-5 w-5" /></Link>
       </header>
 
