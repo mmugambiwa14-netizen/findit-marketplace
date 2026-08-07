@@ -20,69 +20,111 @@ function parsePrice(value) {
   return Number.isFinite(number) && number >= 0 ? number : null;
 }
 
+function copyFilters(filters) {
+  return {
+    category: filters.category || '',
+    bedrooms: filters.bedrooms || '',
+    make: filters.make || '',
+    condition: filters.condition || '',
+    fuelType: filters.fuelType || '',
+    transmission: filters.transmission || '',
+    currency: filters.currency || '',
+  };
+}
+
+const EMPTY_FILTERS = Object.freeze({
+  category: '',
+  bedrooms: '',
+  make: '',
+  condition: '',
+  fuelType: '',
+  transmission: '',
+  currency: '',
+});
+
 export default function FilterSheet({
   open,
   onOpenChange,
   type,
   filters,
   selectedLocation,
-  onLocationChange,
-  onUpdate,
-  onCurrencyChange,
-  onApplyPrice,
-  onClear,
+  onApply,
 }) {
+  const [draftFilters, setDraftFilters] = useState(() => copyFilters(filters));
+  const [draftLocation, setDraftLocation] = useState(selectedLocation);
   const [draftMinPrice, setDraftMinPrice] = useState(draftValue(filters.minPrice));
   const [draftMaxPrice, setDraftMaxPrice] = useState(draftValue(filters.maxPrice));
   const currencyOptions = useMemo(() => getSupportedListingCurrencies(LAUNCH_COUNTRY_CODE).map((currency) => ({
     value: currency.code,
     label: `${currency.name} (${currency.symbol})`,
   })), []);
-  const currencyConfig = filters.currency ? getCurrencyConfig(filters.currency) : null;
+  const currencyConfig = draftFilters.currency ? getCurrencyConfig(draftFilters.currency) : null;
 
   useEffect(() => {
     if (!open) return;
+    setDraftFilters(copyFilters(filters));
+    setDraftLocation(selectedLocation);
     setDraftMinPrice(draftValue(filters.minPrice));
     setDraftMaxPrice(draftValue(filters.maxPrice));
-  }, [open, filters.minPrice, filters.maxPrice]);
+  }, [open, filters, selectedLocation]);
+
+  const updateDraft = (key, value) => {
+    setDraftFilters((current) => ({ ...current, [key]: value }));
+  };
+
+  const updateCurrency = (value) => {
+    setDraftFilters((current) => ({ ...current, currency: value }));
+    setDraftMinPrice('');
+    setDraftMaxPrice('');
+  };
+
+  const resetDraft = () => {
+    setDraftFilters({ ...EMPTY_FILTERS });
+    setDraftLocation(null);
+    setDraftMinPrice('');
+    setDraftMaxPrice('');
+  };
 
   const applyAndClose = () => {
-    if (!filters.currency) {
-      onApplyPrice(null, null);
-      onOpenChange(false);
-      return;
-    }
-    const minimum = parsePrice(draftMinPrice);
-    let maximum = parsePrice(draftMaxPrice);
+    const minimum = draftFilters.currency ? parsePrice(draftMinPrice) : null;
+    let maximum = draftFilters.currency ? parsePrice(draftMaxPrice) : null;
     if (minimum !== null && maximum !== null && maximum < minimum) maximum = minimum;
-    onApplyPrice(minimum, maximum);
+
+    onApply({
+      filters: {
+        ...draftFilters,
+        minPrice: minimum,
+        maxPrice: maximum,
+      },
+      location: draftLocation,
+    });
     onOpenChange(false);
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="overflow-y-auto">
+      <SheetContent side="bottom" className="max-h-[88dvh] overflow-y-auto">
         <SheetHeader className="pr-10 text-left">
           <SheetTitle>Filters</SheetTitle>
-          <SheetDescription>Use only the filters that matter for this category.</SheetDescription>
+          <SheetDescription>Set the filters you want, then apply them together.</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 py-5">
-          {open && <HierarchicalLocationSelector value={selectedLocation} onSelectLocation={onLocationChange} />}
+          {open && <HierarchicalLocationSelector value={draftLocation} onSelectLocation={setDraftLocation} />}
 
-          {type === 'property' && <PropertyFilters category={filters.category} bedrooms={filters.bedrooms} onUpdate={onUpdate} />}
-          {type === 'car' && <VehicleFilters category={filters.category} make={filters.make} condition={filters.condition} fuelType={filters.fuelType} transmission={filters.transmission} onUpdate={onUpdate} />}
-          {type === 'machinery' && <EquipmentFilters category={filters.category} make={filters.make} condition={filters.condition} onUpdate={onUpdate} />}
+          {type === 'property' && <PropertyFilters category={draftFilters.category} bedrooms={draftFilters.bedrooms} onUpdate={updateDraft} />}
+          {type === 'car' && <VehicleFilters category={draftFilters.category} make={draftFilters.make} condition={draftFilters.condition} fuelType={draftFilters.fuelType} transmission={draftFilters.transmission} onUpdate={updateDraft} />}
+          {type === 'machinery' && <EquipmentFilters category={draftFilters.category} make={draftFilters.make} condition={draftFilters.condition} onUpdate={updateDraft} />}
 
           <div className="rounded-2xl border border-border bg-surface-secondary p-4">
             <SearchFilterSelect
               label="Listing currency"
-              value={filters.currency}
-              onChange={onCurrencyChange}
+              value={draftFilters.currency}
+              onChange={updateCurrency}
               options={currencyOptions}
               placeholder="All currencies"
             />
-            {!filters.currency ? (
+            {!draftFilters.currency ? (
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 Choose a currency before comparing prices. PeekaListing does not automatically convert seller prices.
               </p>
@@ -91,9 +133,9 @@ export default function FilterSheet({
                 <div className="flex items-end justify-between gap-3">
                   <div>
                     <Label className="text-sm font-medium">Price range</Label>
-                    <p className="mt-1 text-xs text-muted-foreground">Enter amounts in {currencyConfig?.name || filters.currency}.</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Enter amounts in {currencyConfig?.name || draftFilters.currency}.</p>
                   </div>
-                  <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground">{currencyConfig?.symbol || filters.currency}</span>
+                  <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground">{currencyConfig?.symbol || draftFilters.currency}</span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div>
@@ -129,8 +171,8 @@ export default function FilterSheet({
             )}
           </div>
 
-          <div className="sticky bottom-0 -mx-5 flex gap-2 border-t border-border bg-card px-5 pb-[max(0px,env(safe-area-inset-bottom))] pt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={onClear}>Clear all</Button>
+          <div className="sticky bottom-0 -mx-5 flex gap-2 border-t border-border bg-card/95 px-5 pb-[max(0px,env(safe-area-inset-bottom))] pt-4 backdrop-blur-xl">
+            <Button type="button" variant="outline" className="flex-1" onClick={resetDraft}>Reset</Button>
             <Button type="button" className="flex-1" onClick={applyAndClose}>Show results</Button>
           </div>
         </div>
