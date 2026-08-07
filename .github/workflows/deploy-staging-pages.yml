@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/listing-intelligence-foundation
+      - claude/peekalisting-audit-ui0z6l
   workflow_dispatch:
 
 permissions:
