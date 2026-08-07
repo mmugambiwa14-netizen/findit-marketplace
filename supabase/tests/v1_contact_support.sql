@@ -8,7 +8,12 @@ values
   ('00000000-0000-4000-8000-000000009001', 'support-admin@example.test', '{"full_name":"Support Admin"}', now(), now()),
   ('00000000-0000-4000-8000-000000009002', 'support-user@example.test', '{"full_name":"Support User"}', now(), now());
 
-update public.users set role = 'admin'
+-- Founder-operated V1 requires both admin role and super_admin. Direct postgres
+-- sessions are the explicit deterministic SQL-test/recovery boundary retained
+-- by migration 0030, so this fixture exercises the real helper without
+-- weakening the founder identity check for browser sessions.
+update public.users
+set role = 'admin', super_admin = true
 where id = '00000000-0000-4000-8000-000000009001';
 
 set local role anon;

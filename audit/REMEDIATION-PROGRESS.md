@@ -19,27 +19,26 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - F-065: behavior proven; 48-policy RLS suite passes.
 - F-066: behavior proven; country-helper suite passes 9/9.
 - F-067: behavior proven; seller-profile suite passes 10/10.
-- F-068: behavior proven; marketplace-view suite passes 21/21 in Migration Gates run 31150080956.
-- F-069: PARTIAL; contact-support certification now targets the live keyset admin RPC while explicitly preserving the retired offset RPC revocation; awaiting rerun.
+- F-068: behavior proven; marketplace-view suite passes 21/21.
+- F-069: PARTIAL; the live support keyset boundary and retired offset denial are proven for ordinary users, while the deterministic SQL admin fixture now matches the founder-only `role=admin + super_admin=true` contract and awaits rerun.
 - F-014, F-049, F-059: DONE.
 
 The full machine-readable register remains `audit/findings-status.csv`; F-065/F-066/F-067/F-068/F-069 will be appended in the final proof-record commit.
 
-## Evidence from Migration Gates run 31150080956
+## Evidence from Migration Gates run 31150559866
 
 - Every migration applied successfully.
 - Corrected 22-RPC, 48-policy RLS, 13-case MFA, country-helper, seller-profile and marketplace-view suites passed.
-- `v1_private_marketplace_view_implementation.sql` passed all 21 assertions while listing and service fixtures crossed the authoritative curated publisher triggers.
-- The runner stopped next at `v1_contact_support.sql`: the retired offset function `admin_support_request_rows(...)` correctly returned database-level `permission denied for function admin_support_request_rows`, while the stale test expected the pre-retirement application error `admin access required`.
-- Migration `20260805033000_disable_legacy_offset_admin_rpcs.sql` deliberately revoked the old offset endpoint from authenticated users; `admin_support_request_rows_page(...)` is the live keyset replacement and retains authenticated EXECUTE with admin authorization inside the function.
+- `v1_contact_support.sql` passed its first seven assertions: guest table isolation, support validation/submission/rate-limit behavior, retired offset RPC denial, and ordinary-user rejection through the live keyset founder-inbox endpoint.
+- The first admin query then raised `admin access required` because the old fixture only set `role='admin'`. Migration 0030 has always required `role='admin'`, `super_admin=true`, active status, and founder identity or the explicit direct-postgres deterministic test/recovery boundary. The current repair makes the SQL fixture match that existing contract; it does not relax founder identity or MFA.
 - Frontend/source verification still has only the seven later-owned F-017/F-029/F-042 failures; immutable workflow pins, dependency normalization, trace storage boundary, lint, typechecks, Edge checks and build remain green.
 
 ## Exact next action
 
-1. Let draft PR #33 rerun Migration gates with F-069.
-2. Confirm `v1_contact_support.sql` proves the retired offset RPC remains unreachable, ordinary users are rejected by the live keyset endpoint, admins can page the inbox, and resolution/audit behavior passes.
+1. Let draft PR #33 rerun Migration gates with the corrected F-069 founder-admin fixture.
+2. Confirm `v1_contact_support.sql` completes all assertions: retired RPC denied, ordinary user rejected, founder-admin keyset paging works, support resolution persists, and sensitive request content remains absent from the audit payload.
 3. Continue the database runner through every remaining suite in order.
-4. Repeat only for exact real failures; never restore a retired RPC, disable an authoritative trigger, or weaken a contract.
+4. Repeat only for exact real failures; never restore a retired RPC, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract.
 5. When all database suites pass, record final CI evidence and close F-027/F-062/F-063/F-064/F-065/F-066/F-067/F-068/F-069 plus reopened F-012/F-058/F-060 as supported.
 6. Proceed to WP-05/F-033 only after WP-04 proof-chain closure.
 
