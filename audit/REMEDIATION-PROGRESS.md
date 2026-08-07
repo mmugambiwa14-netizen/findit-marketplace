@@ -12,32 +12,32 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 ## Status
 
 - WP-01/F-013: DONE.
-- WP-02/F-012/F-058/F-060/F-061: PARTIAL while F-063/F-064 proof-chain reruns.
+- WP-02/F-012/F-058/F-060/F-061: PARTIAL while F-063/F-064 proof-chain closure is recorded.
 - WP-03/F-054: BLOCKED by Vercel build-rate limit.
-- WP-04/F-027: PARTIAL; server aal2 boundary is committed and the clean reset now reaches it.
-- F-062: PARTIAL; historical 23-vs-22 RPC snapshot is corrected and the reset passes it.
-- F-065: PARTIAL; five post-boundary RLS policies are normalized in the current commit.
+- WP-04/F-027: **BEHAVIOR PROVEN, PACKAGE PARTIAL** — clean reset reached the MFA suite and all 13 assertions passed in Migration Gates run 31148806214.
+- F-062: behavior proven; the corrected 22-RPC boundary applied successfully.
+- F-065: behavior proven; the 48-policy RLS initialization suite passed.
+- F-066: PARTIAL; the later country-helper test now follows private caller implementations and awaits rerun.
 - F-014, F-049, F-059: DONE.
 
-The full machine-readable register remains `audit/findings-status.csv`; F-065 must be added when executable proof is recorded.
+The full machine-readable register remains `audit/findings-status.csv`; F-065/F-066 must be appended in the final proof-record commit.
 
-## Evidence from Migration Gates run 31148480088
+## Evidence from Migration Gates run 31148806214
 
-- Every migration, including `20260807040000_admin_mfa_assurance_boundary.sql`, applied successfully.
-- Clean reset then failed the first database suite because exactly five later policies retained per-row `auth.uid()` calls.
-- Critical Infrastructure and Buyer Journey contracts passed on the same head.
-- Workflow pin verification, environment validation, lint, all typechecks, Edge checks and production build passed.
-- Source contracts remained red only for separately assigned product findings plus the database-proof follow-up addressed here.
+- Every migration applied successfully.
+- The corrected 22-RPC snapshot passed.
+- `v1_rls_auth_initialization_plans.sql` passed all four assertions, covering exactly 48 initialized policies and zero raw per-row calls.
+- `v1_admin_mfa_assurance_boundary.sql` passed all 13 assertions.
+- The runner then failed later at country-helper assertion 4 because it inspected public caller bodies after migrations 0097/0101 had moved them to private.
 
 ## Exact next action
 
 1. Let draft PR #33 rerun Migration gates.
-2. Confirm `v1_rls_auth_initialization_plans.sql` reports all 48 initialized policies and zero raw calls.
-3. Confirm the runner continues to `v1_admin_mfa_assurance_boundary.sql` and all 13 assertions pass.
-4. Confirm existing private authorization and curated-business suites remain green.
-5. Inspect the source suite and verify all proof-chain contracts pass; only the seven already assigned F-017/F-029/F-042 failures may remain.
-6. Then mark F-027/F-062/F-063/F-064/F-065 and reopened F-012/F-058/F-060 DONE with exact run/job evidence.
-7. Proceed to WP-05/F-033.
+2. Confirm `v1_private_country_helper_implementations.sql` passes all 9 assertions.
+3. Continue through every remaining database certification suite, including existing authorization and curated-business suites.
+4. Confirm source contracts remain at only the seven later-owned F-017/F-029/F-042 failures.
+5. Record final CI evidence and mark F-027/F-062/F-063/F-064/F-065/F-066 and reopened F-012/F-058/F-060 DONE where supported.
+6. Proceed to WP-05/F-033.
 
 ## External blockers
 
