@@ -332,10 +332,62 @@ every manifest icon be the SVG while `webAppManifest` demanded every icon be PNG
 The brand contract now asserts brand *ownership* (every icon a PeekaListing asset, none a FindIt raster),
 which is strictly harder to pass and would have caught the shortcut above.
 
+## SCOPE CORRECTION — "matrix green" means the recommendation runner, not all databases
+
+Read this before quoting the green result above.
+
+`scripts/run-recommendation-database-certification.sh` runs **15** suites, and those 15 are green
+(run 31164127969, re-confirmed on this branch by the *Reset, lint and recommendation pgTAP* job in run
+31165810890). That is what "recommendation database matrix green" means and all it means.
+
+The Migration Gates job *Clean database migration and pgTAP* runs the **full** set: `Files=54, Tests=657`.
+It is still red. Several of those 54 fail with the same signature already diagnosed four times this
+session — a hard SQL error before `plan()`, `Non-zero exit status: 3`, `Parse errors: No plan found in TAP
+output` — among them `v1_verified_business_journey.sql`. That is the curated-publisher fixture class
+(F-075 / F-077 / F-078 / F-079), still present in suites outside the recommendation runner.
+
+**Do not read the recommendation result as whole-database certification.** It is one runner of three.
+
+## Current PR #33 CI inventory @ `ecaace9`
+
+| Job | Result | Reading |
+|---|---|---|
+| Reset, lint and recommendation pgTAP | **success** | 15-suite recommendation matrix holds on this branch |
+| security-behaviour, media-worker-image, contracts (x4) | **success** | — |
+| Clean database migration and pgTAP | failure | full 54-suite matrix; curated-publisher fixture class (**F-084**) |
+| Database reset, RLS and recommendation certification | failure | broader RLS matrix, same job family |
+| Frontend and source contracts | failure | expected: F-029 test 158 |
+| repository-contracts (listing publication) | failure | expected: F-029 test 158 |
+| Repository, build and PWA gates | failure | not yet diagnosed |
+| verify | failure | not yet diagnosed |
+| validate (Cloudflare) | failure → **fixed by F-083**, awaiting re-run | |
+
+## F-083 — the Cloudflare provisioning gate was dead
+
+`cloudflare-provisioning-gates.yml:39` ran `node --test tests/criticalInfrastructureContracts.test.mjs`.
+No such file exists; the real one is `tests/criticalHighInfrastructureContracts.test.mjs`, which
+`critical-infrastructure-gates.yml` references correctly. CI reported `Could not find …` and exited 1 under
+`bash -e`, which then skipped **every** remaining validation in the job: Edge Function typecheck, Wrangler
+configuration dry-run, media worker image build, and the FFmpeg/non-root runtime checks.
+
+So the entire Cloudflare provisioning validation had never run, behind a single red X that gave no
+indication four further gates were unreached. RC-1 again, now on the authoritative hosting path.
+
+Fixed both the specific defect (correct filename, plus that file added to the workflow's `paths` filter so
+a change to the contract can trigger the gate) and the structural one (`if: ${{ !cancelled() &&
+steps.install.outcome == 'success' }}` on each independent validation, reusing WP-01's idiom; the
+FFmpeg check stays gated on the image build because it genuinely consumes it).
+
 ## Exact next action
 
-1. Push and run the full PR check set. The database matrix is green and the JS/lint/typecheck/build surface
-   is green locally; confirm both in CI together.
+1. **F-084** — take the full 54-suite matrix to its next exact failure and apply the proven
+   curated-publisher fixture pattern (approved business + matching category approval + JWT claims scoped to
+   the insert, cleared before assertions). `v1_verified_business_journey.sql` is a known member.
+2. Diagnose `Repository, build and PWA gates` and `verify`, which have not been looked at yet.
+3. Confirm F-083 turns the Cloudflare gate green, and that its four previously-unreachable validations now
+   actually execute rather than merely not-failing.
+4. Only then consider F-012 supported, and with it F-058/F-060. Its gate must explicitly carve out F-029,
+   which stays red until WP-15 lands.
 2. Only then consider F-012 supported, and with it F-058/F-060. **F-029 will still be red** — that is
    correct and is WP-15's to close, so F-012's gate must account for it explicitly rather than waiting for a
    fully green suite that cannot exist until WP-15 lands.
