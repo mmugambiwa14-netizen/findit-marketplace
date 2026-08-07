@@ -18,13 +18,13 @@ export default function ListingDetailActions({ onBack }) {
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 safe-area-top">
-      <div className="mx-auto flex max-w-4xl items-center px-4 py-3">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 safe-area-top md:hidden">
+      <div className="mx-auto flex max-w-4xl items-center px-3 py-3">
         <button
           type="button"
           aria-label="Go back"
           onClick={onBack}
-          className="clay-icon pointer-events-auto h-11 w-11 border-white/10 bg-card/90 text-foreground backdrop-blur-xl"
+          className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/55 text-white shadow-lg backdrop-blur-xl transition hover:bg-black/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </button>
