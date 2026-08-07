@@ -28,7 +28,7 @@ export default class AppErrorBoundary extends React.Component {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
             <AlertTriangle className="h-7 w-7 text-destructive" aria-hidden="true" />
           </div>
-          <h1 id="app-error-title" className="mt-4 text-2xl font-bold">FindIt could not display this screen</h1>
+          <h1 id="app-error-title" className="mt-4 text-2xl font-bold">PeekaListing could not display this screen</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Your account and marketplace data have not been changed. Reload the page or return to Discover.
           </p>
