@@ -32,7 +32,7 @@ export default function AccountBlocked({ status, reason, banUntil }) {
             {isBanned ? 'Your account has been banned' : 'Your account is suspended'}
           </h1>
           <p className="mb-1 text-sm leading-relaxed text-muted-foreground">
-            {isBanned ? 'You no longer have access to FindIt.' : 'Your access to FindIt is temporarily restricted.'}
+            {isBanned ? 'You no longer have access to PeekaListing.' : 'Your access to PeekaListing is temporarily restricted.'}
           </p>
           {reason && <p className="mt-3 text-sm text-foreground"><span className="font-semibold">Reason:</span> {reason}</p>}
           {banUntil && (
