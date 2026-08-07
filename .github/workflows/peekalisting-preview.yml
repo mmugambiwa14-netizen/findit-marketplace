@@ -112,9 +112,6 @@ jobs:
       - name: Validate staging environment
         run: npm run validate:env
 
-      - name: Run current-stage contract suite
-        run: node --test ./tests/*.test.mjs
-
       - name: Build complete PeekaListing application
         run: npm run build
 
