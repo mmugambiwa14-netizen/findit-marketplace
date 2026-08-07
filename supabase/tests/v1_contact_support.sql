@@ -52,29 +52,34 @@ select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009002
 set local role authenticated;
 select extensions.throws_ok(
   $$select * from public.admin_support_request_rows('', 'all', 'all', 25, 0)$$,
+  '42501', 'permission denied for function admin_support_request_rows',
+  'the retired offset founder-inbox RPC is unreachable to authenticated clients'
+);
+select extensions.throws_ok(
+  $$select * from public.admin_support_request_rows_page('', 'all', 'all', 25, null, null)$$,
   '42501', 'admin access required',
-  'ordinary users cannot read the founder inbox projection'
+  'ordinary users cannot read the live founder inbox projection'
 );
 
 reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
 set local role authenticated;
 select extensions.is(
-  (select count(*)::bigint from public.admin_support_request_rows('guest@example.test', 'open', 'safety', 25, 0)),
+  (select count(*)::bigint from public.admin_support_request_rows_page('guest@example.test', 'open', 'safety', 25, null, null)),
   1::bigint,
-  'admin support search returns the matching open request'
+  'admin support search returns the matching open request through the keyset endpoint'
 );
 select extensions.is(
-  (select total_count from public.admin_support_request_rows('', 'open', 'all', 1, 0)),
-  4::bigint,
-  'the founder inbox returns a server-side total count'
+  (select count(*)::bigint from public.admin_support_request_rows_page('', 'open', 'all', 1, null, null)),
+  2::bigint,
+  'the founder inbox keyset endpoint returns the requested row plus one pagination sentinel'
 );
 select extensions.lives_ok(
   $$select public.admin_resolve_support_request(
-      (select request_id from public.admin_support_request_rows('guest@example.test', 'open', 'safety', 1, 0)),
+      (select request_id from public.admin_support_request_rows_page('guest@example.test', 'open', 'safety', 1, null, null) limit 1),
       'Reviewed the safety concern and recorded the outcome'
     )$$,
-  'an admin can resolve a request with an auditable note'
+  'an admin can resolve a request selected through the live keyset endpoint with an auditable note'
 );
 
 reset role;
