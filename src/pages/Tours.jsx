@@ -242,7 +242,7 @@ export default function Tours() {
               <Switch checked={muteByDefault} onCheckedChange={updateMuteDefault} />
             </label>
             <div className="rounded-[var(--findit-panel-radius)] border border-white/10 bg-white/5 p-4 text-xs leading-5 text-white/60">
-              FindIt keeps only the current, previous, and next Peek ready. Other videos are released from memory, and playback pauses whenever the app goes into the background.
+              PeekaListing keeps only the current, previous, and next Peek ready. Other videos are released from memory, and playback pauses whenever the app goes into the background.
             </div>
           </div>
         </SheetContent>
