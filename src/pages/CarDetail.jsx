@@ -72,6 +72,7 @@ export default function CarDetail() {
           badges={(
             <>
               {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
+              {car.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
               {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
               {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
             </>
