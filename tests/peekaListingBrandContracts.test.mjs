@@ -57,6 +57,7 @@ test('live buyer-facing listing and seller surfaces never expose the former prod
     'src/pages/Profile.jsx',
     'src/pages/Tours.jsx',
     'src/components/AuthLayout.jsx',
+    'src/components/listings/ContactButtons.jsx',
     'src/components/listings/ListingDetailLayout.jsx',
     'src/components/listings/ListingDetailTabs.jsx',
     'src/components/tours/TourUploader.jsx',
