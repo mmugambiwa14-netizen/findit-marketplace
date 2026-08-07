@@ -11,6 +11,11 @@ const [
   detailLayout,
   featureItem,
   contactButtons,
+  listingSummary,
+  propertyDetail,
+  carDetail,
+  machineryDetail,
+  serviceDetail,
 ] = await Promise.all([
   read('src/components/layout/AppLayout.jsx'),
   read('src/components/listings/ListingDetailActions.jsx'),
@@ -18,6 +23,11 @@ const [
   read('src/components/listings/ListingDetailLayout.jsx'),
   read('src/components/listings/ListingFeatureItem.jsx'),
   read('src/components/listings/ContactButtons.jsx'),
+  read('src/components/listings/ListingSummary.jsx'),
+  read('src/pages/PropertyDetail.jsx'),
+  read('src/pages/CarDetail.jsx'),
+  read('src/pages/MachineryDetail.jsx'),
+  read('src/pages/ServiceDetail.jsx'),
 ]);
 
 test('listing detail routes use a self-contained mobile shell', () => {
@@ -26,6 +36,20 @@ test('listing detail routes use a self-contained mobile shell', () => {
   assert.match(appLayout, /showSharedMobileTopBar = !immersiveConversation && !immersivePeek && !listingDetail/);
   assert.match(detailActions, /md:hidden/);
   assert.match(detailActions, /bg-black\/55/);
+});
+
+test('listing summaries share one elevated hierarchy across every public detail type', () => {
+  assert.match(listingSummary, /aria-label="Listing summary"/);
+  assert.match(listingSummary, /-mt-3 rounded-\[1\.75rem\]/);
+  assert.match(listingSummary, /shadow-floating backdrop-blur-xl/);
+  assert.match(listingSummary, /text-\[2rem\] font-black/);
+  assert.match(listingSummary, /rounded-full border border-border\/70 bg-muted\/35/);
+
+  for (const source of [propertyDetail, carDetail, machineryDetail, serviceDetail]) {
+    assert.match(source, /import ListingSummary from "@\/components\/listings\/ListingSummary"/);
+    assert.match(source, /<ListingSummary/);
+    assert.match(source, /grid grid-cols-1 gap-3 min-\[430px\]:grid-cols-2/);
+  }
 });
 
 test('listing section navigation is a sticky elevated segmented surface', () => {
