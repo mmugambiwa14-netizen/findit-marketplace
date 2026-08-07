@@ -119,13 +119,29 @@ jobs:
       - name: Add SPA fallback
         run: node ./scripts/create-pages-spa-fallback.mjs dist "$VITE_BASE_PATH"
 
-      - name: Stamp build identity and reset legacy preview caches
+      - name: Stamp and verify build identity
         shell: bash
         run: |
           set -euo pipefail
           cat > dist/preview-build.json <<EOF
           {"product":"PeekaListing","branch":"$GITHUB_REF_NAME","sha":"$GITHUB_SHA","run_id":"$GITHUB_RUN_ID","staging_project":"bwgklpxoetrrkutottdb","scope":"complete-current-stage"}
           EOF
+
+          cat > dist/current-build.txt <<EOF
+          product=PeekaListing
+          branch=$GITHUB_REF_NAME
+          sha=$GITHUB_SHA
+          run_id=$GITHUB_RUN_ID
+          staging_project=bwgklpxoetrrkutottdb
+          scope=complete-current-stage
+          EOF
+
+          grep -Fq '"product":"PeekaListing"' dist/preview-build.json
+          grep -Fq '"branch":"main"' dist/preview-build.json
+          grep -Fq "\"sha\":\"$GITHUB_SHA\"" dist/preview-build.json
+          grep -Fxq 'product=PeekaListing' dist/current-build.txt
+          grep -Fxq 'branch=main' dist/current-build.txt
+          grep -Fxq "sha=$GITHUB_SHA" dist/current-build.txt
 
           printf '\n<!-- product:PeekaListing branch:%s sha:%s scope:complete-current-stage -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/index.html
           if [ -f dist/404.html ]; then
