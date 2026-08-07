@@ -22,6 +22,54 @@ values (
   true
 );
 
+-- This controlled public listing is fixture setup, but it must still cross the
+-- authoritative curated publisher boundary exactly as runtime does. Fixture auth
+-- is opened only for the insert and cleared before any assertion runs.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
+values (
+  '72000000-0000-4000-8000-000000000401',
+  '72000000-0000-4000-8000-000000000003',
+  'Analytics Test Motors',
+  'Analytics Seller',
+  'analytics-seller@example.test',
+  '+263700000401',
+  'ZW',
+  'Analytics Test City',
+  'Approved fixture business used only to certify recommendation analytics boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+)
+values (
+  '72000000-0000-4000-8000-000000000402',
+  '72000000-0000-4000-8000-000000000401',
+  '72000000-0000-4000-8000-000000000003',
+  'car',
+  'approved'
+);
+
+select set_config('request.jwt.claim.sub', '72000000-0000-4000-8000-000000000003', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"72000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   native_price, native_currency, photos, location_id, country_code, category,
@@ -46,6 +94,9 @@ values (
   'available',
   true
 );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 select extensions.has_table(
   'public',
