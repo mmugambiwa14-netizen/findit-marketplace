@@ -478,6 +478,35 @@ fix over a working control, which §4 rule 1 exists to prevent. The Appendix C g
 and *"Exact property location safe"* can be satisfied from this evidence; a hosted spot-check of one served
 object is still worth doing as Track B confirmation, but no in-repo work remains.
 
+## Cloudflare migration — F-087 landed, removal step scoped
+
+`vercel.json` held the **entire production edge configuration**: CSP, HSTS, Referrer-Policy,
+Permissions-Policy, X-Content-Type-Options, X-Frame-Options, COOP, CORP, cache policy and the SPA rewrite.
+Nothing in the repository reproduced any of it, so completing the migration without replacing it would have
+shipped the product with **no security headers at all** and nothing would have failed.
+
+`public/_headers` and `public/_redirects` now carry it, generated from `vercel.json` programmatically rather
+than transcribed (CSP verified byte-identical), with `tests/cloudflareHeadersContracts.test.mjs` pinning the
+security headers **by value** so they cannot drift or become decorative scaffolding. Confirmed reaching
+`dist/` in a real build.
+
+### The removal step, scoped
+
+`vercel.json` is deliberately still present. Removing it requires, in this order:
+
+1. Retarget `scripts/verify-deployment-security.mjs` (152 lines) from parsing `vercel.json`'s
+   `rewrites`/`headers` arrays to parsing the `_headers` / `_redirects` text format. **Every security
+   assertion it makes must survive the retarget** — it is the control that guards the posture above.
+2. Update the five contract files that reference Vercel: `deploymentSecurityContracts`,
+   `stagingCorsContracts`, `mapRuntimeCertificationContracts`, `stagingCapabilityPolicy`,
+   `tourMilestone7ReleaseWorkflows`.
+3. Only then delete `vercel.json` and `docs/deployment/vercel-staging-preview.md`.
+
+Doing 3 before 1 and 2 would break the verifier that guards the headers, which is why it was not done here.
+
+Leave alone regardless: `--findit-*` CSS variables, `__findit_*` storage keys, `deleteFindItCaches()`, and
+the `findit-marketplace` repository name (§3.3 / §2.1).
+
 ## Exact next action
 
 1. Confirm the F-029 and F-085 pushes turn `verify`, `Repository, build and PWA gates`,
