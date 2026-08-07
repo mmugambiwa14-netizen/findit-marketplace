@@ -350,6 +350,7 @@ export default function Search() {
             onOpenFilters={() => setFiltersOpen(true)}
             onOpenSort={() => setSortOpen(true)}
             hasFilters={hasFilters}
+            filterCount={activeFilters.length}
             sortLabel={getSortLabel(sort, currency)}
           />
           <div className="mt-3">
