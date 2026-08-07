@@ -60,7 +60,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
   // Owners may receive raw values in their own management projection. Public
   // listing rows expose only has_contact_* flags. Buyers receive the selected
   // value from the authenticated, rate-limited reveal RPC only after confirming
-  // an external contact action; it is never rendered in FindIt.
+  // an external contact action; it is never rendered in PeekaListing.
   const rawWhatsapp = listing.contact_whatsapp || '';
   const rawPhone = listing.contact_phone || '';
   const rawEmail = listing.contact_email || listing.seller_email || listing.provider_email || '';
@@ -154,8 +154,8 @@ export default function ContactButtons({ listing, type = 'property', placement =
   const actions = [
     showMessage && {
       key: 'message',
-      label: 'Chat in FindIt',
-      description: 'Keep your contact details private in FindIt.',
+      label: 'Chat in PeekaListing',
+      description: 'Keep your contact details private in PeekaListing.',
       icon: MessageSquareText,
       onClick: openChat,
     },
@@ -195,18 +195,18 @@ export default function ContactButtons({ listing, type = 'property', placement =
   const actionCopy = externalAction === 'call'
     ? {
         title: `Call this ${recipientLabel}?`,
-        description: `FindIt will open your phone app. The ${recipientLabel}'s phone number will be visible there, but it will not be displayed inside FindIt.`,
+        description: `PeekaListing will open your phone app. The ${recipientLabel}'s phone number will be visible there, but it will not be displayed inside PeekaListing.`,
         confirm: 'Open phone app',
       }
     : externalAction === 'email'
       ? {
           title: `Email this ${recipientLabel}?`,
-          description: `FindIt will open your email app. The ${recipientLabel}'s email address will be visible there, but it will not be displayed inside FindIt.`,
+          description: `PeekaListing will open your email app. The ${recipientLabel}'s email address will be visible there, but it will not be displayed inside PeekaListing.`,
           confirm: 'Open email app',
         }
       : {
           title: `Open WhatsApp?`,
-          description: `FindIt will open WhatsApp. The ${recipientLabel}'s number may be visible there, but it will not be displayed inside FindIt.`,
+          description: `PeekaListing will open WhatsApp. The ${recipientLabel}'s number may be visible there, but it will not be displayed inside PeekaListing.`,
           confirm: 'Open WhatsApp',
         };
 
@@ -247,7 +247,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
 
           <div className="mt-4 flex items-start gap-2 rounded-xl bg-primary/8 p-3 text-xs leading-5 text-muted-foreground">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p>Phone numbers and email addresses stay hidden in FindIt. They become visible only in the external app you choose to open.</p>
+            <p>Phone numbers and email addresses stay hidden in PeekaListing. They become visible only in the external app you choose to open.</p>
           </div>
         </SheetContent>
       </Sheet>
