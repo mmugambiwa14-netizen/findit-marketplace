@@ -1,16 +1,26 @@
 # PeekaListing Current Stage Reconciliation
 
-Status: active integration and certification source
+Status: promoted and canonical
 
-Branch: `integration/complete-current-stage`
+Canonical branch: `main`
 
-Certification PR: `#34`
+Promotion PR: `#34`
 
-Purpose: maintain one branch containing the latest accepted current-stage frontend, backend, database, security, infrastructure, release, and preview work. Completeness is established by current file content and certification gates, not by branch names or raw commit-count comparisons.
+Promotion merge: `c7ea23d1465aa37e9e0481a9874fffb21e86ffdd`
+
+Purpose: keep one canonical source containing the latest accepted current-stage frontend, backend, database, security, infrastructure, release, and preview work. Completeness is established by current file content and certification gates, not by branch names or raw commit-count comparisons.
+
+## Promotion result
+
+`integration/complete-current-stage` was fully certified and merged into `main` with a normal merge commit so the prior `main` preview-history commits and the complete integration lineage were both preserved.
+
+After merge, the integration branch was fast-forwarded to the merge commit and verified identical to `main` at that point. It is retained only as a historical alias until branch deletion is available; new product work must use `main`.
+
+The promotion head `304cd007a0a4e19b7bcaaca0ee3f3cf334489c0d` passed the complete GitHub certification matrix before merge. The final merge preserves that exact source as an ancestor of canonical `main`.
 
 ## Included current-stage capability
 
-The branch contains the accepted work from the listing-intelligence, curated-marketplace, security-hardening, verified-business, Peek, release-certification, and post-audit remediation lines, including:
+Canonical `main` contains the accepted work from the listing-intelligence, curated-marketplace, security-hardening, verified-business, Peek, release-certification, and post-audit remediation lines, including:
 
 - listing intelligence and category-aware listing foundation
 - Sub-Saharan location registry and privacy-safe location handling
@@ -41,27 +51,25 @@ The branch contains the accepted work from the listing-intelligence, curated-mar
 
 ## Reconciliation decisions
 
-Historical branch ancestry is not merged merely to make every old commit an ancestor. A branch can report unique commits while its relevant files are already byte-identical or superseded on this branch.
+Historical branch ancestry was not imported merely to make every old commit an ancestor. A branch can report unique commits while its relevant files are already byte-identical or superseded by the canonical implementation.
 
-- `feature/listing-intelligence-foundation`: contained by the current lineage; no current-stage commits ahead.
-- `feature/curated-business-marketplace`: contained by the current lineage; no current-stage commits ahead.
-- `claude/findit-hardening-listing-012cf0`: contained by the current lineage; no current-stage commits ahead.
-- `claude/peekalisting-handoff-vklm8s`: contained by the current lineage; no current-stage commits ahead.
-- `integration/final-release-certification`: contained by the current lineage; no current-stage commits ahead.
-- `integration/verified-business-journey-certification`: contained by the current lineage and independently re-certified by the current verified-business journey gate.
-- `integration/listing-publication-journey-certification`: contained by the current lineage and independently re-certified by the current listing-publication gate.
-- `integration/peek-fulfilment-journey-certification`: historical commit ancestry differs, but the current branch contains the fulfilment migrations and contracts; representative migration content is byte-identical and the current Peek fulfilment journey gate re-certifies the capability.
-- `continuation/contract-gate-repair`: historical commits are not required as ancestors; the relevant hygiene and Peek Request migration files on the current branch are byte-identical to the repaired branch content.
-- `feature/contextual-permissions`: the old dialog component is not merged wholesale because the current branch contains the newer contextual-permission implementation used by `TourUploader`, including first-use camera education, remembered explanation state, blocked-state handling, and upload fallback. The shared permission library also covers location and notifications.
+- `feature/listing-intelligence-foundation`: contained by the canonical lineage; no current-stage commits ahead.
+- `feature/curated-business-marketplace`: contained by the canonical lineage; no current-stage commits ahead.
+- `claude/findit-hardening-listing-012cf0`: contained by the canonical lineage; no current-stage commits ahead.
+- `claude/peekalisting-handoff-vklm8s`: contained by the canonical lineage; no current-stage commits ahead.
+- `integration/final-release-certification`: contained by the canonical lineage; no current-stage commits ahead.
+- `integration/verified-business-journey-certification`: contained and independently re-certified by the verified-business journey gate.
+- `integration/listing-publication-journey-certification`: contained and independently re-certified by the listing-publication gate.
+- `integration/peek-fulfilment-journey-certification`: historical commit ancestry differs, but canonical `main` contains the fulfilment migrations and contracts; representative migration content was byte-identical and the current Peek fulfilment journey gate re-certified the capability.
+- `continuation/contract-gate-repair`: historical commits are not required as ancestors; the relevant hygiene and Peek Request migration files were byte-identical to the repaired branch content.
+- `feature/contextual-permissions`: the old dialog component was not merged wholesale because canonical `main` contains the newer contextual-permission implementation used by `TourUploader`, including first-use camera education, remembered explanation state, blocked-state handling, and upload fallback. The shared permission library also covers location and notifications.
 - `feature/peek-threads-phase-3`: not merged wholesale. Its older Supabase Realtime conversation path conflicts with the current bounded polling/refetch messaging architecture and was explicitly superseded.
 - `develop`: not merged wholesale. Reviewed safe database/auth/security packages were ported through the controlled integration sequence; the branch also contains stale Peek deletions and superseded deployment/recommendation assumptions.
-- historical brand, preview, review, and production-readiness branches are retained as history where their accepted runtime changes are already present or superseded.
+- historical brand, preview, review, and production-readiness branches remain provenance where their accepted runtime changes are already present or superseded.
 
-## Certification boundary
+## Certification evidence
 
-Draft PR `#34` is the certification harness for this branch and must remain unmerged until the exact current head passes the required gates.
-
-Required repository evidence includes:
+The promotion head passed:
 
 - release environment validation
 - source graph verification
@@ -84,13 +92,18 @@ Required repository evidence includes:
 - security-behaviour gates
 - critical-infrastructure gates
 - Cloudflare provisioning gates
+- final release certification
 
 Hosted staging/browser evidence remains a separate environment-level gate and must not be implied by repository-only success.
 
 ## Preview authority
 
-GitHub Pages preview must deploy only from `integration/complete-current-stage` while this branch is the active certification source.
+GitHub Pages preview must deploy only from canonical `main`.
 
-The workflow must check out the exact triggering SHA, bind only to the PeekaListing staging Supabase project, verify the current business/Peek source boundaries, build the application, clear legacy preview caches, and expose `preview-build.json` containing the exact branch and commit SHA.
+`.github/workflows/peekalisting-preview.yml` is the single Pages deployment workflow. It checks out the exact triggering SHA, requires the `main` ref, binds only to the PeekaListing staging Supabase project, verifies the current business and Peek source boundaries, builds the application with the Pages base path, clears legacy preview caches, and exposes `preview-build.json` containing the exact deployed branch and commit SHA.
 
 Preview fixtures are enabled only on the disposable staging preview so current marketplace surfaces can be demonstrated without weakening production media or authorization rules.
+
+## Working rule
+
+All new PeekaListing work starts from `main`. Do not use historical feature, release, preview, or integration branches as a new source of truth without first proving that a specific change is absent from `main` and is still compatible with the current architecture.
