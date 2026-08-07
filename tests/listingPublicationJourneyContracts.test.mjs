@@ -78,7 +78,16 @@ test('owner journey supports edit pause resume relist unavailable and permanent 
   assert.match(page, /action: "submit"/);
   assert.match(page, /action: 'unavailable'/);
   assert.match(page, /deleteOwnerListing/);
-  assert.match(creation, /owner_transition_listing/);
+  // The RPC call lives in the repository layer, not the service, which is this
+  // codebase's architecture: repositories own the supabase calls and services
+  // orchestrate them. Asserting the raw RPC name in the service was testing the
+  // wrong layer and broke when the call was correctly moved. Assert the real
+  // wiring across both layers instead, which is strictly stronger than the
+  // single string it replaces: the service must route through the wrapper, and
+  // the wrapper must reach the guarded owner_transition_listing RPC.
+  const repository = await read('src/repositories/listingCreationRepository.js');
+  assert.match(creation, /transitionOwnerListing/);
+  assert.match(repository, /supabase\.rpc\('owner_transition_listing'/);
   assert.match(owner, /deleteOwnerListingRow/);
   assert.match(migration, /p_action not in \('submit', 'pause', 'resume', 'unavailable'\)/);
   assert.match(migration, /p_action = 'submit'/);
