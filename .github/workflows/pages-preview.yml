@@ -54,26 +54,22 @@ jobs:
       VITE_FEATURE_MARKETING_EMAILS: "false"
       VITE_FEATURE_LISTING_EXPIRY: "false"
       VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
-      # The staging catalogue includes repository-backed demo records with no
-      # storage rows. Keep their media fallbacks enabled in the public preview.
       VITE_FEATURE_PREVIEW_FIXTURES: "true"
       VITE_PREVIEW_AUTH_BYPASS: "false"
-      # Peeks are implemented and migrated in FindIt Staging. Do not make the
-      # canonical preview depend on optional repository variables.
       VITE_FEATURE_TOURS: "true"
       VITE_FEATURE_TOURS_PREVIEW: "true"
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
+      - name: Normalize lockfile
+        run: node ./scripts/normalize-package-lock.mjs --write
+
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24
           cache: npm
-
-      - name: Normalize lockfile
-        run: node ./scripts/normalize-package-lock.mjs --write
 
       - name: Install
         run: npm ci --include=dev --ignore-scripts
@@ -88,10 +84,10 @@ jobs:
         run: node ./scripts/create-pages-spa-fallback.mjs dist "$VITE_BASE_PATH"
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: dist
 
@@ -104,4 +100,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128

@@ -16,7 +16,7 @@ let referenceCount = 0;
 
 for (const fileName of (await readdir(workflowsDirectory)).filter((name) => /\.ya?ml$/i.test(name)).sort()) {
   const source = await readFile(resolve(workflowsDirectory, fileName), 'utf8');
-  for (const match of source.matchAll(/^\s*uses:\s*([^\s#]+)\s*$/gm)) {
+  for (const match of source.matchAll(/^\s*-?\s*uses:\s*([^\s#]+)\s*$/gm)) {
     referenceCount += 1;
     const reference = match[1];
     if (reference.startsWith('./')) continue;

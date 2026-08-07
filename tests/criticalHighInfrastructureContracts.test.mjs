@@ -45,12 +45,14 @@ test('Turnstile is fail-closed for origin, hostname, action and missing configur
   assert.doesNotMatch(turnstile, /access-control-allow-origin['"]:\s*['"]\*['"]/);
 });
 
-test('trace helper creates request and session correlation headers', async () => {
+test('trace helper creates request and guarded session correlation headers', async () => {
   const trace = await source('src/lib/traceContext.js');
   assert.match(trace, /x-request-id/);
   assert.match(trace, /x-trace-session/);
   assert.match(trace, /randomUUID/);
-  assert.match(trace, /sessionStorage/);
+  assert.match(trace, /readStoredString\('session'/);
+  assert.match(trace, /writeStoredString\('session'/);
+  assert.doesNotMatch(trace, /\bsessionStorage\b/);
 });
 
 test('rollout contract preserves staged activation and rollback', async () => {
