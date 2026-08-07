@@ -45,9 +45,11 @@ export default function ServiceDetail() {
 
   const category = getServiceCategory(service.category);
   const subcategories = service.subcategories?.length ? service.subcategories : (service.subcategory ? [service.subcategory] : []);
-  const priceDisplay = service.pricing_type === "quote" || service.price == null
+  const quoteOnly = service.pricing_type === "quote" || service.price == null;
+  const priceDisplay = quoteOnly
     ? "Contact for quote"
-    : `${service.pricing_type === "starting_from" ? "From " : ""}${format(service.price)}${service.pricing_type === "hourly" ? "/hr" : ""}`;
+    : `${format(service.price)}${service.pricing_type === "hourly" ? "/hr" : ""}`;
+  const pricePrefix = !quoteOnly && service.pricing_type === "starting_from" ? "From" : null;
 
   const shareService = async () => {
     const url = window.location.href;
@@ -76,6 +78,7 @@ export default function ServiceDetail() {
             </>
           )}
           price={priceDisplay}
+          pricePrefix={pricePrefix}
           title={service.title}
           location={service.location_name}
           metadata={[
