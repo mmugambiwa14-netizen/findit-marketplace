@@ -79,6 +79,7 @@ export default function PropertyDetail() {
           badges={(
             <>
               <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getCategoryLabel(property.category)}</Badge>
+              {property.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
               {property.status !== "available" && <Badge variant="destructive">{statusLabel(property.status)}</Badge>}
               {property.negotiable && <Badge variant="outline">Negotiable</Badge>}
             </>
