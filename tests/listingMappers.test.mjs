@@ -76,9 +76,11 @@ test('rejects unknown listing kinds instead of returning a partial contract', ()
   assert.throws(() => mapPublicListing({ ...sharedRow, kind: 'service' }), TypeError);
 });
 
-test('normalizes and bounds the public search contract', () => {
+test('normalizes and bounds a currency-scoped public search contract', () => {
   const request = normalizePublicSearchRequest({
     kind: 'machinery',
+    countryCode: 'zw',
+    currency: 'usd',
     query: `  ${'x'.repeat(120)}  `,
     minPrice: '2500',
     maxPrice: '1000',
@@ -88,6 +90,8 @@ test('normalizes and bounds the public search contract', () => {
   });
 
   assert.equal(request.kind, 'machinery');
+  assert.equal(request.countryCode, 'ZW');
+  assert.equal(request.currency, 'USD');
   assert.equal(request.query.length, 100);
   assert.equal(request.minPrice, 2500);
   assert.equal(request.maxPrice, 2500);
@@ -97,16 +101,35 @@ test('normalizes and bounds the public search contract', () => {
   assert.equal(request.minBedrooms, 3);
 });
 
-test('falls back to the approved property search defaults', () => {
+test('all-currency browsing has no implicit price bounds', () => {
   const request = normalizePublicSearchRequest({ kind: 'dealer' });
   const explicitNull = normalizePublicSearchRequest({ kind: 'car', maxPrice: null });
 
   assert.equal(request.kind, 'property');
-  assert.equal(request.maxPrice, 500000);
+  assert.equal(request.countryCode, 'ZW');
+  assert.equal(request.currency, '');
+  assert.equal(request.minPrice, null);
+  assert.equal(request.maxPrice, null);
   assert.equal(request.cursor, null);
-  assert.equal(explicitNull.maxPrice, 500000);
+  assert.equal(explicitNull.maxPrice, null);
 });
 
+test('price sorting is rejected until one supported listing currency is selected', () => {
+  const allCurrencies = normalizePublicSearchPageRequest({ kind: 'car', sort: 'price_asc', minPrice: 1000, maxPrice: 20000 });
+  const zar = normalizePublicSearchPageRequest({ kind: 'car', currency: 'zar', sort: 'price_desc', minPrice: 1000, maxPrice: 20000 });
+  const unsupported = normalizePublicSearchPageRequest({ kind: 'car', currency: 'EUR', sort: 'price_desc', minPrice: 1000 });
+
+  assert.equal(allCurrencies.sort, 'newest');
+  assert.equal(allCurrencies.minPrice, null);
+  assert.equal(allCurrencies.maxPrice, null);
+  assert.equal(zar.currency, 'ZAR');
+  assert.equal(zar.sort, 'price_desc');
+  assert.equal(zar.minPrice, 1000);
+  assert.equal(zar.maxPrice, 20000);
+  assert.equal(unsupported.currency, '');
+  assert.equal(unsupported.sort, 'newest');
+  assert.equal(unsupported.minPrice, null);
+});
 
 test('normalizes paired keyset cursors for each supported sort', () => {
   const id = '11111111-1111-4111-8111-111111111111';
