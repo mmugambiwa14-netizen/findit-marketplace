@@ -47,6 +47,8 @@ const MOBILE_NAV_ROUTES = new Set([
   '/my-services',
 ]);
 
+const LISTING_DETAIL_PREFIXES = ['/property/', '/car/', '/machinery/', '/service/'];
+
 function matchesRoute(pathname, route) {
   return route.endsWith('/')
     ? pathname.startsWith(route)
@@ -61,6 +63,10 @@ function isImmersivePeekRoute(pathname) {
   return pathname === '/peek' || pathname.startsWith('/peek/');
 }
 
+function isListingDetailRoute(pathname) {
+  return LISTING_DETAIL_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
@@ -69,8 +75,9 @@ export default function AppLayout() {
   const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
   const immersiveConversation = isImmersiveDesktopRoute(location.pathname);
   const immersivePeek = isImmersivePeekRoute(location.pathname);
+  const listingDetail = isListingDetailRoute(location.pathname);
   const showDesktopNav = !immersiveConversation && !immersivePeek;
-  const showSharedMobileTopBar = !immersiveConversation && !immersivePeek;
+  const showSharedMobileTopBar = !immersiveConversation && !immersivePeek && !listingDetail;
 
   return (
     <div className="findit-screen min-h-[100dvh]">
