@@ -54,13 +54,13 @@ export function SellerPanel({ name, sellerId }) {
 
 export function SafetyPanel({ children }) {
   return (
-    <section className="clay-soft rounded-2xl border-warning/25 bg-warning/10 p-4">
+    <section className="rounded-3xl border border-warning/25 bg-warning/8 p-4 sm:p-5">
       <div className="flex items-start gap-3">
-        <span className="clay-icon h-10 w-10 shrink-0 border-warning/20 bg-warning/10 text-warning">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-warning/20 bg-warning/12 text-warning shadow-sm">
           <Shield className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="font-semibold">Safety tip</h2>
+          <h2 className="font-bold">Buy and arrange safely</h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{children}</p>
         </div>
       </div>
@@ -71,8 +71,10 @@ export function SafetyPanel({ children }) {
 export function ContactBar({ children }) {
   if (!children) return null;
   return (
-    <div className="pointer-events-none fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 z-40 md:bottom-5 md:right-5">
-      <div className="pointer-events-auto">{children}</div>
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:inset-x-auto md:bottom-5 md:right-5 md:px-0 md:pb-0">
+      <div className="pointer-events-auto mx-auto max-w-4xl rounded-2xl border border-border/80 bg-card/94 p-2 shadow-floating backdrop-blur-2xl md:max-w-none md:rounded-full md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none">
+        {children}
+      </div>
     </div>
   );
 }
