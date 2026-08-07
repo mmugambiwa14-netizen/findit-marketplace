@@ -2,22 +2,27 @@
  * Service worker registration and update lifecycle (PWA §2, §12, §17).
  *
  * Production deliberately keeps updates waiting until the user accepts them,
- * protecting long listing drafts from an application swap mid-edit. Vercel
- * preview deployments are different: their branch aliases are reused for many
- * builds, so a waiting worker can make a fresh preview appear to run an older
- * shell. Preview origins therefore never retain FindIt service-worker state.
+ * protecting long listing drafts from an application swap mid-edit. Preview
+ * deployments are different: their URLs are reused for many builds, so a
+ * waiting worker can make a fresh preview appear to run an older shell.
+ * Preview origins therefore never retain PeekaListing service-worker state.
  */
 
 const SERVICE_WORKER_URL = '/sw.js';
-const FINDIT_CACHE_PREFIX = 'findit-';
+const OWNED_CACHE_PREFIXES = ['findit-', 'peekalisting-'];
 
 let registration = null;
 let refreshing = false;
 
 const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
 
+function explicitSharedOriginPreview() {
+  return String(viteEnv.VITE_PREVIEW_DEPLOYMENT || '').trim().toLowerCase() === 'true';
+}
+
 export function previewDeployment() {
-  return String(viteEnv.VITE_VERCEL_ENV || '').trim() === 'preview'
+  return explicitSharedOriginPreview()
+    || String(viteEnv.VITE_VERCEL_ENV || '').trim() === 'preview'
     || String(viteEnv.VITE_VERCEL_TARGET_ENV || '').trim() === 'preview';
 }
 
@@ -32,25 +37,41 @@ export function serviceWorkerSupported() {
 async function deleteFindItCaches() {
   if (typeof caches === 'undefined') return false;
   const names = await caches.keys();
-  const owned = names.filter((name) => name.startsWith(FINDIT_CACHE_PREFIX));
+  const owned = names.filter((name) => (
+    OWNED_CACHE_PREFIXES.some((prefix) => name.startsWith(prefix))
+  ));
   const results = await Promise.all(owned.map((name) => caches.delete(name)));
   return results.some(Boolean);
+}
+
+function registrationBelongsToCurrentPreview(entry) {
+  if (!explicitSharedOriginPreview() || typeof window === 'undefined') return true;
+
+  // GitHub Pages project sites share an origin. Never unregister a worker that
+  // belongs to a different project on the same github.io host.
+  const appBase = new URL(String(viteEnv.BASE_URL || '/'), window.location.origin).href;
+  return String(entry.scope || '').startsWith(appBase);
 }
 
 /**
  * Removes stale preview-only delivery state without touching unrelated caches.
  *
- * @returns {Promise<boolean>} whether a controller, registration, or FindIt
+ * @returns {Promise<boolean>} whether a controller, registration, or PeekaListing
  * cache existed and a one-time reload is therefore useful.
  */
 export async function resetPreviewServiceWorkerState() {
   if (!previewDeployment() || !serviceWorkerSupported()) return false;
 
   try {
-    const hadController = Boolean(navigator.serviceWorker.controller);
     const registrations = await navigator.serviceWorker.getRegistrations();
+    const ownedRegistrations = registrations.filter(registrationBelongsToCurrentPreview);
+    const hadController = ownedRegistrations.some((entry) => (
+      navigator.serviceWorker.controller
+      && navigator.serviceWorker.controller.scriptURL
+      && entry.active?.scriptURL === navigator.serviceWorker.controller.scriptURL
+    ));
     const unregisterResults = await Promise.all(
-      registrations.map((entry) => entry.unregister()),
+      ownedRegistrations.map((entry) => entry.unregister()),
     );
     const deletedCache = await deleteFindItCaches();
     registration = null;
