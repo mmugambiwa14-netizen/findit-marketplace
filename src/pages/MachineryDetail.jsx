@@ -106,10 +106,10 @@ export default function MachineryDetail() {
             {item.operators_licence_required && <div className="mt-5 rounded-2xl border border-warning/25 bg-warning/10 p-4"><p className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-5 w-5 text-warning" />An operator licence is required for this equipment.</p></div>}
             {item.attachments?.length > 0 && <div className="mt-6"><h3 className="text-sm font-bold">Attachments and implements</h3><div className="mt-3 flex flex-wrap gap-2">{item.attachments.map((attachment) => <Badge key={attachment} variant="secondary">{attachment}</Badge>)}</div></div>}
             <div className="mt-6 space-y-5">
+              <PeekThreadsSection parentType="listing" parentId={item.id} listingKind="machinery" ownerId={item.seller_id} guard={guard} />
               <VariantSelector variants={item.variants} selectedIndex={selectedVariant} onSelect={setSelectedVariant} />
               <PriceBreakdown listing={item} />
               {item.accepts_offers && <MakeOfferButton listing={item} />}
-              <PeekThreadsSection parentType="listing" parentId={item.id} listingKind="machinery" ownerId={item.seller_id} guard={guard} />
               <SafetyPanel>Inspect machinery in person and request maintenance records, serial-number verification and applicable certification before purchasing.</SafetyPanel>
             </div>
           </ListingTabSection>
