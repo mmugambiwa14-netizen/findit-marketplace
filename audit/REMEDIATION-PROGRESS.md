@@ -26,7 +26,8 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - F-072: behavior proven; recommendation projection-queue suite passes 20/20.
 - Recommendation geospatial certification: **BEHAVIOR PROVEN** — Recommendation database-gates run 31159888350 passes `v1_recommendation_eligibility_geospatial.sql` 19/19 through the curated Cars publisher boundary.
 - Recommendation publication-boundary certification: **BEHAVIOR PROVEN** — the fixture repair worked. Run 31160257131 passes `v1_recommendation_publication_boundary.sql` 14/14 through the authoritative curated Cars publisher trigger, with geospatial holding at 19/19.
-- F-073: **REPAIRED, AWAITING CI** — `v1_recommendation_services.sql` asserted the pre-activation disabled catalog and contradicted the authoritative release-control migration. Repaired to certify post-activation behavior while retaining disabled-path proof.
+- F-073: **BEHAVIOR PROVEN** — Recommendation database-gates run 31162602508 passes `v1_recommendation_services.sql` **29/29**. The suite asserted the pre-activation disabled catalog and contradicted the authoritative release-control migration; it now certifies post-activation behavior and still proves the disabled degradation path.
+- F-074: **REPAIRED, AWAITING CI** — `v1_recommendation_service_operations.sql` test 16 carried the same pre-activation expectation. Replaced with a metadata/policy-table drift check.
 - F-014, F-049, F-059: DONE.
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
@@ -114,13 +115,42 @@ back; the runtime `service_role` still cannot mutate service policy, which the s
 - No production trigger, direct-table privilege, country gate, admin/MFA rule, listing moderation path, Peek moderation path, payment path or reputation system is weakened or bypassed.
 - Frontend/source verification remains separately red on later-owned source-contract/asset work; lint, typechecks, Edge checks, SQL boundary checks and production build remain green outside those known contracts.
 
+## Evidence from Recommendation database-gates run 31162602508
+
+Dispatched on `claude/peekalisting-remediation-handoff-d1mr2x` @ `dfafd0b`.
+
+- `v1_recommendation_services.sql` passed **29/29**, closing F-073.
+- Every earlier suite held: publication-boundary 14/14, geospatial 19/19, foundation 62/62,
+  projection-queue 20/20, database-lint 10/10, security-advisor 10/10, and both authenticated-RPC suites.
+- The matrix advanced to its next exact failure: `v1_recommendation_service_operations.sql`, **1 failed of
+  37** — test 16, "operational controls do not enable services during migration".
+
+## F-074 — service-operations suite carried the same pre-activation expectation
+
+`supabase/tests/v1_recommendation_service_operations.sql:82-85` asserted
+`bool_and(not enabled)` over `recommendation_service_policies` — the identical pre-0100 expectation that
+F-073 resolved, in a second file. Notably the assertion immediately following it already tolerates "a later
+certification correction" for `schema_version`, so this file was half-updated for the same class of change.
+
+**Repair.** Replaced with a consistency check that the `recommendation_foundation` operational control and
+the authoritative policy table agree: `service_policy_source` names the policy table, `services_enabled` is
+true, and `active_service_policy_count` equals the live count of enabled policies. This is a real drift
+detector between the metadata 0100 writes and the table it describes — strictly more useful than the
+obsolete assertion, and it holds the plan at 37 assertions. No control is weakened.
+
 ## Exact next action
 
-1. Run PR #33 Recommendation database gates with the F-073 services-suite repair.
-2. Require `v1_recommendation_services.sql` to complete its full 29-assertion TAP plan while
-   publication-boundary holds at 14/14, geospatial at 19/19, foundation at 62/62 and projection-queue at 20/20.
-3. Continue the database matrix to the next exact failure and repair only that boundary. The suites after
-   `v1_recommendation_services.sql` in runner order are the remaining unproven surface.
+1. Run Recommendation database gates with the F-074 service-operations repair.
+2. Require `v1_recommendation_service_operations.sql` to complete its full 37-assertion TAP plan while
+   services holds at 29/29, publication-boundary at 14/14, geospatial at 19/19, foundation at 62/62 and
+   projection-queue at 20/20.
+3. Continue the database matrix to the next exact failure and repair only that boundary. Remaining unproven
+   suites in runner order (`scripts/run-recommendation-database-certification.sh:8-22`):
+   `v1_recommendation_scale.sql`, `v1_contextual_ecosystem_intelligence.sql`,
+   `v1_recommendation_personalization.sql`, `v1_recommendation_analytics.sql`,
+   `v1_recommendation_related_services.sql`. Expect the pre-activation staleness class to recur in
+   `v1_recommendation_personalization.sql` and `v1_recommendation_related_services.sql`, both of which
+   reference `service_disabled` — verify each against the migration chain before changing anything.
 4. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken curated publishing, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract merely to turn CI green.
 5. When all database suites pass, record final CI evidence and close proof-chain findings plus reopened F-012/F-058/F-060 as supported.
 6. Proceed to WP-05/F-033 only after WP-04 proof-chain closure.
