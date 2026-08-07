@@ -6,13 +6,22 @@ const section = await readFile(new URL('../src/components/peekThreads/PeekThread
 const property = await readFile(new URL('../src/pages/PropertyDetail.jsx', import.meta.url), 'utf8');
 const car = await readFile(new URL('../src/pages/CarDetail.jsx', import.meta.url), 'utf8');
 const machinery = await readFile(new URL('../src/pages/MachineryDetail.jsx', import.meta.url), 'utf8');
+const service = await readFile(new URL('../src/pages/ServiceDetail.jsx', import.meta.url), 'utf8');
 
-test('Peek Threads is integrated into every asset listing detail page', () => {
-  for (const [name, source] of Object.entries({ property, car, machinery })) {
+test('Peek Requests are integrated into every marketplace detail page', () => {
+  for (const [name, source] of Object.entries({ property, car, machinery, service })) {
     assert.match(source, /PeekThreadsSection/);
-    assert.match(source, /parentType="listing"/);
-    assert.match(source, /ownerId=/, `${name} must provide the seller boundary`);
+    assert.match(source, /ownerId=/, `${name} must provide the seller or provider boundary`);
   }
+  for (const source of [property, car, machinery]) assert.match(source, /parentType="listing"/);
+  assert.match(service, /parentType="service"/);
+});
+
+test('buyer-facing evidence surface uses Peek Request product language', () => {
+  assert.match(section, />Peek Requests<\/h2>/);
+  assert.match(section, /aria-label="Peek Request filters"/);
+  assert.match(section, /Request a Peek/);
+  assert.doesNotMatch(section, />Peek Threads<\/h2>/);
 });
 
 test('composer uses structured categories and duplicate detection', () => {
@@ -22,7 +31,7 @@ test('composer uses structured categories and duplicate detection', () => {
   assert.match(section, /supportPeekRequest/);
 });
 
-test('thread UI exposes required filters without comment terminology', () => {
+test('request UI exposes required filters without comment terminology', () => {
   for (const label of ['Top requests', 'Answered', 'Awaiting response', 'Newest']) {
     assert.ok(section.includes(label));
   }
