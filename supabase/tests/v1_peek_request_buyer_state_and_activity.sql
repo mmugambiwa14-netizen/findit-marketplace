@@ -66,17 +66,21 @@ select extensions.ok(
     to_regprocedure('public.peek_thread_page_v2(uuid,uuid,text,text,integer,timestamp with time zone,uuid,integer)'),
     'EXECUTE'
   )
-  and not has_function_privilege(
+  and has_function_privilege(
     'anon',
     to_regprocedure('public.peek_thread_page(uuid,uuid,text,text,integer,timestamp with time zone,uuid,integer)'),
     'EXECUTE'
   )
-  and not has_function_privilege(
+  and has_function_privilege(
     'authenticated',
     to_regprocedure('public.peek_thread_page(uuid,uuid,text,text,integer,timestamp with time zone,uuid,integer)'),
     'EXECUTE'
-  ),
-  'browser roles use v2 and cannot call the legacy public Peek Request feed'
+  )
+  and position(
+    'private.peek_thread_page_v2'
+    in pg_get_functiondef(to_regprocedure('private.peek_thread_page(uuid,uuid,text,text,integer,timestamp with time zone,uuid,integer)'))
+  ) > 0,
+  'legacy browser compatibility remains executable but delegates to the hardened v2 boundary'
 );
 
 select extensions.ok(
