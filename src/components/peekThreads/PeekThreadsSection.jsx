@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Clock3, Eye, Loader2, Plus, ThumbsUp, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ const FILTERS = [
   { value: 'pending', label: 'Awaiting response', sort: 'most_wanted' },
   { value: 'all', label: 'Newest', sort: 'newest' },
 ];
+const REQUEST_REFRESH_MS = 30_000;
 
 /** @param {{ requestId: string, supported: boolean }} input */
 function updatePeekRequestSupport({ requestId, supported }) {
@@ -55,14 +56,34 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
   const filter = FILTERS[activeFilter];
   const queryKey = ['peek-threads', parentType, parentId, filter.value, filter.sort];
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const threadQuery = useInfiniteQuery({
     queryKey,
-    queryFn: () => getPeekThreadPage({ parentType, parentId, filter: filter.value, sort: filter.sort, limit: 20 }),
+    queryFn: ({ pageParam }) => getPeekThreadPage({
+      parentType,
+      parentId,
+      filter: filter.value,
+      sort: filter.sort,
+      cursor: pageParam || null,
+      limit: 20,
+    }),
+    initialPageParam: null,
+    getNextPageParam: (page) => page.nextCursor || undefined,
     enabled: Boolean(parentId),
-    staleTime: 60_000,
+    staleTime: 15_000,
+    refetchInterval: REQUEST_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
 
-  const items = data?.items || [];
+  const items = useMemo(() => {
+    const byId = new Map();
+    for (const page of threadQuery.data?.pages || []) {
+      for (const item of page.items) byId.set(item.requestId, item);
+    }
+    return [...byId.values()];
+  }, [threadQuery.data]);
+
   const duplicate = useMemo(() => body.trim().length >= 8 ? findDuplicateRequest(body, category, items.map((item) => ({
     id: item.requestId,
     body: item.body,
@@ -70,8 +91,13 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
     status: item.status,
     supporter_count: item.supporterCount,
   }))) : null, [body, category, items]);
+  const duplicateItem = useMemo(
+    () => duplicate ? items.find((item) => item.requestId === duplicate.id) || null : null,
+    [duplicate, items],
+  );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['peek-threads', parentType, parentId] });
+  const refreshBuyerActivity = () => queryClient.invalidateQueries({ queryKey: ['peek-request-activity'] });
 
   const createMutation = useMutation({
     mutationFn: () => createPeekRequest({ parentType, parentId, category, body }),
@@ -79,6 +105,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
       setBody('');
       setComposerOpen(false);
       refresh();
+      refreshBuyerActivity();
       queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
       toast.success('Your Peek Request was submitted');
     },
@@ -87,7 +114,15 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
 
   const supportMutation = useMutation({
     mutationFn: updatePeekRequestSupport,
-    onSuccess: refresh,
+    onSuccess: (_result, variables) => {
+      refresh();
+      refreshBuyerActivity();
+      if (variables.fromComposer) {
+        setBody('');
+        setComposerOpen(false);
+        toast.success('Added your interest to the existing Peek Request');
+      }
+    },
     onError: (mutationError) => toast.error(mutationError.message || 'Unable to update your interest'),
   });
 
@@ -106,11 +141,32 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
   const isOwner = Boolean(user?.id && ownerId && user.id === ownerId);
   const submitRequest = () => guard?.('request a Peek', () => {
     if (duplicate) {
-      supportMutation.mutate({ requestId: duplicate.id, supported: false });
+      if (duplicateItem?.status === 'answered') {
+        setBody('');
+        setComposerOpen(false);
+        setActiveFilter(1);
+        toast.info('A similar Peek Request is already answered');
+        return;
+      }
+      if (duplicateItem?.requestedByMe || duplicateItem?.supportedByMe) {
+        setBody('');
+        setComposerOpen(false);
+        toast.info('You are already part of this Peek Request');
+        return;
+      }
+      supportMutation.mutate({ requestId: duplicate.id, supported: false, fromComposer: true });
       return;
     }
     createMutation.mutate();
   });
+
+  const duplicateActionLabel = duplicateItem?.status === 'answered'
+    ? 'Show answered request'
+    : duplicateItem?.requestedByMe || duplicateItem?.supportedByMe
+      ? 'Already interested'
+      : duplicate
+        ? 'I want this too'
+        : 'Submit request';
 
   return (
     <section id="peek-threads" className="surface-panel scroll-mt-24 overflow-hidden" aria-labelledby={`peek-threads-${parentId}`}>
@@ -140,11 +196,23 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
                 ))}
               </div>
             </div>
-            {duplicate && <div className="mt-3 rounded-xl border border-primary/25 bg-primary/10 p-3 text-sm"><p className="font-semibold">A similar request already exists.</p><p className="mt-1 text-muted-foreground">“{duplicate.body}”</p><p className="mt-1 text-xs text-muted-foreground">Support it instead so the seller sees the combined demand.</p></div>}
+            {duplicate && (
+              <div className="mt-3 rounded-xl border border-primary/25 bg-primary/10 p-3 text-sm">
+                <p className="font-semibold">A similar request already exists.</p>
+                <p className="mt-1 text-muted-foreground">“{duplicate.body}”</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {duplicateItem?.status === 'answered'
+                    ? 'A seller Response Peek already answers it.'
+                    : duplicateItem?.requestedByMe || duplicateItem?.supportedByMe
+                      ? 'You are already counted in the buyer interest for this request.'
+                      : 'Support it instead so the seller sees the combined demand.'}
+                </p>
+              </div>
+            )}
             <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => setComposerOpen(false)}>Cancel</Button>
               <Button type="button" disabled={body.trim().length < 8 || createMutation.isPending || supportMutation.isPending} onClick={submitRequest}>
-                {(createMutation.isPending || supportMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{duplicate ? 'I want this too' : 'Submit request'}
+                {(createMutation.isPending || supportMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{duplicateActionLabel}
               </Button>
             </div>
           </div>
@@ -156,10 +224,17 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
       </div></div>
 
       <div className="divide-y divide-border">
-        {isLoading && <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading Peek Requests</div>}
-        {error && <div className="p-6 text-center"><p className="text-sm text-destructive">Peek Requests could not be loaded.</p><Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>Try again</Button></div>}
-        {!isLoading && !error && items.length === 0 && <div className="p-8 text-center"><Eye className="mx-auto h-7 w-7 text-muted-foreground" /><p className="mt-3 font-semibold">No Peek Requests here yet</p><p className="mt-1 text-sm text-muted-foreground">Be the first buyer to ask for useful visual evidence.</p></div>}
-        {items.map((item) => <ThreadCard key={item.requestId} item={item} isOwner={isOwner} busy={supportMutation.isPending || declineMutation.isPending} onSupport={() => guard?.('support this Peek Request', () => supportMutation.mutate({ requestId: item.requestId, supported: false }))} onDecline={() => { setDeclineTarget(item); setDeclineReason(''); }} />)}
+        {threadQuery.isLoading && <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading Peek Requests</div>}
+        {threadQuery.isError && <div className="p-6 text-center"><p className="text-sm text-destructive">Peek Requests could not be loaded.</p><Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => threadQuery.refetch()}>Try again</Button></div>}
+        {!threadQuery.isLoading && !threadQuery.isError && items.length === 0 && <div className="p-8 text-center"><Eye className="mx-auto h-7 w-7 text-muted-foreground" /><p className="mt-3 font-semibold">No Peek Requests here yet</p><p className="mt-1 text-sm text-muted-foreground">Be the first buyer to ask for useful visual evidence.</p></div>}
+        {items.map((item) => <ThreadCard key={item.requestId} item={item} isOwner={isOwner} busy={supportMutation.isPending || declineMutation.isPending} onSupport={() => guard?.('update your interest in this Peek Request', () => supportMutation.mutate({ requestId: item.requestId, supported: item.supportedByMe }))} onDecline={() => { setDeclineTarget(item); setDeclineReason(''); }} />)}
+        {!threadQuery.isLoading && !threadQuery.isError && threadQuery.hasNextPage && (
+          <div className="flex justify-center p-4">
+            <Button type="button" variant="outline" disabled={threadQuery.isFetchingNextPage} onClick={() => threadQuery.fetchNextPage()}>
+              {threadQuery.isFetchingNextPage ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading</> : 'Load more requests'}
+            </Button>
+          </div>
+        )}
       </div>
 
       <AlertDialog open={Boolean(declineTarget)} onOpenChange={(open) => { if (!open && !declineMutation.isPending) { setDeclineTarget(null); setDeclineReason(''); } }}>
@@ -181,7 +256,11 @@ function ThreadCard({ item, isOwner, busy, onSupport, onDecline }) {
   return (
     <article className="p-5 sm:p-6">
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{peekRequestCategoryLabel(item.category)}</Badge>{answered ? <Badge className="bg-success/15 text-success"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Answered</Badge> : <Badge variant="outline"><Clock3 className="mr-1 h-3.5 w-3.5" />Awaiting seller</Badge>}</div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">{peekRequestCategoryLabel(item.category)}</Badge>
+          {item.requestedByMe && <Badge variant="outline">Your request</Badge>}
+          {answered ? <Badge className="bg-success/15 text-success"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Answered</Badge> : <Badge variant="outline"><Clock3 className="mr-1 h-3.5 w-3.5" />Awaiting seller</Badge>}
+        </div>
         <h3 className="mt-3 text-base font-bold leading-6">{item.body}</h3>
         <p className="mt-2 text-sm font-semibold text-primary">{item.supporterCount === 1 ? '1 buyer wants this' : `${item.supporterCount} buyers want this`}</p>
       </div>
@@ -189,7 +268,12 @@ function ThreadCard({ item, isOwner, busy, onSupport, onDecline }) {
         <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-success/20 bg-success/10 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold">Response Peek available</p><p className="mt-1 text-xs text-muted-foreground">Captured {new Date(item.answeredAt || item.createdAt).toLocaleDateString()}</p></div><ResponsePeekWatchButton tourId={item.currentResponseId} title={item.body} /></div>
       ) : (
         <div className="mt-4 flex flex-wrap gap-2">
-          {!isOwner && <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onSupport}><ThumbsUp className="mr-2 h-4 w-4" />I want this too</Button>}
+          {!isOwner && !item.requestedByMe && (
+            <Button type="button" size="sm" variant={item.supportedByMe ? 'secondary' : 'outline'} aria-pressed={item.supportedByMe} disabled={busy} onClick={onSupport}>
+              {item.supportedByMe ? <CheckCircle2 className="mr-2 h-4 w-4" /> : <ThumbsUp className="mr-2 h-4 w-4" />}
+              {item.supportedByMe ? 'Interested' : 'I want this too'}
+            </Button>
+          )}
           {isOwner && <Button type="button" size="sm" variant="outline" disabled={busy} onClick={onDecline}><XCircle className="mr-2 h-4 w-4" />Decline</Button>}
           {isOwner && <Button type="button" size="sm" onClick={() => window.location.assign(`/peek-requests?request=${encodeURIComponent(item.requestId)}`)}><Eye className="mr-2 h-4 w-4" />Record response</Button>}
         </div>
