@@ -35,8 +35,10 @@ test('all provider-driven auth callbacks use the deployment-aware URL helper', (
   assert.match(authSource, /redirectTo: appUrl\('\/reset-password'\)/);
 });
 
-test('the single Pages preview restores deep links and proves its exact source', () => {
-  assert.match(previewWorkflow, /integration\/complete-current-stage/);
+test('the single Pages preview restores deep links and proves its exact canonical source', () => {
+  assert.match(previewWorkflow, /branches:\s*\n\s*- main/);
+  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(previewWorkflow, /test "\$GITHUB_REF_NAME" = "main"/);
   assert.match(previewWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
   assert.match(previewWorkflow, /VITE_PREVIEW_DEPLOYMENT: "true"/);
   assert.match(previewWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
