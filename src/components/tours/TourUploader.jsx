@@ -126,7 +126,7 @@ export default function TourUploader({
     setError('');
     const permissionState = await readBrowserPermissionState(PERMISSION_KINDS.CAMERA);
     if (permissionState === 'denied') {
-      setError('Camera access is blocked for FindIt. Allow camera access in your browser or device settings, then try again. You can still upload an existing video.');
+      setError('Camera access is blocked for PeekaListing. Allow camera access in your browser or device settings, then try again. You can still upload an existing video.');
       return;
     }
     if (permissionState === 'granted' || hasSeenPermissionIntro(PERMISSION_KINDS.CAMERA)) {
@@ -159,36 +159,34 @@ export default function TourUploader({
       const result = await uploadFunction({
         parentType,
         parentId,
+        category,
         file: draft.file,
         durationSeconds: draft.durationSeconds,
         idempotencyKey: draft.idempotencyKey,
-      }, {
-        resumeUpload: draft.resumeUpload,
-        onProgress: (next) => {
-          setProgress(next);
-          onChange?.({ ...draft, status: 'uploading', progress: next });
+        onProgress: (nextProgress) => {
+          setProgress(nextProgress);
+          onChange?.({
+            ...draft,
+            status: nextProgress?.stage === 'processing' ? 'processing' : 'uploading',
+            resumeUpload: nextProgress?.resumeUpload || draft.resumeUpload || null,
+          });
         },
       });
-      const completed = {
+      onChange?.({
         ...draft,
-        status: 'uploaded',
-        tourId: result.tourId,
-        peekKind: isResponse ? 'response' : 'main',
-        progress: { percent: 100, message: isResponse ? 'Preparing Response Peek' : 'Preparing Peek' },
+        status: 'submitted',
         resumeUpload: null,
-      };
-      onChange?.(completed);
+        uploadedTour: result,
+      });
       onUploaded?.(result);
     } catch (failure) {
-      const message = userFacingError(failure, 'The upload did not finish. Check your connection and try again.');
-      const failed = {
-        ...draft,
-        status: 'error',
-        error: message,
-        resumeUpload: failure?.resumeUpload || draft.resumeUpload || null,
-      };
-      onChange?.(failed);
+      const message = userFacingError(failure, 'We could not upload this Peek. Your listing is still safe.');
       setError(message);
+      onChange?.({
+        ...draft,
+        status: 'failed',
+        error: message,
+      });
       onUploadFailed?.(failure);
     } finally {
       setUploading(false);
@@ -197,54 +195,113 @@ export default function TourUploader({
   };
 
   return (
-    <section className="space-y-3 rounded-2xl border border-border bg-card p-4" aria-labelledby="tour-uploader-heading">
+    <section className="space-y-4" aria-label={resolvedHeading}>
       <div>
-        <h3 id="tour-uploader-heading" className="font-semibold">{resolvedHeading} {!isResponse && <span className="font-normal text-muted-foreground">— optional</span>}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-sm font-semibold text-foreground">{resolvedHeading}</p>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
           {isResponse
-            ? 'Record clear visual evidence for one or more Buyer Peek Requests. Up to 2 minutes and 250 MB.'
-            : 'One video, up to 2 minutes and 250 MB. The public version is processed to 720p.'}
+            ? `Record current visual evidence for this ${parentLabel} and the buyer request.`
+            : `Add a current video Peek for this ${parentLabel}. You can upload or record one now.`}
         </p>
       </div>
-      <TourRecordingGuide category={category} parentType={parentType} />
-      <input ref={uploadInputRef} className="hidden" type="file" accept={TOUR_ALLOWED_MIME_TYPES.join(',')} onChange={choose} />
-      <input ref={recordInputRef} className="hidden" type="file" accept="video/*" capture="environment" onChange={choose} />
 
-      {!draft && (
-        <div className={`grid gap-3 ${onSkip ? 'grid-cols-3' : 'grid-cols-2'}`}>
-          <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={openCamera} disabled={disabled || selecting}><Camera />Record</Button>
-          <Button type="button" variant="outline" className="h-12 rounded-xl" onClick={() => uploadInputRef.current?.click()} disabled={disabled || selecting}><Upload />Upload</Button>
-          {onSkip && <Button type="button" variant="ghost" className="h-12 rounded-xl" onClick={onSkip} disabled={disabled || selecting}><ChevronRight />Skip</Button>}
+      <TourRecordingGuide category={category} />
+
+      {!draft ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto min-h-24 justify-start gap-3 rounded-2xl p-4 text-left"
+            disabled={disabled || selecting}
+            onClick={() => uploadInputRef.current?.click()}
+          >
+            <Upload className="h-5 w-5 shrink-0" />
+            <span>
+              <span className="block font-semibold">Upload a video</span>
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">MP4, MOV or WebM, up to 2 minutes</span>
+            </span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto min-h-24 justify-start gap-3 rounded-2xl p-4 text-left"
+            disabled={disabled || selecting}
+            onClick={openCamera}
+          >
+            <Camera className="h-5 w-5 shrink-0" />
+            <span>
+              <span className="block font-semibold">Record now</span>
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">Use your device camera for a current Peek</span>
+            </span>
+          </Button>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept={TOUR_ALLOWED_MIME_TYPES.join(',')}
+            className="sr-only"
+            onChange={choose}
+          />
+          <input
+            ref={recordInputRef}
+            type="file"
+            accept={TOUR_ALLOWED_MIME_TYPES.join(',')}
+            capture="environment"
+            className="sr-only"
+            onChange={choose}
+          />
         </div>
-      )}
-
-      {draft && (
-        <div className="overflow-hidden rounded-xl border border-border bg-muted/10">
-          <div className="relative aspect-video bg-black">
-            <video src={draft.previewUrl} className="h-full w-full object-contain" controls preload="metadata" aria-label="Selected Peek preview" />
-            <span className="absolute bottom-2 right-2 rounded-md bg-black/75 px-2 py-1 text-xs font-semibold text-white">{durationLabel(draft.durationSeconds)}</span>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold"><Film className="mr-1 inline h-4 w-4" />{draft.file?.name || 'Selected Peek video'}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{sizeLabel(draft.file?.size)} · {durationLabel(draft.durationSeconds)}</p>
+      ) : (
+        <div className="space-y-4 rounded-2xl border border-border bg-card p-4">
+          {draft.previewUrl ? (
+            <video
+              src={draft.previewUrl}
+              controls
+              playsInline
+              preload="metadata"
+              className="aspect-video w-full rounded-xl bg-black object-contain"
+            />
+          ) : (
+            <div className="flex aspect-video items-center justify-center rounded-xl bg-muted">
+              <Film className="h-8 w-8 text-muted-foreground" />
             </div>
-            {!uploading && draft.status !== 'uploaded' && <Button type="button" size="sm" variant="ghost" onClick={clear} disabled={disabled}><Trash2 />Remove</Button>}
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+            <div>
+              <p className="font-semibold">{draft.file?.name || 'Selected video'}</p>
+              <p className="text-muted-foreground">{durationLabel(draft.durationSeconds)} · {sizeLabel(draft.file?.size)}</p>
+            </div>
+            {!uploading && draft.status !== 'submitted' && (
+              <Button type="button" variant="ghost" size="sm" onClick={clear}>
+                <Trash2 className="mr-2 h-4 w-4" />Remove
+              </Button>
+            )}
           </div>
+
+          {progress && <TourUploadProgress progress={progress} />}
+
+          {draft.status === 'failed' && !uploading && (
+            <Button type="button" variant="outline" className="w-full" onClick={upload}>
+              <RotateCcw className="mr-2 h-4 w-4" />Retry upload
+            </Button>
+          )}
+
+          {draft.status !== 'submitted' && draft.status !== 'failed' && (
+            <Button type="button" className="w-full" disabled={disabled || uploading || selecting || !parentId} onClick={upload}>
+              {uploading ? 'Uploading…' : isResponse ? 'Submit Response Peek' : 'Upload Peek'}
+              {!uploading && <ChevronRight className="ml-2 h-4 w-4" />}
+            </Button>
+          )}
         </div>
       )}
 
-      {(uploading || draft?.status === 'uploading') && <TourUploadProgress progress={progress || draft?.progress} />}
-      {draft?.status === 'uploaded' && <p className="rounded-xl bg-success/10 p-3 text-sm font-medium text-success">{isResponse ? 'Response Peek uploaded. It will appear when it is ready.' : `Peek uploaded. It will appear on the ${parentLabel} when it is ready.`}</p>}
-      {error && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
 
-      {draft && parentId && draft.status !== 'uploaded' && !uploading && (
-        <Button type="button" className="h-11 w-full rounded-xl" onClick={upload} disabled={disabled || selecting}>
-          {draft.status === 'error' ? <><RotateCcw />Try upload again</> : <><Upload />{isResponse ? 'Upload Response Peek' : 'Upload Peek'}</>}
+      {onSkip && !draft && (
+        <Button type="button" variant="ghost" className="w-full" disabled={disabled || selecting || uploading} onClick={onSkip}>
+          Skip for now
         </Button>
       )}
-      {draft && !parentId && <p className="text-xs text-muted-foreground">The video will upload after the {parentLabel} is created.</p>}
-      {!draft && !isResponse && <p className="text-center text-xs text-muted-foreground">You can skip this and add or replace a Peek later from {managementLabel}.</p>}
 
       <CameraPermissionDialog
         open={cameraExplanationOpen}
