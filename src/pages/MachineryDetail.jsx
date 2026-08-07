@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Gauge, MapPin, Weight, Wrench, Zap } from "lucide-react";
+import { AlertTriangle, Gauge, Weight, Wrench, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
 import ContactButtons from "@/components/listings/ContactButtons";
@@ -11,6 +11,7 @@ import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaActions from "@/components/listings/ListingMediaActions";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
+import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
@@ -68,23 +69,28 @@ export default function MachineryDetail() {
           <ListingMediaActions onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
         </div>
 
-        <div className="px-4 pb-5 pt-5 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getMachineryLabel(item.category)}</Badge>
-            {item.status !== "available" && <Badge variant="destructive" className="capitalize">{String(item.status).replaceAll("_", " ")}</Badge>}
-            {item.negotiable && <Badge variant="outline">Negotiable</Badge>}
-          </div>
-          <p className="mt-4 text-3xl font-black tracking-tight text-primary sm:text-4xl">{variants.length > 1 && <span className="mr-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">From</span>}{format(activePrice)}</p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{item.title}</h1>
-          {location && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" />{location}</p>}
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>Listed {listedAgo}</span><span aria-hidden="true">·</span><span>{Number(item.views || 0).toLocaleString()} views</span><span aria-hidden="true">·</span><ListingCode type="machinery" id={item.id} />
-          </div>
-        </div>
+        <ListingSummary
+          badges={(
+            <>
+              <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getMachineryLabel(item.category)}</Badge>
+              {item.status !== "available" && <Badge variant="destructive" className="capitalize">{String(item.status).replaceAll("_", " ")}</Badge>}
+              {item.negotiable && <Badge variant="outline">Negotiable</Badge>}
+            </>
+          )}
+          price={format(activePrice)}
+          pricePrefix={variants.length > 1 ? "From" : null}
+          title={item.title}
+          location={location}
+          metadata={[
+            `Listed ${listedAgo}`,
+            `${Number(item.views || 0).toLocaleString()} views`,
+            <ListingCode key="machinery-code" type="machinery" id={item.id} />,
+          ]}
+        />
 
         <ListingDetailTabs>
           <ListingTabSection id="listing-info" title="Listing info">
-            <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               {item.year && <ListingFeatureItem icon={Zap} label="Year" value={item.year} />}
               {item.equipment_hours > 0 && <ListingFeatureItem icon={Gauge} label="Hours" value={`${item.equipment_hours.toLocaleString()} h`} />}
               {item.mileage_km > 0 && <ListingFeatureItem icon={Gauge} label="Mileage" value={`${item.mileage_km.toLocaleString()} km`} />}
