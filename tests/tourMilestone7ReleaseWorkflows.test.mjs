@@ -67,9 +67,10 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /retention-days: 90/);
 });
 
-test('complete-stage preview exposes Peeks and current business flows only against isolated staging', () => {
-  assert.match(previewWorkflow, /integration\/complete-current-stage/);
-  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/integration\/complete-current-stage'/);
+test('canonical preview exposes Peeks and current business flows only against isolated staging', () => {
+  assert.match(previewWorkflow, /branches:\s*\n\s*- main/);
+  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(previewWorkflow, /test "\$GITHUB_REF_NAME" = "main"/);
   assert.match(previewWorkflow, /VITE_MODE: staging/);
   assert.match(previewWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
   assert.match(previewWorkflow, /VITE_PREVIEW_DEPLOYMENT: "true"/);
