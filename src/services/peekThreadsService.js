@@ -6,6 +6,7 @@ import {
   declinePeekRequestRow,
   invokeResponsePeekPlayback,
   mergePeekRequestRows,
+  readMyPeekRequestActivityPage,
   readPeekThreadPage,
   readResponsePeekRequestCandidates,
   readSellerPeekRequestQueue,
@@ -13,6 +14,7 @@ import {
   supportPeekRequestRow,
   withdrawPeekRequestSupportRow,
 } from '@/repositories/peekThreadsRepository';
+import { normalizePeekActivityPage, normalizePeekActivityRequest } from '@/domain/peekThreads/activityContracts';
 import { normalizePeekThreadPage, normalizePeekThreadReadRequest } from '@/domain/peekThreads/readContracts';
 import { normalizeSellerPeekQueuePage, normalizeSellerPeekQueueRequest } from '@/domain/peekThreads/sellerQueueContracts';
 import {
@@ -33,6 +35,11 @@ function requireValid(result) {
 export async function getPeekThreadPage(input) {
   const request = normalizePeekThreadReadRequest(input);
   return normalizePeekThreadPage(await readPeekThreadPage(request), request.limit);
+}
+
+export async function getMyPeekRequestActivityPage(input = {}) {
+  const request = normalizePeekActivityRequest(input);
+  return normalizePeekActivityPage(await readMyPeekRequestActivityPage(request), request.limit);
 }
 
 export async function getSellerPeekRequestQueue(input = {}) {
