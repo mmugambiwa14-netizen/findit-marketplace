@@ -103,7 +103,7 @@ export default function PropertyDetail() {
               <PriceBreakdown listing={property} />
               {property.accepts_offers && <MakeOfferButton listing={property} />}
               <PeekThreadsSection parentType="listing" parentId={property.id} listingKind="property" ownerId={property.seller_id} guard={guard} />
-              <SafetyPanel>Always view the property in person before making a payment. Never send money to someone you have not met. FindIt does not handle buyer–seller payments.{isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}</SafetyPanel>
+              <SafetyPanel>Always view the property in person before making a payment. Never send money to someone you have not met. PeekaListing does not handle buyer–seller payments.{isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}</SafetyPanel>
             </div>
           </ListingTabSection>
 
