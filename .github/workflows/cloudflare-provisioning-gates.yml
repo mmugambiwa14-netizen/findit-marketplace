@@ -52,11 +52,18 @@ jobs:
       - name: Validate Wrangler configuration shape
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: |
+          # wrangler resolves `main` relative to the config file's own
+          # directory, and the example declares main = "workers/edge/src/index.ts".
+          # Rendering to /tmp therefore validated the config somewhere its own
+          # entry point can never resolve, so the dry-run could only ever fail.
+          # Render at the repository root, which is where a real wrangler.toml
+          # made from this template is meant to live.
           sed \
             -e 's/REPLACE_WITH_STAGING_NAMESPACE_ID/00000000000000000000000000000000/' \
             -e 's/REPLACE_WITH_PREVIEW_NAMESPACE_ID/11111111111111111111111111111111/' \
-            infrastructure/cloudflare/wrangler.toml.example > /tmp/wrangler.toml
-          npx --yes wrangler@4 deploy --dry-run --config /tmp/wrangler.toml
+            infrastructure/cloudflare/wrangler.toml.example > ./wrangler.dry-run.toml
+          npx --yes wrangler@4 deploy --dry-run --config ./wrangler.dry-run.toml
+          rm -f ./wrangler.dry-run.toml
       - name: Build media worker image
         id: media-image
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
