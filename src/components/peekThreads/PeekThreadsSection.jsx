@@ -118,8 +118,8 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Visual evidence</p>
-            <h2 id={`peek-threads-${parentId}`} className="mt-1 text-xl font-black tracking-tight">Peek Threads</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Ask for specific visual proof. The seller’s response becomes public evidence for everyone considering this listing.</p>
+            <h2 id={`peek-threads-${parentId}`} className="mt-1 text-xl font-black tracking-tight">Peek Requests</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Ask for specific visual proof before you decide. Seller responses become public Peeks that other buyers can also use.</p>
           </div>
           {!isOwner && <Button type="button" size="sm" className="self-start" onClick={() => guard?.('request a Peek', () => setComposerOpen((open) => !open))}><Plus className="mr-2 h-4 w-4" />Request a Peek</Button>}
         </div>
@@ -151,7 +151,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
         )}
       </div>
 
-      <div className="border-b border-border px-3 py-3 sm:px-5"><div className="no-scrollbar flex gap-2 overflow-x-auto" role="tablist" aria-label="Peek Thread filters">
+      <div className="border-b border-border px-3 py-3 sm:px-5"><div className="no-scrollbar flex gap-2 overflow-x-auto" role="tablist" aria-label="Peek Request filters">
         {FILTERS.map((entry, index) => <button key={`${entry.label}-${index}`} type="button" role="tab" aria-selected={activeFilter === index} onClick={() => setActiveFilter(index)} className={`min-h-10 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition ${activeFilter === index ? 'bg-primary text-primary-foreground' : 'bg-surface-secondary text-muted-foreground hover:text-foreground'}`}>{entry.label}</button>)}
       </div></div>
 
