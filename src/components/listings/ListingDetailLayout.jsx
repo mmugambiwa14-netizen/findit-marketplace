@@ -43,7 +43,7 @@ export function SellerPanel({ name, sellerId }) {
   const content = (
     <>
       <p className="findit-overline">Seller</p>
-      <p className="mt-1 font-bold text-foreground">{name || "FindIt seller"}</p>
+      <p className="mt-1 font-bold text-foreground">{name || "PeekaListing seller"}</p>
       <p className="mt-1 text-sm text-muted-foreground">View the seller’s listings and contact details.</p>
     </>
   );
