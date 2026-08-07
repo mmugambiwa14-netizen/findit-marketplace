@@ -12,7 +12,7 @@ async function invoke(name, args, message) {
 
 export async function readPeekThreadPage(request) {
   const isListing = request.parentType === 'listing';
-  const data = await invoke('peek_thread_page', {
+  const data = await invoke('peek_thread_page_v2', {
     p_listing_id: isListing ? request.parentId : null,
     p_service_id: isListing ? null : request.parentId,
     p_filter: request.filter,
@@ -21,7 +21,16 @@ export async function readPeekThreadPage(request) {
     p_cursor_created_at: request.cursor?.createdAt ?? null,
     p_cursor_id: request.cursor?.id ?? null,
     p_limit: request.limit,
-  }, 'Unable to load Peek requests');
+  }, 'Unable to load Peek Requests');
+  return data ?? [];
+}
+
+export async function readMyPeekRequestActivityPage(request) {
+  const data = await invoke('my_peek_request_activity_page', {
+    p_cursor_created_at: request.cursor?.createdAt ?? null,
+    p_cursor_id: request.cursor?.id ?? null,
+    p_limit: request.limit,
+  }, 'Unable to load your Peek Requests');
   return data ?? [];
 }
 
