@@ -10,6 +10,7 @@ import ListingDetailActions from "@/components/listings/ListingDetailActions";
 import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaActions from "@/components/listings/ListingMediaActions";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
+import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
 import {
   ListingDescription,
@@ -67,20 +68,25 @@ export default function ServiceDetail() {
           <ListingMediaActions onShare={shareService} showSave={false} />
         </div>
 
-        <div className="px-4 pb-5 pt-5 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            {category && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{category.label}</Badge>}
-            {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
-          </div>
-          <p className="mt-4 text-3xl font-black tracking-tight text-primary sm:text-4xl">{priceDisplay}</p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{service.title}</h1>
-          {service.location_name && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" />{service.location_name}</p>}
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"><span>{Number(service.views || 0).toLocaleString()} views</span>{service.can_travel && <><span aria-hidden="true">·</span><span>Travels to customers</span></>}</div>
-        </div>
+        <ListingSummary
+          badges={(
+            <>
+              {category && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{category.label}</Badge>}
+              {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
+            </>
+          )}
+          price={priceDisplay}
+          title={service.title}
+          location={service.location_name}
+          metadata={[
+            `${Number(service.views || 0).toLocaleString()} views`,
+            service.can_travel ? "Travels to customers" : null,
+          ]}
+        />
 
         <ListingDetailTabs>
           <ListingTabSection id="listing-info" title="Listing info">
-            <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               {category && <ListingFeatureItem icon={category.icon || Car} label="Category" value={category.label} />}
               <ListingFeatureItem icon={MapPin} label="Area" value={service.location_name || "Location arranged"} />
               <ListingFeatureItem icon={Car} label="Travel" value={service.can_travel ? "Available" : "Local area"} />
