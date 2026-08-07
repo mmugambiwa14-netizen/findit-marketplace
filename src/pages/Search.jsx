@@ -90,13 +90,28 @@ export default function Search() {
   const fuelType = searchParams.get('fuel') || '';
   const transmission = searchParams.get('transmission') || '';
   const locationId = searchParams.get('location') || '';
+  const locationName = searchParams.get('locationName') || '';
+  const locationCountry = searchParams.get('country') || '';
+  const locationProvince = searchParams.get('province') || '';
 
-  const selectedLocation = locationId ? {
-    country: searchParams.get('country') || '',
-    state: searchParams.get('province') || '',
+  const selectedLocation = useMemo(() => locationId ? {
+    country: locationCountry,
+    state: locationProvince,
     city: locationId,
-    cityName: searchParams.get('locationName') || '',
-  } : null;
+    cityName: locationName,
+  } : null, [locationId, locationCountry, locationProvince, locationName]);
+
+  const filterValues = useMemo(() => ({
+    category,
+    bedrooms,
+    make,
+    condition,
+    fuelType,
+    transmission,
+    currency,
+    minPrice,
+    maxPrice,
+  }), [category, bedrooms, make, condition, fuelType, transmission, currency, minPrice, maxPrice]);
 
   const updateParams = useCallback((updates, { replace = true } = {}) => {
     setSearchParams((current) => {
@@ -249,11 +264,31 @@ export default function Search() {
     });
   };
 
-  const updateFilter = (key, value) => updateParams({ [key]: value });
   const updateViewMode = (value) => updateParams({ view: value === 'map' ? 'map' : null }, { replace: false });
   const updateCurrency = (value) => {
     const nextCurrency = value || null;
     const updates = { currency: nextCurrency, minPrice: null, maxPrice: null };
+    if (!nextCurrency && PRICE_SORTS.has(sort)) updates.sort = null;
+    updateParams(updates);
+  };
+
+  const applyFilterSheet = ({ filters: nextFilters, location }) => {
+    const nextCurrency = nextFilters.currency || null;
+    const updates = {
+      category: nextFilters.category || null,
+      bedrooms: nextFilters.bedrooms || null,
+      make: nextFilters.make || null,
+      condition: nextFilters.condition || null,
+      fuel: nextFilters.fuelType || null,
+      transmission: nextFilters.transmission || null,
+      currency: nextCurrency,
+      minPrice: nextCurrency ? nextFilters.minPrice : null,
+      maxPrice: nextCurrency ? nextFilters.maxPrice : null,
+      country: location?.country || null,
+      province: location?.state || null,
+      location: location?.city || null,
+      locationName: location?.cityName || null,
+    };
     if (!nextCurrency && PRICE_SORTS.has(sort)) updates.sort = null;
     updateParams(updates);
   };
@@ -287,8 +322,6 @@ export default function Search() {
       updateParams({ [key]: null });
     }
   };
-
-  const filterValues = { category, bedrooms, make, condition, fuelType, transmission, currency, minPrice, maxPrice };
 
   return (
     <div className="min-h-[100dvh] bg-background md:pb-8">
@@ -366,11 +399,7 @@ export default function Search() {
         type={type}
         filters={filterValues}
         selectedLocation={selectedLocation}
-        onLocationChange={(location) => updateParams({ country: location.country, province: location.state, location: location.city, locationName: location.cityName })}
-        onUpdate={updateFilter}
-        onCurrencyChange={updateCurrency}
-        onApplyPrice={(minimum, maximum) => updateParams({ minPrice: minimum, maxPrice: maximum })}
-        onClear={clearFilters}
+        onApply={applyFilterSheet}
       />
 
       <SortSheet
