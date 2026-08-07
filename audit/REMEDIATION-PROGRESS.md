@@ -29,7 +29,8 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - F-073: **BEHAVIOR PROVEN** — Recommendation database-gates run 31162602508 passes `v1_recommendation_services.sql` **29/29**. The suite asserted the pre-activation disabled catalog and contradicted the authoritative release-control migration; it now certifies post-activation behavior and still proves the disabled degradation path.
 - F-074: **BEHAVIOR PROVEN** — run 31162845487 passes `v1_recommendation_service_operations.sql` **37/37** with services holding at 29/29. The stale pre-activation expectation is now a metadata/policy-table drift check.
 - F-075: **BEHAVIOR PROVEN** — run 31163209835 passes `v1_recommendation_scale.sql` (9 tests, PASS) with the fixture crossing the curated publisher boundary through the authoritative trigger.
-- F-076: **REPAIRED, AWAITING CI** — `v1_contextual_ecosystem_intelligence.sql` test 41 expected 7 rules stranded against disabled services. Post-activation the correct value is 0; the counter's detection ability is now proved separately.
+- F-076: **BEHAVIOR PROVEN** — run 31163529073 passes `v1_contextual_ecosystem_intelligence.sql` **44/44**.
+- F-077, F-078, F-079: **REPAIRED, AWAITING CI** — the final three suites. All three carried the curated-publisher fixture class; F-079 additionally carried the pre-activation class and is the only suite crossing the *service* publisher boundary.
 - F-014, F-049, F-059: DONE.
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
@@ -196,15 +197,46 @@ assertion that switches one service off inside the test transaction and requires
 stranded rule, then restores it. The drift detector is now proved to actually detect drift, which the
 original 7-expectation never established.
 
+## Evidence from Recommendation database-gates run 31163529073
+
+Dispatched on `claude/peekalisting-remediation-handoff-d1mr2x` @ `e179fb3`.
+
+- `v1_contextual_ecosystem_intelligence.sql` passed **44/44**, closing F-076.
+- Next exact failure: `v1_recommendation_personalization.sql:66`, aborting before `plan()` with
+  `Authentication required` from `enforce_curated_listing_publisher()`.
+
+## F-077 / F-078 / F-079 — the final three suites
+
+With both recurring classes now established and CI-proven four times over, the remaining three suites were
+read directly rather than discovered one CI round-trip at a time. Each defect below is evidenced in the
+fixture source, not assumed:
+
+| Suite | Class | Evidence |
+|---|---|---|
+| `v1_recommendation_personalization.sql` | fixture | inserts `kind='car'` **and** `kind='property'` listings for one seller, so **both** approvals are required |
+| `v1_recommendation_analytics.sql` | fixture | inserts a `kind='car'` listing with no authenticated publisher |
+| `v1_recommendation_related_services.sql` | fixture **and** pre-activation | inserts a listing for one user and a service for another — the only suite crossing `enforce_curated_service_publisher` — and asserted `service_disabled` |
+
+**F-079 detail.** The service publisher trigger requires `provider_id = auth.uid()` plus an approved
+`'service'` category, and the two inserts belong to different users, so each gets its own fixture-auth
+window with claims switched between them. Its stale assertion is retargeted to `degraded = false` rather
+than to a success `reason`, because `0073_executable_related_services.sql` returns **no** `reason` key on
+the success path; `degraded` is the precise discriminator, holding for a live answer while still failing on
+both `service_disabled` and `timeout`. The disabled path is retained by toggling the policy off inside the
+transaction and re-asserting `service_disabled`.
+
 ## Exact next action
 
-1. Run Recommendation database gates with the F-076 contextual-health repair.
-2. Require `v1_contextual_ecosystem_intelligence.sql` to complete its full 44-assertion TAP plan while
-   scale, service-operations (37/37) and services (29/29) all hold.
-3. Continue the database matrix to the next exact failure and repair only that boundary. Remaining unproven
-   suites in runner order (`scripts/run-recommendation-database-certification.sh:8-22`):
-   `v1_recommendation_personalization.sql`, `v1_recommendation_analytics.sql`,
-   `v1_recommendation_related_services.sql`.
+1. Run Recommendation database gates with the F-077/F-078/F-079 repairs.
+2. Require `v1_recommendation_personalization.sql`, `v1_recommendation_analytics.sql` and
+   `v1_recommendation_related_services.sql` to each run clean to `finish()` (all three use `no_plan()`),
+   while every earlier suite holds.
+3. **These are the last three suites in the runner.** If they pass, the full recommendation database matrix
+   is green for the first time — at which point record the final CI evidence and close the proof-chain
+   findings plus reopened F-012/F-058/F-060 as supported, then proceed to WP-05/F-033.
+4. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken
+   curated publishing, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or
+   weaken a contract merely to turn CI green.
 
 **Two recurring classes to expect.** (a) *Pre-activation staleness* — assertions written before
 `0100_release_control_consistency.sql` enabled the service catalog; likely in
