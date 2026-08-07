@@ -6,6 +6,9 @@ select extensions.no_plan();
 with expected(table_name, policy_name) as (
   values
     ('app_alerts', 'app_alerts_owner_read'),
+    ('business_application_responses', 'business_application_responses_owner_read'),
+    ('business_applications', 'business_applications_owner_read'),
+    ('business_category_approvals', 'category_approvals_owner_read'),
     ('business_profiles', 'business_profiles_owner_read'),
     ('business_profiles', 'business_profiles_owner_update'),
     ('business_profiles', 'business_profiles_owner_write'),
@@ -26,6 +29,8 @@ with expected(table_name, policy_name) as (
     ('listings', 'listings_owner_write'),
     ('machinery_details', 'machinery_details_owner_update'),
     ('machinery_details', 'machinery_details_owner_write'),
+    ('managed_listing_requests', 'managed_listing_requests_owner_read'),
+    ('peek_request_fulfilments', 'peek_request_fulfilments_owner_read'),
     ('peek_request_supporters', 'peek_request_supporters_create'),
     ('peek_request_supporters', 'peek_request_supporters_own_read'),
     ('peek_request_supporters', 'peek_request_supporters_withdraw'),
@@ -64,7 +69,7 @@ with expected(table_name, policy_name) as (
 select extensions.is(
   (select count(*)::bigint from missing_or_uninitialized),
   0::bigint,
-  'all 43 locked RLS policies use an auth.uid initialization plan'
+  'all 48 locked RLS policies use an auth.uid initialization plan'
 );
 
 select extensions.is(
@@ -77,8 +82,8 @@ select extensions.is(
         or coalesce(with_check, '') ~* '\(\s*SELECT\s+auth\.uid\(\)\s+AS\s+uid\s*\)'
       )
   ),
-  43::bigint,
-  'exactly 43 public policies contain initialized auth.uid calls'
+  48::bigint,
+  'exactly 48 public policies contain initialized auth.uid calls'
 );
 
 select extensions.is(
