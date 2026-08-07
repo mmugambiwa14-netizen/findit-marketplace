@@ -77,7 +77,7 @@ control PASS* — into execution. Do not upgrade a label without actually runnin
 
 | WP | Findings | Status | Commit | Proving test | Result |
 |---|---|---|---|---|---|
-| WP-01 | F-013 | NOT-STARTED | — | CI: lint/typecheck/build not `skipped` | — |
+| WP-01 | F-013 | **PARTIAL** | *this commit* | `tests/sqlRollbackBoundary.test.mjs` + gate exit 0 · then CI | `LOCAL-EXEC` **PASS** 12/12 · CI half `UNPROVEN — needs an Actions run` |
 | WP-02 | F-012 | NOT-STARTED | — | Green `Release candidate gates` on `main` | — |
 | WP-03 | F-054 | NOT-STARTED | — | Green staging deploy | — |
 | WP-04 | F-027 | NOT-STARTED | — | pgTAP: aal1 admin RPC denied, aal2 allowed | — |
@@ -91,33 +91,43 @@ control PASS* — into execution. Do not upgrade a label without actually runnin
 All `NOT-STARTED`. Per-finding rows in `audit/findings-status.csv`; package definitions in
 `REMEDIATION-PROMPT.md` §7.
 
-**Totals:** 56 findings — **0 DONE · 0 PARTIAL · 0 BLOCKED · 56 NOT-STARTED**
+**Totals:** 56 findings — **0 DONE · 1 PARTIAL · 0 BLOCKED · 55 NOT-STARTED**
 
 ---
 
 ## 4. NEXT ACTION
 
-> **WP-01 · F-013 — fix the CI gate cascade.** Definition: `REMEDIATION-PROMPT.md` §7 → WP-01.
+> **Confirm WP-01 in CI, then start WP-10 (F-014) and WP-09 (F-049).**
 
-Two independent changes, both required:
+### 4a. Close out WP-01 — read the CI run for this branch
 
-1. **Structural.** In `.github/workflows/release-candidate-gates.yml`, the verification steps run
-   sequentially with no guard, so the failure at step 10 (`Verify SQL migration boundary`, `:100-101`)
-   causes steps 11, 13, 14 and 16–24 to report `conclusion=skipped` — including `Run all contracts`,
-   `Lint application`, `Typecheck application`, `Build production application` and
-   `Run reproducible internal certification`. Make the independent verification steps run regardless of a
-   predecessor's failure, while still failing the job.
-2. **The specific conflict.** `scripts/verify-sql-boundary.mjs:72` rejects
-   `drop table if exists public.peek_request_fulfilments;` at
-   `supabase/rollback/20260807020000_peek_request_fulfilment_lifecycle.rollback.sql:11`.
+WP-01's local work is done (`audit/remediation/WP-01-F-013.md`). Its spec-mandated proving test is a **CI**
+run, which is why it is `PARTIAL` and not `DONE`. Open the latest `Release candidate gates` run for
+`claude/peekalisting-audit-ui0z6l` and confirm that **`Lint application`, `Typecheck application` and
+`Build production application` report a conclusion other than `skipped`.**
 
-Reproduce both before editing:
+> **The run is expected to be RED, and that is success for WP-01.** Breaking the cascade makes previously
+> hidden failures visible for the first time — the 10 typecheck errors of F-014 and the 15 failing tests of
+> F-049. A red run whose steps all *executed* is the goal here; driving it green is **WP-02**.
 
-```bash
-node ./scripts/verify-sql-boundary.mjs
-#   SQL boundary verification failed:
-#   - 20260807020000_peek_request_fulfilment_lifecycle.rollback.sql contains destructive table/data rollback statements
-```
+Record the outcome in §6 of `WP-01-F-013.md`, flip F-013 to `DONE` with `CI-VERIFIED`, and update §3 above.
+
+### 4b. Then take these two, in either order
+
+Both were hidden by the cascade and are now visible and locally reproducible:
+
+- **WP-10 · F-014** — 10 typecheck errors. `npx tsc -p ./jsconfig.json` exits 2.
+  `src/components/peekThreads/BuyerPeekRequestsQueue.jsx:112,115,117,119,126` and
+  `src/pages/BusinessProfiles.jsx:26,33,75`. Cause: `useMutation` calls lack explicit generics, so TanStack
+  Query infers `TVariables` as `void`. **Type-soundness gaps, not proven runtime defects** — do not report
+  them as runtime bugs.
+- **WP-09 · F-049** — obsolete tests asserting removed Peek moderation and the old FindIt brand.
+  **Do not simply delete every failing test**: tests `155` (owner lifecycle), `22` (image loading/decoding)
+  and `62` (storage degradation) are *correct* tests failing against *real* defects, and belong to F-029,
+  F-042 and a resilience gap. They must stay red.
+
+Current local baseline: `node --test ./tests/*.test.mjs` → 768 tests, **14 fail**;
+`node --test ./tests/security/*.test.mjs` → 41, **1 fail**.
 
 ---
 

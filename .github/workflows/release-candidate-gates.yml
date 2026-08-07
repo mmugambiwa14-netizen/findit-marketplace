@@ -86,21 +86,27 @@ jobs:
           deno-version: v2.x
 
       - name: Install locked dependencies
+        id: install
         run: npm ci --include=dev --ignore-scripts
 
       - name: Validate release environment
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run validate:env
 
       - name: Verify source graph
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run verify:source-graph
 
       - name: Verify repository hygiene
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run verify:hygiene
 
       - name: Verify SQL migration boundary
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run verify:sql-boundary
 
       - name: Audit routed product surface
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run audit:product-surface
 
       - name: Upload product audit evidence
@@ -113,9 +119,11 @@ jobs:
           retention-days: 30
 
       - name: Restore tracked audit snapshots
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: git restore --worktree -- artifacts/product-audit/page-control-matrix.csv artifacts/product-audit/product-surface-audit.json artifacts/product-audit/route-matrix.csv
 
       - name: Run all contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         shell: bash
         run: |
           mkdir -p artifacts/certification
@@ -134,30 +142,39 @@ jobs:
           retention-days: 30
 
       - name: Run Tours contracts
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run test:tours-contracts
 
       - name: Lint application
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run lint
 
       - name: Typecheck application
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run typecheck
 
       - name: Typecheck migration boundary
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run typecheck:migration
 
       - name: Typecheck active release surface
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run typecheck:active
 
       - name: Typecheck Supabase Edge Functions
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run typecheck:edge-functions
 
       - name: Build production application
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run build
 
       - name: Audit production dependency boundary
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run audit:production
 
       - name: Run reproducible internal certification
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run certify:internal
 
       - name: Upload internal certification evidence
