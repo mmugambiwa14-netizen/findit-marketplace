@@ -100,7 +100,7 @@ All `NOT-STARTED` except as noted. Per-finding rows in `audit/findings-status.cs
 |---|---|---|---|---|---|
 | WP-09 | F-049 | **DONE** | `051cf8a` | both `node --test` suites | `LOCAL-EXEC` **PASS** — contracts 14 → **11** fail; **security 41/41, fully green** |
 | WP-10 | F-014 | **DONE** | `8dc68fd` | `npm run typecheck` + `typecheck:active` | `LOCAL-EXEC` **PASS** — both exit 0 (were exit 2 / 10 errors) |
-| — | **F-059** | **DONE** | *next commit* | contract `508` | `LOCAL-EXEC` **PASS** — suite 11 → **10** fail |
+| — | **F-059** | **DONE** | `f50fc4a` | contract `508` | `LOCAL-EXEC` **PASS** — suite 11 → **10** fail |
 
 ### Findings discovered *after* the audit
 
