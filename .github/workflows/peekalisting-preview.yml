@@ -1,9 +1,9 @@
-name: PeekaListing Complete Stage Preview
+name: Canonical PeekaListing Preview
 
 on:
   push:
     branches:
-      - integration/complete-current-stage
+      - main
   workflow_dispatch:
 
 permissions:
@@ -15,9 +15,10 @@ concurrency:
   group: peekalisting-pages-preview
   cancel-in-progress: true
 
+# Certification source before promotion: integration/complete-current-stage
 jobs:
   build-and-deploy:
-    if: github.ref == 'refs/heads/integration/complete-current-stage'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -66,22 +67,22 @@ jobs:
       TOURS_BACKEND_ENABLED: "true"
 
     steps:
-      - name: Check out exact complete-stage head
+      - name: Check out exact canonical head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.sha }}
 
-      - name: Verify complete-stage preview source
+      - name: Verify canonical preview source
         shell: bash
         run: |
           set -euo pipefail
-          test "$GITHUB_REF_NAME" = "integration/complete-current-stage"
+          test "$GITHUB_REF_NAME" = "main"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           grep -q '<title>PeekaListing Marketplace</title>' index.html
           grep -q 'BusinessPublishingGate' src/App.jsx
           grep -q 'BuyerPeekRequests' src/App.jsx
           grep -q 'BusinessProfiles' src/App.jsx
-          echo "Complete-stage preview source verified: $GITHUB_REF_NAME@$GITHUB_SHA"
+          echo "Canonical preview source verified: $GITHUB_REF_NAME@$GITHUB_SHA"
 
       - name: Verify staging Supabase isolation
         shell: bash
@@ -155,6 +156,6 @@ jobs:
         with:
           path: dist
 
-      - name: Deploy complete PeekaListing preview
+      - name: Deploy canonical PeekaListing preview
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
