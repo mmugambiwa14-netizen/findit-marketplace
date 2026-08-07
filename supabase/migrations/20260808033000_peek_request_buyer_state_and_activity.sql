@@ -1,11 +1,10 @@
 -- Make the buyer side of Peek Requests truthful and trackable.
 --
--- The legacy peek_thread_page RPC is preserved for rollback/service recovery,
--- but browser execution is retired because its restored implementation no
--- longer enforces the explicit public-parent boundary from migration 0118.
--- Browser clients move to peek_thread_page_v2, which restores that boundary
--- and adds only caller-relative booleans. No requester/supporter identity is
--- exposed.
+-- The active browser moves to peek_thread_page_v2 for caller-relative state.
+-- The legacy peek_thread_page identity remains executable for rollback and old
+-- clients, but its privileged implementation is hardened to delegate to the
+-- same safe v2 boundary. This preserves compatibility without preserving the
+-- public-parent visibility regression in the restored Aug-4 implementation.
 
 create index if not exists idx_peek_requests_requester_activity
   on public.peek_requests (requester_id, created_at desc, id desc)
@@ -195,10 +194,7 @@ stable
 security invoker
 set search_path = ''
 as $wrapper$
-  select *
-  from private.peek_thread_page_v2(
-    $1, $2, $3, $4, $5, $6, $7, $8
-  );
+  select * from private.peek_thread_page_v2($1, $2, $3, $4, $5, $6, $7, $8);
 $wrapper$;
 
 revoke all on function public.peek_thread_page_v2(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
@@ -208,6 +204,64 @@ grant execute on function public.peek_thread_page_v2(uuid, uuid, text, text, int
 
 comment on function public.peek_thread_page_v2(uuid, uuid, text, text, integer, timestamptz, uuid, integer) is
   'Privacy-safe bounded Peek Request feed with caller-relative request/support state.';
+
+-- Keep the historical RPC safe for older clients. Its output stays unchanged;
+-- it simply drops the two v2 caller-state columns.
+create or replace function private.peek_thread_page(
+  p_listing_id uuid default null,
+  p_service_id uuid default null,
+  p_filter text default 'all',
+  p_sort text default 'most_wanted',
+  p_cursor_supporter_count integer default null,
+  p_cursor_created_at timestamptz default null,
+  p_cursor_id uuid default null,
+  p_limit integer default 20
+)
+returns table (
+  request_id uuid,
+  listing_id uuid,
+  service_id uuid,
+  category public.peek_request_category,
+  body text,
+  status public.peek_request_status,
+  supporter_count integer,
+  requested_by_label text,
+  created_at timestamptz,
+  answered_at timestamptz,
+  current_response_id uuid,
+  next_supporter_count integer,
+  next_created_at timestamptz,
+  next_id uuid
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $legacy$
+  select
+    request_id,
+    listing_id,
+    service_id,
+    category,
+    body,
+    status,
+    supporter_count,
+    requested_by_label,
+    created_at,
+    answered_at,
+    current_response_id,
+    next_supporter_count,
+    next_created_at,
+    next_id
+  from private.peek_thread_page_v2($1, $2, $3, $4, $5, $6, $7, $8);
+$legacy$;
+
+revoke all on function private.peek_thread_page(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
+  from public, anon, authenticated, service_role;
+grant execute on function private.peek_thread_page(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
+  to anon, authenticated, service_role;
+grant execute on function public.peek_thread_page(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
+  to anon, authenticated, service_role;
 
 -- Buyer activity ------------------------------------------------------------
 -- Requested and supported requests share one bounded newest-first feed. The
@@ -385,14 +439,3 @@ grant execute on function public.my_peek_request_activity_page(timestamptz, uuid
 
 comment on function public.my_peek_request_activity_page(timestamptz, uuid, integer) is
   'Authenticated bounded feed of Peek Requests the caller created or supports.';
-
--- Retire the legacy browser read identity. It remains available to service_role
--- so a release can be rolled back without deleting the implementation.
-revoke execute on function public.peek_thread_page(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
-  from anon, authenticated;
-revoke execute on function private.peek_thread_page(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
-  from anon, authenticated;
-grant execute on function public.peek_thread_page(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
-  to service_role;
-grant execute on function private.peek_thread_page(uuid, uuid, text, text, integer, timestamptz, uuid, integer)
-  to service_role;
