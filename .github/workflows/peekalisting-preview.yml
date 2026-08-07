@@ -1,9 +1,9 @@
-name: PeekaListing Preview
+name: PeekaListing Complete Stage Preview
 
 on:
   push:
     branches:
-      - claude/peekalisting-audit-ui0z6l
+      - integration/complete-current-stage
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build-and-deploy:
-    if: github.ref == 'refs/heads/claude/peekalisting-audit-ui0z6l'
+    if: github.ref == 'refs/heads/integration/complete-current-stage'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -59,27 +59,29 @@ jobs:
       VITE_FEATURE_MARKETING_EMAILS: "false"
       VITE_FEATURE_LISTING_EXPIRY: "false"
       VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
-      VITE_FEATURE_PREVIEW_FIXTURES: "false"
+      VITE_FEATURE_PREVIEW_FIXTURES: "true"
       VITE_PREVIEW_AUTH_BYPASS: "false"
       VITE_FEATURE_TOURS: "true"
       VITE_FEATURE_TOURS_PREVIEW: "true"
       TOURS_BACKEND_ENABLED: "true"
 
     steps:
-      - name: Check out exact triggering head
+      - name: Check out exact complete-stage head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ github.sha }}
 
-      - name: Verify authoritative preview source
+      - name: Verify complete-stage preview source
         shell: bash
         run: |
           set -euo pipefail
-          test "$GITHUB_REF_NAME" = "claude/peekalisting-audit-ui0z6l"
+          test "$GITHUB_REF_NAME" = "integration/complete-current-stage"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           grep -q '<title>PeekaListing Marketplace</title>' index.html
-          grep -q 'BusinessPublishingGate><CreateListing' src/App.jsx
-          echo "PeekaListing preview source verified: $GITHUB_REF_NAME@$GITHUB_SHA"
+          grep -q 'BusinessPublishingGate' src/App.jsx
+          grep -q 'BuyerPeekRequests' src/App.jsx
+          grep -q 'BusinessProfiles' src/App.jsx
+          echo "Complete-stage preview source verified: $GITHUB_REF_NAME@$GITHUB_SHA"
 
       - name: Verify staging Supabase isolation
         shell: bash
@@ -110,7 +112,10 @@ jobs:
       - name: Validate staging environment
         run: npm run validate:env
 
-      - name: Build current PeekaListing application
+      - name: Run current-stage contract suite
+        run: node --test ./tests/*.test.mjs
+
+      - name: Build complete PeekaListing application
         run: npm run build
 
       - name: Add SPA fallback
@@ -121,12 +126,12 @@ jobs:
         run: |
           set -euo pipefail
           cat > dist/preview-build.json <<EOF
-          {"product":"PeekaListing","branch":"$GITHUB_REF_NAME","sha":"$GITHUB_SHA","run_id":"$GITHUB_RUN_ID","staging_project":"bwgklpxoetrrkutottdb"}
+          {"product":"PeekaListing","branch":"$GITHUB_REF_NAME","sha":"$GITHUB_SHA","run_id":"$GITHUB_RUN_ID","staging_project":"bwgklpxoetrrkutottdb","scope":"complete-current-stage"}
           EOF
 
-          printf '\n<!-- product:PeekaListing branch:%s sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/index.html
+          printf '\n<!-- product:PeekaListing branch:%s sha:%s scope:complete-current-stage -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/index.html
           if [ -f dist/404.html ]; then
-            printf '\n<!-- product:PeekaListing branch:%s sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/404.html
+            printf '\n<!-- product:PeekaListing branch:%s sha:%s scope:complete-current-stage -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/404.html
           fi
 
           cat > dist/sw.js <<'EOF'
@@ -153,6 +158,6 @@ jobs:
         with:
           path: dist
 
-      - name: Deploy fresh PeekaListing preview
+      - name: Deploy complete PeekaListing preview
         id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
