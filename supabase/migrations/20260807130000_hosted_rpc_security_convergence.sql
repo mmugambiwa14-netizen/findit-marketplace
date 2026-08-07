@@ -2,9 +2,9 @@ begin;
 
 -- Hosted staging was created from an older, partially applied migration line.
 -- Converge the pre-curated-marketplace authenticated RPC boundary without
--- rewriting the later Aug-6/Aug-7 RPCs that are intentionally handled by the
--- 20260807042000 boundary. Fresh canonical databases are already converged, so
--- this migration validates/no-ops there.
+-- rewriting the later Aug-6/Aug-7 RPCs. On a fresh canonical database the
+-- normal 20260805073000 and 20260807042000 boundaries have already converged
+-- these objects, so this migration validates and no-ops there.
 
 create temporary table findit_20260807130000_targets(signature text primary key) on commit drop;
 insert into findit_20260807130000_targets(signature) values
@@ -36,7 +36,6 @@ declare
   private_oid regprocedure;
   function_name text;
   identity_types text;
-  identity_arguments text;
   full_arguments text;
   result_type text;
   language_name text;
@@ -47,7 +46,6 @@ declare
   function_cost real;
   function_rows real;
   nargs smallint;
-  nargdefaults smallint;
   anon_execute boolean;
   authenticated_execute boolean;
   service_execute boolean;
@@ -84,7 +82,6 @@ begin
     select
       p.proname,
       oidvectortypes(p.proargtypes),
-      pg_get_function_identity_arguments(p.oid),
       pg_get_function_arguments(p.oid),
       pg_get_function_result(p.oid),
       l.lanname,
@@ -95,15 +92,13 @@ begin
       p.procost,
       p.prorows,
       p.pronargs,
-      p.pronargdefaults,
       has_function_privilege('anon', p.oid, 'EXECUTE'),
       has_function_privilege('authenticated', p.oid, 'EXECUTE'),
       has_function_privilege('service_role', p.oid, 'EXECUTE')
     into
-      function_name, identity_types, identity_arguments, full_arguments,
-      result_type, language_name, volatility, returns_set, is_strict,
-      parallel_mode, function_cost, function_rows, nargs, nargdefaults,
-      anon_execute, authenticated_execute, service_execute
+      function_name, identity_types, full_arguments, result_type, language_name,
+      volatility, returns_set, is_strict, parallel_mode, function_cost,
+      function_rows, nargs, anon_execute, authenticated_execute, service_execute
     from pg_proc p
     join pg_language l on l.oid = p.prolang
     where p.oid = public_oid::oid;
@@ -170,7 +165,8 @@ end;
 $migration$;
 
 -- Staging carried the pre-correction SECURITY DEFINER variant. Restore the
--- canonical invoker implementation exactly.
+-- canonical invoker implementation exactly; this is also idempotent after the
+-- canonical Aug-4 correction.
 create or replace function public.discover_category_counts()
 returns table(category_key text, item_count bigint)
 language sql
@@ -210,7 +206,10 @@ $$;
 revoke all on function public.discover_category_counts() from public;
 grant execute on function public.discover_category_counts() to anon, authenticated;
 
--- The next canonical boundary is deliberately locked to these 17 later RPCs.
+-- A drifted hosted database reaches this migration before the canonical Aug-7
+-- wrapper hardening and therefore has the locked 17 later privileged RPCs.
+-- A fresh canonical reset reaches it after that hardening and therefore has 0.
+-- Reject every other state.
 do $migration$
 declare
   actual_count integer;
@@ -223,11 +222,11 @@ begin
     and p.prosecdef
     and has_function_privilege('authenticated', p.oid, 'EXECUTE');
 
-  if actual_count <> 17 then
-    raise exception '20260807130000 expected 17 remaining authenticated public SECURITY DEFINER RPCs, found %', actual_count;
+  if actual_count not in (0, 17) then
+    raise exception '20260807130000 expected canonical 0 or hosted-pre-hardening 17 authenticated public SECURITY DEFINER RPCs, found %', actual_count;
   end if;
 
-  if exists (
+  if actual_count = 17 and exists (
     select p.oid::regprocedure::text
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
