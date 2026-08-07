@@ -21,6 +21,56 @@ values
   ('00000000-0000-4000-8000-000000001101', 'Harare', 'city', 'ZW', true),
   ('00000000-0000-4000-8000-000000001102', 'Retired Area', 'city', 'ZW', false);
 
+-- These fixtures are setup, but they still cross the authoritative curated
+-- publisher boundaries: listings via enforce_curated_listing_publisher (matches
+-- on kind, requires seller_id = auth.uid()) and services via
+-- enforce_curated_service_publisher (requires provider_id = auth.uid() and an
+-- approved 'service' category). Both belong to the same user here, so one
+-- fixture-auth window covers both inserts and is cleared before any assertion.
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
+)
+values (
+  '00000000-0000-4000-8000-000000001501',
+  '00000000-0000-4000-8000-000000001001',
+  'V1 Owner Trading',
+  'V1 Owner',
+  'v1-owner@example.test',
+  '+263700001501',
+  'ZW',
+  'Harare',
+  'Approved fixture business used only to certify the RLS matrix boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+)
+values
+  (
+    '00000000-0000-4000-8000-000000001502',
+    '00000000-0000-4000-8000-000000001501',
+    '00000000-0000-4000-8000-000000001001',
+    'car',
+    'approved'
+  ),
+  (
+    '00000000-0000-4000-8000-000000001503',
+    '00000000-0000-4000-8000-000000001501',
+    '00000000-0000-4000-8000-000000001001',
+    'service',
+    'approved'
+  );
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000001001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000001001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, price, status, location_id
 )
@@ -71,6 +121,9 @@ values
     'mechanic',
     'paused'
   );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 insert into public.business_profiles (
   id, user_id, company_name, business_type, registration_number, phone, verified

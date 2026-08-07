@@ -71,6 +71,45 @@ values
     now(), now()
   );
 
+-- Fixture setup, but it still crosses enforce_curated_listing_publisher, which
+-- matches on kind and requires seller_id = auth.uid(). Auth is opened only for
+-- this insert and cleared before the Tour assertions below.
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
+)
+values (
+  '00000000-0000-4000-8000-000000009501',
+  '00000000-0000-4000-8000-000000009001',
+  'Tour Owner Motors',
+  'Tour Owner',
+  'tour-owner@example.test',
+  '+263700009501',
+  'ZW',
+  'Harare',
+  'Approved fixture business used only to certify Tour foundation boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status
+)
+values (
+  '00000000-0000-4000-8000-000000009502',
+  '00000000-0000-4000-8000-000000009501',
+  '00000000-0000-4000-8000-000000009001',
+  'car',
+  'approved'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000009001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000009001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   category, listing_type, status
@@ -87,6 +126,9 @@ insert into public.listings (
   'sale',
   'available'
 );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 select extensions.throws_matching(
   $$
