@@ -1,0 +1,60 @@
+vertical,attribute,required_by_brief,captured_in_ui,stored_in_db,db_location,server_validated,filterable,indexed,displayed,searchable,safely_exposed,notes
+listing_core,title,yes,yes,yes,listings.title,"yes — 10-160 chars (0046)",yes,"yes — idx_listings_title_trgm gin_trgm_ops",yes,yes,yes,
+listing_core,description,yes,yes,yes,listings.description,"yes — 50-5000 chars (0046)",no,no,yes,partial,yes,
+listing_core,price,yes,yes,yes,"listings.price numeric(14,2)","yes — >0 and <=999999999999.99 (0046); listings_price_nonnegative (0013:163)",yes,"yes — idx_listings_price",yes,no,yes,exact decimal type
+listing_core,currency,yes,yes,yes,listings.currency,"yes — ^[A-Z]{3}$ and is_supported_listing_currency(country,currency)",partial,no,yes,no,yes,explicit per row; native_price/native_currency retained
+listing_core,category,yes,yes,yes,listings.category,"yes — must be an active leaf of public.categories matching marketplace_kind",yes,"yes — idx_listings_kind_status",yes,yes,yes,121 leaf categories
+listing_core,listing_type (sale/rent),yes,yes,yes,listings.listing_type,"yes — in ('sale','rent')",yes,no,yes,no,yes,
+listing_core,status,yes,n/a,yes,listings.status,"yes — enum; owner transitions via owner_transition_listing only",yes,"yes — idx_listings_kind_status",yes,no,yes,protect_listing_managed_fields blocks owner tampering
+listing_core,location,yes,yes,yes,"listings.location_id FK, country_code, public_latitude/longitude, public_location_label","yes — location must exist and be is_active",yes,"yes — idx_listings_location",yes,yes,yes,public_* columns are the coarsened projection; see Phase 3
+listing_core,exact coordinates,n/a,yes,yes,"listings.latitude/longitude; listing_private_locations","yes",no,no,no,no,"MUST NOT be public — verified in Phase 3",privacy-critical
+listing_core,photos,yes,yes,yes,listings.photos jsonb + listing_media,"yes — 1-20 items; each proven against listing_upload_intents and storage.objects owner/mimetype/byte_size",no,no,yes,no,yes,strong ownership proof
+listing_core,contact_phone,yes,yes,yes,listings.contact_phone,"yes — <=40 chars; at least one contact method required",no,no,"reveal only",no,"yes — revoked from anon (0109) and authenticated (0115)",behind audited rate-limited reveal RPC
+listing_core,contact_whatsapp,yes,yes,yes,listings.contact_whatsapp,"yes — <=40 chars",no,no,"reveal only",no,"yes — revoked from anon and authenticated",+263 normalization checked in Phase 5
+listing_core,contact_email,yes,yes,yes,listings.contact_email,"yes — <=254 chars and email regex",no,no,"reveal only",no,"yes — revoked from anon and authenticated",
+listing_core,has_contact_* flags,n/a,n/a,yes,"listings.has_contact_phone/whatsapp/email (generated stored)",n/a,no,no,yes,no,yes,"generated columns so cards render affordances without values"
+listing_core,views,no,n/a,yes,listings.views,"yes — listings_views_nonnegative (0013:165); owner cannot mutate",no,no,yes,no,yes,inflation risk assessed in Phase 6
+listing_core,attributes (registry document),yes,NO,"column exists but NEVER written","listings.attributes jsonb","envelope only — is_valid_attribute_document (0114)",no,no,no,no,n/a,"F-019/F-020 — registry is dead code; column holds default {version:1,values:{}} permanently"
+property,property_type,yes,yes,yes,property_details.property_type,"enum cast; unknown values coalesce to 'other'",partial,no,yes,no,yes,
+property,bedrooms,yes,yes,yes,property_details.bedrooms,"type only + property_details_counts_nonnegative (0013:171); no upper bound",yes,no,yes,no,yes,
+property,bathrooms,yes,yes,yes,property_details.bathrooms,"same as bedrooms",yes,no,yes,no,yes,
+property,size_sqm,yes,yes,yes,property_details.size_sqm,"property_details_size_positive (0013:173)",partial,no,yes,no,yes,single size field
+property,land size vs built size,yes,no,NO,—,no,no,no,no,no,n/a,F-021 — cannot distinguish land area from built area
+property,size units,yes,no,NO,—,no,no,no,no,no,n/a,F-021 — sqm assumed; no acres/hectares for farms despite a1_farm/a2_farm categories
+property,parking,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+property,tenure / title,yes,no,NO,—,no,no,no,no,no,n/a,"F-021 — material for fraud-sensitive property; also relevant to Phase 8"
+property,utilities (borehole/solar/water/ZESA/sewer),yes,no,NO,—,no,no,no,no,no,n/a,"F-021 — high market relevance in Zimbabwe"
+property,furnishing,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+property,availability date,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+property,province/city/suburb,yes,partial,partial,"via locations FK only",yes,yes,yes,yes,yes,yes,"no free-text suburb; granularity limited to the locations registry"
+car,brand,yes,yes,yes,car_details.brand,"trim only; no allowlist",partial,no,yes,partial,yes,free text — no canonical make list
+car,model,yes,yes,yes,car_details.model,"trim only",partial,no,yes,partial,yes,free text
+car,year,yes,yes,yes,car_details.year,"car_details_year_plausible (0013:169)",yes,no,yes,no,yes,
+car,mileage,yes,yes,yes,car_details.mileage,"car_details_mileage_nonnegative (0013:167)",yes,no,yes,no,yes,
+car,fuel_type,yes,yes,yes,car_details.fuel_type,"enum car_fuel_type",yes,no,yes,no,yes,
+car,transmission,yes,yes,yes,car_details.transmission,"enum car_transmission",yes,no,yes,no,yes,
+car,condition,yes,yes,yes,car_details.condition,"lower/trim free text — no enum",partial,no,yes,no,yes,"inconsistent with machinery_details.condition which IS an enum"
+car,variant,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+car,engine size,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+car,drivetrain,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+car,body type,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+car,duty / import status,yes,no,NO,—,no,no,no,no,no,n/a,"F-021 — brief calls this materially important for this market"
+car,VIN / chassis,"privacy-sensitive",no,NO,—,n/a,n/a,n/a,n/a,n/a,"correctly absent","privacy-positive: never collected so cannot leak"
+machinery,machinery_type,yes,yes,yes,machinery_details.machinery_type,"enum; unknown coalesces to 'other'",partial,no,yes,no,yes,
+machinery,brand,yes,yes,yes,machinery_details.brand,"trim only",partial,no,yes,partial,yes,
+machinery,model,yes,yes,yes,machinery_details.model,"trim only",partial,no,yes,partial,yes,
+machinery,year,yes,yes,yes,machinery_details.year,"machinery_details_year_plausible (0013:177)",yes,no,yes,no,yes,
+machinery,usage_hours (engine hours),yes,yes,yes,machinery_details.usage_hours,"machinery_details_usage_nonnegative (0013:175)",yes,no,yes,no,yes,"CORRECT — engine hours not mileage, as the brief requires"
+machinery,condition,yes,yes,yes,machinery_details.condition,"enum machinery_condition",yes,no,yes,no,yes,"stronger than car_details.condition free text"
+machinery,capacity / payload,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+machinery,axles,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+machinery,attachments,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+machinery,certification,yes,no,NO,—,no,no,no,no,no,n/a,"F-021 — relevant to Phase 8 trust claims"
+machinery,operational state,yes,partial,partial,"machinery_details.condition enum",yes,yes,no,yes,no,yes,
+machinery,transport notes,yes,no,NO,—,no,no,no,no,no,n/a,F-021
+service,service category,yes,yes,yes,"services + categories (4 service leaves)",yes,yes,no,yes,yes,yes,
+service,area / location,yes,yes,yes,services location columns,yes,partial,no,yes,partial,yes,"service_radius flag is off — VITE_FEATURE_SERVICE_RADIUS defaults false"
+service,business binding,yes,yes,yes,"services.provider_id; business_profiles",yes,no,no,yes,no,yes,verified in Phase 5 FLOW-13/14
+service,description,yes,yes,yes,services.description,yes,no,no,yes,partial,yes,
+service,public/private contacts,yes,yes,yes,"services.contact_* + has_contact_* generated",yes,no,no,"reveal only",no,"yes — revoked from anon (0109) and authenticated (0115)",
+service,attributes (registry document),yes,NO,"column exists but NEVER written",services.attributes jsonb,"envelope only",no,no,no,no,n/a,F-019/F-020
