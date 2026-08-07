@@ -2,29 +2,34 @@
 
 Updated: 2026-08-07
 Canonical source of truth: `main`
+Promotion PR: `#34`
+Promotion merge: `c7ea23d1465aa37e9e0481a9874fffb21e86ffdd`
 
-This ledger prevents historical branches from being treated as active product lines. Branch deletion must occur only after the final release-certification PR merges and any explicitly retained package is reconciled.
+This ledger prevents historical branches from being treated as active product lines. New PeekaListing product work starts from `main` only.
 
-## Keep
+## Canonical
 
 - `main` — sole canonical product branch.
-- `integration/final-release-certification` — temporary active Stage 6 branch; delete after merge.
-- `backup/main-pre-production-promotion-2026-08-05` — retain until the first production release and rollback window close.
 
-## Retain temporarily for isolated reconciliation
+## Temporary identical alias
 
-- `feature/peek-threads-phase-3` / PR #4 — contains a unique five-file real-time conversation update package. Do not merge wholesale; port only if current messaging certification shows it is still required.
-- `feature/contextual-permissions` / PR #5 — contains a unique contextual camera-permission education package. Explicitly deferred from the release-certification milestone and must be rebased or ported separately.
+- `integration/complete-current-stage` — certification branch used by PR #34. After merge it was fast-forwarded to canonical `main` and verified identical. It is not an independent product source and should be deleted when branch-ref deletion is available.
 
-## Closed after controlled reconciliation
+## Retain only for rollback provenance
 
-- PR #3 / `continuation/release-certification-ci` — replaced by the Stage 6 release workflow.
-- PR #6 / `claude/repo-code-review-fu5wgc` — security, MFA and database work was ported through controlled PRs #21–#26; direct merge is unsafe.
-- PR #7 / `brand/peekalisting-binoculars` — canonical logo, wordmark, browser metadata, PWA manifest, service-worker identity and push fallbacks were ported into PR #32.
+- `backup/main-pre-production-promotion-2026-08-05` — retain until the first production release and rollback window close, then delete.
 
-## Safe to delete after Stage 6 merge
+## Reconciled but deliberately not merged wholesale
 
-These branches represent work already merged or reconciled into canonical `main`:
+- `feature/peek-threads-phase-3` / PR #4 — older Supabase Realtime conversation implementation conflicts with the current bounded polling/refetch messaging architecture. Preserve only as Git history; do not resume product work from it.
+- `feature/contextual-permissions` / PR #5 — the old branch package is superseded by the newer contextual permission implementation already active on `main`, including camera education/recovery plus shared location and notification permission foundations. Do not merge the old branch wholesale.
+- `develop` — reviewed safe packages were ported through controlled integrations. The branch also contains stale Peek deletions and superseded deployment/recommendation assumptions. Never merge wholesale.
+- `continuation/contract-gate-repair` — relevant repository-hygiene and Peek Request repair content is already represented on `main`; historical commit ancestry is not required.
+- `integration/peek-fulfilment-journey-certification` — historical ancestry differs, but the fulfilment migrations/contracts are present on `main` and current journey certification passes.
+
+## Reconciled and safe to delete
+
+These branches are already contained, superseded, or independently re-certified by canonical `main`:
 
 - `brand/peekalisting-binoculars`
 - `continuation/release-certification-ci`
@@ -33,6 +38,7 @@ These branches represent work already merged or reconciled into canonical `main`
 - `integration/cloudflare-provisioning`
 - `integration/critical-high-infrastructure`
 - `integration/develop-security-reconciliation`
+- `integration/final-release-certification`
 - `integration/final-security-certification-gates`
 - `integration/input-and-url-security-tests`
 - `integration/listing-publication-journey-certification`
@@ -41,12 +47,8 @@ These branches represent work already merged or reconciled into canonical `main`
 - `integration/safety-operations-journey-certification`
 - `integration/security-boundary-tests-2`
 - `integration/verified-business-journey-certification`
-
-## Historical branches requiring deletion after a final comparison
-
-- `develop` — never merge wholesale; all accepted security work has been reconciled. Preserve only through Git history.
-- `feature/listing-intelligence-foundation` — former source-of-truth branch, now superseded by `main`.
-- `feature/curated-business-marketplace` — superseded by the verified-business flow in `main`.
+- `feature/listing-intelligence-foundation`
+- `feature/curated-business-marketplace`
 - `preview/integration`
 - `release/production-readiness-2026-08-05`
 - `continuation/contract-gate-repair`
@@ -55,10 +57,25 @@ These branches represent work already merged or reconciled into canonical `main`
 - `claude/peekalisting-handoff-vklm8s`
 - `claude/repo-code-review-fu5wgc`
 
+The old feature branches listed in the previous section are also eligible for deletion once their historical value is no longer needed; their code must not be treated as newer than `main` merely because Git reports unique historical commits.
+
+## Closed controlled reconciliation packages
+
+- PR #3 / `continuation/release-certification-ci` — replaced by the current release certification system.
+- PR #6 / `claude/repo-code-review-fu5wgc` — security, MFA and database work was ported through controlled reconciliation; direct merge remains unsafe.
+- PR #7 / `brand/peekalisting-binoculars` — canonical logo, wordmark, browser metadata, PWA identity and service-worker branding are on `main`.
+- PR #34 / `integration/complete-current-stage` — merged after full current-stage repository/database/journey certification and canonical preview promotion.
+
+## Preview branch rule
+
+GitHub Pages must deploy from `main` only through `.github/workflows/peekalisting-preview.yml`.
+
+The legacy Pages workflows are absent. Historical preview branches must never be re-enabled as Pages deployment sources.
+
 ## Dependabot branches
 
 Close or merge through normal dependency review; do not treat them as product source branches.
 
 ## External limitation
 
-The current GitHub connector cannot delete branch refs. Actual deletion remains a GitHub UI/CLI action after PR #32 is merged.
+The current GitHub connector can fast-forward branch refs but does not expose branch-ref deletion. Historical refs therefore remain until deleted through a GitHub surface that supports deletion. Their existence does not change the source-of-truth rule: `main` is canonical.
