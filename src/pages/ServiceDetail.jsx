@@ -74,6 +74,7 @@ export default function ServiceDetail() {
           badges={(
             <>
               {category && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{category.label}</Badge>}
+              {service.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
               {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
             </>
           )}
