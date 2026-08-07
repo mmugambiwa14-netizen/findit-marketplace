@@ -13,6 +13,7 @@ import { getMessageInboxPage } from '@/services/messagingService';
 import { cn } from '@/lib/utils';
 
 const PAGE_SIZE = 30;
+const INBOX_REFRESH_MS = 10_000;
 
 function statusLabel(status) {
   return {
@@ -43,6 +44,10 @@ export default function Inquiries() {
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(user?.id) && !conversationId,
     staleTime: 15_000,
+    refetchInterval: INBOX_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
 
   const conversations = useMemo(() => {
@@ -59,7 +64,7 @@ export default function Inquiries() {
         <div className="mx-auto flex min-h-[76px] max-w-3xl items-center gap-3.5 px-4 py-4 sm:py-3.5">
           <button type="button" onClick={() => navigate('/profile')} aria-label="Back to profile" className="clay-icon h-11 w-11"><ArrowLeft className="h-5 w-5" /></button>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.17em] text-primary">FindIt inbox</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.17em] text-primary">PeekaListing inbox</p>
             <h1 className="mt-1 text-2xl font-black tracking-[-0.025em]">Chats</h1>
           </div>
         </div>
