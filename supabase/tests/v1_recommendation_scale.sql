@@ -15,6 +15,61 @@ values (
 insert into public.locations (id, name, type, country_code, is_active)
 values ('10000000-0000-4000-8000-000000000002', 'Scale Test City', 'city', 'ZW', true);
 
+-- The scale fixture is setup, but every listing row still has to cross the
+-- authoritative curated publisher boundary exactly as runtime does.
+-- enforce_curated_listing_publisher() matches on the listing's kind, so this
+-- seller needs an approved 'car' category and a matching JWT subject. Fixture
+-- auth is opened only for the inserts and cleared before any worker or
+-- assertion runs.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
+values (
+  '10000000-0000-4000-8000-000000009001',
+  '10000000-0000-4000-8000-000000000001',
+  'Recommendation Scale Motors',
+  'Recommendation Scale',
+  'recommendation-scale@example.test',
+  '+263700009001',
+  'ZW',
+  'Scale Test City',
+  'Approved fixture business used only to certify recommendation scale boundaries.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id,
+  business_application_id,
+  user_id,
+  category,
+  status
+)
+values (
+  '10000000-0000-4000-8000-000000009002',
+  '10000000-0000-4000-8000-000000009001',
+  '10000000-0000-4000-8000-000000000001',
+  'car',
+  'approved'
+);
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id,
   kind,
@@ -76,6 +131,9 @@ select
   (case when series % 2 = 0 then 'automatic' else 'manual' end)::car_transmission,
   'used'
 from generate_series(1, 2000) series;
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 -- Projection is asynchronous (queue-based, not a synchronous write-time
 -- side effect); drain the queue with the same bounded worker the production
@@ -174,6 +232,15 @@ where category_key = 'car'
 order by published_at desc, listing_id desc
 limit 25;
 
+-- The concurrent-insert row crosses the same curated publisher boundary, so
+-- reopen fixture auth for just this insert.
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id,
   kind,
@@ -225,6 +292,9 @@ values (
   'automatic',
   'used'
 );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 select processed_count from public.process_listing_recommendation_projection_jobs(10, 8);
 

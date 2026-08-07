@@ -27,7 +27,8 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - Recommendation geospatial certification: **BEHAVIOR PROVEN** — Recommendation database-gates run 31159888350 passes `v1_recommendation_eligibility_geospatial.sql` 19/19 through the curated Cars publisher boundary.
 - Recommendation publication-boundary certification: **BEHAVIOR PROVEN** — the fixture repair worked. Run 31160257131 passes `v1_recommendation_publication_boundary.sql` 14/14 through the authoritative curated Cars publisher trigger, with geospatial holding at 19/19.
 - F-073: **BEHAVIOR PROVEN** — Recommendation database-gates run 31162602508 passes `v1_recommendation_services.sql` **29/29**. The suite asserted the pre-activation disabled catalog and contradicted the authoritative release-control migration; it now certifies post-activation behavior and still proves the disabled degradation path.
-- F-074: **REPAIRED, AWAITING CI** — `v1_recommendation_service_operations.sql` test 16 carried the same pre-activation expectation. Replaced with a metadata/policy-table drift check.
+- F-074: **BEHAVIOR PROVEN** — run 31162845487 passes `v1_recommendation_service_operations.sql` **37/37** with services holding at 29/29. The stale pre-activation expectation is now a metadata/policy-table drift check.
+- F-075: **REPAIRED, AWAITING CI** — `v1_recommendation_scale.sql` fixture did not cross the curated publisher boundary. Same class as the publication-boundary repair; same proven pattern applied.
 - F-014, F-049, F-059: DONE.
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
@@ -138,19 +139,52 @@ true, and `active_service_policy_count` equals the live count of enabled policie
 detector between the metadata 0100 writes and the table it describes — strictly more useful than the
 obsolete assertion, and it holds the plan at 37 assertions. No control is weakened.
 
+## Evidence from Recommendation database-gates run 31162845487
+
+Dispatched on `claude/peekalisting-remediation-handoff-d1mr2x` @ `2b5b651`.
+
+- `v1_recommendation_service_operations.sql` passed **37/37**, closing F-074.
+- `v1_recommendation_services.sql` held at **29/29**; publication-boundary 14/14, geospatial 19/19,
+  foundation 62/62, projection-queue 20/20 all held.
+- Next exact failure: `v1_recommendation_scale.sql:57` — a hard SQL error, not an assertion failure.
+  `ERROR: Authentication required` raised from `public.enforce_curated_listing_publisher()` line 7,
+  aborting before `plan()` ("No plan found in TAP output", exit 3).
+
+## F-075 — scale fixture did not cross the curated publisher boundary
+
+Identical class to the publication-boundary repair already proven on this branch, in a third file. The
+scale suite bulk-inserts 2,000 `kind = 'car'` listings plus one later concurrent-insert row directly into
+`public.listings`, and the `listings_enforce_curated_publisher` BEFORE INSERT trigger rejects every one of
+them without an authenticated publisher.
+
+`enforce_curated_listing_publisher()` matches on **`new.kind`**, not the `category` column
+(`20260806070000_enforce_curated_publishing_at_database_boundary.sql:11`), so `category = 'scale-cars'` is
+irrelevant — the seller needs an approved **`car`** category and `new.seller_id = auth.uid()`.
+
+**Repair.** Applied the same proven pattern: an approved fixture business plus a `car`
+`business_category_approvals` row for the fixture seller, with JWT claims set only across each insert and
+cleared immediately after. Both insert sites are bracketed separately, so the projection worker and every
+assertion still run with no fixture auth in scope. The fixture writes **through** the authoritative trigger
+rather than around it — no trigger is disabled, no direct-table privilege is granted, and no curated
+publishing rule is weakened.
+
 ## Exact next action
 
-1. Run Recommendation database gates with the F-074 service-operations repair.
-2. Require `v1_recommendation_service_operations.sql` to complete its full 37-assertion TAP plan while
-   services holds at 29/29, publication-boundary at 14/14, geospatial at 19/19, foundation at 62/62 and
-   projection-queue at 20/20.
+1. Run Recommendation database gates with the F-075 scale-fixture repair.
+2. Require `v1_recommendation_scale.sql` to reach and complete its TAP output (it uses `no_plan()`, so the
+   pass condition is a clean run to `finish()`), while service-operations holds at 37/37 and services at
+   29/29.
 3. Continue the database matrix to the next exact failure and repair only that boundary. Remaining unproven
    suites in runner order (`scripts/run-recommendation-database-certification.sh:8-22`):
-   `v1_recommendation_scale.sql`, `v1_contextual_ecosystem_intelligence.sql`,
-   `v1_recommendation_personalization.sql`, `v1_recommendation_analytics.sql`,
-   `v1_recommendation_related_services.sql`. Expect the pre-activation staleness class to recur in
-   `v1_recommendation_personalization.sql` and `v1_recommendation_related_services.sql`, both of which
-   reference `service_disabled` — verify each against the migration chain before changing anything.
+   `v1_contextual_ecosystem_intelligence.sql`, `v1_recommendation_personalization.sql`,
+   `v1_recommendation_analytics.sql`, `v1_recommendation_related_services.sql`.
+
+**Two recurring classes to expect.** (a) *Pre-activation staleness* — assertions written before
+`0100_release_control_consistency.sql` enabled the service catalog; likely in
+`v1_recommendation_personalization.sql` and `v1_recommendation_related_services.sql`, which both reference
+`service_disabled`. (b) *Fixtures that bypass the curated publisher boundary* — any suite inserting directly
+into `public.listings` or `public.services`. Verify each against the migration chain before changing
+anything, and repair fixtures by crossing the boundary, never by disabling it.
 4. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken curated publishing, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract merely to turn CI green.
 5. When all database suites pass, record final CI evidence and close proof-chain findings plus reopened F-012/F-058/F-060 as supported.
 6. Proceed to WP-05/F-033 only after WP-04 proof-chain closure.
