@@ -87,7 +87,7 @@ export default function ServiceDetail() {
             </div>
             <div className="mt-6 space-y-5">
               <PeekThreadsSection parentType="service" parentId={service.id} listingKind="service" ownerId={service.provider_id} guard={guard} />
-              <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. FindIt does not handle service payments.</SafetyPanel>
+              <SafetyPanel>Agree on the scope, timeline and pricing in writing before work begins. PeekaListing does not handle service payments.</SafetyPanel>
             </div>
           </ListingTabSection>
 
@@ -100,7 +100,7 @@ export default function ServiceDetail() {
           </ListingTabSection>
 
           <ListingTabSection id="seller" title="Seller">
-            <ListingSeller name={service.provider_name || "FindIt service provider"} sellerId={service.provider_id} joinedAt={service.provider_joined_at} activeListingCount={service.provider_active_listing_count} actions={<ContactButtons listing={service} type="service" placement="browse" />} />
+            <ListingSeller name={service.provider_name || "PeekaListing service provider"} sellerId={service.provider_id} joinedAt={service.provider_joined_at} activeListingCount={service.provider_active_listing_count} actions={<ContactButtons listing={service} type="service" placement="browse" />} />
           </ListingTabSection>
         </ListingDetailTabs>
       </main>
