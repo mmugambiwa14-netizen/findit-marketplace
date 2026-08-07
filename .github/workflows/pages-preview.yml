@@ -1,4 +1,4 @@
-name: GitHub Pages Preview
+name: Canonical GitHub Pages Preview
 
 on:
   push:
@@ -23,6 +23,10 @@ jobs:
       NODE_ENV: production
       VITE_MODE: staging
       VITE_BASE_PATH: /findit-marketplace/
+      # GitHub Pages is a disposable preview surface. Mark it explicitly so the
+      # runtime removes stale PeekaListing/FindIt service workers and caches
+      # instead of allowing an old PWA shell to survive a new deployment.
+      VITE_PREVIEW_DEPLOYMENT: "true"
       VITE_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
       VITE_AUTH_GOOGLE_ENABLED: ${{ vars.FINDIT_AUTH_GOOGLE_ENABLED }}
@@ -63,8 +67,16 @@ jobs:
       VITE_FEATURE_TOURS: "true"
       VITE_FEATURE_TOURS_PREVIEW: "true"
     steps:
-      - name: Checkout
+      - name: Checkout canonical main HEAD
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Record canonical source
+        run: |
+          echo "Preview source branch: main"
+          echo "Preview source commit: $(git rev-parse HEAD)"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -83,6 +95,15 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Stamp preview provenance
+        run: |
+          {
+            echo "source_branch=main"
+            echo "source_commit=$(git rev-parse HEAD)"
+            echo "workflow_run=${GITHUB_RUN_ID}"
+            echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } > dist/preview-build.txt
 
       - name: Add SPA fallback
         run: node ./scripts/create-pages-spa-fallback.mjs dist "$VITE_BASE_PATH"
