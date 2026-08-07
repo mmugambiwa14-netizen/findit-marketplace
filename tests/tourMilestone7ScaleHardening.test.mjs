@@ -49,7 +49,7 @@ const [
   read('supabase/functions/tour-observability-monitor/index.ts'),
   read('supabase/config.toml'),
   read('.github/workflows/maintenance-workers.yml'),
-  read('.github/workflows/deploy-staging-pages.yml'),
+  read('.github/workflows/peekalisting-preview.yml'),
   read('src/repositories/adminRepository.js'),
   read('src/services/adminService.js'),
   read('src/pages/admin/AdminDashboard.jsx'),
@@ -194,15 +194,19 @@ test('observability scheduler requires its own secret and enforces metric retent
   assert.match(migration, /p_before > now\(\) - interval '30 days'/);
 });
 
-test('production Tours activation requires a named accepted staging record', () => {
+test('production Tours activation requires named acceptance while preview remains isolated staging', () => {
   assert.match(validator, /FINDIT_TOURS_RELEASE_ACCEPTED/);
   assert.match(validator, /FINDIT_TOURS_ACCEPTANCE_ID/);
   assert.match(validator, /tour-acceptance-/);
   assert.match(validator, /Tours must remain disabled in production/);
   assert.match(envExample, /FINDIT_TOURS_RELEASE_ACCEPTED=false/);
   assert.match(envExample, /FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET/);
-  assert.match(stagingWorkflow, /VITE_FEATURE_TOURS_PREVIEW/);
-  assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED/);
+  assert.match(stagingWorkflow, /integration\/complete-current-stage/);
+  assert.match(stagingWorkflow, /VITE_MODE: staging/);
+  assert.match(stagingWorkflow, /VITE_PREVIEW_DEPLOYMENT: "true"/);
+  assert.match(stagingWorkflow, /VITE_FEATURE_TOURS_PREVIEW: "true"/);
+  assert.match(stagingWorkflow, /TOURS_BACKEND_ENABLED: "true"/);
+  assert.doesNotMatch(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: "true"/);
 });
 
 test('scale smoke harnesses traverse multiple pages and enforce authorization', () => {
