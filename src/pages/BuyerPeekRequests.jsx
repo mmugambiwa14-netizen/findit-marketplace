@@ -1,8 +1,8 @@
 import { ArrowLeft, Inbox, Send } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import BuyerPeekRequestsQueue from '@/components/peekThreads/BuyerPeekRequestsQueue';
 import MyPeekRequestsQueue from '@/components/peekThreads/MyPeekRequestsQueue';
 import ResponsePeekBindingQueue from '@/components/peekThreads/ResponsePeekBindingQueue';
+import SellerPeekRequestsQueueLive from '@/components/peekThreads/SellerPeekRequestsQueueLive';
 import { cn } from '@/lib/utils';
 
 export default function BuyerPeekRequests() {
@@ -64,7 +64,7 @@ export default function BuyerPeekRequests() {
         ) : (
           <div className="-mx-4">
             <ResponsePeekBindingQueue />
-            <BuyerPeekRequestsQueue />
+            <SellerPeekRequestsQueueLive />
           </div>
         )}
       </main>
