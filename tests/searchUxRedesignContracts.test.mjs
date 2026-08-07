@@ -46,7 +46,7 @@ test('mobile search exposes labeled filters and sort with active-filter count', 
 
 test('price sorting remains unavailable until a listing currency is selected', () => {
   assert.match(sortSheet, /requiresCurrency/);
-  assert.match(sortSheet, /Price sorting needs a currency/);
+  assert.match(sortSheet, /Choose a listing currency in Filters before sorting by price/);
   assert.match(sortSheet, /disabled=\{disabled\}/);
   assert.match(searchPage, /!currency && PRICE_SORTS\.has\(normalizedSort\)/);
 });
