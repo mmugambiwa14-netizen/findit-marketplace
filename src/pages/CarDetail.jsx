@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Calendar, CheckCircle, Fuel, Gauge, MapPin, Palette, Settings, XCircle } from "lucide-react";
+import { AlertTriangle, Calendar, CheckCircle, Fuel, Gauge, Palette, Settings, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
 import ContactButtons from "@/components/listings/ContactButtons";
@@ -11,6 +11,7 @@ import ListingFeatureItem from "@/components/listings/ListingFeatureItem";
 import ListingMediaActions from "@/components/listings/ListingMediaActions";
 import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
+import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
@@ -67,21 +68,28 @@ export default function CarDetail() {
           <ListingMediaActions onShare={() => shareListing("car", car)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
         </div>
 
-        <div className="px-4 pb-5 pt-5 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
-            {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
-            {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
-          </div>
-          <p className="mt-4 text-3xl font-black tracking-tight text-primary sm:text-4xl">{variants.length > 1 && <span className="mr-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">From</span>}{format(activePrice)}</p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">{car.title}</h1>
-          {location && <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" />{location}</p>}
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"><span>Listed {listedAgo}</span><span aria-hidden="true">·</span><span>{Number(car.views || 0).toLocaleString()} views</span><span aria-hidden="true">·</span><ListingCode type="car" id={car.id} /></div>
-        </div>
+        <ListingSummary
+          badges={(
+            <>
+              {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
+              {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
+              {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
+            </>
+          )}
+          price={format(activePrice)}
+          pricePrefix={variants.length > 1 ? "From" : null}
+          title={car.title}
+          location={location}
+          metadata={[
+            `Listed ${listedAgo}`,
+            `${Number(car.views || 0).toLocaleString()} views`,
+            <ListingCode key="car-code" type="car" id={car.id} />,
+          ]}
+        />
 
         <ListingDetailTabs>
           <ListingTabSection id="listing-info" title="Listing info">
-            <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               <ListingFeatureItem icon={Calendar} label="Year" value={car.year} />
               <ListingFeatureItem icon={Gauge} label="Mileage" value={`${(car.mileage || 0).toLocaleString()} km`} />
               <ListingFeatureItem icon={Fuel} label="Fuel" value={car.fuel_type} />
