@@ -22,14 +22,24 @@ test('upload intent defaults to Main Peek and requires explicit Response Peek mo
   assert.match(repository, /peekKind: request\.peekKind \|\| 'main'/);
 });
 
-test('seller queue reuses the existing uploader and waits for moderation before answering', async () => {
+test('seller queue reuses the existing uploader and promises no moderation step', async () => {
   const queue = await read('src/components/peekThreads/BuyerPeekRequestsQueue.jsx');
   const uploader = await read('src/components/tours/TourUploader.jsx');
   const service = await read('src/services/responsePeekUploadService.js');
   assert.match(queue, /peekKind="response"/);
-  assert.match(queue, /The request remains pending while the video is processed and moderated/);
-  assert.match(queue, /It becomes answered automatically after approval/);
   assert.match(uploader, /uploadResponsePeek/);
   assert.match(service, /peekKind: 'response'/);
   assert.doesNotMatch(service, /bindResponsePeek/);
+
+  // The MVP removed human Peek moderation: a Response Peek publishes when
+  // processing succeeds, and safety is report-driven after publication. This test
+  // previously asserted the opposite, requiring the queue to tell sellers their
+  // upload "remains pending ... and moderated" and "becomes answered automatically
+  // after approval" (F-049).
+  //
+  // Asserting the absence rather than deleting the assertion, because the copy is
+  // still in the component and promising sellers an approval step that does not
+  // exist is a real defect, tracked as F-059. This is its proving test.
+  assert.doesNotMatch(queue, /moderat/i, 'seller queue must not promise a moderation step');
+  assert.doesNotMatch(queue, /after approval/i, 'seller queue must not promise an approval step');
 });

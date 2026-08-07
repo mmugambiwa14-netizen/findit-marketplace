@@ -81,9 +81,12 @@ test('admin report queue exposes Tour identity and exact video reasons', () => {
     assert.match(migration, new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
   assert.match(migration, /coalesce\(r\.tour_reason, r\.reason::text\)/);
-  assert.match(adminReports, /<SelectItem value="tour">Tours<\/SelectItem>/);
-  assert.match(adminReports, /Remove reported Tour/);
-  assert.match(adminReports, /Only the Tour video will be removed/);
+  // The report *value* stays "tour" because it is a database enum, but every label
+  // the operator reads was rebranded to Peek. This test asserted the old labels
+  // and so could never pass after the rename (F-049).
+  assert.match(adminReports, /<SelectItem value="tour">Peeks<\/SelectItem>/);
+  assert.match(adminReports, /Remove reported Peek/);
+  assert.match(adminReports, /Dismiss report and restore Peek/);
 });
 
 test('public users can report the video from catalogue and detail playback', () => {
@@ -114,7 +117,14 @@ test('admin review media uses a short-lived signed boundary and never exposes so
   assert.match(repository, /tour-admin-review-access/);
   assert.match(service, /getAdminTourReviewAccess/);
   assert.match(service, /featureFlags\.tours && !featureFlags\.toursPreview/);
-  assert.match(adminReports, /featureFlags\.tours \|\| featureFlags\.toursPreview/);
+  // Previously asserted the same feature gate in AdminReports.jsx. That gate moved
+  // out of the page and into requireTourAdministration() in the service, which every
+  // admin Tour call goes through -- a strictly stronger control, since a page-level
+  // check is bypassable and a service-level throw is not. Assert the real control
+  // rather than the page that used to duplicate it (F-049).
+  assert.match(service, /function requireTourAdministration\(\)/);
+  assert.match(service, /Tour administration is not enabled in this build/);
+  assert.match(service, /export function getAdminTourReviewAccess[\s\S]{0,120}requireTourAdministration\(\)/);
   assert.match(smoke, /non-admin cannot obtain moderation media/);
 });
 

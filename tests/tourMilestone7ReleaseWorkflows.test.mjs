@@ -84,13 +84,17 @@ test('staging deployment can expose preview or public Tours without weakening pr
   assert.match(stagingWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED/);
   assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: \$\{\{ vars\.FINDIT_TOURS_RELEASE_ACCEPTED \}\}/);
   assert.match(stagingWorkflow, /FINDIT_TOURS_ACCEPTANCE_ID: \$\{\{ vars\.FINDIT_TOURS_ACCEPTANCE_ID \}\}/);
+  // VITE_FEATURE_INTERNATIONAL_LISTING was dropped from this list during F-049.
+  // It is deliberately "false" in staging *and* in release-candidate-gates.yml:33,
+  // because the MVP is Zimbabwe-first. The workflow is correct and the expectation
+  // was stale, so the test moved to match the decision rather than the reverse.
   for (const requiredFlag of [
     'VITE_FEATURE_GOOGLE_OAUTH',
-    'VITE_FEATURE_INTERNATIONAL_LISTING',
     'VITE_FEATURE_MANUAL_LOCATION',
     'VITE_FEATURE_CURRENT_LOCATION',
     'VITE_FEATURE_REPORTING',
   ]) assert.match(stagingWorkflow, new RegExp(`${requiredFlag}: "true"`));
+  assert.match(stagingWorkflow, /VITE_FEATURE_INTERNATIONAL_LISTING: "false"/);
   for (const closedFlag of [
     'VITE_FEATURE_PREVIEW_FIXTURES',
     'VITE_PREVIEW_AUTH_BYPASS',

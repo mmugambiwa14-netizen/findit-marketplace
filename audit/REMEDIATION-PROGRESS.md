@@ -98,6 +98,7 @@ All `NOT-STARTED` except as noted. Per-finding rows in `audit/findings-status.cs
 
 | WP | Findings | Status | Commit | Proving test | Result |
 |---|---|---|---|---|---|
+| WP-09 | F-049 | **DONE** | *next commit* | both `node --test` suites | `LOCAL-EXEC` **PASS** — contracts 14 → **11** fail; **security 41/41, fully green** |
 | WP-10 | F-014 | **DONE** | `8dc68fd` | `npm run typecheck` + `typecheck:active` | `LOCAL-EXEC` **PASS** — both exit 0 (were exit 2 / 10 errors) |
 
 ### Findings discovered *after* the audit
@@ -108,11 +109,16 @@ made those steps run, and they immediately reported a defect the audit never had
 | ID | Sev | WP | Title |
 |---|---|---|---|
 | **F-058** | P2 | WP-02 | `src/lib/traceContext.js:15,18` calls `globalThis.sessionStorage` directly instead of going through the guarded `src/lib/browserStorage.js` boundary. Fails `npm run audit:product-surface` with `UNSAFE_BROWSER_STORAGE`. |
+| **F-059** | P2 | WP-09 | `BuyerPeekRequestsQueue.jsx:193,277` tells sellers a Response Peek *"remains open while … moderated"* and *"becomes answered only after approval"*. **The MVP has no Peek moderation** — this promises users a step that does not exist. Proving test already written (contract `508`). |
+| **F-060** | P2 | WP-02 | `buyer-journey-certification.yml` does not normalize `package-lock.json` before install, unlike every other locked workflow. Supply-chain hygiene. |
+| **F-061** | P2 | WP-02 | `pages-preview.yml` pins `actions/checkout@v4` — a **mutable tag** — where every other workflow pins an immutable commit SHA. A moved tag silently changes what CI executes. |
 
 **Numbering:** the audit used `F-001`…`F-057` with `F-032` withdrawn (56 live). New findings continue from
 **`F-058`**. They live in `findings-status.csv` only — `findings.csv` stays frozen at the audit baseline.
 
-**Totals:** 57 findings — **2 DONE (F-013, F-014) · 0 PARTIAL · 0 BLOCKED · 55 NOT-STARTED**
+**F-060 and F-061 are pre-existing** — both name workflow files this branch has never modified.
+
+**Totals:** 60 findings — **3 DONE (F-013, F-014, F-049) · 0 PARTIAL · 0 BLOCKED · 57 NOT-STARTED**
 
 ### CI evidence so far
 
@@ -138,45 +144,60 @@ six real failures are now *reported* rather than hidden. Outstanding, in step or
 
 ## 4. NEXT ACTION
 
-> **WP-09 · F-049 — reconcile the obsolete, self-contradicting tests.** Then F-058, then re-run CI.
+> **F-059 — remove the moderation/approval promise from the seller-facing Peek queue.**
+> Its proving test is already written and already failing, on purpose.
 
-WP-01 and WP-10 are closed. The remaining red CI steps are listed in §3 under *CI evidence so far*. Work
-them in this order:
+### 4a. F-059 *(smallest next step; unblocks contract test 508)*
 
-### 4a. WP-09 · F-049 — obsolete tests *(largest remaining CI blocker: steps 14 and 16)*
+`src/components/peekThreads/BuyerPeekRequestsQueue.jsx` still tells sellers about an approval step the MVP
+removed:
 
-The suite encodes product decisions that were later reversed, and two tests now assert **opposite** things,
-so it cannot go green without deleting contradictory assertions.
+- `:277` — *"The accepted request remains open while the video is uploaded, processed and moderated.
+  It becomes answered only after approval."*
+- `:193` toast — *"Response Peek uploaded. It will answer this request automatically after approval."*
 
-- Test `508 — seller queue reuses the existing uploader and waits for moderation before answering` asserts
-  a **human Peek moderation step the MVP removed** (`REMEDIATION-PROMPT.md` §2.3).
-- Test `34 — the polished FindIt identity is present across app shells and install metadata` asserts the
-  **old brand**, directly contradicting `tests/peekaListingBrandContracts.test.mjs`.
-- `tests/webAppManifest.test.mjs:24-25` likewise still asserts `name === 'FindIt Marketplace'`.
-- Tests `684`, `686`, `695` carry legacy Tour vocabulary.
+A Response Peek publishes when **processing succeeds**; safety is report-driven *after* publication
+(`REMEDIATION-PROMPT.md` §2.3). Rewrite both strings to describe processing only, with no approval or
+moderation language.
 
-> **Do NOT simply delete every failing test.** Tests `155` (owner lifecycle), `22` (image loading/decoding)
-> and `62` (storage degradation) are **correct tests failing against real defects** — they belong to F-029,
-> F-042 and a resilience gap, and must stay red until those packages.
+Proving test, already in place and red:
+`node --test ./tests/responsePeekUploadContracts.test.mjs` — asserts `doesNotMatch(/moderat/i)` and
+`doesNotMatch(/after approval/i)` against the component.
 
-Security test `31 — admin routes are nested beneath a required admin role boundary` is a **stale assertion,
-not a regression**: Phase 4 verified all 10 admin routes are nested under `ProtectedRoute
-requiredRole="admin"` at `src/App.jsx:199-211` with server-side role resolution. Fix the assertion.
+### 4b. Then F-058, F-060, F-061 — the rest of what CI is reporting
 
-Current local baseline: `node --test ./tests/*.test.mjs` → 768 tests, **14 fail**;
-`node --test ./tests/security/*.test.mjs` → 41, **1 fail**.
+- **F-058** — `src/lib/traceContext.js:15,18` use `globalThis.sessionStorage` directly; route them through
+  `readStoredString` / `writeStoredString` in `src/lib/browserStorage.js`.
+  Proving test: `npm run audit:product-surface` exits 0.
+- **F-060** — add the `scripts/normalize-package-lock.mjs --write` step to
+  `.github/workflows/buyer-journey-certification.yml`, matching the other locked workflows.
+  Proving test: contract `226`.
+- **F-061** — pin `actions/checkout` in `.github/workflows/pages-preview.yml` to the immutable SHA
+  `3d3c42e5aac5ba805825da76410c181273ba90b1` used everywhere else. Proving test: contract `767`.
 
-### 4b. F-058 — guarded storage boundary *(CI step 11)*
+### 4c. Re-run CI, then WP-02
 
-`src/lib/traceContext.js:15,18` call `globalThis.sessionStorage?.getItem/setItem` directly. Route them
-through `readStoredString` / `writeStoredString` in `src/lib/browserStorage.js`.
-Proving test: `npm run audit:product-surface` exits 0.
+Manual dispatch (see §3), compare step conclusions, then close **WP-02 (F-012)** and hand off **B-7** so
+these become required checks on `main`.
 
-### 4c. Re-run CI and reassess
+---
 
-Manual dispatch (see §3), then compare step conclusions. Steps 18 and 20 should already be green from
-WP-10. What remains after that is **WP-02 (F-012)**: drive the whole workflow green, then hand off **B-7**
-so these become required checks.
+### Current suite state, and why each red is still red
+
+`node --test ./tests/*.test.mjs` → **769 tests, 11 fail** · `node --test ./tests/security/*.test.mjs` →
+**41/41, green**.
+
+**Every remaining red is accounted for. Do not "fix" one by deleting it.**
+
+| Tests | Owner | Status |
+|---|---|---|
+| `760` `762` `763` `764` `765` | F-017 / WP-19 | **BLOCKED** — needs PeekaListing PNG rasters (192, 512, maskable, 180 apple-touch). No image tooling here; see §6. |
+| `508` | **F-059** | Proving test for the next step above |
+| `22` | F-042 | Image derivatives, Tranche 1 |
+| `155` | F-029 | `sold` transition, Tranche 1 |
+| `62` | resilience gap | Related to F-058 |
+| `226` | **F-060** | Workflow lockfile normalization |
+| `767` | **F-061** | Mutable action ref |
 
 ---
 

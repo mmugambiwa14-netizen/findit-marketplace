@@ -72,6 +72,25 @@ test('a maskable icon is declared and is a distinct file from the plain one', ()
   );
 });
 
+test('index.html declares an apple-touch-icon, which iOS requires to install', () => {
+  // iOS ignores the manifest when choosing a home-screen icon and needs a PNG
+  // apple-touch-icon link instead, so without this "Add to Home Screen" yields a
+  // blank or screenshot icon on iPhone and iPad.
+  //
+  // Moved here from brandLegalEmailFounderContracts.test.mjs during F-049, so that
+  // install metadata has a single contract rather than two that disagreed about
+  // which brand the icon belongs to. It is expected to FAIL until F-017 (WP-19)
+  // ships the PeekaListing raster set -- the requirement is real and unmet.
+  const html = readFileSync(join(projectRoot, 'index.html'), 'utf8');
+  const link = html.match(/<link[^>]+rel="apple-touch-icon"[^>]*>/);
+  assert.ok(link, 'index.html must declare <link rel="apple-touch-icon">');
+
+  const href = link[0].match(/href="([^"]+)"/)?.[1];
+  assert.ok(href, 'the apple-touch-icon link must have an href');
+  assert.ok(existsSync(resolveAsset(href)), `missing apple-touch-icon asset: ${href}`);
+  assert.match(href, /\.png$/, 'iOS does not accept an SVG apple-touch-icon');
+});
+
 test('every shortcut resolves to a real route and a real icon', () => {
   const routes = readFileSync(join(projectRoot, 'src', 'App.jsx'), 'utf8');
   assert.ok(manifest.shortcuts.length > 0);
