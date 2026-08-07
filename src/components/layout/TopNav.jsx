@@ -40,7 +40,7 @@ export default function TopNav() {
   return (
     <header className="glass-bar sticky top-0 z-50 hidden border-b px-4 py-2 md:block">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-5">
-        <Link to="/" className="shrink-0" aria-label="FindIt Discover">
+        <Link to="/" className="shrink-0" aria-label="PeekaListing Discover">
           <BrandLogo
             markClassName="h-8 w-8 sm:h-9 sm:w-9"
             wordmarkClassName="text-lg sm:text-xl"
