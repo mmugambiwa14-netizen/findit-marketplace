@@ -22,8 +22,22 @@ export default function BusinessProfiles() {
     enabled: Boolean(user?.id),
   });
 
+  /**
+   * What BusinessProfileForm hands to onSubmit
+   * (src/components/business/BusinessProfileForm.jsx:87).
+   *
+   * Named explicitly because useMutation defaults TVariables to void when it
+   * cannot infer it from mutationFn, which turned this destructuring into a
+   * read off void.
+   *
+   * @typedef {object} SaveProfileVariables
+   * @property {Record<string, unknown>} input
+   * @property {{ upload?: { path: string } | null, removeExisting?: boolean }} logoChange
+   */
+
   const saveMutation = useMutation({
-    mutationFn: ({ input, logoChange }) => saveOwnerBusinessProfile(user.id, profileQuery.data?.id, input, logoChange),
+    mutationFn: (/** @type {SaveProfileVariables} */ { input, logoChange }) =>
+      saveOwnerBusinessProfile(user.id, profileQuery.data?.id, input, logoChange),
     onSuccess: (profile) => {
       queryClient.setQueryData(['owner-business-profile', user.id], profile);
       setEditing(false);

@@ -9,7 +9,7 @@
 "F-033","P2","0","WP-05","No evidence of EXIF/GPS stripping on listing images, which defeats the deliberate coordinate coarsening","NOT-STARTED","","","",""
 "F-054","P1","0","WP-03","Staging deployment is failing, so the environment the capability model depends on is not being built","NOT-STARTED","","","",""
 "F-004","P2","1","WP-23","Capability gating trusts a client-readable hostname prefix","NOT-STARTED","","","",""
-"F-014","P2","1","WP-10","typecheck and typecheck:active fail on main with 10 errors, unreported because CI never reaches those steps","NOT-STARTED","","","",""
+"F-014","P2","1","WP-10","typecheck and typecheck:active fail on main with 10 errors, unreported because CI never reaches those steps","DONE","523ada7","npm run typecheck && npm run typecheck:active","LOCAL-EXEC PASS (both exit 0; was exit 2 with 10 errors)","JSDoc typedefs pin useMutation TVariables (was defaulting to void); profileSaved declared on the global Error interface alongside the existing code/correlationId/retryable augmentations. No runtime behaviour changed. See audit/remediation/WP-10-F-014.md"
 "F-015","P2","1","WP-24","Permissions-Policy camera=() may conflict with Peek capture, and UI copy anticipates a permission the capture flow never requests","NOT-STARTED","","","",""
 "F-017","P2","1","WP-19","PWA manifest ships a single SVG icon with no apple-touch-icon, no raster PNG and no maskable purpose, and a contract test locks it in","NOT-STARTED","","","",""
 "F-026","P2","1","WP-20","peek_requests.moderation_status defaults to 'pending' while the live contract requires 'approved', so any insert path omitting it strands the request invisibly","NOT-STARTED","","","",""

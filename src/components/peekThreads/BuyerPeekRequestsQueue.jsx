@@ -46,6 +46,34 @@ function waitingLabel(seconds) {
   return `${Math.floor(hours / 24)}d waiting`;
 }
 
+/**
+ * One row of the seller fulfilment queue, as built by normalizeSellerPeekQueuePage()
+ * in src/domain/peekThreads/sellerQueueContracts.js:18-39.
+ *
+ * Declared here because useMutation defaults TVariables to void when it cannot
+ * infer it from mutationFn, which silently turned every `item` below into void.
+ *
+ * @typedef {object} SellerQueueItem
+ * @property {string} requestId
+ * @property {string} parentType
+ * @property {string} parentId
+ * @property {string} parentKind
+ * @property {string} parentTitle
+ * @property {string} category
+ * @property {string} body
+ * @property {number} supporterCount
+ * @property {string} createdAt
+ * @property {number} pendingSeconds
+ * @property {number} queueScore
+ * @property {{
+ *   status: string,
+ *   attemptCount: number,
+ *   tourId: string | null,
+ *   expiresAt: string | null,
+ *   failureReason: string | null,
+ * } | null} fulfilment
+ */
+
 function fulfilmentLabel(status) {
   return {
     accepted: 'Accepted',
@@ -109,7 +137,7 @@ export default function BuyerPeekRequestsQueue() {
   };
 
   const accept = useMutation({
-    mutationFn: (item) => acceptPeekRequest(item.requestId),
+    mutationFn: (/** @type {SellerQueueItem} */ item) => acceptPeekRequest(item.requestId),
     onSuccess: (_result, item) => {
       invalidateQueue();
       toast.success(item.fulfilment?.status === 'failed' ? 'Peek Request ready to retry' : 'Peek Request accepted');
@@ -123,7 +151,7 @@ export default function BuyerPeekRequestsQueue() {
   });
 
   const cancel = useMutation({
-    mutationFn: (item) => cancelPeekRequestFulfilment(item.requestId, 'Seller cancelled the current fulfilment attempt'),
+    mutationFn: (/** @type {SellerQueueItem} */ item) => cancelPeekRequestFulfilment(item.requestId, 'Seller cancelled the current fulfilment attempt'),
     onSuccess: () => {
       setCancelTarget(null);
       resetResponse();

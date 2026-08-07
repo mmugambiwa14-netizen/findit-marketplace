@@ -91,6 +91,10 @@ control PASS* — into execution. Do not upgrade a label without actually runnin
 All `NOT-STARTED` except as noted. Per-finding rows in `audit/findings-status.csv`; package definitions in
 `REMEDIATION-PROMPT.md` §7.
 
+| WP | Findings | Status | Commit | Proving test | Result |
+|---|---|---|---|---|---|
+| WP-10 | F-014 | **DONE** | `523ada7` | `npm run typecheck` + `typecheck:active` | `LOCAL-EXEC` **PASS** — both exit 0 (were exit 2 / 10 errors) |
+
 ### Findings discovered *after* the audit
 
 The audit's 56 findings were what could be seen while the CI cascade was hiding twelve steps. Fixing F-013
@@ -103,7 +107,7 @@ made those steps run, and they immediately reported a defect the audit never had
 **Numbering:** the audit used `F-001`…`F-057` with `F-032` withdrawn (56 live). New findings continue from
 **`F-058`**. They live in `findings-status.csv` only — `findings.csv` stays frozen at the audit baseline.
 
-**Totals:** 57 findings — **1 DONE · 0 PARTIAL · 0 BLOCKED · 56 NOT-STARTED**
+**Totals:** 57 findings — **2 DONE (F-013, F-014) · 0 PARTIAL · 0 BLOCKED · 55 NOT-STARTED**
 
 ### CI evidence so far
 
@@ -129,37 +133,45 @@ six real failures are now *reported* rather than hidden. Outstanding, in step or
 
 ## 4. NEXT ACTION
 
-> **Confirm WP-01 in CI, then start WP-10 (F-014) and WP-09 (F-049).**
+> **WP-09 · F-049 — reconcile the obsolete, self-contradicting tests.** Then F-058, then re-run CI.
 
-### 4a. Close out WP-01 — read the CI run for this branch
+WP-01 and WP-10 are closed. The remaining red CI steps are listed in §3 under *CI evidence so far*. Work
+them in this order:
 
-WP-01's local work is done (`audit/remediation/WP-01-F-013.md`). Its spec-mandated proving test is a **CI**
-run, which is why it is `PARTIAL` and not `DONE`. Open the latest `Release candidate gates` run for
-`claude/peekalisting-audit-ui0z6l` and confirm that **`Lint application`, `Typecheck application` and
-`Build production application` report a conclusion other than `skipped`.**
+### 4a. WP-09 · F-049 — obsolete tests *(largest remaining CI blocker: steps 14 and 16)*
 
-> **The run is expected to be RED, and that is success for WP-01.** Breaking the cascade makes previously
-> hidden failures visible for the first time — the 10 typecheck errors of F-014 and the 15 failing tests of
-> F-049. A red run whose steps all *executed* is the goal here; driving it green is **WP-02**.
+The suite encodes product decisions that were later reversed, and two tests now assert **opposite** things,
+so it cannot go green without deleting contradictory assertions.
 
-Record the outcome in §6 of `WP-01-F-013.md`, flip F-013 to `DONE` with `CI-VERIFIED`, and update §3 above.
+- Test `508 — seller queue reuses the existing uploader and waits for moderation before answering` asserts
+  a **human Peek moderation step the MVP removed** (`REMEDIATION-PROMPT.md` §2.3).
+- Test `34 — the polished FindIt identity is present across app shells and install metadata` asserts the
+  **old brand**, directly contradicting `tests/peekaListingBrandContracts.test.mjs`.
+- `tests/webAppManifest.test.mjs:24-25` likewise still asserts `name === 'FindIt Marketplace'`.
+- Tests `684`, `686`, `695` carry legacy Tour vocabulary.
 
-### 4b. Then take these two, in either order
+> **Do NOT simply delete every failing test.** Tests `155` (owner lifecycle), `22` (image loading/decoding)
+> and `62` (storage degradation) are **correct tests failing against real defects** — they belong to F-029,
+> F-042 and a resilience gap, and must stay red until those packages.
 
-Both were hidden by the cascade and are now visible and locally reproducible:
-
-- **WP-10 · F-014** — 10 typecheck errors. `npx tsc -p ./jsconfig.json` exits 2.
-  `src/components/peekThreads/BuyerPeekRequestsQueue.jsx:112,115,117,119,126` and
-  `src/pages/BusinessProfiles.jsx:26,33,75`. Cause: `useMutation` calls lack explicit generics, so TanStack
-  Query infers `TVariables` as `void`. **Type-soundness gaps, not proven runtime defects** — do not report
-  them as runtime bugs.
-- **WP-09 · F-049** — obsolete tests asserting removed Peek moderation and the old FindIt brand.
-  **Do not simply delete every failing test**: tests `155` (owner lifecycle), `22` (image loading/decoding)
-  and `62` (storage degradation) are *correct* tests failing against *real* defects, and belong to F-029,
-  F-042 and a resilience gap. They must stay red.
+Security test `31 — admin routes are nested beneath a required admin role boundary` is a **stale assertion,
+not a regression**: Phase 4 verified all 10 admin routes are nested under `ProtectedRoute
+requiredRole="admin"` at `src/App.jsx:199-211` with server-side role resolution. Fix the assertion.
 
 Current local baseline: `node --test ./tests/*.test.mjs` → 768 tests, **14 fail**;
 `node --test ./tests/security/*.test.mjs` → 41, **1 fail**.
+
+### 4b. F-058 — guarded storage boundary *(CI step 11)*
+
+`src/lib/traceContext.js:15,18` call `globalThis.sessionStorage?.getItem/setItem` directly. Route them
+through `readStoredString` / `writeStoredString` in `src/lib/browserStorage.js`.
+Proving test: `npm run audit:product-surface` exits 0.
+
+### 4c. Re-run CI and reassess
+
+Manual dispatch (see §3), then compare step conclusions. Steps 18 and 20 should already be green from
+WP-10. What remains after that is **WP-02 (F-012)**: drive the whole workflow green, then hand off **B-7**
+so these become required checks.
 
 ---
 
