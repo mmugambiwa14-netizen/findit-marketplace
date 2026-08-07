@@ -42,6 +42,7 @@ export default function SearchToolbar({
   onOpenFilters,
   onOpenSort,
   hasFilters,
+  filterCount = 0,
   sortLabel,
 }) {
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -75,10 +76,10 @@ export default function SearchToolbar({
   };
 
   return (
-    <div className="mt-4 flex items-start gap-2">
+    <div className="mt-4 space-y-2.5">
       <form
         onSubmit={onSubmit}
-        className="relative min-w-0 flex-1"
+        className="relative"
         role="search"
         onFocus={() => onFocusChange(true)}
         onBlur={() => window.setTimeout(() => onFocusChange(false), 120)}
@@ -93,13 +94,13 @@ export default function SearchToolbar({
           aria-expanded={showSuggestions}
           aria-controls={showSuggestions ? SUGGESTIONS_ID : undefined}
           aria-activedescendant={activeIndex >= 0 ? `${SUGGESTIONS_ID}-${activeIndex}` : undefined}
-          placeholder="Search in this category"
+          placeholder="Search title, place or category"
           value={queryInput}
           onChange={(event) => onQueryInputChange(event.target.value)}
           onKeyDown={handleKeyDown}
           autoComplete="off"
           maxLength={100}
-          className="clay-control h-12 rounded-2xl pl-10"
+          className="clay-control h-12 rounded-2xl pl-10 pr-4"
         />
         {showSuggestions && (
           <div id={SUGGESTIONS_ID} role="listbox" aria-label="Search suggestions" className="clay-card absolute left-0 right-0 top-14 z-50 overflow-hidden rounded-2xl">
@@ -122,25 +123,31 @@ export default function SearchToolbar({
         )}
       </form>
 
-      <button
-        type="button"
-        onClick={onOpenFilters}
-        aria-label="Open filters"
-        className={cn('clay-control relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-muted-foreground hover:text-foreground', hasFilters && 'border-primary/45 text-primary')}
-      >
-        <SlidersHorizontal className="h-5 w-5" aria-hidden="true" />
-        {hasFilters && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />}
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={onOpenFilters}
+          aria-label={filterCount > 0 ? `Open filters, ${filterCount} active` : 'Open filters'}
+          className={cn(
+            'clay-control flex h-11 min-w-0 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:text-foreground',
+            hasFilters && 'border-primary/45 bg-primary/8 text-primary',
+          )}
+        >
+          <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>Filters</span>
+          {filterCount > 0 && <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-black text-primary-foreground">{filterCount}</span>}
+        </button>
 
-      <button
-        type="button"
-        onClick={onOpenSort}
-        aria-label={`Sort listings, currently ${sortLabel}`}
-        className="clay-control flex h-12 min-w-12 shrink-0 items-center justify-center gap-1.5 rounded-2xl px-3 text-muted-foreground hover:text-foreground"
-      >
-        <ArrowUpDown className="h-5 w-5" aria-hidden="true" />
-        <span className="hidden text-xs font-semibold lg:inline">{sortLabel}</span>
-      </button>
+        <button
+          type="button"
+          onClick={onOpenSort}
+          aria-label={`Sort listings, currently ${sortLabel}`}
+          className="clay-control flex h-11 min-w-0 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-foreground hover:text-foreground"
+        >
+          <ArrowUpDown className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="truncate">{sortLabel}</span>
+        </button>
+      </div>
     </div>
   );
 }
