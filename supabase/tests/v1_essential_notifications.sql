@@ -13,10 +13,11 @@ values
 update public.users set role = 'admin', super_admin = true
 where id = '00000000-0000-4000-8000-000000003001';
 
--- Current MVP has no human listing approval/rejection step. Build the listing
--- through the real curated seller boundary: an approved business/category plus
--- the matching authenticated seller. The pending_review input is converted to
--- available by the automatic validated-listing publication trigger.
+-- Current MVP has no human listing approval/rejection step. Authorize the
+-- seller through the curated business/category boundary, then create the
+-- listing through the same private-media + authenticated submission path used
+-- by the product. Authenticated clients intentionally have no direct INSERT
+-- privilege on public.listings.
 insert into public.business_applications (
   id,
   user_id,
@@ -59,6 +60,42 @@ values (
   'approved'
 );
 
+create temporary table notification_listing_fixture (
+  intent_id uuid,
+  storage_path text,
+  listing_id uuid
+) on commit drop;
+
+grant select, insert, update on notification_listing_fixture to service_role, authenticated;
+
+set local role service_role;
+insert into notification_listing_fixture(intent_id, storage_path)
+select
+  public.authorize_listing_image_upload(
+    '00000000-0000-4000-8000-000000003002',
+    '00000000-0000-4000-8000-000000003002/staging/00000000-0000-4000-8000-000000003401.png',
+    'image/png', 68, 1, 1, repeat('b', 64)
+  ),
+  '00000000-0000-4000-8000-000000003002/staging/00000000-0000-4000-8000-000000003401.png';
+reset role;
+
+insert into storage.objects (id, bucket_id, name, owner, owner_id, metadata)
+values (
+  '00000000-0000-4000-8000-000000003402',
+  'listing-images',
+  '00000000-0000-4000-8000-000000003002/staging/00000000-0000-4000-8000-000000003401.png',
+  '00000000-0000-4000-8000-000000003002',
+  '00000000-0000-4000-8000-000000003002',
+  '{"mimetype":"image/png","size":68}'::jsonb
+);
+
+set local role service_role;
+select extensions.lives_ok(
+  $$select public.complete_listing_image_upload((select intent_id from notification_listing_fixture))$$,
+  'trusted upload completion accepts the validated notification fixture image'
+);
+reset role;
+
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000003002', true);
 select set_config(
   'request.jwt.claims',
@@ -66,19 +103,28 @@ select set_config(
   true
 );
 set local role authenticated;
-
-insert into public.listings (id, kind, seller_id, seller_name, title, category, price, status)
-values (
-  '00000000-0000-4000-8000-000000003101', 'car',
-  '00000000-0000-4000-8000-000000003002', 'Notification Owner',
-  'Notification vehicle', 'cars_sale', 14000, 'pending_review'
+select extensions.lives_ok(
+  $$select public.create_v1_listing_submission(
+    '00000000-0000-4000-8000-000000003403',
+    '{"kind":"car","title":"2022 Toyota Fortuner notification vehicle","description":"A complete approved seller vehicle listing created through the real publication path for notification certification.","category":"cars_sale","listingType":"sale","price":14000,"currency":"USD","negotiable":false,"locationId":"00000000-0000-4000-8000-000000000101","contactPhone":"+263700003002"}'::jsonb,
+    '{"brand":"Toyota","model":"Fortuner","year":"2022","mileage":"32000","fuelType":"diesel","transmission":"automatic","condition":"used"}'::jsonb,
+    jsonb_build_array(jsonb_build_object(
+      'intentId', (select intent_id from notification_listing_fixture),
+      'path', (select storage_path from notification_listing_fixture)
+    ))
+  )$$,
+  'an approved authenticated seller creates the notification fixture through the live listing submission RPC'
 );
-insert into public.car_details (listing_id, brand, model)
-values ('00000000-0000-4000-8000-000000003101', 'Toyota', 'Fortuner');
-
 reset role;
+
+update notification_listing_fixture
+set listing_id = (
+  select id from public.listings
+  where submission_key = '00000000-0000-4000-8000-000000003403'
+);
+
 select extensions.is(
-  (select status::text from public.listings where id = '00000000-0000-4000-8000-000000003101'),
+  (select status::text from public.listings where id = (select listing_id from notification_listing_fixture)),
   'available',
   'validated approved-category listing auto-publishes without human listing review'
 );
@@ -91,7 +137,7 @@ select extensions.is(
 );
 select extensions.ok(
   (select expires_at is not null from public.listings
-   where id = '00000000-0000-4000-8000-000000003101'),
+   where id = (select listing_id from notification_listing_fixture)),
   'automatic publication still assigns a server-managed listing expiry'
 );
 
@@ -106,7 +152,7 @@ select set_config(
 set local role authenticated;
 select extensions.lives_ok(
   $$select public.owner_transition_listing(
-    '00000000-0000-4000-8000-000000003101', 'unavailable'
+    (select listing_id from notification_listing_fixture), 'unavailable'
   )$$,
   'the owner can move a live listing to unavailable through the trusted lifecycle RPC'
 );
@@ -127,10 +173,10 @@ select set_config('request.jwt.claim.sub', '', true);
 select set_config('request.jwt.claims', '{}', true);
 update public.listings
 set status = 'available'
-where id = '00000000-0000-4000-8000-000000003101';
+where id = (select listing_id from notification_listing_fixture);
 update public.listings
 set expires_at = now() + interval '2 days', expiry_notice_sent_at = null
-where id = '00000000-0000-4000-8000-000000003101';
+where id = (select listing_id from notification_listing_fixture);
 
 select extensions.is(
   public.process_listing_expiry_notifications(now()) ->> 'notices_created',
@@ -147,8 +193,8 @@ insert into public.reports (
   id, listing_id, listing_type, listing_title, reason, reporter_id
 ) values (
   '00000000-0000-4000-8000-000000003201',
-  '00000000-0000-4000-8000-000000003101', 'vehicle',
-  'Notification vehicle', 'fake',
+  (select listing_id from notification_listing_fixture), 'vehicle',
+  '2022 Toyota Fortuner notification vehicle', 'fake',
   '00000000-0000-4000-8000-000000003003'
 );
 
