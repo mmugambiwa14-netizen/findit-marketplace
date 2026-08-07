@@ -22,7 +22,7 @@ select extensions.is(
       and md5(replace(function_record.prosrc, E'\r\n', E'\n')) = '2fa173e978e3d5142ef72c6266e9dc20'
   ),
   1::bigint,
-  'one exact stable public listing search implementation lives in private'
+  'one exact legacy listing search implementation remains in private for rollback compatibility'
 );
 
 select extensions.is(
@@ -44,7 +44,7 @@ select extensions.is(
       and position('private.public_listing_search_page(' in function_record.prosrc) > 0
   ),
   1::bigint,
-  'one public stable invoker wrapper preserves fourteen defaults and the 31-column result'
+  'one exact legacy public wrapper remains installed for rollback compatibility'
 );
 
 select extensions.is(
@@ -62,16 +62,16 @@ select extensions.is(
       and privilege.privilege_type = 'EXECUTE'
   ),
   0::bigint,
-  'no PUBLIC execute grant remains on either listing search function'
+  'no PUBLIC execute grant remains on either legacy listing search function'
 );
 
 select extensions.ok(
-  has_function_privilege(
+  not has_function_privilege(
     'anon',
     'public.public_listing_search_page(text,text,text,text,numeric,numeric,integer,text,text,text,text,text,text,uuid,integer)',
     'EXECUTE'
   )
-  and has_function_privilege(
+  and not has_function_privilege(
     'authenticated',
     'public.public_listing_search_page(text,text,text,text,numeric,numeric,integer,text,text,text,text,text,text,uuid,integer)',
     'EXECUTE'
@@ -81,16 +81,16 @@ select extensions.ok(
     'public.public_listing_search_page(text,text,text,text,numeric,numeric,integer,text,text,text,text,text,text,uuid,integer)',
     'EXECUTE'
   ),
-  'public listing search wrapper preserves browser and service execution grants'
+  'legacy public listing search is service-only after v2 promotion'
 );
 
 select extensions.ok(
-  has_function_privilege(
+  not has_function_privilege(
     'anon',
     'private.public_listing_search_page(text,text,text,text,numeric,numeric,integer,text,text,text,text,text,text,uuid,integer)',
     'EXECUTE'
   )
-  and has_function_privilege(
+  and not has_function_privilege(
     'authenticated',
     'private.public_listing_search_page(text,text,text,text,numeric,numeric,integer,text,text,text,text,text,text,uuid,integer)',
     'EXECUTE'
@@ -100,7 +100,7 @@ select extensions.ok(
     'private.public_listing_search_page(text,text,text,text,numeric,numeric,integer,text,text,text,text,text,text,uuid,integer)',
     'EXECUTE'
   ),
-  'private listing search implementation preserves required execution grants'
+  'legacy private implementation is service-only after v2 promotion'
 );
 
 select extensions.is(
@@ -115,7 +115,7 @@ select extensions.is(
       )
   ),
   0::bigint,
-  'no stored function depends on the public search identity'
+  'no stored function depends on the legacy public search identity'
 );
 
 select extensions.is(
@@ -126,21 +126,15 @@ select extensions.is(
        or position('public_listing_search_page(' in coalesce(policy.with_check, '')) > 0
   ),
   0::bigint,
-  'no RLS policy depends on the public search identity'
+  'no RLS policy depends on the legacy public search identity'
 );
 
-set local role anon;
+set local role service_role;
 select extensions.throws_ok(
   $$select * from public.public_listing_search_page('unsupported')$$,
   '22023',
   'invalid public listing search page',
-  'public wrapper preserves all defaults and input validation'
-);
-select extensions.throws_ok(
-  $$select * from private.public_listing_search_page('unsupported')$$,
-  '22023',
-  'invalid public listing search page',
-  'private implementation preserves all defaults and validation'
+  'legacy service-only wrapper preserves its locked validation behavior'
 );
 reset role;
 
