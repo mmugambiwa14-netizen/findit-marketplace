@@ -89,7 +89,7 @@ export default function SellerProfile() {
     );
   }
 
-  const sellerName = profile.full_name || listings[0]?.seller_name || "FindIt seller";
+  const sellerName = profile.full_name || listings[0]?.seller_name || "PeekaListing seller";
   const sellerBio = profile.bio || "";
   const avatarUrl = profile.avatar_url || "";
   const isOwnProfile = user?.id === profile.id;
@@ -125,7 +125,7 @@ export default function SellerProfile() {
               {whatsapp && (
                 <Button className="bg-green-600 text-white hover:bg-green-700" onClick={() => {
                   const number = whatsapp.replace(/[^0-9]/g, "");
-                  const message = encodeURIComponent("Hi, I'm interested in one of your FindIt listings.");
+                  const message = encodeURIComponent("Hi, I'm interested in one of your PeekaListing listings.");
                   window.open(`https://wa.me/${number}?text=${message}`, "_blank", "noopener,noreferrer");
                 }}><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</Button>
               )}
