@@ -45,6 +45,8 @@ export function normalizePeekThreadPage(rows = [], limit = PEEK_THREAD_PAGE_SIZE
     status: row.status,
     supporterCount: Number(row.supporter_count) || 0,
     requestedByLabel: row.requested_by_label || 'a buyer',
+    requestedByMe: Boolean(row.requested_by_me),
+    supportedByMe: Boolean(row.supported_by_me),
     createdAt: row.created_at,
     answeredAt: row.answered_at ?? null,
     currentResponseId: row.current_response_id ?? null,
