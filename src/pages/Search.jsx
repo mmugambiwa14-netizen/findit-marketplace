@@ -17,12 +17,16 @@ import {
   PROPERTY_CATEGORIES,
   TRANSMISSIONS,
 } from '@/lib/constants';
+import { useCurrency } from '@/lib/CurrencyContext';
+import { getCurrencyConfig, getSupportedListingCurrencies, LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { getPublicSearchSuggestions, searchPublicListingsPage } from '@/services/publicListingsService';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 const VALID_TYPES = new Set(['property', 'car', 'machinery']);
 const VALID_SORTS = new Set(['newest', 'price_asc', 'price_desc', 'most_viewed']);
+const PRICE_SORTS = new Set(['price_asc', 'price_desc']);
 const VALID_VIEWS = new Set(['list', 'map']);
+const VALID_PRICE_CURRENCIES = new Set(getSupportedListingCurrencies(LAUNCH_COUNTRY_CODE).map((currency) => currency.code));
 const RECENT_SEARCHES_KEY = 'findit.recent-searches';
 const CATEGORIES_BY_TYPE = {
   property: PROPERTY_CATEGORIES,
@@ -30,10 +34,10 @@ const CATEGORIES_BY_TYPE = {
   machinery: MACHINERY_CATEGORIES,
 };
 
-function readNumber(value, fallback) {
-  if (value === null || value === '') return fallback;
+function readOptionalNumber(value) {
+  if (value === null || value === '') return null;
   const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
 function readRecentSearches() {
@@ -49,25 +53,37 @@ function optionLabel(options, value) {
   return options.find((option) => String(option.value) === String(value))?.label || value;
 }
 
+function priceFilterLabel(minimum, maximum, currency, formatNative) {
+  if (!currency) return '';
+  if (minimum !== null && maximum !== null) return `${formatNative(minimum, currency)} – ${formatNative(maximum, currency)}`;
+  if (minimum !== null) return `From ${formatNative(minimum, currency)}`;
+  if (maximum !== null) return `Up to ${formatNative(maximum, currency)}`;
+  return '';
+}
+
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [recentSearches, setRecentSearches] = useState(readRecentSearches);
+  const { formatNative } = useCurrency();
 
   const requestedType = searchParams.get('type');
   const type = VALID_TYPES.has(requestedType) ? requestedType : 'property';
   const query = searchParams.get('q') || '';
   const [queryInput, setQueryInput] = useState(query);
+  const requestedCurrency = String(searchParams.get('currency') || '').toUpperCase();
+  const currency = VALID_PRICE_CURRENCIES.has(requestedCurrency) ? requestedCurrency : '';
+  const minPrice = currency ? readOptionalNumber(searchParams.get('minPrice')) : null;
+  const rawMaxPrice = currency ? readOptionalNumber(searchParams.get('maxPrice')) : null;
+  const maxPrice = minPrice !== null && rawMaxPrice !== null && rawMaxPrice < minPrice ? minPrice : rawMaxPrice;
   const requestedSort = searchParams.get('sort');
-  const sort = VALID_SORTS.has(requestedSort) ? requestedSort : 'newest';
+  const normalizedSort = VALID_SORTS.has(requestedSort) ? requestedSort : 'newest';
+  const sort = !currency && PRICE_SORTS.has(normalizedSort) ? 'newest' : normalizedSort;
   const requestedView = searchParams.get('view');
   const viewMode = featureFlags.maps && VALID_VIEWS.has(requestedView) ? requestedView : 'list';
   const category = searchParams.get('category') || '';
-  const maxAllowedPrice = type === 'machinery' ? 2_000_000 : 500_000;
-  const minPrice = Math.min(readNumber(searchParams.get('minPrice'), 0), maxAllowedPrice);
-  const maxPrice = Math.max(minPrice, Math.min(readNumber(searchParams.get('maxPrice'), maxAllowedPrice), maxAllowedPrice));
   const bedrooms = searchParams.get('bedrooms') || '';
   const make = searchParams.get('make') || '';
   const condition = searchParams.get('condition') || '';
@@ -97,18 +113,34 @@ export default function Search() {
   useEffect(() => setQueryInput(query), [query]);
 
   useEffect(() => {
-    if (!searchParams.has('page')) return;
+    const orphanedPriceState = !currency && (
+      searchParams.has('minPrice')
+      || searchParams.has('maxPrice')
+      || PRICE_SORTS.has(normalizedSort)
+    );
+    const invalidCurrency = Boolean(requestedCurrency && !currency);
+    const legacyPage = searchParams.has('page');
+    if (!orphanedPriceState && !invalidCurrency && !legacyPage) return;
+
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       next.delete('page');
+      if (orphanedPriceState || invalidCurrency) {
+        next.delete('minPrice');
+        next.delete('maxPrice');
+      }
+      if (invalidCurrency) next.delete('currency');
+      if ((orphanedPriceState || invalidCurrency) && PRICE_SORTS.has(next.get('sort'))) next.delete('sort');
       return next;
     }, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [currency, normalizedSort, requestedCurrency, searchParams, setSearchParams]);
 
   const suggestionQuery = useDebouncedValue(queryInput.trim().slice(0, 100), 250);
 
   const request = useMemo(() => ({
     kind: type,
+    countryCode: LAUNCH_COUNTRY_CODE,
+    currency,
     query,
     category,
     locationId,
@@ -120,7 +152,7 @@ export default function Search() {
     fuelType,
     transmission,
     sort,
-  }), [type, query, category, locationId, minPrice, maxPrice, bedrooms, make, condition, fuelType, transmission, sort]);
+  }), [type, currency, query, category, locationId, minPrice, maxPrice, bedrooms, make, condition, fuelType, transmission, sort]);
 
   const { data: suggestions } = useQuery({
     queryKey: ['public-search-suggestions', type, suggestionQuery],
@@ -152,9 +184,9 @@ export default function Search() {
     }
     return [...byId.values()];
   }, [resultsQuery.data]);
-  const priceStep = type === 'machinery' ? 5000 : 1000;
+
   const hasFilters = Boolean(
-    category || locationId || bedrooms || make || condition || fuelType || transmission || minPrice > 0 || maxPrice < maxAllowedPrice,
+    category || locationId || bedrooms || make || condition || fuelType || transmission || currency || minPrice !== null || maxPrice !== null,
   );
 
   const rememberSearch = (value) => {
@@ -186,7 +218,7 @@ export default function Search() {
   };
 
   const clearFilters = () => {
-    updateParams({
+    const updates = {
       category: null,
       location: null,
       locationName: null,
@@ -197,9 +229,12 @@ export default function Search() {
       condition: null,
       fuel: null,
       transmission: null,
+      currency: null,
       minPrice: null,
       maxPrice: null,
-    });
+    };
+    if (PRICE_SORTS.has(sort)) updates.sort = null;
+    updateParams(updates);
   };
 
   const changeType = (nextType) => {
@@ -216,6 +251,12 @@ export default function Search() {
 
   const updateFilter = (key, value) => updateParams({ [key]: value });
   const updateViewMode = (value) => updateParams({ view: value === 'map' ? 'map' : null }, { replace: false });
+  const updateCurrency = (value) => {
+    const nextCurrency = value || null;
+    const updates = { currency: nextCurrency, minPrice: null, maxPrice: null };
+    if (!nextCurrency && PRICE_SORTS.has(sort)) updates.sort = null;
+    updateParams(updates);
+  };
 
   const activeFilters = useMemo(() => {
     const filters = [];
@@ -226,21 +267,28 @@ export default function Search() {
     if (condition) filters.push({ key: 'condition', label: optionLabel(CONDITIONS, condition) });
     if (fuelType) filters.push({ key: 'fuel', label: optionLabel(FUEL_TYPES, fuelType) });
     if (transmission) filters.push({ key: 'transmission', label: optionLabel(TRANSMISSIONS, transmission) });
-    if (minPrice > 0 || maxPrice < maxAllowedPrice) filters.push({ key: 'price', label: `$${minPrice.toLocaleString()}–$${maxPrice.toLocaleString()}` });
+    if (currency) {
+      const config = getCurrencyConfig(currency);
+      filters.push({ key: 'currency', label: `${config.name} (${config.symbol})` });
+      const priceLabel = priceFilterLabel(minPrice, maxPrice, currency, formatNative);
+      if (priceLabel) filters.push({ key: 'price', label: priceLabel });
+    }
     return filters;
-  }, [category, type, locationId, selectedLocation?.cityName, bedrooms, make, condition, fuelType, transmission, minPrice, maxPrice, maxAllowedPrice]);
+  }, [category, type, locationId, selectedLocation?.cityName, bedrooms, make, condition, fuelType, transmission, currency, minPrice, maxPrice, formatNative]);
 
   const removeFilter = (key) => {
     if (key === 'location') {
       updateParams({ location: null, locationName: null, country: null, province: null });
     } else if (key === 'price') {
       updateParams({ minPrice: null, maxPrice: null });
+    } else if (key === 'currency') {
+      updateCurrency(null);
     } else {
       updateParams({ [key]: null });
     }
   };
 
-  const filterValues = { category, bedrooms, make, condition, fuelType, transmission, minPrice, maxPrice };
+  const filterValues = { category, bedrooms, make, condition, fuelType, transmission, currency, minPrice, maxPrice };
 
   return (
     <div className="min-h-[100dvh] bg-background md:pb-8">
@@ -269,7 +317,7 @@ export default function Search() {
             onOpenFilters={() => setFiltersOpen(true)}
             onOpenSort={() => setSortOpen(true)}
             hasFilters={hasFilters}
-            sortLabel={getSortLabel(sort)}
+            sortLabel={getSortLabel(sort, currency)}
           />
           <div className="mt-3">
             <ActiveFilterChips filters={activeFilters} onRemove={removeFilter} onClear={clearFilters} />
@@ -320,13 +368,18 @@ export default function Search() {
         selectedLocation={selectedLocation}
         onLocationChange={(location) => updateParams({ country: location.country, province: location.state, location: location.city, locationName: location.cityName })}
         onUpdate={updateFilter}
-        onApplyPrice={(minimum, maximum) => updateParams({ minPrice: minimum || null, maxPrice: maximum >= maxAllowedPrice ? null : maximum })}
+        onCurrencyChange={updateCurrency}
+        onApplyPrice={(minimum, maximum) => updateParams({ minPrice: minimum, maxPrice: maximum })}
         onClear={clearFilters}
-        maxAllowedPrice={maxAllowedPrice}
-        priceStep={priceStep}
       />
 
-      <SortSheet open={sortOpen} onOpenChange={setSortOpen} value={sort} onChange={(value) => updateParams({ sort: value === 'newest' ? null : value })} />
+      <SortSheet
+        open={sortOpen}
+        onOpenChange={setSortOpen}
+        value={sort}
+        currency={currency}
+        onChange={(value) => updateParams({ sort: value === 'newest' ? null : value })}
+      />
     </div>
   );
 }
