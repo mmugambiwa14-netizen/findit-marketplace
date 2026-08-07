@@ -62,7 +62,10 @@ jobs:
             -e 's/REPLACE_WITH_STAGING_NAMESPACE_ID/00000000000000000000000000000000/' \
             -e 's/REPLACE_WITH_PREVIEW_NAMESPACE_ID/11111111111111111111111111111111/' \
             infrastructure/cloudflare/wrangler.toml.example > ./wrangler.dry-run.toml
-          npx --yes wrangler@4 deploy --dry-run --config ./wrangler.dry-run.toml
+          # Keep this exact. A floating wrangler@4 resolved to an unpublished
+          # 4.120.0 package and broke CI even though the configuration itself
+          # was unchanged. 4.119.0 is the last version proven by this gate.
+          npx --yes wrangler@4.119.0 deploy --dry-run --config ./wrangler.dry-run.toml
           rm -f ./wrangler.dry-run.toml
       - name: Build media worker image
         id: media-image
