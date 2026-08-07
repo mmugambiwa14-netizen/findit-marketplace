@@ -15,7 +15,7 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - WP-02/F-012/F-058/F-060/F-061: PARTIAL pending final proof-chain closure record.
 - WP-03/F-054: BLOCKED by Vercel build-rate limit.
 - WP-04/F-027: **BEHAVIOR PROVEN, PACKAGE PARTIAL** — all 13 server-side MFA assertions pass on clean reset.
-- F-062: **REOPENED/PARTIAL for post-boundary closure** — historical 22-RPC behavior is proven, but later feature migrations reintroduced 17 authenticated-callable public SECURITY DEFINER RPCs. Migration `20260807042000_close_post_boundary_authenticated_rpc_drift.sql` snapshots that exact catalogue, preserves each latest implementation in `private`, restores invoker wrappers, and awaits CI proof.
+- F-062: **REOPENED/PARTIAL for post-boundary closure** — the new closure migration applies cleanly and the original authenticated-RPC suite now passes 16/16, proving zero authenticated-callable public SECURITY DEFINER functions and all 57 original wrappers restored. Historical newer-boundary provenance correction is awaiting CI.
 - F-065: behavior proven; 48-policy RLS suite passes.
 - F-066: behavior proven; country-helper suite passes 9/9.
 - F-067: behavior proven; seller-profile suite passes 10/10.
@@ -28,27 +28,26 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
 
-## Evidence from Migration Gates run 31154048816
+## Evidence from Recommendation database-gates run 31156136049
 
-- Every migration applied successfully through the pre-closure schema.
-- Corrected 22-RPC, 48-policy RLS, 13-case MFA, country-helper, seller-profile, marketplace-view, support, essential-notifications and recommendation-foundation suites passed again.
-- `v1_recommendation_projection_queue.sql` passed all 20 assertions: coalesced queueing, listing-write fail-open behavior, browser isolation, bounded dead-lettering, stable error code storage, explicit retry, successful recovery, suspension removal, indexes and RLS.
-- The main runner then advanced to `v1_recommendation_eligibility_geospatial.sql`, whose first direct listing fixture fails at the authoritative curated publisher boundary before TAP begins. That fixture is the next database-matrix item after the authenticated-RPC security closure is proven.
-- The dedicated authenticated-RPC catalogue failure was fully isolated before changing the boundary: 17 public authenticated SECURITY DEFINER functions were present. Sixteen came from the curated-business and Peek fulfilment feature migrations; the 17th was `owner_transition_listing(uuid,text)`.
-- `owner_transition_listing(uuid,text)` is also the missing original 0101 invoker wrapper: the no-human-review migration replaced that wrapper in-place with a new public SECURITY DEFINER implementation while leaving its private predecessor behind. This single identity explains both the 17-function exposure and the 56/57 wrapper count.
-- The closure migration is catalogue-locked to those exact 17 identities. It copies the current authoritative function definition into `private`, handles older private implementations safely, recreates the public surface as SECURITY INVOKER SQL wrappers, preserves named-role grants/defaults/results/planner attributes, keeps the original 0101 marker on `owner_transition_listing`, and fails if any unexpected privileged RPC appears.
+- `20260807042000_close_post_boundary_authenticated_rpc_drift.sql` applied successfully on clean reset.
+- `v1_private_authenticated_rpc_implementations.sql` passed all 16 assertions. This proves the actual security closure: no authenticated-callable public SECURITY DEFINER function remains, all 57 original 0101 compatibility wrappers exist, all have private privileged implementations, all 57 public wrappers are invoker SQL functions with empty search paths, and the historical role-grant matrices remain intact.
+- The next suite, `v1_private_new_authenticated_rpc_implementations.sql`, failed only its first five provenance/count assertions: 20 wrappers carried the 20260805073000 marker while the test incorrectly expected 23.
+- The historical migration itself explicitly locked **22** privileged RPCs, not 23. `discover_category_counts()` was born separately as a direct public SECURITY INVOKER SQL read RPC and was never one of those 22 privileged implementations. The pgTAP had incorrectly added it to the private-wrapper catalogue.
+- Two genuine members of the historical 22 — `queue_response_peek_binding(uuid,uuid)` and `seller_peek_request_queue(bigint,timestamptz,uuid,integer)` — were later redefined by Peek fulfilment work. The closure preserved their behavior/security but temporarily replaced their historical provenance comments with the new closure marker.
+- `20260807042100_restore_authenticated_boundary_provenance.sql` restores those two original markers and explicitly asserts that `discover_category_counts()` remains public, SQL, SECURITY INVOKER, empty-search-path, anonymously/authenticated callable, and has no private privileged twin.
+- The corrected pgTAP now locks the real 22-RPC boundary and certifies `discover_category_counts()` separately rather than weakening it into a SECURITY DEFINER path.
 - No publication trigger, founder-only admin rule, MFA requirement, direct table privilege, listing moderation path, Peek moderation path or retired RPC is restored or weakened.
-- Frontend/source verification still has only the seven later-owned F-017/F-029/F-042 failures; immutable workflow pins, dependency normalization, trace storage boundary, lint, typechecks, Edge checks and build remain green.
+- The main database matrix had already advanced past F-072 to `v1_recommendation_eligibility_geospatial.sql`, whose first direct listing fixture still needs the next sequential repair after F-062 closes.
 
 ## Exact next action
 
-1. Run PR #33 Migration Gates with `20260807042000_close_post_boundary_authenticated_rpc_drift.sql`.
-2. Require `v1_private_authenticated_rpc_implementations.sql` to prove zero authenticated-callable public SECURITY DEFINER functions and all 57 original 0101 wrappers restored, with the historical role-grant matrices unchanged.
-3. If the closure migration or RPC suite exposes an exact implementation/result/grant incompatibility, repair only that identity; do not relax the catalogue assertion.
-4. Once F-062 is re-proven, continue the main database runner at `v1_recommendation_eligibility_geospatial.sql` and repair only its stale publication fixture through approved authenticated seller context.
-5. Repeat only for exact real failures; never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract.
-6. When all database suites pass, record final CI evidence and close the proof-chain findings plus reopened F-012/F-058/F-060 as supported.
-7. Proceed to WP-05/F-033 only after WP-04 proof-chain closure.
+1. Run PR #33 Recommendation database gates and Migration Gates with the provenance migration/test correction.
+2. Require both authenticated-RPC suites to pass completely: original boundary 16/16 and newer-boundary suite with the exact historical 22 wrappers plus the separate discover invoker assertions.
+3. Once F-062 is fully re-proven, continue the main database runner at `v1_recommendation_eligibility_geospatial.sql` and repair only its stale publication fixture through approved authenticated seller context.
+4. Repeat only for exact real failures; never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract.
+5. When all database suites pass, record final CI evidence and close the proof-chain findings plus reopened F-012/F-058/F-060 as supported.
+6. Proceed to WP-05/F-033 only after WP-04 proof-chain closure.
 
 ## External blockers
 
