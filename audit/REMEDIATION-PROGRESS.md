@@ -21,28 +21,29 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - F-067: behavior proven; seller-profile suite passes 10/10.
 - F-068: behavior proven; marketplace-view suite passes 21/21.
 - F-069: behavior proven; contact-support suite passes 12/12.
-- F-070: PARTIAL; essential-notifications certification now uses the real media-upload and authenticated listing-submission RPC path, then exercises current owner/status/expiry/report/account events with human listing approval/rejection explicitly absent; awaiting clean-database rerun.
+- F-070: behavior proven; essential-notifications suite passes 24/24 in Migration Gates run 31152533443 through the real media/upload/listing-submission path with human listing review absent.
+- F-071: PARTIAL; recommendation-foundation fixtures now cross the authoritative curated Cars publisher boundary with approved owner context and await clean-database rerun.
 - F-014, F-049, F-059: DONE.
 
-The full machine-readable register remains `audit/findings-status.csv`; F-065/F-066/F-067/F-068/F-069/F-070 will be appended in the final proof-record commit.
+The full machine-readable register remains `audit/findings-status.csv`; F-065/F-066/F-067/F-068/F-069/F-070/F-071 will be appended in the final proof-record commit.
 
-## Evidence from Migration Gates run 31151771259
+## Evidence from Migration Gates run 31152533443
 
 - Every migration applied successfully.
 - Corrected 22-RPC, 48-policy RLS, 13-case MFA, country-helper, seller-profile, marketplace-view and support suites passed again.
-- The runner reached `v1_essential_notifications.sql` but failed before the TAP plan with `42501: permission denied for table listings` because the intermediate F-070 fixture attempted a direct authenticated `INSERT` into `public.listings`.
-- That denial is the intended least-privilege runtime boundary. The canonical listing certification proves the supported path is: service-role upload authorization -> validated storage object -> upload completion -> authenticated `create_v1_listing_submission(...)`.
-- The current F-070 repair now uses that same production path and stores the generated listing ID in a temporary fixture table for all downstream notification assertions.
-- Human `listing_approved` / `listing_rejected` review remains absent from the current MVP; no moderation endpoint or direct table grant is restored.
+- `v1_essential_notifications.sql` passed all 24 assertions: validated media, authenticated approved-seller auto-publication, zero human listing approval/rejection notifications, owner status change, expiry notice/idempotency, report resolution, account status, safe-link/marketing constraints, read state, forgery denial and cross-user isolation.
+- The runner then stopped before the TAP plan in `v1_recommendation_foundation.sql` at its first direct listing fixture with `42501: Authentication required` from `enforce_curated_listing_publisher()`.
+- F-071 keeps the publication trigger authoritative. The recommendation test needs deliberate `available`, `draft` and content-suspended states rather than a listing-creation journey, so trusted SQL fixture creation now uses an approved Cars owner plus matching JWT and clears that JWT before recommendation authorization tests.
+- No recommendation production function, listing privilege, moderation flow or publication trigger is changed.
 - Frontend/source verification still has only the seven later-owned F-017/F-029/F-042 failures; immutable workflow pins, dependency normalization, trace storage boundary, lint, typechecks, Edge checks and build remain green.
 
 ## Exact next action
 
-1. Let draft PR #33 rerun Migration gates with the runtime-authoritative F-070 listing fixture.
-2. Confirm `v1_essential_notifications.sql` completes its full TAP plan through validated media, authenticated approved-seller auto-publication, zero human listing approval/rejection notifications, owner status change, expiry notice/idempotency, report resolution, account status, read-state and isolation assertions.
+1. Let draft PR #33 rerun Migration gates with F-071.
+2. Confirm `v1_recommendation_foundation.sql` completes its TAP plan with three queued fixture projections, exactly one public recommendation projection, event isolation, audited admin configuration and service-worker maintenance behavior intact.
 3. Continue the database runner through every remaining suite in order.
 4. Repeat only for exact real failures; never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract.
-5. When all database suites pass, record final CI evidence and close F-027/F-062/F-063/F-064/F-065/F-066/F-067/F-068/F-069/F-070 plus reopened F-012/F-058/F-060 as supported.
+5. When all database suites pass, record final CI evidence and close F-027/F-062/F-063/F-064/F-065/F-066/F-067/F-068/F-069/F-070/F-071 plus reopened F-012/F-058/F-060 as supported.
 6. Proceed to WP-05/F-033 only after WP-04 proof-chain closure.
 
 ## External blockers

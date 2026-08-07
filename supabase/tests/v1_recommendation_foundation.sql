@@ -22,6 +22,59 @@ where id = '00000000-0000-4000-8000-000000002005';
 insert into public.locations (id, name, type, country_code, is_active)
 values ('00000000-0000-4000-8000-000000002101', 'Recommendation Test City', 'city', 'ZW', true);
 
+-- Recommendation certification needs three deliberately different listing
+-- states, not a listing-creation journey. Keep trusted SQL fixture creation but
+-- cross the same authoritative curated publisher trigger as runtime by giving
+-- the owner approved Cars access and a matching JWT for the inserts.
+insert into public.business_applications (
+  id,
+  user_id,
+  business_name,
+  contact_name,
+  business_email,
+  business_phone,
+  country_code,
+  city,
+  description,
+  expected_inventory_band,
+  status
+)
+values (
+  '00000000-0000-4000-8000-000000002501',
+  '00000000-0000-4000-8000-000000002001',
+  'Recommendation Test Motors',
+  'Recommendation Owner',
+  'recommendation-owner@example.test',
+  '+263700002001',
+  'ZW',
+  'Recommendation Test City',
+  'Approved fixture business used only to certify recommendation projection behavior.',
+  '1-10',
+  'approved'
+);
+
+insert into public.business_category_approvals (
+  id,
+  business_application_id,
+  user_id,
+  category,
+  status
+)
+values (
+  '00000000-0000-4000-8000-000000002502',
+  '00000000-0000-4000-8000-000000002501',
+  '00000000-0000-4000-8000-000000002001',
+  'car',
+  'approved'
+);
+
+select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000002001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000002001","role":"authenticated","aal":"aal1"}',
+  true
+);
+
 insert into public.listings (
   id, kind, seller_id, seller_name, title, description, price, currency,
   native_price, native_currency, photos, location_id, country_code, category,
@@ -54,6 +107,9 @@ values
     '00000000-0000-4000-8000-000000002101', 'ZW', 'sedans', 'sale',
     'available', false, now()
   );
+
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claims', '{}', true);
 
 insert into public.car_details (listing_id, brand, model, year, mileage, fuel_type, transmission, condition)
 values
