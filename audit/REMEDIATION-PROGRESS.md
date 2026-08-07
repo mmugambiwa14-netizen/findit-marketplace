@@ -50,7 +50,12 @@ Full set in `REMEDIATION-PROMPT.md` §4. The five that matter most when picking 
 > Every turn ends with a clean working tree and a push.
 
 So the **last commit on this branch is always a complete handoff.** If the ledger and the code ever
-disagree, trust `git log` and fix the ledger.
+disagree, **trust `git log`** and fix the ledger.
+
+> **Do not write a commit's own SHA into a file inside that commit.** The SHA is not known until the commit
+> exists, and any later `--amend` invalidates it. This was tried once and produced a dangling reference.
+> Backfill the `commit` column in the **next** commit — the `Commit` cells below are always one package
+> behind at most, and `git log --oneline origin/main..HEAD` is authoritative.
 
 ---
 
@@ -93,7 +98,7 @@ All `NOT-STARTED` except as noted. Per-finding rows in `audit/findings-status.cs
 
 | WP | Findings | Status | Commit | Proving test | Result |
 |---|---|---|---|---|---|
-| WP-10 | F-014 | **DONE** | `523ada7` | `npm run typecheck` + `typecheck:active` | `LOCAL-EXEC` **PASS** — both exit 0 (were exit 2 / 10 errors) |
+| WP-10 | F-014 | **DONE** | `8dc68fd` | `npm run typecheck` + `typecheck:active` | `LOCAL-EXEC` **PASS** — both exit 0 (were exit 2 / 10 errors) |
 
 ### Findings discovered *after* the audit
 
