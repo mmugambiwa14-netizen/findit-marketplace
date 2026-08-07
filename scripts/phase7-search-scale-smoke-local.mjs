@@ -24,9 +24,11 @@ function success(result, label) {
   return result.data;
 }
 
-async function searchPage({ sort = 'newest', cursor = null, minPrice = 0, maxPrice = 500000, minBedrooms = null } = {}) {
-  return success(await publicClient.rpc('public_listing_search_page', {
+async function searchPage({ sort = 'newest', cursor = null, currency = '', minPrice = null, maxPrice = null, minBedrooms = null } = {}) {
+  return success(await publicClient.rpc('public_listing_search_page_v2', {
     p_kind: 'property',
+    p_country_code: 'ZW',
+    p_currency: currency,
     p_query: marker,
     p_category: '',
     p_location_id: '',
@@ -86,6 +88,9 @@ try {
     description: 'Disposable keyset search pagination fixture',
     price: 100000 + index,
     currency: 'USD',
+    native_price: 100000 + index,
+    native_currency: 'USD',
+    country_code: 'ZW',
     category: index % 2 === 0 ? 'houses-for-sale' : 'apartments-for-sale',
     status: 'available',
     photos: [],
@@ -114,23 +119,33 @@ try {
     'newest traversal is deterministic beyond the first 100 rows',
   );
 
-  const priceAscending = await traverse({ sort: 'price_asc' });
+  const priceAscending = await traverse({ sort: 'price_asc', currency: 'USD' });
   assert.equal(priceAscending.length, fixtureCount);
   assert.deepEqual(
     priceAscending.map((row) => Number(row.price)),
     Array.from({ length: fixtureCount }, (_, index) => 100000 + index),
-    'ascending-price keysets preserve deterministic price and id ordering',
+    'ascending-price keysets preserve deterministic seller-native USD price and id ordering',
   );
 
   const bedroomFiltered = await traverse({ sort: 'newest', minBedrooms: 4 });
   assert.equal(bedroomFiltered.length, Math.ceil(fixtureCount / 2));
   assert.equal(bedroomFiltered.every((row) => Number(row.property_details?.bedrooms) >= 4), true);
 
-  const priceFiltered = await traverse({ sort: 'price_desc', minPrice: 100050, maxPrice: 100059 });
+  const priceFiltered = await traverse({ sort: 'price_desc', currency: 'USD', minPrice: 100050, maxPrice: 100059 });
   assert.deepEqual(priceFiltered.map((row) => Number(row.price)), [100059, 100058, 100057, 100056, 100055, 100054, 100053, 100052, 100051, 100050]);
 
+  const rejectedCrossCurrencySort = await publicClient.rpc('public_listing_search_page_v2', {
+    p_kind: 'property',
+    p_country_code: 'ZW',
+    p_currency: '',
+    p_query: marker,
+    p_sort: 'price_asc',
+    p_limit: pageSize,
+  });
+  assert.match(rejectedCrossCurrencySort.error?.message || '', /invalid public listing search v2 page/i, 'price sorting without a currency must be rejected by the database');
+
   console.log(`Phase 7 ${smokeTarget.label} search-scale smoke passed.`);
-  console.log(`Verified ${fixtureCount}-row keyset traversal, no duplicates/skips, four sort/filter boundaries, and no exact counts or offsets.`);
+  console.log(`Verified ${fixtureCount}-row keyset traversal, no duplicates/skips, seller-native USD price boundaries, all-currency browse, and no exact counts or offsets.`);
 } finally {
   if (ownerId) {
     try { await root.from('listings').delete().eq('seller_id', ownerId).ilike('title', `${marker}%`); } catch { /* best effort */ }
