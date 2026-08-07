@@ -39,8 +39,11 @@ export function ListingDetailTabs({ children }) {
 
   return (
     <>
-      <nav className="sticky top-[var(--findit-header-height,0px)] z-30 border-y border-border bg-background/95 backdrop-blur-xl" aria-label="Listing sections">
-        <div className="no-scrollbar mx-auto flex max-w-4xl overflow-x-auto px-3 sm:px-5">
+      <nav
+        className="sticky top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-30 bg-background/88 px-3 py-2 backdrop-blur-xl md:top-[3.75rem] md:px-5"
+        aria-label="Listing sections"
+      >
+        <div className="no-scrollbar mx-auto flex max-w-4xl overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-1 shadow-floating">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -48,25 +51,27 @@ export function ListingDetailTabs({ children }) {
               onClick={() => goTo(tab.id)}
               aria-current={active === tab.id ? 'page' : undefined}
               className={cn(
-                'relative min-h-12 flex-1 whitespace-nowrap px-3 text-sm font-semibold text-muted-foreground transition-colors',
-                active === tab.id && 'text-foreground',
+                'min-h-11 flex-1 whitespace-nowrap rounded-xl px-3 text-xs font-bold text-muted-foreground transition-colors sm:text-sm',
+                active === tab.id && 'bg-primary/12 text-primary shadow-sm',
               )}
             >
               {tab.label}
-              <span className={cn('absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-primary transition-opacity', active === tab.id ? 'opacity-100' : 'opacity-0')} />
             </button>
           ))}
         </div>
       </nav>
-      <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 sm:px-6 sm:py-8">{children}</div>
+      <div className="mx-auto max-w-4xl space-y-10 px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7">{children}</div>
     </>
   );
 }
 
 export function ListingTabSection({ id, title, children, className = '' }) {
   return (
-    <section id={id} aria-labelledby={`${id}-heading`} className={cn('scroll-mt-28', className)}>
-      <h2 id={`${id}-heading`} className="mb-4 text-xl font-black tracking-tight">{title}</h2>
+    <section id={id} aria-labelledby={`${id}-heading`} className={cn('scroll-mt-32', className)}>
+      <div className="mb-4 flex items-center gap-3">
+        <span className="h-5 w-1 rounded-full bg-primary" aria-hidden="true" />
+        <h2 id={`${id}-heading`} className="text-lg font-black tracking-tight sm:text-xl">{title}</h2>
+      </div>
       {children}
     </section>
   );
@@ -79,11 +84,11 @@ export function ListingDescription({ value }) {
   const shown = !expanded && isLong ? `${description.slice(0, 420).trimEnd()}…` : description;
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
+    <div className="rounded-3xl border border-border/80 bg-card/90 p-5 shadow-sm sm:p-6">
       {description ? (
         <>
           <p className="whitespace-pre-wrap text-[15px] leading-7 text-foreground/90">{shown}</p>
-          {isLong && <button type="button" onClick={() => setExpanded((value) => !value)} className="mt-4 text-sm font-bold text-primary">{expanded ? 'Read less' : 'Read more'}</button>}
+          {isLong && <button type="button" onClick={() => setExpanded((value) => !value)} className="mt-4 min-h-10 rounded-xl px-1 text-sm font-bold text-primary">{expanded ? 'Read less' : 'Read more'}</button>}
         </>
       ) : <p className="text-sm text-muted-foreground">The seller did not add a description.</p>}
     </div>
@@ -99,19 +104,19 @@ export function ListingLocation({ label, latitude, longitude }) {
   const embedUrl = query ? `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed` : null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+    <div className="overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
       {embedUrl ? (
         <iframe title={`Map showing ${label || 'listing location'}`} src={embedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-64 w-full border-0 sm:h-72" />
       ) : (
         <div className="flex h-52 items-center justify-center bg-muted/30 text-muted-foreground"><MapPin className="mr-2 h-5 w-5" />Location unavailable</div>
       )}
-      <div className="flex items-center justify-between gap-4 p-4 sm:p-5">
+      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Public location</p>
           <p className="mt-1 truncate font-bold">{label || 'Location not supplied'}</p>
-          <p className="mt-1 text-xs text-muted-foreground">The map shows the public listing area, not a seller’s private live location.</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">The map shows the public listing area, not a seller’s private live location.</p>
         </div>
-        {mapsUrl && <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-xl border border-border px-3 text-sm font-semibold hover:border-primary"><ExternalLink className="h-4 w-4" />Open map</a>}
+        {mapsUrl && <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold transition hover:border-primary/40 hover:bg-primary/8"><ExternalLink className="h-4 w-4" />Open map</a>}
       </div>
     </div>
   );
@@ -149,10 +154,10 @@ export function ListingSeller({
   const resolvedProfilePath = profilePath || (sellerId ? `/seller/${encodeURIComponent(sellerId)}` : null);
   const profile = (
     <div className="flex items-center gap-4">
-      <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border">
+      <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted ring-1 ring-border">
         {resolvedAvatarUrl && !avatarFailed
           ? <img src={resolvedAvatarUrl} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" onError={() => setAvatarFailed(true)} />
-          : <UserRound className="h-6 w-6 text-muted-foreground" />}
+          : <UserRound className="h-7 w-7 text-muted-foreground" />}
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-lg font-black">{name || 'PeekaListing seller'}</p>
@@ -165,8 +170,8 @@ export function ListingSeller({
   );
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 sm:p-6">
-      {resolvedProfilePath ? <Link to={resolvedProfilePath} className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{profile}</Link> : profile}
+    <div className="rounded-3xl border border-border/80 bg-card/90 p-5 shadow-sm sm:p-6">
+      {resolvedProfilePath ? <Link to={resolvedProfilePath} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">{profile}</Link> : profile}
       <div className="mt-5 space-y-3">
         {actions}
         {resolvedProfilePath && (
