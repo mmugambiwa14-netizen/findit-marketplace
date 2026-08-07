@@ -4,11 +4,14 @@ import ConversationThread from '@/components/messaging/ConversationThread';
 import { supabase } from '@/lib/supabaseClient';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const METADATA_REFRESH_MS = 15_000;
 
 /**
  * Adds realtime message delivery to the established thread implementation.
  * Polling inside ConversationThread remains as a fallback for interrupted or
- * unsupported realtime connections.
+ * unsupported realtime connections. Metadata is refreshed separately so a
+ * remote block, closure, or listing-state change cannot remain stale while
+ * the thread stays open without new messages.
  */
 export default function RealtimeConversationThread(props) {
   const { conversationId, currentUser } = props;
@@ -18,17 +21,21 @@ export default function RealtimeConversationThread(props) {
     if (!UUID_PATTERN.test(String(conversationId || '')) || !currentUser?.id) return undefined;
 
     let cancelled = false;
-    const refresh = () => {
+    const refreshMetadata = () => {
       if (cancelled) return;
-      queryClient.invalidateQueries({
-        queryKey: ['message-thread', conversationId],
-        exact: true,
-      });
       queryClient.invalidateQueries({
         queryKey: ['message-conversation-metadata', conversationId],
         exact: true,
       });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
+    };
+    const refreshAll = () => {
+      if (cancelled) return;
+      queryClient.invalidateQueries({
+        queryKey: ['message-thread', conversationId],
+        exact: true,
+      });
+      refreshMetadata();
     };
 
     const channel = supabase
@@ -41,21 +48,25 @@ export default function RealtimeConversationThread(props) {
           table: 'inquiries',
           filter: `conversation_id=eq.${conversationId}`,
         },
-        refresh,
+        refreshAll,
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') refresh();
+        if (status === 'SUBSCRIBED') refreshAll();
       });
 
+    const metadataInterval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshMetadata();
+    }, METADATA_REFRESH_MS);
     const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible') refresh();
+      if (document.visibilityState === 'visible') refreshAll();
     };
-    window.addEventListener('online', refresh);
+    window.addEventListener('online', refreshAll);
     document.addEventListener('visibilitychange', refreshWhenVisible);
 
     return () => {
       cancelled = true;
-      window.removeEventListener('online', refresh);
+      window.clearInterval(metadataInterval);
+      window.removeEventListener('online', refreshAll);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
       supabase.removeChannel(channel);
     };
