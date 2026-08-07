@@ -452,6 +452,32 @@ erroring later, where previously they died at the insert. Six suites still end i
 These are **later** errors, not the original fixture class, so each needs its own diagnosis. Do not assume
 the curated-publisher pattern applies again — that assumption already produced one wrong call this session.
 
+## WP-05 / F-033 — DOES NOT REPRODUCE, control already present
+
+The audit marked F-033 **LIKELY**, not CONFIRMED: the *absence of a strip step* was evidenced, the
+*presence of GPS in served objects* was not. Rule 1 says confirm before editing. It does not hold.
+
+`supabase/functions/_shared/trusted-image.ts` already strips metadata server-side, per format:
+
+- **JPEG** — APP1 (`0xe1`, the EXIF marker), APP13 (`0xed`, IPTC), COM (`0xfe`), APP3–APP12 and APP15
+- **PNG** — `eXIf`, `tEXt`, `zTXt`, `iTXt`, `tIME` chunks
+- **WebP** — `EXIF` and `XMP` chunks, and it clears the VP8X feature-flag bits so the container stops
+  advertising metadata it no longer carries
+
+Both upload paths use it *before* the object exists — `listing-image-upload/index.ts:104` and
+`marketplace-image-upload/index.ts:90` call `prepareTrustedImage(originalBytes)` and then upload the
+returned **stripped** `bytes` (`:129` / `:120`), never `originalBytes`. The checksum and the upload intent
+are computed over the stripped bytes too, so the authorised object and the stored object are the same thing.
+
+The proving test the plan asked for already exists: `tests/trustedImageSanitization.test.mjs` builds PNG,
+JPEG and WebP fixtures whose metadata payload is literally `GPS=-17.8252,31.0335` — Harare — and asserts
+removal in all three, with `tests/storageUploadBoundary.test.mjs` covering the upload boundary. Both pass.
+
+**Recorded as not-reproduced rather than fixed.** Writing a second strip step here would have been a phantom
+fix over a working control, which §4 rule 1 exists to prevent. The Appendix C gates *"EXIF/GPS posture safe"*
+and *"Exact property location safe"* can be satisfied from this evidence; a hosted spot-check of one served
+object is still worth doing as Track B confirmation, but no in-repo work remains.
+
 ## Exact next action
 
 1. Confirm the F-029 and F-085 pushes turn `verify`, `Repository, build and PWA gates`,
