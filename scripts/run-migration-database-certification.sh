@@ -23,6 +23,7 @@ TEST_FILES=(
   supabase/tests/v1_contact_support.sql
   supabase/tests/v1_private_recommendation_event_implementation.sql
   supabase/tests/v1_private_public_listing_search_implementation.sql
+  supabase/tests/v1_currency_safe_public_listing_search_v2.sql
   supabase/tests/v1_private_notification_read_implementations.sql
   supabase/tests/v1_essential_notifications.sql
   supabase/tests/v1_recommendation_foundation.sql
