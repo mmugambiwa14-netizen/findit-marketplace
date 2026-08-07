@@ -84,7 +84,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
         variant="outline"
         disabled
         title="Existing chats remain available, but new enquiries are closed."
-        className="h-11 rounded-full px-4 shadow-floating"
+        className="h-12 w-full rounded-2xl px-5 shadow-floating md:h-11 md:w-auto md:rounded-full"
       >
         <MessageSquareText className="h-4 w-4" />
         Enquiries closed
@@ -145,7 +145,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
       }
       setExternalAction(null);
     } catch (failure) {
-      toast.error(userFacingError(failure, `We could not open this contact method. Please try again.`));
+      toast.error(userFacingError(failure, 'We could not open this contact method. Please try again.'));
     } finally {
       setOpeningExternal(false);
     }
@@ -186,7 +186,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
   if (actions.length === 0) {
     if (browsePlacement) return null;
     return (
-      <Button type="button" variant="outline" disabled className="h-11 rounded-full px-4 shadow-floating">
+      <Button type="button" variant="outline" disabled className="h-12 w-full rounded-2xl px-5 shadow-floating md:h-11 md:w-auto md:rounded-full">
         Contact unavailable
       </Button>
     );
@@ -205,7 +205,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
           confirm: 'Open email app',
         }
       : {
-          title: `Open WhatsApp?`,
+          title: 'Open WhatsApp?',
           description: `PeekaListing will open WhatsApp. The ${recipientLabel}'s number may be visible there, but it will not be displayed inside PeekaListing.`,
           confirm: 'Open WhatsApp',
         };
@@ -217,13 +217,15 @@ export default function ContactButtons({ listing, type = 'property', placement =
           <Button
             type="button"
             className={cn(
-              'clay-button h-11 rounded-full px-4 shadow-floating',
-              browsePlacement ? 'w-full rounded-xl shadow-none' : 'min-w-[7.25rem]',
+              'clay-button px-5 font-bold',
+              browsePlacement
+                ? 'h-11 w-full rounded-xl shadow-none'
+                : 'h-12 w-full rounded-2xl shadow-floating md:h-11 md:w-auto md:min-w-[9rem] md:rounded-full',
             )}
             aria-label={`Contact ${recipientLabel} about ${listing.title}`}
           >
             <MessageSquareText className="h-4 w-4" />
-            <span>Contact</span>
+            <span>Contact {recipientLabel}</span>
             {!browsePlacement && <ChevronUp className="h-4 w-4 opacity-75" />}
           </Button>
         </SheetTrigger>
