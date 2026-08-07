@@ -16,7 +16,7 @@ export function GuestPromptSheet({ open, onClose, action = 'save favourites or p
     <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose(); }}>
       <DialogContent className="safe-area-bottom gap-0 rounded-3xl p-5 pb-7 sm:max-w-[410px]" onOpenAutoFocus={(event) => event.preventDefault()}>
         <DialogHeader className="pr-10 text-left">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">FindIt account</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">PeekaListing account</p>
           <DialogTitle className="mt-1 text-xl">Sign in to continue</DialogTitle>
           <DialogDescription className="pt-2 text-sm leading-6">
             Use a free account to <span className="font-medium text-foreground">{action}</span>.
@@ -38,7 +38,7 @@ export function GuestPromptSheet({ open, onClose, action = 'save favourites or p
           </Button>
         </div>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          New to FindIt?{' '}
+          New to PeekaListing?{' '}
           <button
             type="button"
             className="font-semibold text-primary hover:text-primary-hover hover:underline"
