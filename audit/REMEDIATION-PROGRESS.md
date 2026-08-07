@@ -24,30 +24,28 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - F-070: behavior proven; essential-notifications suite passes 24/24 through the real media/upload/listing-submission path with human listing review absent.
 - F-071: behavior proven; recommendation-foundation suite passes 62/62.
 - F-072: behavior proven; recommendation projection-queue suite passes 20/20.
-- Recommendation geospatial certification: **PARTIAL / fixture repair awaiting CI** — `v1_recommendation_eligibility_geospatial.sql` reaches the curated publisher trigger before TAP because its controlled Cars listing fixture lacked an approved seller/category context. The test now crosses the real publisher boundary using an approved Cars business fixture plus matching JWT and clears fixture auth before geospatial assertions.
+- Recommendation geospatial certification: **BEHAVIOR PROVEN** — Recommendation database-gates run 31159888350 passes `v1_recommendation_eligibility_geospatial.sql` 19/19 through the curated Cars publisher boundary.
+- Recommendation publication-boundary certification: **PARTIAL / fixture repair awaiting CI** — the next suite reached its direct Cars fixture before TAP and was rejected by `enforce_curated_listing_publisher()` with `42501: Authentication required`. The fixture now uses an approved Cars business/category plus matching seller JWT and clears fixture auth immediately after publication.
 - F-014, F-049, F-059: DONE.
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
 
-## Evidence from Migration Gates run 31159384054
+## Evidence from Recommendation database-gates run 31159888350
 
-- `20260807042300_restore_owner_transition_country_gate.sql` applied successfully on clean reset.
-- `v1_admin_mfa_assurance_boundary.sql` passed 13/13.
-- `v1_private_country_helper_implementations.sql` returned to 9/9. The no-human-review owner transition now retains the independent `public.is_country_publishable(...)` guard established by migration 0046.
-- Seller-profile, marketplace-view, support, notification and earlier private-boundary suites stayed green.
-- `v1_essential_notifications.sql` passed 24/24.
+- All authenticated-RPC, database-lint and security-advisor suites remained green.
 - `v1_recommendation_foundation.sql` passed 62/62.
 - `v1_recommendation_projection_queue.sql` passed 20/20.
-- The runner then reached `v1_recommendation_eligibility_geospatial.sql` and stopped before TAP at its direct Cars listing fixture with `42501: Authentication required` from `enforce_curated_listing_publisher()`.
-- This is the same fixture-class issue already repaired in the projection-queue suite: production now requires a seller with an approved business application and approved Cars category plus authenticated request context before a public Cars listing may be created.
-- The geospatial test now creates that controlled approved Cars publisher context, sets the seller JWT only for fixture publication, writes the same test listing through the authoritative trigger, then clears JWT claims before recommendation worker, geography, eligibility, event and deletion assertions.
+- `v1_recommendation_eligibility_geospatial.sql` passed all 19 assertions after its fixture crossed the authoritative curated Cars publisher boundary. Privacy-safe geography, GiST use, seller suspension/restoration, event eligibility and deletion cascades all remained intact.
+- The runner then reached `v1_recommendation_publication_boundary.sql` and stopped before TAP at its first direct Cars listing insert with `42501: Authentication required` from `enforce_curated_listing_publisher()`.
+- The curated publisher trigger is insert-only. The publication-boundary test therefore needs approval/auth context only for its initial controlled fixture insert; its later suspension and status mutations do not cross that trigger.
+- The test now creates an approved Cars business/category for its seller, sets matching seller JWT claims for the listing insert, writes through the authoritative trigger, and clears fixture claims before the worker and eligibility assertions.
 - No production trigger, direct-table privilege, country gate, admin/MFA rule, listing moderation path, Peek moderation path, payment path or reputation system is weakened or bypassed.
 - Frontend/source verification remains separately red on later-owned source-contract/asset work; lint, typechecks, Edge checks, SQL boundary checks and production build remain green outside those known contracts.
 
 ## Exact next action
 
-1. Run PR #33 Migration Gates and Recommendation database gates with the geospatial fixture correction.
-2. Require `v1_recommendation_eligibility_geospatial.sql` to complete its full TAP plan while all earlier database suites remain green.
+1. Run PR #33 Migration Gates and Recommendation database gates with the publication-boundary fixture correction.
+2. Require `v1_recommendation_publication_boundary.sql` to complete its full TAP plan while geospatial remains 19/19 and all earlier suites stay green.
 3. Continue the database matrix to the next exact failure and repair only that boundary.
 4. Never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken curated publishing, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract merely to turn CI green.
 5. When all database suites pass, record final CI evidence and close proof-chain findings plus reopened F-012/F-058/F-060 as supported.
