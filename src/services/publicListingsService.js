@@ -118,7 +118,16 @@ export async function getPublicListingsByIds(listingIds, { signal } = {}) {
 export async function searchPublicListingsPage(input) {
   const request = normalizePublicSearchPageRequest(input);
   if (localPreviewListingsEnabled()) {
-    const page = paginateLocalPreviewListings(request);
+    // Preview fixtures are intentionally USD-only. Preserve truthful currency
+    // behavior instead of relabeling fixture amounts as another currency.
+    if (request.currency && request.currency !== 'USD') {
+      return { items: [], nextCursor: null };
+    }
+    const page = paginateLocalPreviewListings({
+      ...request,
+      minPrice: request.minPrice ?? 0,
+      maxPrice: request.maxPrice ?? Number.MAX_SAFE_INTEGER,
+    });
     return {
       items: await attachPublicTourSummaries(
         page.items.map(mapPublicListing),
