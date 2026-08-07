@@ -1,0 +1,157 @@
+name: PeekaListing Preview
+
+on:
+  push:
+    branches:
+      - claude/peekalisting-audit-ui0z6l
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: peekalisting-pages-preview
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    if: github.ref == 'refs/heads/claude/peekalisting-audit-ui0z6l'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      NODE_ENV: production
+      VITE_MODE: staging
+      VITE_BASE_PATH: /findit-marketplace/
+      VITE_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+      VITE_AUTH_GOOGLE_ENABLED: ${{ vars.FINDIT_AUTH_GOOGLE_ENABLED }}
+      VITE_AUTH_APPLE_ENABLED: "false"
+      VITE_FEATURE_BUSINESS_PROFILES: "true"
+      VITE_FEATURE_CURATED_BUSINESS_MARKETPLACE: "true"
+      VITE_FEATURE_MESSAGING: "true"
+      VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
+      VITE_FEATURE_GOOGLE_OAUTH: "true"
+      VITE_FEATURE_MAPS: ${{ vars.FINDIT_MAPS_ENABLED }}
+      VITE_MAPTILER_PUBLIC_KEY: ${{ secrets.FINDIT_MAPTILER_PUBLIC_KEY }}
+      VITE_MAPTILER_STYLE_ID: ${{ vars.FINDIT_MAPTILER_STYLE_ID }}
+      VITE_FEATURE_INTERNATIONAL_LISTING: "false"
+      VITE_FEATURE_MANUAL_LOCATION: "true"
+      VITE_FEATURE_CURRENT_LOCATION: "true"
+      VITE_FEATURE_CURRENCY_CONVERSION: "false"
+      VITE_FEATURE_PHONE_VERIFICATION: "false"
+      VITE_FEATURE_SERVICE_RADIUS: "false"
+      VITE_FEATURE_REPORTING: "true"
+      VITE_FEATURE_PAYMENTS: "false"
+      VITE_FEATURE_SUBSCRIPTIONS: "false"
+      VITE_FEATURE_ESCROW: "false"
+      VITE_FEATURE_PREMIUM_LISTINGS: "false"
+      VITE_FEATURE_AI_MODERATION: "false"
+      VITE_FEATURE_AI_BAN_EVASION: "false"
+      VITE_FEATURE_AI_TICKET_TRIAGE: "false"
+      VITE_FEATURE_AI_SUPPORT_CHAT: "false"
+      VITE_FEATURE_SCHEDULED_REMINDERS: "false"
+      VITE_FEATURE_MARKETING_EMAILS: "false"
+      VITE_FEATURE_LISTING_EXPIRY: "false"
+      VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
+      VITE_FEATURE_PREVIEW_FIXTURES: "false"
+      VITE_PREVIEW_AUTH_BYPASS: "false"
+      VITE_FEATURE_TOURS: "true"
+      VITE_FEATURE_TOURS_PREVIEW: "true"
+      TOURS_BACKEND_ENABLED: "true"
+
+    steps:
+      - name: Check out exact triggering head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify authoritative preview source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "claude/peekalisting-audit-ui0z6l"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          grep -q '<title>PeekaListing Marketplace</title>' index.html
+          grep -q 'BusinessPublishingGate><CreateListing' src/App.jsx
+          echo "PeekaListing preview source verified: $GITHUB_REF_NAME@$GITHUB_SHA"
+
+      - name: Verify staging Supabase isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$VITE_SUPABASE_URL" in
+            *bwgklpxoetrrkutottdb*)
+              echo "Bound to PeekaListing staging Supabase: bwgklpxoetrrkutottdb"
+              ;;
+            *)
+              echo "::error::Preview is not bound to staging Supabase bwgklpxoetrrkutottdb"
+              exit 1
+              ;;
+          esac
+
+      - name: Normalize lockfile
+        run: node ./scripts/normalize-package-lock.mjs --write
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Validate staging environment
+        run: npm run validate:env
+
+      - name: Build current PeekaListing application
+        run: npm run build
+
+      - name: Add SPA fallback
+        run: node ./scripts/create-pages-spa-fallback.mjs dist "$VITE_BASE_PATH"
+
+      - name: Stamp build identity and reset legacy preview caches
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > dist/preview-build.json <<EOF
+          {"product":"PeekaListing","branch":"$GITHUB_REF_NAME","sha":"$GITHUB_SHA","run_id":"$GITHUB_RUN_ID","staging_project":"bwgklpxoetrrkutottdb"}
+          EOF
+
+          printf '\n<!-- product:PeekaListing branch:%s sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/index.html
+          if [ -f dist/404.html ]; then
+            printf '\n<!-- product:PeekaListing branch:%s sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/404.html
+          fi
+
+          cat > dist/sw.js <<'EOF'
+          self.addEventListener('install', (event) => {
+            self.skipWaiting();
+            event.waitUntil(caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))));
+          });
+          self.addEventListener('activate', (event) => {
+            event.waitUntil((async () => {
+              const keys = await caches.keys();
+              await Promise.all(keys.map((key) => caches.delete(key)));
+              await self.clients.claim();
+              await self.registration.unregister();
+            })());
+          });
+          self.addEventListener('fetch', () => {});
+          EOF
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
+
+      - name: Upload fresh preview artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        with:
+          path: dist
+
+      - name: Deploy fresh PeekaListing preview
+        id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
