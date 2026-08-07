@@ -1,3 +1,5 @@
+import { readStoredString, writeStoredString } from '@/lib/browserStorage';
+
 const TRACE_HEADER = 'x-request-id';
 const TRACE_STORAGE_KEY = 'peekalisting.trace-session';
 
@@ -12,10 +14,10 @@ export function createTraceId() {
 
 export function getSessionTraceId() {
   try {
-    const existing = globalThis.sessionStorage?.getItem(TRACE_STORAGE_KEY);
+    const existing = readStoredString('session', TRACE_STORAGE_KEY, null);
     if (valid(existing)) return existing;
     const next = createTraceId();
-    globalThis.sessionStorage?.setItem(TRACE_STORAGE_KEY, next);
+    writeStoredString('session', TRACE_STORAGE_KEY, next);
     return next;
   } catch {
     return createTraceId();

@@ -36,6 +36,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 23
+      - name: Normalize lockfile
+        run: node ./scripts/normalize-package-lock.mjs --write
       - run: npm ci
       - name: Run buyer certification
         run: node scripts/certify-buyer-journey.mjs
