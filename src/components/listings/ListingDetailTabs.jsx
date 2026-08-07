@@ -155,7 +155,7 @@ export function ListingSeller({
           : <UserRound className="h-6 w-6 text-muted-foreground" />}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-lg font-black">{name || 'FindIt seller'}</p>
+        <p className="truncate text-lg font-black">{name || 'PeekaListing seller'}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {validJoined && <span>Joined {joined.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>}
           {Number.isFinite(Number(resolvedActiveListingCount)) && <span>{Number(resolvedActiveListingCount)} active listings</span>}
