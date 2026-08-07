@@ -13,11 +13,15 @@ test('release workflow targets canonical main only', async () => {
   assert.match(workflow, /hosted-release-certification/);
 });
 
-test('clean database certification uses a locked CLI and runs all pgTAP tests', async () => {
+test('release clean database certification reuses the authoritative migration matrix', async () => {
   const workflow = await read('.github/workflows/release-certification.yml');
-  assert.match(workflow, /supabase@2\.84\.2 start/);
-  assert.match(workflow, /supabase@2\.84\.2 db reset/);
-  assert.match(workflow, /supabase@2\.84\.2 test db/);
+  const runner = await read('scripts/run-migration-database-certification.sh');
+  assert.match(workflow, /bash \.\/scripts\/run-migration-database-certification\.sh/);
+  assert.doesNotMatch(workflow, /Run complete pgTAP suite[\s\S]*supabase@2\.84\.2 test db/);
+  assert.match(runner, /SUPABASE_CLI_VERSION="2\.84\.2"/);
+  assert.match(runner, /supabase\/tests\/v1_curated_business_marketplace\.sql/);
+  assert.match(runner, /supabase\/tests\/v1_recommendation_services\.sql/);
+  assert.match(runner, /supabase\/tests\/v1_admin_mfa_assurance_boundary\.sql/);
   assert.doesNotMatch(workflow, /supabase\/setup-cli@v1/);
 });
 
