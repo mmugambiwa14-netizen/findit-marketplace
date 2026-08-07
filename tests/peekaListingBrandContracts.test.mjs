@@ -48,20 +48,30 @@ test('startup and push fallbacks never expose the former product name', async ()
   assert.match(push, /peekalisting-binoculars\.svg/);
 });
 
-test('live buyer-facing listing and seller surfaces never expose the former product name', async () => {
+test('live user-facing surfaces never expose the former product name', async () => {
   const paths = [
     'src/pages/PropertyDetail.jsx',
     'src/pages/CarDetail.jsx',
     'src/pages/MachineryDetail.jsx',
+    'src/pages/ServiceDetail.jsx',
     'src/pages/SellerProfile.jsx',
     'src/pages/Profile.jsx',
     'src/pages/Tours.jsx',
+    'src/components/AppErrorBoundary.jsx',
     'src/components/AuthLayout.jsx',
+    'src/components/auth/AccountBlocked.jsx',
     'src/components/auth/GuestPromptSheet.jsx',
+    'src/components/layout/AppLayout.jsx',
+    'src/components/layout/BottomNav.jsx',
+    'src/components/layout/MobileTopNav.jsx',
+    'src/components/layout/SiteFooter.jsx',
+    'src/components/layout/TopNav.jsx',
     'src/components/listings/ContactButtons.jsx',
     'src/components/listings/ListingDetailLayout.jsx',
     'src/components/listings/ListingDetailTabs.jsx',
     'src/components/listings/MessageDialog.jsx',
+    'src/components/pwa/InstallPrompt.jsx',
+    'src/components/discover/HomePeekRail.jsx',
     'src/components/tours/TourUploader.jsx',
     'src/services/listingTourContracts.js',
     'public/offline.html',
