@@ -17,7 +17,7 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 - WP-04/F-027: **BEHAVIOR PROVEN, PACKAGE PARTIAL** — all 13 server-side MFA assertions pass on clean reset.
 - F-062: **BEHAVIOR PROVEN, PACKAGE PARTIAL** — post-boundary authenticated RPC drift is closed. Recommendation database-gates run 31156730006 proves both the original 0101 boundary and newer 22-RPC boundary at 16/16 each, with zero authenticated-callable public SECURITY DEFINER functions, all 57 original wrappers restored, and `discover_category_counts()` preserved as a direct least-privilege invoker read RPC.
 - F-065: behavior proven; 48-policy RLS suite passes.
-- F-066: behavior proven; country-helper suite passes 9/9.
+- F-066: **REOPENED/PARTIAL** — Migration Gates run 31157145537 exposed a post-closure regression: country-helper suite is 8/9 because the no-human-review rewrite of `owner_transition_listing` omitted the independent country publication guard. `20260807042300_restore_owner_transition_country_gate.sql` restores only that guard and is awaiting CI proof.
 - F-067: behavior proven; seller-profile suite passes 10/10.
 - F-068: behavior proven; marketplace-view suite passes 21/21.
 - F-069: behavior proven; contact-support suite passes 12/12.
@@ -28,24 +28,21 @@ Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected 
 
 The full machine-readable register remains `audit/findings-status.csv`; proof-chain statuses will be appended in the final proof-record commit only after the full database matrix closes.
 
-## Evidence from Recommendation database-gates run 31156730006
+## Evidence from runs 31156730006 and 31157145537
 
-- `20260807042000_close_post_boundary_authenticated_rpc_drift.sql` and `20260807042100_restore_authenticated_boundary_provenance.sql` both applied successfully on clean reset.
-- `v1_private_authenticated_rpc_implementations.sql` passed all 16 assertions: zero authenticated-callable public SECURITY DEFINER functions, all 57 original 0101 wrappers restored, private privileged twins present, invoker/empty-search-path public wrappers intact, and historical role-grant matrices preserved.
-- `v1_private_new_authenticated_rpc_implementations.sql` passed all 16 assertions after restoring the real historical 22-RPC boundary and separately certifying `discover_category_counts()` as a direct public SQL SECURITY INVOKER read RPC with no private privileged twin.
-- F-062 is therefore behavior-proven again. No protected authorization or publication boundary was weakened to achieve this.
-- The next suite, `v1_database_lint_runtime_contract_repairs.sql`, failed only its first assertion: two of the three previously ambiguous PL/pgSQL functions retained `#variable_conflict use_column`, while `private.seller_peek_request_queue(bigint,timestamptz,uuid,integer)` no longer did.
-- Root cause is deterministic: the 42000 closure correctly replaced the stale private seller queue with the newer fulfilment-aware authoritative body from the public RPC. That newer definition post-dated the earlier 050745 lint repair and therefore did not contain the parser-precedence directive.
-- `20260807042200_restore_seller_peek_queue_variable_precedence.sql` restores only `#variable_conflict use_column` to the latest private seller queue implementation. It also asserts the function remains private SECURITY DEFINER, its public counterpart remains an authenticated SECURITY INVOKER wrapper with empty search path, and zero authenticated public SECURITY DEFINER drift has reappeared.
-- This is parser/lint compatibility only: no queue ordering, fulfilment state, pagination, privilege, return shape or product behavior is changed.
-- The main database matrix had already advanced past F-072 to `v1_recommendation_eligibility_geospatial.sql`, whose first direct listing fixture still needs the next sequential repair after the lint compatibility suite is green.
-- Frontend/source verification still has only the seven later-owned F-017/F-029/F-042 failures; immutable workflow pins, dependency normalization, trace storage boundary, lint, typechecks, Edge checks and build remain green outside those owned source contracts.
+- Both authenticated-RPC certification suites are green at 16/16 each. Zero authenticated-callable public SECURITY DEFINER functions remain and all historical public invoker compatibility boundaries are preserved.
+- `v1_database_lint_runtime_contract_repairs.sql` is now green 10/10 after `20260807042200_restore_seller_peek_queue_variable_precedence.sql` restored only the parser-precedence directive on the current fulfilment-aware seller queue.
+- The authoritative full Migration Gates matrix then reached `v1_private_country_helper_implementations.sql` and passed 8/9. Only assertion 4 failed: three of the four stored private caller paths still invoke the canonical public country helpers, but `private.owner_transition_listing(uuid,text)` no longer invokes `public.is_country_publishable(...)`.
+- Root cause is deterministic. Migration 0046 established the country gate on owner submission. Migration `20260807030000_remove_listing_content_review_from_mvp.sql` correctly removed human review and made owner submission go directly to `available`, but accidentally omitted the independent country-publishability check. The later authenticated-RPC closure faithfully copied that newer body into private, exposing the omission to the existing country-helper certification.
+- `20260807042300_restore_owner_transition_country_gate.sql` keeps the no-review MVP behavior and restores only `public.is_country_publishable(coalesce(listing_row.country_code, 'ZW'))` before owner submission can transition to `available`. The public RPC remains a SECURITY INVOKER wrapper to the private implementation, and the migration asserts that zero authenticated public SECURITY DEFINER drift is reintroduced.
+- The dedicated recommendation runner has already advanced beyond these boundaries to `v1_recommendation_eligibility_geospatial.sql`, where its first direct listing fixture is rejected by the authoritative curated publisher trigger with `42501: Authentication required`. That fixture is the next sequential repair after F-066 returns to 9/9.
+- Frontend/source verification remains separately red on later-owned contract/asset work; lint, typechecks, Edge checks, SQL boundary checks and production build remain green.
 
 ## Exact next action
 
-1. Run PR #33 Recommendation database gates and Migration Gates with `20260807042200_restore_seller_peek_queue_variable_precedence.sql`.
-2. Require `v1_database_lint_runtime_contract_repairs.sql` to pass all 10 assertions while both authenticated-RPC suites remain green.
-3. Continue the main database runner through the next exact failure. The known next fixture is `v1_recommendation_eligibility_geospatial.sql`, whose direct listing setup must cross the curated publishing boundary through an approved authenticated seller context rather than bypassing the trigger.
+1. Run PR #33 Migration Gates with `20260807042300_restore_owner_transition_country_gate.sql`.
+2. Require `v1_private_country_helper_implementations.sql` to return to 9/9 while MFA, RPC, RLS and earlier suites remain green.
+3. Continue the database matrix to `v1_recommendation_eligibility_geospatial.sql`. Repair its stale direct-listing fixture through an approved authenticated Cars publisher context; do not disable or bypass `enforce_curated_listing_publisher()`.
 4. Repeat only for exact real failures; never grant direct authenticated listing writes, restore listing moderation or a retired RPC, weaken founder-only admin authorization/MFA, disable an authoritative trigger, or weaken a contract.
 5. When all database suites pass, record final CI evidence and close the proof-chain findings plus reopened F-012/F-058/F-060 as supported.
 6. Proceed to WP-05/F-033 only after WP-04 proof-chain closure.
