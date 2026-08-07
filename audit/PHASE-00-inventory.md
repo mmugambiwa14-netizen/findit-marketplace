@@ -5,7 +5,7 @@
 **Audited ref:** `origin/main` @ `ee6f21231e5e963068efe8c4320f560f7a25f8f3`
 ("Merge pull request #32 from …/integration/final-release-certification")
 **Audit date:** 2026-08-07
-**Evidence tiers used:** Static (repo) ✅ · Local execution ✅ · Live read-only (MCP) ⛔ BLOCKED — see `EXTERNAL-EVIDENCE.md` E-000
+**Evidence tiers used:** Static (repo) PASS · Local execution PASS · Live read-only (MCP) BLOCKED BLOCKED — see `EXTERNAL-EVIDENCE.md` E-000
 
 > This phase reports facts, not remediation opinions. Findings are recorded in `findings.csv`.
 
@@ -199,11 +199,11 @@ a deployed bundle. `scripts/validate-env.mjs:194` additionally rejects any non-`
 
 | Variable | Client/server | Declared in `.env.example` | Validator | Notes |
 |---|---|---|---|---|
-| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | client | ✅ | `scripts/validate-env.mjs:37-52` (required, placeholder + protocol checked) | |
-| `VITE_WEB_PUSH_PUBLIC_KEY` | client | ❌ **missing** | none | Used in `src/`; undocumented — F-008 |
-| `VITE_VERCEL_ENV`, `VITE_VERCEL_TARGET_ENV`, `VITE_VERCEL_GIT_COMMIT_REF` | client | ❌ (Vercel-injected) | none | Expected absence; `GIT_COMMIT_REF` drives the staging trust decision (§0.7) |
-| 26 `VITE_FEATURE_*` / `VITE_AUTH_*` / `VITE_PREVIEW_*` | client | ✅ | `validate-env.mjs:53-60` enforces exact `true`/`false` | |
-| `VITE_MAPTILER_PUBLIC_KEY`, `VITE_MAPTILER_STYLE_ID` | client | ✅ | — | Public by design |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | client | PASS | `scripts/validate-env.mjs:37-52` (required, placeholder + protocol checked) | |
+| `VITE_WEB_PUSH_PUBLIC_KEY` | client | no **missing** | none | Used in `src/`; undocumented — F-008 |
+| `VITE_VERCEL_ENV`, `VITE_VERCEL_TARGET_ENV`, `VITE_VERCEL_GIT_COMMIT_REF` | client | absent (Vercel-injected) | none | Expected absence; `GIT_COMMIT_REF` drives the staging trust decision (§0.7) |
+| 26 `VITE_FEATURE_*` / `VITE_AUTH_*` / `VITE_PREVIEW_*` | client | PASS | `validate-env.mjs:53-60` enforces exact `true`/`false` | |
+| `VITE_MAPTILER_PUBLIC_KEY`, `VITE_MAPTILER_STYLE_ID` | client | PASS | — | Public by design |
 
 **Server-side (Deno / Workers) — 25 variables**, none reachable from browser code:
 `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY(S)`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
@@ -290,7 +290,7 @@ No god components: the largest is 554 LOC and the codebase shows clean
 **Orphaned component files (5), all Peek/Tour-era:** `AdminTourQueue.jsx`, `ImmersivePeekCard.jsx`,
 `TourCard.jsx`, `TourCatalogueHeader.jsx`, `TourCategoryChips.jsx` — F-010.
 
-⚠️ **Important correction:** `AdminTourQueue.jsx` is a dead *component file*, but the functionality is **live**
+**Important correction:** `AdminTourQueue.jsx` is a dead *component file*, but the functionality is **live**
 via `src/pages/admin/AdminPeeks.jsx:17,44` → `getAdminTourQueue` → `adminRepository.js:31` → RPC
 `admin_tour_queue_page`, whose error string reads *"We could not load the Peek moderation queue."*
 `/admin/peeks` is a **reachable route** (`App.jsx:203`). Whether this is report-driven removal (permitted by

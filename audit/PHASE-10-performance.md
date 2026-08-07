@@ -1,6 +1,6 @@
 # PHASE 10 — PERFORMANCE & LOW-BANDWIDTH RESILIENCE
 
-**Audited ref:** `origin/main` @ `ee6f212` · Real build measured locally ✅ · No field/Lighthouse measurement (no running app) — Core Web Vitals are UNVERIFIED.
+**Audited ref:** `origin/main` @ `ee6f212` · Real build measured locally PASS · No field/Lighthouse measurement (no running app) — Core Web Vitals are UNVERIFIED.
 
 ## 10.1 Measured bundle (real `vite build`)
 

@@ -1,6 +1,6 @@
 # PHASE 15 — CI/CD, ENVIRONMENTS, CLOUDFLARE & DR
 
-**Audited ref:** `origin/main` @ `ee6f212` · **GitHub Actions verified live** ✅ · Vercel/Supabase/Cloudflare ⛔ E-001/E-003/E-004
+**Audited ref:** `origin/main` @ `ee6f212` · **GitHub Actions verified live** PASS · Vercel/Supabase/Cloudflare BLOCKED E-001/E-003/E-004
 
 ## 15.1 GitHub Actions — measured, not assumed
 
@@ -39,10 +39,10 @@ gates are **not** required checks, since a required failing check would have blo
 
 | Environment | Repository evidence | Verified? |
 |---|---|---|
-| Production (Vercel, `peekalisting.com`) | `vercel.json` only; **no workflow deploys to production** | ⛔ E-003 / E-006 |
+| Production (Vercel, `peekalisting.com`) | `vercel.json` only; **no workflow deploys to production** | BLOCKED E-003 / E-006 |
 | Staging (GitHub Pages) | `deploy-staging-pages.yml` — **currently failing** | Repo-visible, broken |
 | Preview | `pages-preview.yml` — **currently failing** | Repo-visible, broken |
-| Supabase staging / production | 159 migrations, `config.toml` | ⛔ E-004 |
+| Supabase staging / production | 159 migrations, `config.toml` | BLOCKED E-004 |
 
 **Preview-writes-production is a P0 per Appendix A and cannot be assessed from the repository.** The audit
 does **not** mark it PASS. `stagingCapabilityPolicy.js` makes this materially riskier than usual: a preview
@@ -69,7 +69,7 @@ Turnstile: server function exists, never invoked (**F-034**). R2/Workers/Queues 
 | Migration rollback scripts | **100** rollback scripts for **159** migrations — **59 migrations have no rollback** → **F-056 (P2)** |
 | Rollback gate | `verify:sql-boundary` enforces non-destructive rollbacks — and is what is currently red (F-013) |
 | DR documentation | `docs/BACKUP_AND_DISASTER_RECOVERY.md`, `docs/BACKUP_AND_RECOVERY.md`, `docs/DEPLOYMENT_RUNBOOK.md` |
-| PITR / backups | ⛔ **E-004** — not provable from the repository |
+| PITR / backups | BLOCKED **E-004** — not provable from the repository |
 | Restore drill | **No evidence of one ever being performed** → **F-057 (P2)** |
 | Deploy rollback | Vercel supports instant rollback, but unverified (E-003) |
 | Secret rotation | No documented procedure found |

@@ -1,7 +1,7 @@
 # PHASE 01 — REPOSITORY, BUILD & CONFIG HARDENING
 
 **Audited ref:** `origin/main` @ `ee6f212`
-**Evidence tiers:** Static ✅ · Local execution ✅ (build, lint, typecheck, verifiers all executed) · Live read-only ✅ **GitHub Actions** (Supabase/Cloudflare/Vercel still blocked — E-000)
+**Evidence tiers:** Static PASS · Local execution PASS (build, lint, typecheck, verifiers all executed) · Live read-only PASS **GitHub Actions** (Supabase/Cloudflare/Vercel still blocked — E-000)
 
 ---
 
@@ -130,7 +130,7 @@ build prints no chunk summary).
 | `dist/` total | 3.3 MB |
 | JS | 1,507,014 bytes across **151** chunks |
 | CSS | 111,208 bytes across 3 files |
-| Source maps in `dist/` | **0** ✅ |
+| Source maps in `dist/` | **0** PASS |
 
 Largest chunks (raw / gzip):
 
@@ -173,14 +173,14 @@ Assessed **strong**. `vercel.json:11-51` applies to `/(.*)`:
 | Header | Value | Assessment |
 |---|---|---|
 | `Content-Security-Policy` | `default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'` + scoped allowlists | **Strong** — no `unsafe-inline`/`unsafe-eval` on `script-src`; only `style-src-attr` allows `unsafe-inline` (needed for React inline styles) |
-| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | ✅ |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | ✅ |
-| `X-Content-Type-Options` | `nosniff` | ✅ |
-| `X-Frame-Options` | `DENY` | ✅ (doubled with `frame-ancestors 'none'`) |
-| `Cross-Origin-Opener-Policy` | `same-origin-allow-popups` | ✅ correct for OAuth popups |
-| `Cross-Origin-Resource-Policy` | `same-site` | ✅ |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | PASS |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | PASS |
+| `X-Content-Type-Options` | `nosniff` | PASS |
+| `X-Frame-Options` | `DENY` | PASS (doubled with `frame-ancestors 'none'`) |
+| `Cross-Origin-Opener-Policy` | `same-origin-allow-popups` | PASS correct for OAuth popups |
+| `Cross-Origin-Resource-Policy` | `same-site` | PASS |
 | `Permissions-Policy` | `geolocation=(self), camera=(), microphone=(), payment=(), usb=(), browsing-topics=()` | See below |
-| `Cache-Control` | `no-store, max-age=0` on HTML; `immutable` on `/assets/*`; `must-revalidate` on `/sw.js` | ✅ correct triad |
+| `Cache-Control` | `no-store, max-age=0` on HTML; `immutable` on `/assets/*`; `must-revalidate` on `/sw.js` | PASS correct triad |
 
 **CSP is consistent with the live media path.** `media-src 'self' blob: https://*.supabase.co` matches
 `supabase/functions/tour-playback-access/index.ts:58-62,88`, which serves Peek playback from **Supabase

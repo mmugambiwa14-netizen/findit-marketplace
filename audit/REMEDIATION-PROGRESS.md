@@ -77,7 +77,7 @@ control PASS* — into execution. Do not upgrade a label without actually runnin
 
 | WP | Findings | Status | Commit | Proving test | Result |
 |---|---|---|---|---|---|
-| WP-01 | F-013 | **PARTIAL** | *this commit* | `tests/sqlRollbackBoundary.test.mjs` + gate exit 0 · then CI | `LOCAL-EXEC` **PASS** 12/12 · CI half `UNPROVEN — needs an Actions run` |
+| WP-01 | F-013 | **DONE** | `cb0b6c6` | `tests/sqlRollbackBoundary.test.mjs`; gate exit 0; CI step conclusions | `LOCAL-EXEC` **PASS** 12/12 · **`CI-VERIFIED` PASS** — run [31144698189](https://github.com/mmugambiwa14-netizen/findit-marketplace/actions/runs/31144698189), **0 verification steps skipped** |
 | WP-02 | F-012 | NOT-STARTED | — | Green `Release candidate gates` on `main` | — |
 | WP-03 | F-054 | NOT-STARTED | — | Green staging deploy | — |
 | WP-04 | F-027 | NOT-STARTED | — | pgTAP: aal1 admin RPC denied, aal2 allowed | — |
@@ -88,10 +88,42 @@ control PASS* — into execution. Do not upgrade a label without actually runnin
 
 ### Tranche 1 · 2 · 3
 
-All `NOT-STARTED`. Per-finding rows in `audit/findings-status.csv`; package definitions in
+All `NOT-STARTED` except as noted. Per-finding rows in `audit/findings-status.csv`; package definitions in
 `REMEDIATION-PROMPT.md` §7.
 
-**Totals:** 56 findings — **0 DONE · 1 PARTIAL · 0 BLOCKED · 55 NOT-STARTED**
+### Findings discovered *after* the audit
+
+The audit's 56 findings were what could be seen while the CI cascade was hiding twelve steps. Fixing F-013
+made those steps run, and they immediately reported a defect the audit never had access to:
+
+| ID | Sev | WP | Title |
+|---|---|---|---|
+| **F-058** | P2 | WP-02 | `src/lib/traceContext.js:15,18` calls `globalThis.sessionStorage` directly instead of going through the guarded `src/lib/browserStorage.js` boundary. Fails `npm run audit:product-surface` with `UNSAFE_BROWSER_STORAGE`. |
+
+**Numbering:** the audit used `F-001`…`F-057` with `F-032` withdrawn (56 live). New findings continue from
+**`F-058`**. They live in `findings-status.csv` only — `findings.csv` stays frozen at the audit baseline.
+
+**Totals:** 57 findings — **1 DONE · 0 PARTIAL · 0 BLOCKED · 56 NOT-STARTED**
+
+### CI evidence so far
+
+**Run [31144698189](https://github.com/mmugambiwa14-netizen/findit-marketplace/actions/runs/31144698189)**
+@ `cb0b6c6` — job `verify`, conclusion `failure`, **0 verification steps skipped**. The job is red because
+six real failures are now *reported* rather than hidden. Outstanding, in step order:
+
+| Step | Owner |
+|---|---|
+| 11 Audit routed product surface | **F-058** |
+| 14 Run all contracts | F-049 (+ F-017, F-029, F-042) |
+| 16 Run Tours contracts | F-049 |
+| 18 Typecheck application | F-014 — **fixed locally, see WP-10** |
+| 20 Typecheck active release surface | F-014 — **fixed locally** |
+| 24 Run reproducible internal certification | aggregates the above |
+
+> **Triggering CI on this branch.** `release-candidate-gates.yml` runs on `pull_request`, pushes to `main`,
+> and `workflow_dispatch` — **not** on a push to a feature branch. Use a manual dispatch against
+> `claude/peekalisting-audit-ui0z6l`, or open a PR. Same for `migration-gates.yml` and
+> `release-certification.yml`.
 
 ---
 

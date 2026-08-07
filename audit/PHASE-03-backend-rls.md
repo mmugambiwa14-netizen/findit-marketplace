@@ -1,6 +1,6 @@
 # PHASE 03 — SUPABASE, DATABASE, RLS & RPC SECURITY
 
-**Audited ref:** `origin/main` @ `ee6f212` · **Evidence:** Static replay of 159 migrations ✅ · Live DB ⛔ E-004
+**Audited ref:** `origin/main` @ `ee6f212` · **Evidence:** Static replay of 159 migrations PASS · Live DB BLOCKED E-004
 
 > Method: policy state was **reconstructed by replaying every `create policy` / `drop policy` statement in
 > migration order**, not by reading the first migration that defines a table. Early permissive policies that

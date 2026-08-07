@@ -1,6 +1,6 @@
 # PHASE 12 — OBSERVABILITY & OPERATIONS
 
-**Audited ref:** `origin/main` @ `ee6f212` · Hosted dashboards/alerting ⛔ E-001/E-004
+**Audited ref:** `origin/main` @ `ee6f212` · Hosted dashboards/alerting BLOCKED E-001/E-004
 
 ## 12.1 Frontend error capture — absent
 

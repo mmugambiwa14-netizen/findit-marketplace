@@ -1,6 +1,6 @@
 # PHASE 06 — APPLICATION SECURITY
 
-**Audited ref:** `origin/main` @ `ee6f212` · Static + local build evidence ✅ · Hosted ⛔ E-003/E-004/E-005
+**Audited ref:** `origin/main` @ `ee6f212` · Static + local build evidence PASS · Hosted BLOCKED E-003/E-004/E-005
 
 ## 6.1 Secrets
 

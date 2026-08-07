@@ -1,6 +1,6 @@
 # PHASE 02 — DATA MODEL, TAXONOMY & ATTRIBUTES
 
-**Audited ref:** `origin/main` @ `ee6f212` · **Evidence:** Static (159 migrations) ✅ · Live DB ⛔ E-004
+**Audited ref:** `origin/main` @ `ee6f212` · **Evidence:** Static (159 migrations) PASS · Live DB BLOCKED E-004
 
 ---
 
@@ -51,16 +51,16 @@ What is actually captured, validated and stored:
 
 | Vertical | Required by brief | Present? |
 |---|---|---|
-| Property | parking | ❌ |
-| Property | land size vs built size, with units | ❌ (single `size_sqm`) |
-| Property | tenure / title | ❌ |
-| Property | utilities: borehole, solar, water, ZESA, sewer | ❌ |
-| Property | furnishing, availability date | ❌ |
-| Property | province / city / suburb | ⚠️ via `location_id` → `locations` only |
-| Cars | **duty / import status** (called out as materially important) | ❌ |
-| Cars | variant, engine size, drivetrain, body type | ❌ |
-| Cars | VIN / chassis | ✅ correctly **absent** (privacy-positive) |
-| Machinery | capacity / payload, axles, attachments, certification, transport notes | ❌ |
+| Property | parking | no |
+| Property | land size vs built size, with units | no (single `size_sqm`) |
+| Property | tenure / title | no |
+| Property | utilities: borehole, solar, water, ZESA, sewer | no |
+| Property | furnishing, availability date | no |
+| Property | province / city / suburb | partial - via `location_id` → `locations` only |
+| Cars | **duty / import status** (called out as materially important) | no |
+| Cars | variant, engine size, drivetrain, body type | no |
+| Cars | VIN / chassis | PASS correctly **absent** (privacy-positive) |
+| Machinery | capacity / payload, axles, attachments, certification, transport notes | no |
 
 Fields defined in the dead registry do not count as captured. → **F-021 (P2)**
 
