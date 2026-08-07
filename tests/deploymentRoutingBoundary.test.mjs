@@ -45,8 +45,11 @@ test('the single Pages preview restores deep links and proves its exact canonica
   assert.doesNotMatch(previewWorkflow, /cp dist\/index\.html dist\/404\.html/);
   assert.match(previewWorkflow, /test "\$\(git rev-parse HEAD\)" = "\$GITHUB_SHA"/);
   assert.match(previewWorkflow, /preview-build\.json/);
+  assert.match(previewWorkflow, /current-build\.txt/);
   assert.match(previewWorkflow, /"branch":"\$GITHUB_REF_NAME"/);
   assert.match(previewWorkflow, /"sha":"\$GITHUB_SHA"/);
+  assert.match(previewWorkflow, /grep -Fxq 'branch=main' dist\/current-build\.txt/);
+  assert.match(previewWorkflow, /grep -Fxq "sha=\$GITHUB_SHA" dist\/current-build\.txt/);
   assert.match(pagesFallback, /window\.location\.replace\(destination\.toString\(\)\)/);
   assert.match(pagesFallback, /currentPath\.startsWith\(basePath\)/);
   assert.match(indexSource, /src\/documentBootstrap\.js/);
