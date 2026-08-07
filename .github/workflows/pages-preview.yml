@@ -3,7 +3,7 @@ name: GitHub Pages Preview
 on:
   push:
     branches:
-      - main
+      - claude/peekalisting-audit-ui0z6l
   workflow_dispatch:
 
 permissions:
@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.ref == 'refs/heads/claude/peekalisting-audit-ui0z6l'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -59,8 +60,18 @@ jobs:
       VITE_FEATURE_TOURS: "true"
       VITE_FEATURE_TOURS_PREVIEW: "true"
     steps:
-      - name: Checkout
+      - name: Checkout exact preview head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify preview source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "claude/peekalisting-audit-ui0z6l"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "Deploying PeekaListing preview from $GITHUB_REF_NAME@$GITHUB_SHA"
 
       - name: Normalize lockfile
         run: node ./scripts/normalize-package-lock.mjs --write
@@ -82,6 +93,21 @@ jobs:
 
       - name: Add SPA fallback
         run: node ./scripts/create-pages-spa-fallback.mjs dist "$VITE_BASE_PATH"
+
+      - name: Stamp preview head
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > dist/preview-build.json <<EOF
+          {"product":"PeekaListing","branch":"$GITHUB_REF_NAME","sha":"$GITHUB_SHA","run_id":"$GITHUB_RUN_ID"}
+          EOF
+          printf '\n<!-- product:PeekaListing preview-branch:%s preview-sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/index.html
+          if [ -f dist/404.html ]; then
+            printf '\n<!-- product:PeekaListing preview-branch:%s preview-sha:%s -->\n' "$GITHUB_REF_NAME" "$GITHUB_SHA" >> dist/404.html
+          fi
+          if [ -f dist/sw.js ]; then
+            printf '\n// product:PeekaListing preview-build-sha:%s\n' "$GITHUB_SHA" >> dist/sw.js
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
