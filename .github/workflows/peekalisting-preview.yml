@@ -27,6 +27,7 @@ jobs:
       NODE_ENV: production
       VITE_MODE: staging
       VITE_BASE_PATH: /findit-marketplace/
+      VITE_PREVIEW_DEPLOYMENT: "true"
       VITE_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
       VITE_AUTH_GOOGLE_ENABLED: ${{ vars.FINDIT_AUTH_GOOGLE_ENABLED }}
