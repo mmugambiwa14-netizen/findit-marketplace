@@ -1552,7 +1552,14 @@ stop, report, do not unilaterally remediate.
 5. One finding + root cause per commit, message `fix(F-0nn): …`, body naming the RC and the sourcing
    priority used.
 6. Nothing in the §3.3 register was modified.
-7. `audit/findings.csv` row updated with resolution status.
+7. `audit/findings-status.csv` row updated with resolution status, `audit/REMEDIATION-PROGRESS.md` §3/§4
+   refreshed, and `audit/remediation/WP-nn-F-0nn.md` written — **all in the same commit as the code**.
+
+> **Amendment, 2026-08-07.** This item originally read *"`audit/findings.csv` row updated with resolution
+> status."* That was wrong. `audit/findings.csv` is dated evidence captured at `ee6f212`; an audit record
+> you mutate is no longer a record anyone can check the work against. `findings.csv` is therefore
+> **immutable**, and status lives in `audit/findings-status.csv` (same `id` key, plus `status`, `commit`,
+> `proving_test`, `proving_test_result`). See `audit/REMEDIATION-PROGRESS.md` §6.
 
 ### 10.2 Per tranche — Appendix C gate transitions
 
