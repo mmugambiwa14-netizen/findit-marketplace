@@ -22,8 +22,13 @@ const manifest = JSON.parse(
 const resolveAsset = (url) => join(publicRoot, url.replace(/^\//, ''));
 
 test('manifest declares the fields browsers require for installability', () => {
-  assert.equal(manifest.name, 'FindIt Marketplace');
-  assert.equal(manifest.short_name, 'FindIt');
+  // These two asserted the pre-rebrand name and contradicted
+  // peekaListingBrandContracts.test.mjs, which is F-049 residue rather than a
+  // manifest defect: the manifest was already correct. Fixed here so install
+  // metadata has one brand answer, per the remediation plan's rule that when a
+  // test and a shipped decision disagree, the test is what gets examined first.
+  assert.equal(manifest.name, 'PeekaListing Marketplace');
+  assert.equal(manifest.short_name, 'PeekaListing');
   assert.equal(manifest.start_url, '/');
   assert.equal(manifest.scope, '/');
   assert.equal(manifest.display, 'standalone');
@@ -79,8 +84,9 @@ test('index.html declares an apple-touch-icon, which iOS requires to install', (
   //
   // Moved here from brandLegalEmailFounderContracts.test.mjs during F-049, so that
   // install metadata has a single contract rather than two that disagreed about
-  // which brand the icon belongs to. It is expected to FAIL until F-017 (WP-19)
-  // ships the PeekaListing raster set -- the requirement is real and unmet.
+  // which brand the icon belongs to. F-017 (WP-19) has since shipped the
+  // PeekaListing raster set rendered from the approved binocular mark, so this
+  // now passes rather than standing as a known gap.
   const html = readFileSync(join(projectRoot, 'index.html'), 'utf8');
   const link = html.match(/<link[^>]+rel="apple-touch-icon"[^>]*>/);
   assert.ok(link, 'index.html must declare <link rel="apple-touch-icon">');
