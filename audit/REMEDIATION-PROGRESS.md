@@ -7,6 +7,27 @@
 **Baseline:** `main` @ `ee6f21231e5e963068efe8c4320f560f7a25f8f3`  
 **Draft PR:** #33
 
+## Branch topology — ONE integration path
+
+```text
+main (protected canonical base, merge target only)
+  └── claude/peekalisting-audit-ui0z6l   ← ALL remediation, Cloudflare migration and certification work
+```
+
+`claude/peekalisting-audit-ui0z6l` is the **single** integration branch. Do **not** open another
+remediation branch, and do **not** do implementation work on `main` — `main` is the protected merge target
+and is only written by merging this branch once it is genuinely ready.
+
+The reason this is stated explicitly: the repository previously fragmented into thirteen unreconciled
+branches each holding a different piece of PeekaListing with no single integration path
+(`REMEDIATION-PROMPT.md` §6 priority 3). That is the failure mode to avoid, not repeat.
+
+Some CI evidence below records runs dispatched on `claude/peekalisting-remediation-handoff-d1mr2x`. That
+branch was a strict descendant of this one and has been **fast-forwarded back into it losslessly** — no
+merge commit, no cherry-pick, no divergence, and `ab2d533` remains in this branch's history. Those run
+references are kept verbatim because they are the actual provenance of the proofs; the commits themselves
+now live here.
+
 Read `audit/REMEDIATION-PROMPT.md` §3.3 before editing. Never weaken protected controls or reintroduce listing moderation, Peek moderation, payments or reputation.
 
 ## Status
