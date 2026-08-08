@@ -1,4 +1,5 @@
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PART = '[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
 const EVENTS = new Set([
   'listing_approved',
   'listing_rejected',
@@ -10,9 +11,11 @@ const EVENTS = new Set([
   'tour_rejected',
   'listing_status_changed',
   'saved_listing_unavailable',
+  'peek_request_created',
+  'peek_request_answered',
 ]);
 const SAFE_LINK = new RegExp(
-  `^/(?:my-listings|profile|settings|chats|saved|(?:property|car|machinery|service|chats|messages)/${UUID.source.slice(1, -1)})$`,
+  `^(?:/(?:my-listings|profile|settings|chats|saved|post|peek-requests)|/peek-requests\\?request=${UUID_PART}|/(?:chats|messages)/${UUID_PART}|/(?:property|car|machinery|service)/${UUID_PART}(?:\\?responsePeek=${UUID_PART})?(?:#peek-threads)?)$`,
   'i',
 );
 
