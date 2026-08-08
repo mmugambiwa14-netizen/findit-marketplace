@@ -88,7 +88,7 @@ values
     'A complete public listing with service history, ownership information, recent maintenance, accurate specifications and a detailed condition description.',
     25000, 'USD', 25000, 'USD',
     '[{"path":"one"},{"path":"two"},{"path":"three"},{"path":"four"},{"path":"five"}]'::jsonb,
-    '00000000-0000-4000-8000-000000002101', 'ZW', 'pickup-trucks', 'sale',
+    '00000000-0000-4000-8000-000000002101', 'ZW', 'utility', 'sale',
     'available', true, null
   ),
   (
@@ -96,7 +96,7 @@ values
     '00000000-0000-4000-8000-000000002001', 'Recommendation Owner',
     'Private recommendation draft', 'Draft listings must never be projected.',
     10000, 'USD', 10000, 'USD', '[]'::jsonb,
-    '00000000-0000-4000-8000-000000002101', 'ZW', 'sedans', 'sale',
+    '00000000-0000-4000-8000-000000002101', 'ZW', 'cars_sale', 'sale',
     'draft', false, null
   ),
   (
@@ -104,7 +104,7 @@ values
     '00000000-0000-4000-8000-000000002001', 'Recommendation Owner',
     'Suspended recommendation listing', 'Suspended content must never be projected.',
     12000, 'USD', 12000, 'USD', '[]'::jsonb,
-    '00000000-0000-4000-8000-000000002101', 'ZW', 'sedans', 'sale',
+    '00000000-0000-4000-8000-000000002101', 'ZW', 'cars_sale', 'sale',
     'available', false, now()
   );
 
