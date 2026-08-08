@@ -8,6 +8,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
   searchMigration,
   searchV2Migration,
+  searchCardMigration,
   searchRollback,
   observabilityMigration,
   observabilityRollback,
@@ -27,6 +28,7 @@ const [
 ] = await Promise.all([
   read('supabase/migrations/0041_v1_public_search_and_notification_scale.sql'),
   read('supabase/migrations/20260808020000_currency_safe_public_listing_search_v2.sql'),
+  read('supabase/migrations/20260808043000_public_listing_search_card_projection.sql'),
   read('supabase/rollback/0041_v1_public_search_and_notification_scale.rollback.sql'),
   read('supabase/migrations/0042_v1_release_observability_completion.sql'),
   read('supabase/rollback/0042_v1_release_observability_completion.rollback.sql'),
@@ -47,16 +49,18 @@ const [
 
 const CURSOR_ID = '11111111-1111-4111-8111-111111111111';
 
-test('active public search uses bounded currency-safe keyset pages and indexed public predicates', () => {
+test('active public search uses bounded currency-safe thin card keyset pages and indexed public predicates', () => {
   assert.match(searchMigration, /create or replace function public\.public_listing_search_page/);
   assert.match(searchV2Migration, /create or replace function public\.public_listing_search_page_v2/);
-  assert.match(searchV2Migration, /listing\.status in \('available', 'under_offer'\)/);
-  assert.match(searchV2Migration, /listing\.content_suspended_at is null/);
-  assert.match(searchV2Migration, /\(listing\.created_at, listing\.id\) < \(cursor_time, p_cursor_id\)/);
-  assert.match(searchV2Migration, /limit p_limit \+ 1/);
+  assert.match(searchCardMigration, /create or replace function public\.public_listing_search_card_page_v1/);
+  assert.match(searchCardMigration, /listing\.status in \('available', 'under_offer'\)/);
+  assert.match(searchCardMigration, /listing\.content_suspended_at is null/);
+  assert.match(searchCardMigration, /\(listing\.created_at, listing\.id\) < \(cursor_time, p_cursor_id\)/);
+  assert.match(searchCardMigration, /limit p_limit \+ 1/);
+  assert.match(searchCardMigration, /jsonb_build_array\(listing\.photos -> 0\)/);
   assert.match(searchV2Migration, /idx_listings_public_currency_price_asc/);
   assert.match(searchV2Migration, /idx_listings_public_currency_price_desc/);
-  assert.match(searchRepository, /public_listing_search_page_v2/);
+  assert.match(searchRepository, /public_listing_search_card_page_v1/);
   assert.match(searchService, /normalizePublicSearchPageRequest/);
   assert.match(searchService, /nextCursor/);
   assert.match(searchPage, /useInfiniteQuery/);
