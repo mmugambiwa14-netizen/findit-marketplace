@@ -148,7 +148,8 @@ test('chat context preserves listing identity, price and availability without ex
   assert.match(conversation, /conversation\.listing_status/);
   assert.match(inbox, /conversation\.listing_price/);
   assert.match(inbox, /conversation\.has_tour/);
-  assert.match(messagingService, /resolveListingImages/);
+  assert.match(messagingService, /hydrateListingCardImages/);
+  assert.match(messagingService, /hydrateConversationListings/);
   assert.doesNotMatch(`${conversation}\n${inbox}\n${messagingService}`, /playback_storage_path|source_storage_path|thumbnail_storage_path/);
 });
 
