@@ -146,6 +146,22 @@ function safeLegacyUrl(value) {
   }
 }
 
+function listingPhotoValues(row) {
+  return Array.isArray(row?.photos) ? row.photos : [];
+}
+
+function firstDisplayablePhoto(row) {
+  return listingPhotoValues(row).find((value) => isTrustedListingImagePath(value) || safeLegacyUrl(value)) ?? null;
+}
+
+function listingMediaMetadata(row) {
+  const photos = listingPhotoValues(row);
+  return {
+    photo_paths: photos.filter(isTrustedListingImagePath),
+    has_legacy_media: photos.some((value) => !isTrustedListingImagePath(value)),
+  };
+}
+
 export async function resolveListingImages(values) {
   const photos = Array.isArray(values) ? values : [];
   const storagePaths = [...new Set(photos.filter(isTrustedListingImagePath))];
@@ -159,12 +175,39 @@ export async function resolveListingImages(values) {
   return photos.map((value) => signedByPath.get(value) ?? safeLegacyUrl(value)).filter(Boolean);
 }
 
+/**
+ * Hydrates only the cover image required by marketplace cards. Full photo path
+ * metadata is retained for trusted boundaries, but non-visible gallery images
+ * are not signed until a detail or edit surface actually needs them.
+ */
+export async function hydrateListingCardImages(rows) {
+  const listings = Array.isArray(rows) ? rows : [];
+  const coverValues = listings.map(firstDisplayablePhoto);
+  const storagePaths = [...new Set(coverValues.filter(isTrustedListingImagePath))];
+  const signedByPath = new Map();
+
+  if (storagePaths.length) {
+    const signedRows = await signListingImagePaths(storagePaths);
+    signedRows.forEach((row, index) => {
+      if (row?.signedUrl) signedByPath.set(storagePaths[index], row.signedUrl);
+    });
+  }
+
+  return listings.map((row, index) => {
+    const cover = coverValues[index];
+    const resolvedCover = cover ? (signedByPath.get(cover) ?? safeLegacyUrl(cover)) : null;
+    return {
+      ...row,
+      ...listingMediaMetadata(row),
+      photos: resolvedCover ? [resolvedCover] : [],
+    };
+  });
+}
+
 export async function hydrateListingImages(rows) {
   const listings = Array.isArray(rows) ? rows : [];
   const storagePaths = [...new Set(
-    listings.flatMap((row) => (
-      Array.isArray(row?.photos) ? row.photos.filter(isTrustedListingImagePath) : []
-    )),
+    listings.flatMap((row) => listingPhotoValues(row).filter(isTrustedListingImagePath)),
   )];
   const signedByPath = new Map();
 
@@ -177,9 +220,8 @@ export async function hydrateListingImages(rows) {
 
   return listings.map((row) => ({
     ...row,
-    photo_paths: Array.isArray(row.photos) ? row.photos.filter(isTrustedListingImagePath) : [],
-    has_legacy_media: Array.isArray(row.photos) && row.photos.some((value) => !isTrustedListingImagePath(value)),
-    photos: (Array.isArray(row.photos) ? row.photos : [])
+    ...listingMediaMetadata(row),
+    photos: listingPhotoValues(row)
       .map((value) => signedByPath.get(value) ?? safeLegacyUrl(value))
       .filter(Boolean),
   }));
