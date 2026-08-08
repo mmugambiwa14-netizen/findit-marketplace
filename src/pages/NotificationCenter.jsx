@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
@@ -44,27 +44,51 @@ const EVENT_STYLE = {
   peek_request_answered: { label: 'Peek Request answered', icon: Film, className: 'text-green-600 dark:text-green-400' },
 };
 
+function markPageRead(page, notificationId = null, readAt = new Date().toISOString()) {
+  if (!page || !Array.isArray(page.items)) return page;
+  let changed = false;
+  const items = page.items.map((item) => {
+    if (item.is_read || (notificationId && item.id !== notificationId)) return item;
+    changed = true;
+    return { ...item, is_read: true, read_at: item.read_at || readAt };
+  });
+  return changed ? { ...page, items } : page;
+}
+
 export default function NotificationCenter() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const request = useMemo(() => ({ eventType: 'all', unreadOnly: false, limit: PAGE_SIZE }), []);
+  const historyKey = useMemo(() => ['notifications', 'pages', user?.id, request], [request, user?.id]);
+  const tailKey = useMemo(() => ['notifications', 'tail', user?.id], [user?.id]);
+  const unreadKey = useMemo(() => ['notifications', 'unread-count', user?.id], [user?.id]);
 
   const notificationsQuery = useInfiniteQuery({
-    queryKey: ['notifications', 'pages', user?.id, request],
-    queryFn: ({ pageParam }) => getNotificationsPage({ ...request, cursor: pageParam || null }),
+    queryKey: historyKey,
+    queryFn: ({ pageParam, signal }) => getNotificationsPage({ ...request, cursor: pageParam || null }, signal),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(user?.id),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const tailQuery = useQuery({
+    queryKey: tailKey,
+    queryFn: ({ signal }) => getNotificationsPage(request, signal),
+    enabled: Boolean(user?.id && notificationsQuery.data),
     staleTime: 15_000,
     refetchInterval: NOTIFICATION_REFRESH_MS,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: 'always',
     refetchOnReconnect: 'always',
   });
+
   const unreadQuery = useQuery({
-    queryKey: ['notifications', 'unread-count', user?.id],
-    queryFn: getUnreadNotificationCount,
+    queryKey: unreadKey,
+    queryFn: ({ signal }) => getUnreadNotificationCount(signal),
     enabled: Boolean(user?.id),
     staleTime: 10_000,
     refetchInterval: NOTIFICATION_REFRESH_MS,
@@ -73,28 +97,60 @@ export default function NotificationCenter() {
     refetchOnReconnect: 'always',
   });
 
+  useEffect(() => {
+    const incomingItems = Array.isArray(tailQuery.data?.items) ? tailQuery.data.items : [];
+    const firstHistoryPage = notificationsQuery.data?.pages?.[0];
+    const historyItems = Array.isArray(firstHistoryPage?.items) ? firstHistoryPage.items : [];
+    if (!incomingItems.length || !historyItems.length) return;
+
+    const historyIds = new Set(historyItems.map((item) => item.id));
+    const overlaps = incomingItems.some((item) => historyIds.has(item.id));
+    if (overlaps) return;
+
+    queryClient.setQueryData(historyKey, {
+      pages: [tailQuery.data],
+      pageParams: [null],
+    });
+  }, [historyKey, notificationsQuery.data, queryClient, tailQuery.data]);
+
   const items = useMemo(() => {
     const byId = new Map();
+    for (const item of tailQuery.data?.items || []) byId.set(item.id, item);
     for (const page of notificationsQuery.data?.pages || []) {
-      for (const item of page.items) byId.set(item.id, item);
+      for (const item of page.items) {
+        if (!byId.has(item.id)) byId.set(item.id, item);
+      }
     }
     return [...byId.values()];
-  }, [notificationsQuery.data]);
+  }, [notificationsQuery.data, tailQuery.data]);
 
-  const invalidateNotifications = () => {
-    queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  const updateReadCaches = (notificationId = null) => {
+    const readAt = new Date().toISOString();
+    const history = /** @type {any} */ (queryClient.getQueryData(historyKey));
+    if (history?.pages?.length) {
+      queryClient.setQueryData(historyKey, {
+        ...history,
+        pages: history.pages.map((page) => markPageRead(page, notificationId, readAt)),
+      });
+    }
+
+    const tail = /** @type {any} */ (queryClient.getQueryData(tailKey));
+    if (tail) queryClient.setQueryData(tailKey, markPageRead(tail, notificationId, readAt));
+
+    const currentUnread = Number(queryClient.getQueryData(unreadKey)) || 0;
+    queryClient.setQueryData(unreadKey, notificationId ? Math.max(0, currentUnread - 1) : 0);
   };
 
   const markRead = useMutation({
     mutationFn: markNotificationRead,
-    onSuccess: invalidateNotifications,
+    onSuccess: (_result, notificationId) => updateReadCaches(notificationId),
     onError: (failure) => toast.error(failure.message),
   });
 
   const markAllRead = useMutation({
     mutationFn: markAllNotificationsRead,
     onSuccess: () => {
-      invalidateNotifications();
+      updateReadCaches();
       toast.success('All notifications marked as read');
     },
     onError: (failure) => toast.error(failure.message),
@@ -147,7 +203,7 @@ export default function NotificationCenter() {
             <div className="p-4 text-center"><Button variant="outline" disabled={notificationsQuery.isFetchingNextPage} onClick={() => notificationsQuery.fetchNextPage()}>{notificationsQuery.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more notifications'}</Button></div>
           )}
           {!notificationsQuery.hasNextPage && items.length > 0 && <p className="p-4 text-center text-xs text-muted-foreground">You have reached the end of your notifications.</p>}
-          {notificationsQuery.isError && items.length > 0 && <div className="p-4 text-center"><Button variant="outline" onClick={() => notificationsQuery.refetch()}>Retry loading more</Button></div>}
+          {notificationsQuery.isFetchNextPageError && items.length > 0 && <div className="p-4 text-center"><Button variant="outline" onClick={() => notificationsQuery.fetchNextPage()}>Retry loading more</Button></div>}
         </>
       )}
     </div>
