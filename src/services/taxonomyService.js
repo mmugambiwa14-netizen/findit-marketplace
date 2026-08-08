@@ -9,8 +9,19 @@ function normalizeKind(value, { optional = false } = {}) {
   return value;
 }
 
+function normalizeCountryCode(value, { optional = true } = {}) {
+  if (optional && (value === null || value === undefined || value === '')) return null;
+  const normalized = String(value || '').trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) throw new TypeError('Country code is invalid');
+  return normalized;
+}
+
 function textArray(value) {
   return Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.length > 0) : [];
+}
+
+function objectValue(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
 export function normalizeTaxonomyNode(row) {
@@ -21,16 +32,18 @@ export function normalizeTaxonomyNode(row) {
     parentId: row.parent_id ?? null,
     marketplaceKind: row.marketplace_kind,
     label: row.display_label,
+    localizedLabels: objectValue(row.localized_labels),
     description: row.description ?? '',
     sortOrder: Number(row.sort_order ?? 0),
     nodeType: row.node_type,
     isPostable: Boolean(row.is_postable),
     aliases: textArray(row.aliases),
     synonyms: textArray(row.synonyms),
+    marketAvailability: textArray(row.market_availability),
     supersededBy: row.superseded_by ?? null,
     validFrom: row.valid_from ?? null,
     validTo: row.valid_to ?? null,
-    schemaBinding: row.schema_binding && typeof row.schema_binding === 'object' ? row.schema_binding : {},
+    schemaBinding: objectValue(row.schema_binding),
     taxonomyVersion: Number(row.taxonomy_version ?? 1),
     depth: Number(row.depth ?? 0),
     pathSlugs: textArray(row.path_slugs),
@@ -38,17 +51,19 @@ export function normalizeTaxonomyNode(row) {
   });
 }
 
-export async function getCategoryTaxonomy(marketplaceKind = null) {
+export async function getCategoryTaxonomy(marketplaceKind = null, countryCode = null) {
   const normalizedKind = normalizeKind(marketplaceKind, { optional: true });
-  const rows = await fetchCategoryTaxonomy(normalizedKind);
+  const normalizedCountry = normalizeCountryCode(countryCode);
+  const rows = await fetchCategoryTaxonomy(normalizedKind, normalizedCountry);
   return rows.map(normalizeTaxonomyNode);
 }
 
-export async function resolveCategory(marketplaceKind, slug) {
+export async function resolveCategory(marketplaceKind, slug, countryCode = null) {
   const kind = normalizeKind(marketplaceKind);
+  const normalizedCountry = normalizeCountryCode(countryCode);
   const normalizedSlug = typeof slug === 'string' ? slug.trim().toLowerCase() : '';
   if (!/^[a-z0-9]+(?:_[a-z0-9]+)*$/.test(normalizedSlug)) throw new TypeError('Category slug is invalid');
-  const row = await fetchResolvedCategory(kind, normalizedSlug);
+  const row = await fetchResolvedCategory(kind, normalizedSlug, normalizedCountry);
   if (!row) return null;
   return {
     id: row.category_id,
@@ -56,7 +71,7 @@ export async function resolveCategory(marketplaceKind, slug) {
     canonicalSlug: row.canonical_slug,
     isPostable: Boolean(row.is_postable),
     supersededBy: row.superseded_by ?? null,
-    schemaBinding: row.schema_binding && typeof row.schema_binding === 'object' ? row.schema_binding : {},
+    schemaBinding: objectValue(row.schema_binding),
   };
 }
 
