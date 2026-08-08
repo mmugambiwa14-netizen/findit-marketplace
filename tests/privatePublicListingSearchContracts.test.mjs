@@ -3,11 +3,25 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [legacyMigration, legacyRollback, v2Migration, v2Rollback, workflow, databaseCertification, sqlBoundary, repository, scaleContracts] = await Promise.all([
+const [
+  legacyMigration,
+  legacyRollback,
+  v2Migration,
+  v2Rollback,
+  cardMigration,
+  cardRollback,
+  workflow,
+  databaseCertification,
+  sqlBoundary,
+  repository,
+  scaleContracts,
+] = await Promise.all([
   read('supabase/migrations/0097_private_public_listing_search_implementation.sql'),
   read('supabase/rollback/0097_private_public_listing_search_implementation.rollback.sql'),
   read('supabase/migrations/20260808020000_currency_safe_public_listing_search_v2.sql'),
   read('supabase/rollback/20260808020000_currency_safe_public_listing_search_v2.rollback.sql'),
+  read('supabase/migrations/20260808043000_public_listing_search_card_projection.sql'),
+  read('supabase/rollback/20260808043000_public_listing_search_card_projection.rollback.sql'),
   read('.github/workflows/migration-gates.yml'),
   read('scripts/run-migration-database-certification.sh'),
   read('scripts/verify-sql-boundary.mjs'),
@@ -70,9 +84,35 @@ test('v2 search adds currency and privacy boundaries without losing keyset pagin
   assert.match(v2Rollback, /drop function if exists public\.public_listing_search_page_v2/);
 });
 
-test('active repository uses the v2 keyset RPC argument contract', () => {
-  assert.match(repository, /supabase\.rpc\('public_listing_search_page_v2'/);
-  assert.doesNotMatch(repository, /supabase\.rpc\('public_listing_search_page'/);
+test('thin card search preserves v2 semantics while dropping detail payload', () => {
+  assert.match(cardMigration, /create or replace function private\.public_listing_search_card_page_v1/);
+  assert.match(cardMigration, /create or replace function public\.public_listing_search_card_page_v1/);
+  assert.match(cardMigration, /listing\.native_currency/);
+  assert.match(cardMigration, /listing\.native_price/);
+  assert.match(cardMigration, /listing\.public_latitude/);
+  assert.match(cardMigration, /listing\.public_longitude/);
+  assert.match(cardMigration, /listing\.content_suspended_at is null/);
+  assert.match(cardMigration, /jsonb_build_array\(listing\.photos -> 0\)/);
+  assert.match(cardMigration, /\(listing\.created_at, listing\.id\) < \(cursor_time, p_cursor_id\)/);
+  assert.match(cardMigration, /limit p_limit \+ 1/);
+  const resultBlock = cardMigration.match(/returns table \([\s\S]*?\)\s*language plpgsql/i)?.[0] ?? '';
+  for (const field of ['id uuid', 'seller_name text', 'has_contact_phone boolean', 'title text', 'price numeric', 'photos jsonb', 'latitude numeric', 'longitude numeric', 'views integer', 'cursor_value text']) {
+    assert.match(resultBlock, new RegExp(field.replace(/ /g, '\\s+')));
+  }
+  assert.doesNotMatch(resultBlock, /description text|deposit numeric|agent_fee numeric|additional_fees numeric|created_via text|updated_at timestamptz/);
+  assert.doesNotMatch(cardMigration, /revoke execute on function public\.public_listing_search_page_v2/);
+  assert.doesNotMatch(cardRollback, /drop function if exists public\.public_listing_search_page_v2/);
+  assert.doesNotMatch(cardRollback, /drop table|truncate|delete from/i);
+});
+
+test('active repository uses the thin card keyset RPC argument contract', () => {
+  const active = repository.slice(
+    repository.indexOf('export async function findPublicListingsPage'),
+    repository.indexOf('export async function findPublicListingTitleSuggestions'),
+  );
+  assert.match(active, /supabase\.rpc\('public_listing_search_card_page_v1'/);
+  assert.doesNotMatch(active, /supabase\.rpc\('public_listing_search_page_v2'/);
+  assert.doesNotMatch(active, /supabase\.rpc\('public_listing_search_page'/);
   for (const argument of [
     'p_kind: request.kind',
     'p_country_code: request.countryCode',
@@ -92,7 +132,7 @@ test('active repository uses the v2 keyset RPC argument contract', () => {
     'p_cursor_id: request.cursor?.id ?? null',
     'p_limit: request.pageSize',
   ]) {
-    assert.match(repository, new RegExp(argument.replace(/[?.]/g, '\\$&')));
+    assert.match(active, new RegExp(argument.replace(/[?.]/g, '\\$&')));
   }
 });
 
@@ -105,9 +145,10 @@ test('established scale contracts retain keyset ordering and limit-plus-one beha
   assert.match(scaleContracts, /not-a-date/);
 });
 
-test('database certification runs both the legacy rollback boundary and v2 search suite', () => {
+test('database certification runs legacy, v2 compatibility and thin card search suites', () => {
   assert.match(workflow, /v1_private_public_listing_search_implementation\.sql/);
   assert.match(databaseCertification, /v1_private_public_listing_search_implementation\.sql/);
   assert.match(databaseCertification, /v1_currency_safe_public_listing_search_v2\.sql/);
+  assert.match(databaseCertification, /v1_public_listing_search_card_projection\.sql/);
   assert.match(sqlBoundary, /0097_private_public_listing_search_implementation\.sql/);
 });
