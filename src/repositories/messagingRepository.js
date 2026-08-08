@@ -36,6 +36,10 @@ export function findMessageInbox(request, signal) {
   }, 'Unable to load messages', signal);
 }
 
+export function findMessageUnreadCount(signal) {
+  return rpc('message_unread_count', {}, 'Unable to load unread message count', signal);
+}
+
 export function findMessageConversation(conversationId, signal) {
   return rpc('message_conversation', {
     p_conversation_id: conversationId,
