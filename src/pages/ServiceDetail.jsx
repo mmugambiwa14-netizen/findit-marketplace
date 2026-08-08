@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Car, MapPin } from "lucide-react";
+import { Briefcase, Car, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ import {
 import { ContactBar, DetailLoading, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useMarketplaceView } from "@/hooks/useMarketplaceView";
-import { getServiceCategory, getSubcategoryLabel } from "@/lib/serviceConstants";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getPublicService } from "@/services/servicesService";
 
@@ -43,8 +42,10 @@ export default function ServiceDetail() {
   if (error) return <ServiceError onRetry={refetch} />;
   if (!service) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4"><div className="clay-card rounded-2xl px-6 py-10 text-center"><p className="text-muted-foreground">Service not found.</p><Link to="/services" className="mt-3 inline-block font-medium text-primary">Back to Services</Link></div></div>;
 
-  const category = getServiceCategory(service.category);
-  const subcategories = service.subcategories?.length ? service.subcategories : (service.subcategory ? [service.subcategory] : []);
+  const categoryLabel = service.category_label || "Service";
+  const subcategoryLabels = service.subcategory_labels?.length
+    ? service.subcategory_labels
+    : (service.subcategory_label ? [service.subcategory_label] : []);
   const quoteOnly = service.pricing_type === "quote" || service.price == null;
   const priceDisplay = quoteOnly
     ? "Contact for quote"
@@ -73,9 +74,9 @@ export default function ServiceDetail() {
         <ListingSummary
           badges={(
             <>
-              {category && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{category.label}</Badge>}
+              <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{categoryLabel}</Badge>
               {service.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
-              {subcategories.map((subcategory) => <Badge key={subcategory} variant="outline">{getSubcategoryLabel(service.category, subcategory)}</Badge>)}
+              {subcategoryLabels.map((label, index) => <Badge key={`${label}-${index}`} variant="outline">{label}</Badge>)}
             </>
           )}
           price={priceDisplay}
@@ -91,7 +92,7 @@ export default function ServiceDetail() {
         <ListingDetailTabs>
           <ListingTabSection id="listing-info" title="Listing info">
             <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
-              {category && <ListingFeatureItem icon={category.icon || Car} label="Category" value={category.label} />}
+              <ListingFeatureItem icon={Briefcase} label="Category" value={categoryLabel} />
               <ListingFeatureItem icon={MapPin} label="Area" value={service.location_name || "Location arranged"} />
               <ListingFeatureItem icon={Car} label="Travel" value={service.can_travel ? "Available" : "Local area"} />
             </div>
