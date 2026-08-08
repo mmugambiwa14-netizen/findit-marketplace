@@ -31,14 +31,14 @@ test('active Search suggestions pass TanStack cancellation into the service', ()
   assert.match(searchPage, /useDebouncedValue\(queryInput\.trim\(\)\.slice\(0, 100\), 250\)/);
 });
 
-test('public listing Search propagates cancellation through the keyset RPC and card enrichment boundary', () => {
+test('public listing Search propagates cancellation through the thin keyset RPC and card enrichment boundary', () => {
   const serviceBlock = between(service, 'export async function searchPublicListingsPage', 'export async function getPublicSearchSuggestions');
   assert.match(serviceBlock, /findPublicListingsPage\(request, signal\)/);
   assert.match(serviceBlock, /throwIfAborted\(signal\)/);
   assert.match(serviceBlock, /enrichPublicListingCards\(cleanRows\)/);
 
   const repositoryBlock = between(listingRepository, 'export async function findPublicListingsPage', 'export async function findPublicListingTitleSuggestions');
-  assert.match(repositoryBlock, /let query = supabase\.rpc\('public_listing_search_page_v2'/);
+  assert.match(repositoryBlock, /let query = supabase\.rpc\('public_listing_search_card_page_v1'/);
   assert.match(repositoryBlock, /if \(signal\) query = query\.abortSignal\(signal\)/);
 });
 
