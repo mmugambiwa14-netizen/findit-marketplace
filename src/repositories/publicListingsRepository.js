@@ -162,7 +162,9 @@ export async function findPublicListings(request) {
 
 /**
  * Reads one bounded public Search card page through the currency-safe,
- * privacy-safe thin projection. The database returns limit+1 rows so the
+ * privacy-safe thin projection. The full public_listing_search_page_v2 RPC
+ * remains installed for compatibility and targeted rollback, but is not used
+ * by the active Search card path. The database returns limit+1 rows so the
  * service can derive the next cursor without exact counts or deep offsets.
  */
 export async function findPublicListingsPage(request, signal) {
