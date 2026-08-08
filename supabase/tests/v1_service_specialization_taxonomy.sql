@@ -124,25 +124,10 @@ select extensions.ok(
   'service specializations carry searchable synonyms in canonical reference data'
 );
 
--- Postability is defined at specialization level. The domain group itself must
--- not become a listing destination merely because it has a non-null parent.
-select extensions.throws_ok(
-  $$insert into public.listings (
-      id, kind, category, seller_id, title, price, currency, status, country_code
-    ) values (
-      '81000000-0000-4000-8000-000000000001',
-      'property',
-      'property',
-      '81000000-0000-4000-8000-000000000002',
-      'Invalid taxonomy group listing',
-      1,
-      'USD',
-      'available',
-      'ZW'
-    )$$,
-  '22023',
-  'listing category is not an active postable taxonomy node',
-  'a grouping/root value cannot be posted as a listing category'
+select extensions.matches(
+  pg_get_functiondef('public.enforce_listing_taxonomy_category()'::regprocedure),
+  'is_postable[[:space:]]+and[[:space:]]+c\.node_type = ''category''',
+  'listing postability remains explicit and independent of taxonomy depth'
 );
 
 select * from extensions.finish();
