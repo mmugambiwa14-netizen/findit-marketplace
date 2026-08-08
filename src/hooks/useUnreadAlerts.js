@@ -10,7 +10,7 @@ export function useUnreadAlerts() {
 
   const { data: count = 0 } = useQuery({
     queryKey: ["notifications", "unread-count", user?.id],
-    queryFn: getUnreadNotificationCount,
+    queryFn: ({ signal }) => getUnreadNotificationCount(signal),
     enabled: featureFlags.essentialNotifications && Boolean(user?.id),
     staleTime: 10_000,
     refetchInterval: UNREAD_REFRESH_MS,
