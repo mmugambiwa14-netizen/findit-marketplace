@@ -8,11 +8,12 @@ import {
   normalizePeekActivityRequest,
 } from '../src/domain/peekThreads/activityContracts.js';
 
-const [repository, listingSurface, workspace, buyerQueue, sellerQueue, migration] = await Promise.all([
+const [repository, listingSurface, workspace, buyerQueue, sellerQueue, sellerLive, migration] = await Promise.all([
   readFile(new URL('../src/repositories/peekThreadsRepository.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/peekThreads/PeekThreadsSection.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/pages/BuyerPeekRequests.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/peekThreads/MyPeekRequestsQueue.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/components/peekThreads/BuyerPeekRequestsQueue.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/components/peekThreads/SellerPeekRequestsQueueLive.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../supabase/migrations/20260808033000_peek_request_buyer_state_and_activity.sql', import.meta.url), 'utf8'),
 ]);
@@ -90,13 +91,15 @@ test('Peek Requests workspace serves buyer tracking and seller fulfilment withou
   assert.match(buyerQueue, /Listing no longer public/);
 });
 
-test('seller response workspace refreshes only while useful and recovers on focus or reconnect', () => {
+test('seller response workspace refreshes only bounded live data and recovers on focus or reconnect', () => {
   assert.match(sellerQueue, /SELLER_QUEUE_REFRESH_MS = 30_000/);
-  assert.match(sellerQueue, /document\.visibilityState === 'hidden'/);
-  assert.match(sellerQueue, /invalidateQueries\(\{ queryKey: \['seller-peek-request-queue'\] \}\)/);
-  assert.match(sellerQueue, /invalidateQueries\(\{ queryKey: \['unbound-response-peeks'\] \}\)/);
-  assert.match(sellerQueue, /window\.addEventListener\('online', refresh\)/);
-  assert.match(sellerQueue, /document\.addEventListener\('visibilitychange', refreshWhenVisible\)/);
+  assert.match(sellerQueue, /refetchInterval: SELLER_QUEUE_REFRESH_MS/);
+  assert.match(sellerQueue, /refetchIntervalInBackground: false/);
+  assert.match(sellerQueue, /refetchOnWindowFocus: 'always'/);
+  assert.match(sellerQueue, /refetchOnReconnect: 'always'/);
+  assert.match(sellerQueue, /staleTime: Infinity/);
+  assert.doesNotMatch(sellerLive, /invalidateQueries|setInterval|visibilitychange|addEventListener/);
+  assert.match(sellerLive, /return <BuyerPeekRequestsQueue \/>/);
 });
 
 test('buyer state migration preserves privacy, public-parent safety and bounded activity reads', () => {
