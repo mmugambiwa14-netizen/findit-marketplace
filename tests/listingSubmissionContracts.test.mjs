@@ -19,21 +19,65 @@ const base = {
   price: '18000',
   locationId: '44444444-4444-4444-8444-444444444444',
   contactWhatsapp: '+263771234567',
-  detail: { brand: 'Toyota', model: 'Hilux', year: 2022, mileage: 45000, fuelType: 'diesel', transmission: 'manual', condition: 'good' },
+  detail: {
+    subtype: 'bakkie',
+    brand: 'Toyota',
+    model: 'Hilux',
+    year: 2022,
+    mileage: 45000,
+    fuel_type: 'diesel',
+    transmission: 'manual',
+    condition: 'good',
+    service_history: 'full',
+    accident_history: 'none',
+  },
   media: [{ intentId: imageId, path: `${ownerId}/staging/${imageId}.jpg` }],
 };
 
-test('normalizes a strict V1 product submission with native currency', () => {
+test('normalizes a schema-backed V2 product submission with native currency', () => {
   const result = normalizeListingSubmission(ownerId, { ...base, currency: 'ZAR', negotiable: true });
   assert.equal(result.listing.currency, 'ZAR');
   assert.equal(result.listing.price, 18000);
   assert.equal(result.listing.negotiable, true);
   assert.equal(result.detail.brand, 'Toyota');
+  assert.equal(result.detail.fuel_type, 'diesel');
+  assert.equal(result.attributes.version, 1);
+  assert.equal(result.attributes.values.subtype, 'bakkie');
+  assert.equal(result.attributes.values.service_history, 'full');
 });
 
-test('rejects unsupported V1 offer and category concepts', () => {
+test('registry values richer than the legacy database enums survive normalization', () => {
+  const result = normalizeListingSubmission(ownerId, {
+    ...base,
+    detail: { ...base.detail, fuel_type: 'plug_in_hybrid', transmission: 'cvt' },
+  });
+  assert.equal(result.detail.fuel_type, 'plug_in_hybrid');
+  assert.equal(result.detail.transmission, 'cvt');
+});
+
+test('property transaction values come from the property registry', () => {
+  const result = normalizeListingSubmission(ownerId, {
+    ...base,
+    kind: 'property',
+    category: 'office',
+    listingType: 'lease',
+    title: 'Central Harare office space to lease',
+    detail: { subtype: 'commercial', property_type: 'office' },
+  });
+  assert.equal(result.listing.listingType, 'lease');
+  assert.deepEqual(result.detail, {
+    property_type: 'office',
+  });
+  assert.equal(result.attributes.values.subtype, 'commercial');
+});
+
+test('rejects unsupported offers, category slugs and obsolete camelCase detail keys', () => {
   assert.throws(() => normalizeListingSubmission(ownerId, { ...base, listingType: 'auction' }), /Offer type/);
   assert.throws(() => normalizeListingSubmission(ownerId, { ...base, category: 'Premium Cars' }), /Category/);
+  assert.throws(() => normalizeListingSubmission(ownerId, {
+    ...base,
+    detail: { ...base.detail, fuel_type: undefined, fuelType: 'diesel' },
+  }), /Unsupported field|Fuel/);
 });
 
 test('requires one contact path and one validated owner-scoped image', () => {
