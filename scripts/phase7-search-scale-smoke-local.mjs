@@ -25,7 +25,7 @@ function success(result, label) {
 }
 
 async function searchPage({ sort = 'newest', cursor = null, currency = '', minPrice = null, maxPrice = null, minBedrooms = null } = {}) {
-  return success(await publicClient.rpc('public_listing_search_page_v2', {
+  return success(await publicClient.rpc('public_listing_search_card_page_v1', {
     p_kind: 'property',
     p_country_code: 'ZW',
     p_currency: currency,
@@ -43,7 +43,7 @@ async function searchPage({ sort = 'newest', cursor = null, currency = '', minPr
     p_cursor_value: cursor?.value ?? null,
     p_cursor_id: cursor?.id ?? null,
     p_limit: pageSize,
-  }), `public listing ${sort} keyset page`);
+  }), `public listing ${sort} card keyset page`);
 }
 
 async function traverse(options = {}) {
@@ -56,6 +56,8 @@ async function traverse(options = {}) {
     const page = result.slice(0, pageSize);
     for (const row of page) {
       assert.equal(seen.has(row.id), false, `keyset page ${pageNumber} must not repeat ${row.id}`);
+      assert.equal(Object.hasOwn(row, 'description'), false, 'card search rows must not carry listing descriptions');
+      assert.ok(Array.isArray(row.photos) && row.photos.length <= 1, 'card search rows carry at most one cover image');
       seen.add(row.id);
       rows.push(row);
     }
@@ -134,7 +136,7 @@ try {
   const priceFiltered = await traverse({ sort: 'price_desc', currency: 'USD', minPrice: 100050, maxPrice: 100059 });
   assert.deepEqual(priceFiltered.map((row) => Number(row.price)), [100059, 100058, 100057, 100056, 100055, 100054, 100053, 100052, 100051, 100050]);
 
-  const rejectedCrossCurrencySort = await publicClient.rpc('public_listing_search_page_v2', {
+  const rejectedCrossCurrencySort = await publicClient.rpc('public_listing_search_card_page_v1', {
     p_kind: 'property',
     p_country_code: 'ZW',
     p_currency: '',
@@ -142,10 +144,10 @@ try {
     p_sort: 'price_asc',
     p_limit: pageSize,
   });
-  assert.match(rejectedCrossCurrencySort.error?.message || '', /invalid public listing search v2 page/i, 'price sorting without a currency must be rejected by the database');
+  assert.match(rejectedCrossCurrencySort.error?.message || '', /invalid public listing card search page/i, 'price sorting without a currency must be rejected by the database');
 
   console.log(`Phase 7 ${smokeTarget.label} search-scale smoke passed.`);
-  console.log(`Verified ${fixtureCount}-row keyset traversal, no duplicates/skips, seller-native USD price boundaries, all-currency browse, and no exact counts or offsets.`);
+  console.log(`Verified ${fixtureCount}-row thin-card keyset traversal, no duplicates/skips, one-cover payloads, seller-native USD price boundaries, all-currency browse, and no exact counts or offsets.`);
 } finally {
   if (ownerId) {
     try { await root.from('listings').delete().eq('seller_id', ownerId).ilike('title', `${marker}%`); } catch { /* best effort */ }
