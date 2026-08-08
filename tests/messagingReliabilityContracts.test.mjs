@@ -32,16 +32,36 @@ test('open threads refresh remote metadata even when no new message is inserted'
   assert.match(realtimeThread, /document\.addEventListener\('visibilitychange', refreshWhenVisible\)/);
 });
 
-test('message delivery uses realtime with adaptive bounded foreground polling fallback', () => {
+test('message delivery polls only a bounded live tail while loaded history remains immutable', () => {
   assert.match(thread, /const DISCONNECTED_THREAD_REFRESH_MS = 4000/);
   assert.match(thread, /const CONNECTED_THREAD_REFRESH_MS = 15_000/);
   assert.match(thread, /realtimeConnected = false/);
+
+  const historyStart = thread.indexOf('const messagesQuery = useInfiniteQuery');
+  const tailStart = thread.indexOf('const tailQuery = useQuery', historyStart);
+  assert.notEqual(historyStart, -1);
+  assert.notEqual(tailStart, -1);
+  const historyBlock = thread.slice(historyStart, tailStart);
+  assert.match(historyBlock, /queryKey: \['message-thread', conversationId\]/);
+  assert.match(historyBlock, /staleTime:\s*Infinity/);
+  assert.match(historyBlock, /refetchOnWindowFocus:\s*false/);
+  assert.match(historyBlock, /refetchOnReconnect:\s*false/);
+  assert.doesNotMatch(historyBlock, /refetchInterval:/);
+
+  assert.match(thread, /queryKey: \['message-thread-tail', conversationId\]/);
   assert.match(thread, /refetchInterval:\s*realtimeConnected \? CONNECTED_THREAD_REFRESH_MS : DISCONNECTED_THREAD_REFRESH_MS/);
   assert.match(thread, /refetchIntervalInBackground:\s*false/);
   assert.match(thread, /refetchOnWindowFocus:\s*'always'/);
   assert.match(thread, /refetchOnReconnect:\s*'always'/);
+  assert.match(thread, /queryClient\.setQueryData\(\['message-thread', conversationId\]/);
+  assert.match(thread, /const overlaps = incomingItems\.some/);
+  assert.match(thread, /pages: \[incomingPage\], pageParams: \[null\]/);
+  assert.match(thread, /refetchQueries\(\{ queryKey: \['message-thread-tail', conversationId\], exact: true, type: 'active' \}\)/);
   assert.match(thread, /markConversationSeen\(conversationId\)/);
-  assert.match(thread, /resetQueries\(\{ queryKey: \['message-thread', conversationId\], exact: true \}\)/);
+  assert.doesNotMatch(thread, /resetQueries\(\{ queryKey: \['message-thread', conversationId\]/);
+
+  assert.match(realtimeThread, /queryKey: \['message-thread-tail', conversationId\]/);
+  assert.doesNotMatch(realtimeThread, /queryKey: \['message-thread', conversationId\]/);
   assert.match(realtimeThread, /table:\s*'inquiries'/);
   assert.match(realtimeThread, /event:\s*'INSERT'/);
   assert.match(realtimeThread, /const \[realtimeConnected, setRealtimeConnected\] = useState\(false\)/);
