@@ -10,7 +10,7 @@ const [worker, migration] = await Promise.all([
 
 test('notification fanout caps total recipient work before claiming jobs', () => {
   assert.match(worker, /const MAX_RECIPIENTS_PER_INVOCATION = 2_000/);
-  assert.match(worker, /const claimLimit = Math\.min\(/[\s\S]*?jobLimit,[\s\S]*?Math\.max\(1, Math\.floor\(MAX_RECIPIENTS_PER_INVOCATION \/ recipientLimit\)\)/);
+  assert.match(worker, /const claimLimit = Math\.min\([\s\S]*?jobLimit,[\s\S]*?Math\.max\(1, Math\.floor\(MAX_RECIPIENTS_PER_INVOCATION \/ recipientLimit\)\)/);
   assert.match(worker, /claim_notification_fanout_jobs/);
   assert.match(worker, /p_limit: claimLimit/);
   assert.doesNotMatch(worker, /claim_notification_fanout_jobs[\s\S]{0,160}p_limit: jobLimit/);
