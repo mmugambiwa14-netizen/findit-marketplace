@@ -176,7 +176,10 @@ const mapsEnabled = env.VITE_FEATURE_MAPS === 'true';
 const currentLocationEnabled = env.VITE_FEATURE_CURRENT_LOCATION === 'true';
 if (mapsEnabled) {
   const key = env.VITE_MAPTILER_PUBLIC_KEY?.trim();
-  if (!key) problems.push('VITE_MAPTILER_PUBLIC_KEY is required when maps are enabled');
+  // Staging/development can exercise the complete map UI through the
+  // same-origin vendored MapLibre runtime and OpenFreeMap's no-key fallback.
+  // Production must still use a restricted MapTiler browser key.
+  if (!key && mode === 'production') problems.push('VITE_MAPTILER_PUBLIC_KEY is required when maps are enabled in production');
   else if (/your-|example|placeholder|replace-/i.test(key)) problems.push('VITE_MAPTILER_PUBLIC_KEY still contains a placeholder');
   const styleId = env.VITE_MAPTILER_STYLE_ID?.trim() || 'streets-v4';
   if (!/^[a-z0-9][a-z0-9_-]{1,95}$/i.test(styleId)) problems.push('VITE_MAPTILER_STYLE_ID is invalid');

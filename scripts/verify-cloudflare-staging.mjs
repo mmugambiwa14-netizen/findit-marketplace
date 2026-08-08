@@ -84,6 +84,17 @@ try {
   failures.push(`/sw.js: ${error instanceof Error ? error.message : String(error)}`);
 }
 
+if (process.env.VITE_FEATURE_MAPS === 'true') {
+  for (const path of ['/vendor/maplibre/maplibre-gl.js', '/vendor/maplibre/maplibre-gl.css']) {
+    try {
+      const { response } = await request(path);
+      if (response.status !== 200) failures.push(`${path}: expected HTTP 200, got ${response.status}`);
+    } catch (error) {
+      failures.push(`${path}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+}
+
 const supabaseUrl = process.env.VITE_SUPABASE_URL?.trim();
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY?.trim();
 if (supabaseUrl || supabaseAnonKey) {

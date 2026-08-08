@@ -45,7 +45,9 @@ jobs:
       VITE_FEATURE_MESSAGING: "true"
       VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
       VITE_FEATURE_GOOGLE_OAUTH: "true"
-      VITE_FEATURE_MAPS: "false"
+      # Staging exercises the real MapLibre stack with the no-key OpenFreeMap
+      # fallback. Production remains protected by the MapTiler key gate.
+      VITE_FEATURE_MAPS: "true"
       VITE_FEATURE_CURRENT_LOCATION: "true"
       VITE_FEATURE_MANUAL_LOCATION: "true"
       VITE_FEATURE_REPORTING: "true"
