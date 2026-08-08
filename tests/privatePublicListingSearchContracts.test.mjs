@@ -137,7 +137,7 @@ test('active repository uses the thin card keyset RPC argument contract', () => 
 });
 
 test('established scale contracts retain keyset ordering and limit-plus-one behavior', () => {
-  assert.match(scaleContracts, /active public search uses bounded currency-safe keyset pages/);
+  assert.match(scaleContracts, /active public search uses bounded currency-safe thin card keyset pages and indexed public predicates/);
   assert.match(scaleContracts, /cursor_time, p_cursor_id/);
   assert.match(scaleContracts, /limit p_limit/);
   assert.match(scaleContracts, /public search executable contracts normalize paired sort cursors/);
