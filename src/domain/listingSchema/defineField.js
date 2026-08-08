@@ -106,7 +106,7 @@ export function defineField(definition) {
     throw new TypeError(`Field ${field.id}: order must be a number`);
   }
 
-  return Object.freeze(field);
+  return Object.freeze(/** @type {FieldDefinition} */ (field));
 }
 
 /** Convenience for a yes/no amenity that should be filterable and structured. */
