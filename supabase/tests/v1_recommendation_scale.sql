@@ -104,7 +104,7 @@ select
   '[{"path":"one"},{"path":"two"}]'::jsonb,
   '10000000-0000-4000-8000-000000000002',
   'ZW',
-  'scale-cars',
+  'utility',
   'sale',
   'available',
   now() - make_interval(secs => series),
@@ -177,7 +177,7 @@ select extensions.matches(
     select listing_id
     from public.listing_recommendation_features
     where category_key = 'car'
-      and subcategory_key = 'scale-cars'
+      and subcategory_key = 'utility'
       and country_code = 'ZW'
       and price_amount between 10500 and 11500
     order by price_amount, published_at desc, listing_id
@@ -274,7 +274,7 @@ insert into public.listings (
   '[{"path":"one"},{"path":"two"}]'::jsonb,
   '10000000-0000-4000-8000-000000000002',
   'ZW',
-  'scale-cars',
+  'utility',
   'sale',
   'available',
   now() + interval '1 second',
