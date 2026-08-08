@@ -29,7 +29,7 @@ import {
 
 const THREAD_PAGE_SIZE = 50;
 const DISCONNECTED_THREAD_REFRESH_MS = 4000;
-const CONNECTED_THREAD_REFRESH_MS = 30_000;
+const CONNECTED_THREAD_REFRESH_MS = 15_000;
 const listingPath = (conversation, tour = false) => `/${conversation.listing_kind}/${conversation.listing_id}${tour ? '?media=tour' : ''}`;
 
 function statusLabel(status) {
