@@ -53,7 +53,7 @@ where c.marketplace_kind = featured.marketplace_kind
 
 do $verify$
 declare
-  expected integer := 27;
+  expected integer := 26;
   actual integer;
 begin
   select count(*)::integer into actual
