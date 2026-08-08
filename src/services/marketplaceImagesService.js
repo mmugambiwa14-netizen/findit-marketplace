@@ -51,9 +51,54 @@ function safeLegacyUrl(value) {
   }
 }
 
+function imageValues(row) {
+  return Array.isArray(row?.photos) ? row.photos : [];
+}
+
+function firstDisplayableImage(row, purpose) {
+  return imageValues(row).find((value) => (
+    isTrustedMarketplaceImagePath(value, purpose) || safeLegacyUrl(value)
+  )) ?? null;
+}
+
+/**
+ * Resolves one visible cover image per marketplace card in a single signed URL
+ * batch. Full path metadata is retained so owner/detail boundaries can still
+ * reason about media without signing non-visible gallery objects on browse.
+ */
+export async function hydrateMarketplaceCardImages(rows, purpose) {
+  const normalizedPurpose = normalizeMarketplaceImagePurpose(purpose);
+  const values = Array.isArray(rows) ? rows : [];
+  const covers = values.map((row) => firstDisplayableImage(row, normalizedPurpose));
+  const storagePaths = [...new Set(
+    covers.filter((value) => isTrustedMarketplaceImagePath(value, normalizedPurpose)),
+  )];
+  const signedByPath = new Map();
+
+  if (storagePaths.length) {
+    const signedRows = await signMarketplaceImagePaths(storagePaths);
+    signedRows.forEach((row, index) => {
+      if (row?.signedUrl) signedByPath.set(storagePaths[index], row.signedUrl);
+    });
+  }
+
+  return values.map((row, index) => {
+    const photos = imageValues(row);
+    const cover = covers[index];
+    const resolvedCover = cover ? (signedByPath.get(cover) ?? safeLegacyUrl(cover)) : null;
+    return {
+      ...row,
+      photo_paths: photos.filter((value) => isTrustedMarketplaceImagePath(value, normalizedPurpose)),
+      has_legacy_media: photos.some((value) => !isTrustedMarketplaceImagePath(value, normalizedPurpose)),
+      photos: resolvedCover ? [resolvedCover] : [],
+    };
+  });
+}
+
 export async function resolveMarketplaceImages(values, purpose) {
+  const normalizedPurpose = normalizeMarketplaceImagePurpose(purpose);
   const images = Array.isArray(values) ? values : [];
-  const storagePaths = images.filter((value) => isTrustedMarketplaceImagePath(value, purpose));
+  const storagePaths = images.filter((value) => isTrustedMarketplaceImagePath(value, normalizedPurpose));
   const signedByPath = new Map();
   if (storagePaths.length) {
     const signedRows = await signMarketplaceImagePaths(storagePaths);
