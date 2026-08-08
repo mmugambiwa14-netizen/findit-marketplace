@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabaseClient';
 
-async function invoke(name, args, message) {
-  const { data, error } = await supabase.rpc(name, args);
+async function invoke(name, args, message, signal) {
+  let query = supabase.rpc(name, args);
+  if (signal) query = query.abortSignal(signal);
+  const { data, error } = await query;
   if (error) {
     const repositoryError = new Error(message);
     repositoryError.cause = error;
@@ -10,7 +12,7 @@ async function invoke(name, args, message) {
   return data;
 }
 
-export async function readPeekThreadPage(request) {
+export async function readPeekThreadPage(request, signal) {
   const isListing = request.parentType === 'listing';
   const data = await invoke('peek_thread_page_v2', {
     p_listing_id: isListing ? request.parentId : null,
@@ -21,35 +23,35 @@ export async function readPeekThreadPage(request) {
     p_cursor_created_at: request.cursor?.createdAt ?? null,
     p_cursor_id: request.cursor?.id ?? null,
     p_limit: request.limit,
-  }, 'Unable to load Peek Requests');
+  }, 'Unable to load Peek Requests', signal);
   return data ?? [];
 }
 
-export async function readMyPeekRequestActivityPage(request) {
+export async function readMyPeekRequestActivityPage(request, signal) {
   const data = await invoke('my_peek_request_activity_page', {
     p_cursor_created_at: request.cursor?.createdAt ?? null,
     p_cursor_id: request.cursor?.id ?? null,
     p_limit: request.limit,
-  }, 'Unable to load your Peek Requests');
+  }, 'Unable to load your Peek Requests', signal);
   return data ?? [];
 }
 
-export async function readSellerPeekRequestQueue(request) {
+export async function readSellerPeekRequestQueue(request, signal) {
   const data = await invoke('seller_peek_request_queue', {
     p_cursor_score: request.cursor?.score ?? null,
     p_cursor_created_at: request.cursor?.createdAt ?? null,
     p_cursor_id: request.cursor?.id ?? null,
     p_limit: request.limit,
-  }, 'Unable to load Buyer Peek Requests');
+  }, 'Unable to load Buyer Peek Requests', signal);
   return data ?? [];
 }
 
-export async function readUnboundResponsePeeks() {
-  return await invoke('seller_unbound_response_peeks', {}, 'Unable to load approved Response Peeks') ?? [];
+export async function readUnboundResponsePeeks(signal) {
+  return await invoke('seller_unbound_response_peeks', {}, 'Unable to load approved Response Peeks', signal) ?? [];
 }
 
-export async function readResponsePeekRequestCandidates(tourId) {
-  return await invoke('response_peek_request_candidates', { p_tour_id: tourId }, 'Unable to load matching Peek Requests') ?? [];
+export async function readResponsePeekRequestCandidates(tourId, signal) {
+  return await invoke('response_peek_request_candidates', { p_tour_id: tourId }, 'Unable to load matching Peek Requests', signal) ?? [];
 }
 
 export async function invokeResponsePeekPlayback(tourId) {
