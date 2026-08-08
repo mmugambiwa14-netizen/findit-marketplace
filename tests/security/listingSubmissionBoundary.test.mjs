@@ -27,17 +27,30 @@ function validProperty(overrides = {}) {
     negotiable: true,
     locationId: LOCATION_ID,
     contactEmail: 'seller@example.com',
-    detail: { propertyType: 'house', bedrooms: 3, bathrooms: 2, sizeSqm: 180 },
+    detail: {
+      subtype: 'residential',
+      property_type: 'house',
+      bedrooms: 3,
+      bathrooms: 2,
+      size_sqm: 180,
+    },
     media: [{ intentId: INTENT_ID, path: IMAGE_PATH }],
     ...overrides,
   };
 }
 
-test('a complete property submission is normalized into bounded server input', () => {
+test('a complete property submission is normalized into bounded V2 server input', () => {
   const result = normalizeListingSubmission(OWNER_ID, validProperty());
   assert.equal(result.listing.kind, 'property');
   assert.equal(result.listing.currency, 'USD');
   assert.equal(result.listing.contactEmail, 'seller@example.com');
+  assert.deepEqual(result.detail, {
+    property_type: 'house',
+    bedrooms: 3,
+    bathrooms: 2,
+    size_sqm: 180,
+  });
+  assert.equal(result.attributes.values.subtype, 'residential');
   assert.deepEqual(result.media, [{ intentId: INTENT_ID, path: IMAGE_PATH }]);
 });
 
@@ -71,13 +84,19 @@ test('media paths must belong to the owner staging namespace and be unique', () 
   })), /Duplicate listing image/);
 });
 
-test('category-specific numeric values and enums are validated', () => {
+test('schema-backed category values and numeric constraints are enforced', () => {
   assert.throws(() => normalizeListingSubmission(OWNER_ID, validProperty({
-    detail: { propertyType: 'castle', bedrooms: 3, bathrooms: 2 },
-  })), /Property type is invalid/);
+    detail: { subtype: 'residential', property_type: 'castle', bedrooms: 3, bathrooms: 2 },
+  })), /Property type has an unsupported value/);
   assert.throws(() => normalizeListingSubmission(OWNER_ID, validProperty({
-    detail: { propertyType: 'house', bedrooms: 1.5, bathrooms: 2 },
-  })), /Bedrooms is invalid/);
+    detail: { subtype: 'residential', property_type: 'house', bedrooms: 1.5, bathrooms: 2 },
+  })), /Bedrooms must be a whole number/);
+  assert.throws(() => normalizeListingSubmission(OWNER_ID, validProperty({
+    detail: { ...validProperty().detail, is_verified: true },
+  })), /Unsupported field/);
+  assert.throws(() => normalizeListingSubmission(OWNER_ID, validProperty({
+    detail: { ...validProperty().detail, subtype: 'castle' },
+  })), /Subtype is invalid/);
 });
 
 test('owners cannot invoke invented or destructive listing actions', () => {
