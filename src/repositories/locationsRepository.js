@@ -70,8 +70,11 @@ export async function resolveNearestMarketplacePlace({ latitude, longitude }) {
   return data?.[0] ?? null;
 }
 
-export async function findActiveLocationSuggestions(searchTerm, { countryCode = LAUNCH_COUNTRY_CODE, limit = 5 } = {}) {
-  const { data, error } = await supabase
+export async function findActiveLocationSuggestions(
+  searchTerm,
+  { countryCode = LAUNCH_COUNTRY_CODE, limit = 5, signal = null } = {},
+) {
+  let query = supabase
     .from('locations')
     .select('id, name, type')
     .eq('is_active', true)
@@ -80,7 +83,9 @@ export async function findActiveLocationSuggestions(searchTerm, { countryCode = 
     .ilike('name', `%${escapeLikePattern(searchTerm)}%`)
     .order('name', { ascending: true })
     .limit(limit);
+  if (signal) query = query.abortSignal(signal);
 
+  const { data, error } = await query;
   if (error) {
     const repositoryError = new Error('Unable to load location suggestions');
     repositoryError.cause = error;
