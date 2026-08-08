@@ -153,6 +153,28 @@ if (supabaseUrl || supabaseAnonKey) {
         failures.push('Supabase listing search: staging returned no public listings');
       }
 
+      const categoryCountsResponse = await fetch(new URL('/rest/v1/rpc/discover_category_counts', supabaseUrl), {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (categoryCountsResponse.status !== 200) {
+        failures.push(`Supabase category counts: expected HTTP 200, got ${categoryCountsResponse.status}`);
+      } else {
+        const categoryCounts = await categoryCountsResponse.json();
+        const expectedCategoryKeys = ['property', 'car', 'machinery', 'service'];
+        const receivedCategoryKeys = Array.isArray(categoryCounts)
+          ? categoryCounts.map((row) => row?.category_key)
+          : [];
+        if (
+          receivedCategoryKeys.length !== expectedCategoryKeys.length
+          || expectedCategoryKeys.some((key, index) => receivedCategoryKeys[index] !== key)
+          || categoryCounts.some((row) => !Number.isInteger(row?.item_count) || row.item_count < 0)
+        ) {
+          failures.push('Supabase category counts: expected four ordered non-negative counts');
+        }
+      }
+
       const tourFeedResponse = await fetch(new URL('/functions/v1/tour-feed', supabaseUrl), {
         method: 'POST',
         headers: { ...headers, Origin: base.origin, 'Content-Type': 'application/json' },
@@ -184,4 +206,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Cloudflare staging verification passed for ${base.host}: SPA, PWA, security headers, Google OAuth, listings, Peeks, and Supabase connectivity verified.`);
+console.log(`Cloudflare staging verification passed for ${base.host}: SPA, PWA, security headers, Google OAuth, listings, category counts, Peeks, and Supabase connectivity verified.`);
