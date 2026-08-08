@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Clock3, Eye, Loader2, MessageSquareMore, ThumbsUp, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import ResponsePeekWatchButton from '@/components/peekThreads/ResponsePeekWatchB
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import { getMyPeekRequestActivityPage, withdrawPeekRequestSupport } from '@/services/peekThreadsService';
 
+const ACTIVITY_PAGE_SIZE = 20;
 const ACTIVITY_REFRESH_MS = 30_000;
 
 function parentPath(item) {
@@ -31,13 +32,31 @@ function requestStatus(item) {
   return { label: 'Awaiting response', icon: Clock3, className: '' };
 }
 
+function removeRequestFromPage(page, requestId) {
+  if (!page || !Array.isArray(page.items)) return page;
+  const items = page.items.filter((item) => item.requestId !== requestId);
+  return items.length === page.items.length ? page : { ...page, items };
+}
+
 export default function MyPeekRequestsQueue() {
   const queryClient = useQueryClient();
+  const historyKey = useMemo(() => ['peek-request-activity', 'pages'], []);
+  const tailKey = useMemo(() => ['peek-request-activity', 'tail'], []);
+
   const activity = useInfiniteQuery({
-    queryKey: ['peek-request-activity'],
-    queryFn: ({ pageParam }) => getMyPeekRequestActivityPage({ cursor: pageParam || null, limit: 20 }),
+    queryKey: historyKey,
+    queryFn: ({ pageParam, signal }) => getMyPeekRequestActivityPage({ cursor: pageParam || null, limit: ACTIVITY_PAGE_SIZE }, signal),
     initialPageParam: null,
     getNextPageParam: (page) => page.nextCursor || undefined,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const tail = useQuery({
+    queryKey: tailKey,
+    queryFn: ({ signal }) => getMyPeekRequestActivityPage({ limit: ACTIVITY_PAGE_SIZE }, signal),
+    enabled: Boolean(activity.data),
     staleTime: 15_000,
     refetchInterval: ACTIVITY_REFRESH_MS,
     refetchIntervalInBackground: false,
@@ -45,18 +64,53 @@ export default function MyPeekRequestsQueue() {
     refetchOnReconnect: 'always',
   });
 
+  useEffect(() => {
+    const incomingItems = Array.isArray(tail.data?.items) ? tail.data.items : [];
+    const firstHistoryPage = activity.data?.pages?.[0];
+    const historyItems = Array.isArray(firstHistoryPage?.items) ? firstHistoryPage.items : [];
+    if (!incomingItems.length) return;
+
+    if (!historyItems.length) {
+      if (firstHistoryPage) {
+        queryClient.setQueryData(historyKey, { pages: [tail.data], pageParams: [null] });
+      }
+      return;
+    }
+
+    const historyIds = new Set(historyItems.map((item) => item.requestId));
+    const overlaps = incomingItems.some((item) => historyIds.has(item.requestId));
+    if (overlaps) return;
+    queryClient.setQueryData(historyKey, { pages: [tail.data], pageParams: [null] });
+  }, [activity.data, historyKey, queryClient, tail.data]);
+
   const items = useMemo(() => {
     const byId = new Map();
+    for (const item of tail.data?.items || []) byId.set(item.requestId, item);
     for (const page of activity.data?.pages || []) {
-      for (const item of page.items) byId.set(item.requestId, item);
+      for (const item of page.items) {
+        if (!byId.has(item.requestId)) byId.set(item.requestId, item);
+      }
     }
     return [...byId.values()];
-  }, [activity.data]);
+  }, [activity.data, tail.data]);
+
+  const removeRequestFromCaches = (requestId) => {
+    const history = /** @type {any} */ (queryClient.getQueryData(historyKey));
+    if (history?.pages?.length) {
+      queryClient.setQueryData(historyKey, {
+        ...history,
+        pages: history.pages.map((page) => removeRequestFromPage(page, requestId)),
+      });
+    }
+    const currentTail = /** @type {any} */ (queryClient.getQueryData(tailKey));
+    if (currentTail) queryClient.setQueryData(tailKey, removeRequestFromPage(currentTail, requestId));
+  };
 
   const withdraw = useMutation({
     mutationFn: (requestId) => withdrawPeekRequestSupport(requestId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['peek-request-activity'] });
+    onSuccess: (_result, requestId) => {
+      removeRequestFromCaches(requestId);
+      queryClient.invalidateQueries({ queryKey: tailKey, exact: true });
       queryClient.invalidateQueries({ queryKey: ['peek-threads'] });
       toast.success('Interest removed from this Peek Request');
     },
@@ -76,7 +130,7 @@ export default function MyPeekRequestsQueue() {
 
       {activity.isLoading ? (
         <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your Peek Requests</div>
-      ) : activity.isError ? (
+      ) : activity.isError && items.length === 0 ? (
         <div className="p-7 text-center"><p className="text-sm text-destructive">Your Peek Requests could not be loaded.</p><Button type="button" className="mt-3" size="sm" variant="outline" onClick={() => activity.refetch()}>Try again</Button></div>
       ) : items.length === 0 ? (
         <div className="p-9 text-center">
@@ -144,6 +198,9 @@ export default function MyPeekRequestsQueue() {
                 {activity.isFetchingNextPage ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading</> : 'Load more requests'}
               </Button>
             </div>
+          )}
+          {activity.isFetchNextPageError && items.length > 0 && (
+            <div className="flex justify-center p-4"><Button type="button" variant="outline" onClick={() => activity.fetchNextPage()}>Retry loading more</Button></div>
           )}
         </div>
       )}
