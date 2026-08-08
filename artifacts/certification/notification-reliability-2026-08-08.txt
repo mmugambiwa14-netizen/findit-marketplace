@@ -1,0 +1,3 @@
+Notification reliability certification rerun trigger.
+Canonical main head: f2f5184f28f71ea96609e6d72c66c7abfd064a4c
+Scope: Peek Request event alignment, bounded deep links, foreground freshness, unread recovery, 41-suite clean-database certification.
