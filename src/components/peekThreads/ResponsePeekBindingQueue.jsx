@@ -11,15 +11,26 @@ import {
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import { bindResponsePeek, getResponsePeekRequestCandidates, getUnboundResponsePeeks } from '@/services/peekThreadsService';
 
+const READY_RESPONSE_REFRESH_MS = 30_000;
+
 export default function ResponsePeekBindingQueue() {
   const queryClient = useQueryClient();
   const [active, setActive] = useState(null);
   const [selected, setSelected] = useState([]);
-  const ready = useQuery({ queryKey: ['unbound-response-peeks'], queryFn: getUnboundResponsePeeks, staleTime: 30_000 });
+  const ready = useQuery({
+    queryKey: ['unbound-response-peeks'],
+    queryFn: ({ signal }) => getUnboundResponsePeeks(signal),
+    staleTime: 15_000,
+    refetchInterval: READY_RESPONSE_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
+  });
   const candidates = useQuery({
     queryKey: ['response-peek-candidates', active?.tourId],
-    queryFn: () => getResponsePeekRequestCandidates(active.tourId),
+    queryFn: ({ signal }) => getResponsePeekRequestCandidates(active.tourId, signal),
     enabled: Boolean(active?.tourId),
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -31,10 +42,9 @@ export default function ResponsePeekBindingQueue() {
     onSuccess: (count) => {
       toast.success(`${Number(count) || selected.length} Peek Request${(Number(count) || selected.length) === 1 ? '' : 's'} answered`);
       setActive(null); setSelected([]);
-      queryClient.invalidateQueries({ queryKey: ['unbound-response-peeks'] });
-      queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['unbound-response-peeks'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue', 'tail'], exact: true });
       queryClient.invalidateQueries({ queryKey: ['peek-threads'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
     onError: (error) => toast.error(error.message || 'Unable to publish the Response Peek'),
   });
