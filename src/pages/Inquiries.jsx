@@ -39,7 +39,7 @@ export default function Inquiries() {
 
   const inboxQuery = useInfiniteQuery({
     queryKey: ['message-inbox', request],
-    queryFn: ({ pageParam }) => getMessageInboxPage({ ...request, cursor: pageParam || null }),
+    queryFn: ({ pageParam, signal }) => getMessageInboxPage({ ...request, cursor: pageParam || null }, signal),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(user?.id) && !conversationId,
