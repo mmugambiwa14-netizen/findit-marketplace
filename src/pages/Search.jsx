@@ -186,7 +186,7 @@ export default function Search() {
 
   const resultsQuery = useInfiniteQuery({
     queryKey: ['public-listing-search-page', request],
-    queryFn: ({ pageParam }) => searchPublicListingsPage({ ...request, cursor: pageParam || null }),
+    queryFn: ({ pageParam, signal }) => searchPublicListingsPage({ ...request, cursor: pageParam || null }, { signal }),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     staleTime: 1000 * 30,
