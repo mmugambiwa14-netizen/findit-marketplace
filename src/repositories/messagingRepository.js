@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabaseClient';
 
-function rpc(name, params, message) {
-  return supabase.rpc(name, params).then(({ data, error }) => {
+function rpc(name, params, message, signal) {
+  let query = supabase.rpc(name, params);
+  if (signal) query = query.abortSignal(signal);
+  return query.then(({ data, error }) => {
     if (error) {
       const failure = new Error(message);
       failure.cause = error;
@@ -25,26 +27,26 @@ export function insertConversationMessage(conversationId, body) {
   }, 'Unable to send the message');
 }
 
-export function findMessageInbox(request) {
+export function findMessageInbox(request, signal) {
   return rpc('message_inbox', {
     p_query: request.query,
     p_unread_only: request.unreadOnly,
     p_limit: request.limit,
     p_offset: request.offset,
-  }, 'Unable to load messages');
+  }, 'Unable to load messages', signal);
 }
 
-export function findMessageConversation(conversationId) {
+export function findMessageConversation(conversationId, signal) {
   return rpc('message_conversation', {
     p_conversation_id: conversationId,
-  }, 'Unable to load the conversation');
+  }, 'Unable to load the conversation', signal);
 }
 
-export function findMessageThread(conversationId, limit = 200) {
+export function findMessageThread(conversationId, limit = 200, signal) {
   return rpc('message_thread_rows', {
     p_conversation_id: conversationId,
     p_limit: limit,
-  }, 'Unable to load conversation messages');
+  }, 'Unable to load conversation messages', signal);
 }
 
 export function updateConversationSeen(conversationId) {
@@ -68,21 +70,21 @@ export function insertConversationReport(input) {
   }, 'Unable to report the conversation');
 }
 
-export function findMessageInboxPage(request) {
+export function findMessageInboxPage(request, signal) {
   return rpc('message_inbox_page', {
     p_query: request.query,
     p_unread_only: request.unreadOnly,
     p_cursor_at: request.cursor?.at ?? null,
     p_cursor_id: request.cursor?.id ?? null,
     p_limit: request.limit,
-  }, 'Unable to load messages');
+  }, 'Unable to load messages', signal);
 }
 
-export function findMessageThreadPage(request) {
+export function findMessageThreadPage(request, signal) {
   return rpc('message_thread_page', {
     p_conversation_id: request.conversationId,
     p_before_created_at: request.cursor?.at ?? null,
     p_before_id: request.cursor?.id ?? null,
     p_limit: request.limit,
-  }, 'Unable to load conversation messages');
+  }, 'Unable to load conversation messages', signal);
 }
