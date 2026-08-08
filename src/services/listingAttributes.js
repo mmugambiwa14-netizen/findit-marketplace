@@ -53,7 +53,9 @@ export function toStoragePayload(category, rawValues = {}) {
   const { valid, errors, values } = validateCategoryValues(category, rawValues);
   if (!valid) return { ok: false, errors };
 
-  const { columns, attributes } = splitStorage(category, values);
+  const storage = splitStorage(category, values);
+  const columns = /** @type {Record<string, unknown>} */ (storage.columns);
+  const attributes = /** @type {AttributeDocument} */ (storage.attributes);
   if (subtype) attributes.values.subtype = subtype;
   return { ok: true, columns, attributes };
 }
