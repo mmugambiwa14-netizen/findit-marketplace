@@ -98,7 +98,7 @@ export const legalDocuments = {
         title: '10. Service providers and international transfers',
         bullets: [
           'Supabase provides our database, authentication, file storage, and server-side functions. Marketplace data is held there. The staging and production databases are hosted in the European Union (London and Ireland regions).',
-          'GitHub Pages serves the application front-end.',
+          'Cloudflare Pages serves the application front-end.',
           'Google provides optional sign-in, where you choose to use it.',
           'A third-party video service processes uploaded Peek video into a playable format and generates thumbnails.',
           'An email delivery provider sends account and notification email.',

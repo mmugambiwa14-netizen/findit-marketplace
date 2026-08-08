@@ -7,16 +7,13 @@ const [flags, policy] = await Promise.all([
   readFile(new URL('../src/lib/stagingCapabilityPolicy.js', import.meta.url), 'utf8'),
 ]);
 
-test('trusted continuation branches share the staging capability set', () => {
-  assert.match(policy, /export const TRUSTED_STAGING_BRANCHES/);
-  assert.match(policy, /export function isTrustedStagingBranch/);
-  for (const branch of [
-    'feature/listing-intelligence-foundation',
-    'claude/findit-hardening-listing-012cf0',
-    'feature/peek-threads-phase-3',
-  ]) {
-    assert.ok(policy.includes(`'${branch}'`), `${branch} must remain in the trusted staging lineage`);
-  }
+test('Cloudflare preview and staging deployments share the certified capability set', () => {
+  assert.match(policy, /export const TRUSTED_NON_PRODUCTION_DEPLOYMENTS/);
+  assert.match(policy, /export function isTrustedStagingDeployment/);
+  assert.ok(policy.includes("'preview'"), 'Cloudflare preview deployments must be trusted non-production');
+  assert.ok(policy.includes("'staging'"), 'the dedicated staging deployment must be trusted non-production');
+  assert.ok(policy.includes("'staging.peekalisting.com'"), 'the staging custom domain must remain explicit');
+  assert.doesNotMatch(policy, /VERCEL_GIT_COMMIT_REF|\.vercel\.app/);
 });
 
 test('staging-certified capabilities cannot be hidden by Preview environment drift', () => {

@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "peekalisting",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-08-08",
+  "env": {
+    "preview": {
+      "vars": {
+        "DEPLOYMENT_ENV": "preview"
+      }
+    },
+    "production": {
+      "vars": {
+        "DEPLOYMENT_ENV": "production"
+      }
+    }
+  }
+}

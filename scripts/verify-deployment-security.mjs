@@ -1,39 +1,43 @@
 import { readFile } from 'node:fs/promises';
 
 const failures = [];
-const [vercelSource, html, mapProvider] = await Promise.all([
-  readFile(new URL('../vercel.json', import.meta.url), 'utf8'),
+const [headersSource, redirectsSource, html, mapProvider] = await Promise.all([
+  readFile(new URL('../public/_headers', import.meta.url), 'utf8'),
+  readFile(new URL('../public/_redirects', import.meta.url), 'utf8'),
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/lib/mapProvider.js', import.meta.url), 'utf8'),
 ]);
-
-let vercel;
-try {
-  vercel = JSON.parse(vercelSource);
-} catch (error) {
-  failures.push(`vercel.json is invalid JSON: ${error.message}`);
-  vercel = {};
-}
 
 function failUnless(condition, message) {
   if (!condition) failures.push(message);
 }
 
-const rewrites = Array.isArray(vercel.rewrites) ? vercel.rewrites : [];
-failUnless(
-  rewrites.some((rewrite) => rewrite?.source === '/(.*)' && rewrite?.destination === '/index.html'),
-  'vercel.json must preserve SPA deep links through an index.html rewrite',
-);
+function parseHeaders(source) {
+  const rules = new Map();
+  let current = null;
+  for (const rawLine of source.split(/\r?\n/)) {
+    const line = rawLine.trimEnd();
+    if (!line || line.trimStart().startsWith('#')) continue;
+    if (!/^\s/.test(line)) {
+      current = line.trim();
+      rules.set(current, new Map());
+      continue;
+    }
+    const match = line.match(/^\s+([^:]+):\s*(.*)$/);
+    if (current && match) rules.get(current).set(match[1].trim().toLowerCase(), match[2].trim());
+  }
+  return rules;
+}
 
-const headerRules = Array.isArray(vercel.headers) ? vercel.headers : [];
-const globalRule = headerRules.find((rule) => rule?.source === '/(.*)');
-const globalHeaders = new Map(
-  (globalRule?.headers || []).map((header) => [String(header.key || '').toLowerCase(), String(header.value || '')]),
-);
-const assetRule = headerRules.find((rule) => rule?.source === '/assets/(.*)');
-const assetHeaders = new Map(
-  (assetRule?.headers || []).map((header) => [String(header.key || '').toLowerCase(), String(header.value || '')]),
-);
+const rules = parseHeaders(headersSource);
+const globalHeaders = rules.get('/*') || new Map();
+const assetHeaders = rules.get('/assets/*') || new Map();
+
+failUnless(/^\/\*$/m.test(headersSource), '_headers must declare a /* baseline block');
+failUnless(/^\/assets\/\*$/m.test(headersSource), '_headers must declare an immutable assets block');
+failUnless(/^\/sw\.js$/m.test(headersSource), '_headers must declare a service-worker block');
+failUnless(/^\/manifest\.webmanifest$/m.test(headersSource), '_headers must declare a manifest block');
+failUnless(/^\/\*\s+\/index\.html\s+200$/m.test(redirectsSource), '_redirects must preserve SPA deep links');
 
 for (const required of [
   'content-security-policy',
@@ -97,9 +101,7 @@ for (const directive of [
   'media-src',
   'font-src',
   'worker-src',
-]) {
-  failUnless(directives.has(directive), `CSP is missing ${directive}`);
-}
+]) failUnless(directives.has(directive), `CSP is missing ${directive}`);
 
 failUnless(directives.get('default-src')?.includes("'self'"), "CSP default-src must be 'self'");
 failUnless(directives.get('base-uri')?.includes("'self'"), "CSP base-uri must be 'self'");
@@ -123,9 +125,7 @@ failUnless(directives.get('worker-src')?.includes('blob:'), 'current MapLibre ru
 failUnless(csp.includes('upgrade-insecure-requests'), 'CSP must upgrade insecure requests');
 failUnless(!csp.includes('http:'), 'CSP must not allow clear-text HTTP sources');
 
-for (const [name, values] of directives) {
-  failUnless(!values.includes('*'), `CSP ${name} must not contain a standalone wildcard`);
-}
+for (const [name, values] of directives) failUnless(!values.includes('*'), `CSP ${name} must not contain a standalone wildcard`);
 
 const scriptTags = [...html.matchAll(/<script\b([^>]*)>/gi)];
 failUnless(scriptTags.length >= 2, 'index.html must load the document bootstrap and application entry');
@@ -149,4 +149,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Deployment security verification passed: script-safe CSP, scoped runtime styles, hardened headers, SPA routing and pinned map runtime inspected.');
+console.log('Deployment security verification passed: Cloudflare headers, SPA routing, script safety and pinned map runtime inspected.');

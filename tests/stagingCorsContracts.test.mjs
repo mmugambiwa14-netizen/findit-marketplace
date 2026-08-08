@@ -8,11 +8,12 @@ const contextualRuntime = await readFile('supabase/functions/contextual-ecosyste
 const stagingScript = await readFile('scripts/configure-staging.ps1', 'utf8');
 
 test('canonical staging origins share one browser CORS boundary', () => {
-  assert.match(sharedRuntime, /https:\/\/findit-marketplace-staging\.vercel\.app/);
-  assert.match(sharedRuntime, /https:\/\/mmugambiwa14-netizen\.github\.io/);
+  assert.match(sharedRuntime, /https:\/\/staging\.peekalisting\.pages\.dev/);
+  assert.doesNotMatch(sharedRuntime, /vercel\.app|github\.io/);
   assert.match(recommendationRuntime, /allowedRequestOrigin/);
   assert.match(contextualRuntime, /allowedRequestOrigin/);
-  assert.match(stagingScript, /\$PagesOrigin,\$VercelOrigin/);
+  assert.match(stagingScript, /\$PagesOrigin/);
+  assert.doesNotMatch(stagingScript, /VercelOrigin/);
 });
 
 test('unknown browser origins still fail closed', () => {

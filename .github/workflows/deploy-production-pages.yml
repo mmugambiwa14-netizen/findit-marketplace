@@ -1,0 +1,100 @@
+name: Deploy production to Cloudflare Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type PROMOTE only after staging acceptance is recorded
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-pages-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: inputs.confirmation == 'PROMOTE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: cloudflare-production
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      NODE_ENV: production
+      VITE_MODE: production
+      VITE_DEPLOY_ENV: production
+      VITE_BASE_PATH: /
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_AUTH_GOOGLE_ENABLED: "true"
+      VITE_AUTH_APPLE_ENABLED: "false"
+      VITE_FEATURE_BUSINESS_PROFILES: "true"
+      VITE_FEATURE_MESSAGING: "true"
+      VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
+      VITE_FEATURE_GOOGLE_OAUTH: "true"
+      VITE_FEATURE_MAPS: "true"
+      VITE_MAPTILER_PUBLIC_KEY: ${{ vars.VITE_MAPTILER_PUBLIC_KEY }}
+      VITE_MAPTILER_STYLE_ID: ${{ vars.VITE_MAPTILER_STYLE_ID }}
+      VITE_FEATURE_CURRENT_LOCATION: "true"
+      VITE_FEATURE_MANUAL_LOCATION: "true"
+      VITE_FEATURE_REPORTING: "true"
+      VITE_FEATURE_CURRENCY_CONVERSION: "false"
+      VITE_FEATURE_PHONE_VERIFICATION: "false"
+      VITE_FEATURE_INTERNATIONAL_LISTING: "false"
+      VITE_FEATURE_SERVICE_RADIUS: "false"
+      VITE_FEATURE_LISTING_EXPIRY: "false"
+      VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
+      VITE_FEATURE_TOURS: "false"
+      VITE_FEATURE_TOURS_PREVIEW: "false"
+      VITE_FEATURE_PREVIEW_FIXTURES: "false"
+      VITE_PREVIEW_AUTH_BYPASS: "false"
+      VITE_FEATURE_PAYMENTS: "false"
+      VITE_FEATURE_SUBSCRIPTIONS: "false"
+      VITE_FEATURE_ESCROW: "false"
+      VITE_FEATURE_PREMIUM_LISTINGS: "false"
+      VITE_FEATURE_AI_MODERATION: "false"
+      VITE_FEATURE_AI_BAN_EVASION: "false"
+      VITE_FEATURE_AI_TICKET_TRIAGE: "false"
+      VITE_FEATURE_AI_SUPPORT_CHAT: "false"
+      VITE_FEATURE_SCHEDULED_REMINDERS: "false"
+      VITE_FEATURE_MARKETING_EMAILS: "false"
+      TOURS_BACKEND_ENABLED: "false"
+      FINDIT_TOURS_WORKERS_ENABLED: "false"
+      FINDIT_TOURS_RELEASE_ACCEPTED: "false"
+      FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: ${{ vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED }}
+      FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
+
+    steps:
+      - name: Check out production source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Normalize locked dependency metadata
+        run: node ./scripts/normalize-package-lock.mjs --write
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Build and verify production artifact
+        run: npm run build
+
+      - name: Verify Cloudflare security contracts
+        run: npm run verify:deployment-security
+
+      - name: Deploy production branch without changing DNS
+        run: >-
+          npx wrangler pages deploy dist
+          --project-name=peekalisting
+          --branch=main
+          --commit-hash="$GITHUB_SHA"
+          --commit-message="Cloudflare production $GITHUB_SHA"

@@ -67,31 +67,34 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /retention-days: 90/);
 });
 
-test('canonical preview exposes Peeks and current business flows only against isolated staging', () => {
-  assert.match(previewWorkflow, /branches:\s*\n\s*- main/);
-  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/main'/);
-  assert.match(previewWorkflow, /test "\$GITHUB_REF_NAME" = "main"/);
+test('Cloudflare staging deploy is manual, isolated, and activates the accepted preproduction surface', () => {
+  assert.match(previewWorkflow, /workflow_dispatch/);
+  assert.match(previewWorkflow, /confirmation/);
+  assert.match(previewWorkflow, /environment:\s*\n\s*name: cloudflare-staging/);
   assert.match(previewWorkflow, /VITE_MODE: staging/);
-  assert.match(previewWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
-  assert.match(previewWorkflow, /VITE_PREVIEW_DEPLOYMENT: "true"/);
+  assert.match(previewWorkflow, /VITE_DEPLOY_ENV: staging/);
+  assert.match(previewWorkflow, /VITE_BASE_PATH: \//);
+  assert.match(previewWorkflow, /VITE_SUPABASE_URL: \$\{\{ vars\.VITE_SUPABASE_URL \|\| vars\.FINDIT_SUPABASE_URL \}\}/);
+  assert.match(previewWorkflow, /VITE_SUPABASE_ANON_KEY: \$\{\{ secrets\.VITE_SUPABASE_ANON_KEY \|\| secrets\.FINDIT_SUPABASE_ANON_KEY \}\}/);
   assert.match(previewWorkflow, /npm ci --include=dev --ignore-scripts/);
-  assert.match(previewWorkflow, /VITE_FEATURE_CURATED_BUSINESS_MARKETPLACE: "true"/);
   assert.match(previewWorkflow, /VITE_FEATURE_BUSINESS_PROFILES: "true"/);
   assert.match(previewWorkflow, /VITE_FEATURE_MESSAGING: "true"/);
   assert.match(previewWorkflow, /VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"/);
   assert.match(previewWorkflow, /VITE_FEATURE_TOURS: "true"/);
-  assert.match(previewWorkflow, /VITE_FEATURE_TOURS_PREVIEW: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_TOURS_PREVIEW: "false"/);
   assert.match(previewWorkflow, /TOURS_BACKEND_ENABLED: "true"/);
-  assert.match(previewWorkflow, /VITE_FEATURE_PREVIEW_FIXTURES: "true"/);
+  assert.match(previewWorkflow, /VITE_AUTH_GOOGLE_ENABLED: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_GOOGLE_OAUTH: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_CURRENT_LOCATION: "true"/);
+  assert.match(previewWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: "true"/);
+  assert.match(previewWorkflow, /VITE_FEATURE_PREVIEW_FIXTURES: "false"/);
   assert.match(previewWorkflow, /VITE_PREVIEW_AUTH_BYPASS: "false"/);
-  assert.match(previewWorkflow, /VITE_FEATURE_INTERNATIONAL_LISTING: "false"/);
-  assert.match(previewWorkflow, /bwgklpxoetrrkutottdb/);
-  assert.match(previewWorkflow, /BusinessPublishingGate/);
-  assert.match(previewWorkflow, /BuyerPeekRequests/);
-  assert.match(previewWorkflow, /BusinessProfiles/);
-  assert.match(previewWorkflow, /preview-build\.json/);
-  assert.match(previewWorkflow, /"scope":"complete-current-stage"/);
-  assert.match(previewWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
+  assert.match(previewWorkflow, /npx wrangler pages deploy dist/);
+  assert.match(previewWorkflow, /--project-name=peekalisting/);
+  assert.match(previewWorkflow, /--branch=staging/);
+  assert.match(previewWorkflow, /npm run verify:deployment-security/);
+  assert.match(previewWorkflow, /npm run verify:cloudflare-staging/);
+  assert.doesNotMatch(previewWorkflow, /actions\/deploy-pages|github-pages/);
 });
 
 test('preview access cannot be enabled without the complete backend worker boundary', () => {

@@ -88,7 +88,7 @@ test('event timeouts abort PostgREST work instead of only abandoning the respons
 test('Auth redirect configuration covers root and nested browser routes', () => {
   assert.match(supabaseConfig, /http:\/\/localhost:5173\/\*\*/);
   assert.match(supabaseConfig, /http:\/\/127\.0\.0\.1:5173\/\*\*/);
-  assert.match(supabaseConfig, /https:\/\/mmugambiwa14-netizen\.github\.io\/findit-marketplace\/\*\*/);
+  assert.match(supabaseConfig, /https:\/\/staging\.peekalisting\.pages\.dev\/\*\*/);
 });
 
 test('personalization rollback is non-destructive and preserves privacy enforcement', () => {
