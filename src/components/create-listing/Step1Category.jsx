@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -31,9 +32,10 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
   const navigate = useNavigate();
   const { access, refresh } = usePublishingAccess();
   const [error, setError] = useState('');
+  const marketCountry = String(formData.country_code || LAUNCH_COUNTRY_CODE).toUpperCase();
   const taxonomyQuery = useQuery({
-    queryKey: ['public-category-taxonomy'],
-    queryFn: () => getCategoryTaxonomy(),
+    queryKey: ['public-category-taxonomy', marketCountry],
+    queryFn: () => getCategoryTaxonomy(null, marketCountry),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -47,11 +49,12 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
       const presentation = FAMILY_PRESENTATION[kind];
       if (!presentation) return null;
       const root = rootsByKind.get(kind);
+      if (!root) return null;
       return {
         key: kind,
         icon: presentation.icon,
-        label: root?.label ?? presentation.fallbackLabel,
-        desc: root?.description || presentation.desc,
+        label: root.label || presentation.fallbackLabel,
+        desc: root.description || presentation.desc,
       };
     })
     .filter(Boolean), [access.approvedCategories, rootsByKind]);
@@ -120,12 +123,28 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
     );
   }
 
+  if (categories.length === 0) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Create a listing</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">No approved categories are available in this market</h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">Your publishing approvals and the active {marketCountry} taxonomy do not currently overlap. Refresh after an approval or taxonomy change.</p>
+        </div>
+        <Button type="button" variant="outline" onClick={() => { refresh(); taxonomyQuery.refetch(); }}>
+          <RefreshCw className="mr-2 h-4 w-4" />Refresh access
+        </Button>
+        <PublishingOperationsPanel access={access} onRefresh={refresh} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Create a listing</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight">What are you posting?</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Only current taxonomy categories approved for your business are available.</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">Only current taxonomy categories approved for your business and available in {marketCountry} are shown.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -176,7 +195,7 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
               </SelectContent>
             </Select>
           ) : (
-            <p className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground">There are no active postable categories in this marketplace family right now.</p>
+            <p className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground">There are no active postable categories in this marketplace family for {marketCountry} right now.</p>
           )}
         </div>
       )}
