@@ -1,5 +1,21 @@
 # Deployment
 
+## Current Cloudflare Pages authority
+
+Cloudflare Pages is the authoritative frontend host and Supabase remains the
+backend. The protected workflow `.github/workflows/peekalisting-preview.yml`
+publishes the isolated `staging` Pages branch only after an explicit manual
+confirmation. It does not change DNS or custom domains.
+
+The staging workflow uses Node 24, preserves `public/_headers` and
+`public/_redirects`, verifies the PWA/security contracts, deploys `dist`, and
+checks hosted SPA routes and Supabase Auth connectivity. Production has a
+separate protected environment and manual promotion workflow; it must not run
+before staging acceptance is recorded.
+
+See [`DEPLOYMENT_CLOUDFLARE.md`](DEPLOYMENT_CLOUDFLARE.md) for the current
+Cloudflare procedure. The older GitHub Pages notes below are historical.
+
 ## Current deployment status — 2026-07-29
 
 Supabase staging and the GitHub Pages staging frontend are deployed. GitHub

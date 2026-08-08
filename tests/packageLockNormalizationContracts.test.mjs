@@ -28,11 +28,11 @@ test('every locked workflow install normalizes the package lock first', async ()
   }
 
   // Pinned deliberately: the loop above passes vacuously if npm-ci detection
-  // ever breaks and matches nothing. The current workflow set has eleven npm-ci
-  // paths after the obsolete staging Pages workflow was removed and the single
-  // complete-stage preview became authoritative. Adding or removing an npm-ci
-  // workflow must update this number consciously.
-  assert.equal(installPaths, 11, 'all eleven npm-ci workflow paths must be covered');
+  // ever breaks and matches nothing. The current workflow set has twelve npm-ci
+  // paths after Cloudflare staging and the separately protected production
+  // Pages workflow became explicit. Adding or removing an npm-ci workflow must
+  // update this number consciously.
+  assert.equal(installPaths, 12, 'all twelve npm-ci workflow paths must be covered');
 });
 
 test('normalizer synchronizes the manifest boundary and removes retired packages', async () => {

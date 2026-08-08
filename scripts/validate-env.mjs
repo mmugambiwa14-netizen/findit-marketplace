@@ -35,6 +35,12 @@ function loadProjectEnv() {
 const env = { ...loadProjectEnv(), ...process.env };
 const problems = [];
 const requiredBrowserVariables = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
+const unsafeViteName = /(SERVICE_ROLE|SECRET|PASSWORD|PRIVATE_KEY|API_TOKEN|ACCESS_TOKEN)/i;
+for (const name of Object.keys(env)) {
+  if (name.startsWith('VITE_') && unsafeViteName.test(name)) {
+    problems.push(`${name} must not be VITE-prefixed because Vite exposes it to browser code`);
+  }
+}
 
 for (const name of requiredBrowserVariables) {
   const value = env[name]?.trim();

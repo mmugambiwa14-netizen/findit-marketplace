@@ -1,7 +1,7 @@
 # Cloudflare Pages headers.
 #
-# Generated from the retired vercel.json so the production security posture
-# survives the move off Vercel byte for byte. Cloudflare applies every
+# Carried forward from the retired hosting configuration so the production
+# security posture survives the hosting migration byte for byte. Cloudflare applies every
 # matching rule in order, so the /* block sets the baseline and the more
 # specific blocks below override individual headers (notably Cache-Control).
 #

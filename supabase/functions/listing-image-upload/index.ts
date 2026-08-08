@@ -4,7 +4,7 @@ import { MAX_BYTES, prepareTrustedImage, sha256Hex } from "../_shared/trusted-im
 const DEFAULT_ALLOWED_ORIGINS = [
   "http://127.0.0.1:5173",
   "http://localhost:5173",
-  "https://findit-marketplace-staging.vercel.app",
+  "https://staging.peekalisting.pages.dev",
 ];
 
 const ALLOWED_ORIGINS = new Set(
@@ -17,7 +17,7 @@ function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.has(origin)) return true;
   try {
     const hostname = new URL(origin).hostname.toLowerCase();
-    return hostname.endsWith("-mmugambiwa14-9496s-projects.vercel.app");
+    return hostname === "staging.peekalisting.pages.dev";
   } catch {
     return false;
   }

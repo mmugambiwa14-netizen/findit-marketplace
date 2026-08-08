@@ -33,9 +33,8 @@ function copyFirstPartyPublicAssets() {
 
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => ({
-  // GitHub Pages serves the staging build beneath the repository name. Keep
-  // local and custom-domain builds rooted at "/" unless a deploy explicitly
-  // supplies VITE_BASE_PATH.
+  // Cloudflare Pages and the custom domain are rooted at "/" unless a deploy
+  // explicitly supplies VITE_BASE_PATH.
   base: process.env.VITE_BASE_PATH || '/',
   // Preview-only media stays outside production. The build plugin below copies
   // only first-party runtime assets from public/ into the hosted artifact.

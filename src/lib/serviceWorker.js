@@ -22,8 +22,7 @@ function explicitSharedOriginPreview() {
 
 export function previewDeployment() {
   return explicitSharedOriginPreview()
-    || String(viteEnv.VITE_VERCEL_ENV || '').trim() === 'preview'
-    || String(viteEnv.VITE_VERCEL_TARGET_ENV || '').trim() === 'preview';
+    || String(viteEnv.VITE_DEPLOY_ENV || '').trim().toLowerCase() === 'preview';
 }
 
 export function serviceWorkerSupported() {
@@ -47,8 +46,8 @@ async function deleteFindItCaches() {
 function registrationBelongsToCurrentPreview(entry) {
   if (!explicitSharedOriginPreview() || typeof window === 'undefined') return true;
 
-  // GitHub Pages project sites share an origin. Never unregister a worker that
-  // belongs to a different project on the same github.io host.
+  // Shared preview origins can contain unrelated applications. Never unregister
+  // a worker outside this deployment's base path.
   const appBase = new URL(String(viteEnv.BASE_URL || '/'), window.location.origin).href;
   return String(entry.scope || '').startsWith(appBase);
 }

@@ -31,6 +31,6 @@ export function assertSmokeTarget(url, testName) {
   return {
     label: 'hosted staging',
     origin: process.env.FINDIT_SMOKE_ORIGIN
-      ?? 'https://mmugambiwa14-netizen.github.io',
+      ?? 'https://staging.peekalisting.pages.dev',
   };
 }

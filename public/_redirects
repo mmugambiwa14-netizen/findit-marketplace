@@ -1,3 +1,3 @@
-# Cloudflare Pages SPA fallback, replacing the vercel.json rewrite of
+# Cloudflare Pages SPA fallback, replacing the previous hosting rewrite of
 # /(.*) -> /index.html. The 200 keeps the URL intact for client routing.
 /*    /index.html   200

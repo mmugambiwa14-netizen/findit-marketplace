@@ -1,6 +1,6 @@
 FindIt staging release
 Canonical source: main
 Curated verified-business marketplace flow included.
-GitHub Pages preview deploys only from main.
+Cloudflare Pages staging deploys only through the protected staging workflow.
 Release generated: 2026-08-06T10:08:00+03:00
 Canonical commit: b4b5f278820ed02a37ae60c0605b9c248b47fc8c
