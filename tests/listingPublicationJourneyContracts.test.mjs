@@ -27,13 +27,24 @@ test('listing images use private bounded single-use upload intents', async () =>
   assert.match(base, /duplicate listing image/);
 });
 
-test('submission validates business category payload location contact media and details atomically', async () => {
+test('submission keeps the mature V1 transaction behind the schema-backed V2 boundary', async () => {
   const service = await read('src/services/listingCreationService.js');
   const repository = await read('src/repositories/listingCreationRepository.js');
+  const contract = await read('src/services/listingSubmissionContracts.js');
   const base = await read('supabase/migrations/0021_v1_listing_creation_and_media.sql');
+  const v2 = await read('supabase/migrations/20260808081300_listing_schema_v2_submission.sql');
+
   assert.match(service, /can_publish_in_category/);
   assert.match(service, /normalizeListingSubmission/);
-  assert.match(repository, /create_v1_listing_submission/);
+  assert.match(contract, /toStoragePayload/);
+  assert.match(repository, /create_v2_listing_submission/);
+  assert.match(repository, /p_attributes: request\.attributes/);
+  assert.match(v2, /private\.create_v1_listing_submission/);
+  assert.match(v2, /set attributes = p_attributes/);
+  assert.match(v2, /if existing_listing_id is not null/);
+
+  // The V1 transaction still owns the hardened publication invariants rather
+  // than V2 duplicating them into a second implementation.
   assert.match(base, /active listing category not found/);
   assert.match(base, /active Zimbabwe location not found/);
   assert.match(base, /media_count not between 1 and 20/);
@@ -41,6 +52,22 @@ test('submission validates business category payload location contact media and 
   assert.match(base, /insert into public\.car_details/);
   assert.match(base, /insert into public\.machinery_details/);
   assert.match(base, /idx_listings_submission_key/);
+});
+
+test('listing detail collection is generated from the shared versioned schema registry', async () => {
+  const details = await read('src/components/create-listing/ListingDetailsStep.jsx');
+  const contract = await read('src/services/listingSubmissionContracts.js');
+
+  assert.match(details, /resolveVisibleFields/);
+  assert.match(details, /isFieldRequired/);
+  assert.match(details, /toStoragePayload/);
+  assert.match(details, /field\.input === 'multiselect'/);
+  assert.match(details, /field\.input === 'boolean'/);
+  assert.match(contract, /normalizeSchemaDetail/);
+
+  // These camelCase V1 form keys were the old duplicate schema authority.
+  assert.doesNotMatch(details, /propertyType|fuelType|machineryType|usageHours|needs_repair/);
+  assert.doesNotMatch(contract, /PROPERTY_TYPES|FUEL_TYPES|TRANSMISSIONS|MACHINERY_TYPES|MACHINERY_CONDITIONS/);
 });
 
 test('validated listings publish immediately without listing moderation', async () => {
@@ -78,13 +105,6 @@ test('owner journey supports edit pause resume relist unavailable and permanent 
   assert.match(page, /action: "submit"/);
   assert.match(page, /action: 'unavailable'/);
   assert.match(page, /deleteOwnerListing/);
-  // The RPC call lives in the repository layer, not the service, which is this
-  // codebase's architecture: repositories own the supabase calls and services
-  // orchestrate them. Asserting the raw RPC name in the service was testing the
-  // wrong layer and broke when the call was correctly moved. Assert the real
-  // wiring across both layers instead, which is strictly stronger than the
-  // single string it replaces: the service must route through the wrapper, and
-  // the wrapper must reach the guarded owner_transition_listing RPC.
   const repository = await read('src/repositories/listingCreationRepository.js');
   assert.match(creation, /transitionOwnerListing/);
   assert.match(repository, /supabase\.rpc\('owner_transition_listing'/);
@@ -115,12 +135,17 @@ test('successful Peeks are automatically published after processing validation',
 
 test('listing journey has executable database and hosted certification assets', async () => {
   const pgTap = await read('supabase/tests/v1_listing_creation_and_media.sql');
+  const v2PgTap = await read('supabase/tests/v1_listing_schema_v2_submission.sql');
   const runner = await read('scripts/certify-listing-publication-journey.mjs');
   const rollback = await read('supabase/rollback/20260807030000_remove_listing_content_review_from_mvp.rollback.sql');
+  const v2Rollback = await read('supabase/rollback/20260808081300_listing_schema_v2_submission.rollback.sql');
   assert.match(pgTap, /publish immediately without human review/);
   assert.match(pgTap, /pause a live listing/);
   assert.match(pgTap, /relist an unavailable listing/);
   assert.match(pgTap, /permanently delete/);
+  assert.match(v2PgTap, /exact richer fuel value/);
+  assert.match(v2PgTap, /idempotent retry cannot mutate/);
   assert.match(runner, /listingPublicationJourneyContracts/);
   assert.match(rollback, /Restore the pre-MVP owner transition contract/);
+  assert.match(v2Rollback, /Disable the V2 write surface/);
 });
