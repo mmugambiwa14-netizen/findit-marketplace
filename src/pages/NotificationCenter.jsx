@@ -9,6 +9,7 @@ import {
   Clock3,
   Film,
   Loader2,
+  MessageSquareMore,
   ShieldCheck,
   UserRoundCog,
   XCircle,
@@ -26,6 +27,7 @@ import {
 } from '@/services/notificationsService';
 
 const PAGE_SIZE = 50;
+const NOTIFICATION_REFRESH_MS = 30_000;
 const DEFAULT_STYLE = { label: 'Account update', icon: Bell, className: 'text-primary' };
 const EVENT_STYLE = {
   listing_approved: { label: 'Listing published', icon: CheckCircle2, className: 'text-green-600 dark:text-green-400' },
@@ -38,6 +40,8 @@ const EVENT_STYLE = {
   tour_rejected: { label: 'Peek unavailable', icon: XCircle, className: 'text-destructive' },
   listing_status_changed: { label: 'Listing update', icon: Clock3, className: 'text-primary' },
   saved_listing_unavailable: { label: 'Saved listing update', icon: AlertCircle, className: 'text-amber-600 dark:text-amber-400' },
+  peek_request_created: { label: 'New Peek Request', icon: MessageSquareMore, className: 'text-primary' },
+  peek_request_answered: { label: 'Peek Request answered', icon: Film, className: 'text-green-600 dark:text-green-400' },
 };
 
 export default function NotificationCenter() {
@@ -53,12 +57,20 @@ export default function NotificationCenter() {
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(user?.id),
     staleTime: 15_000,
+    refetchInterval: NOTIFICATION_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
   const unreadQuery = useQuery({
     queryKey: ['notifications', 'unread-count', user?.id],
     queryFn: getUnreadNotificationCount,
     enabled: Boolean(user?.id),
     staleTime: 10_000,
+    refetchInterval: NOTIFICATION_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: 'always',
+    refetchOnReconnect: 'always',
   });
 
   const items = useMemo(() => {
@@ -116,7 +128,7 @@ export default function NotificationCenter() {
       ) : notificationsQuery.isError && items.length === 0 ? (
         <div className="mx-4 mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center" role="alert"><p className="font-medium">We could not load notifications</p><p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p><Button className="mt-4" variant="outline" onClick={() => notificationsQuery.refetch()}>Try again</Button></div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center px-4 py-20 text-center text-muted-foreground"><Bell className="mb-3 h-12 w-12 stroke-1" /><p className="font-medium">No notifications yet</p><p className="mt-1 max-w-sm text-sm">FindIt only sends essential listing, Peek, report and account updates.</p></div>
+        <div className="flex flex-col items-center justify-center px-4 py-20 text-center text-muted-foreground"><Bell className="mb-3 h-12 w-12 stroke-1" /><p className="font-medium">No notifications yet</p><p className="mt-1 max-w-sm text-sm">PeekaListing only sends essential listing, Peek, report and account updates.</p></div>
       ) : (
         <>
           <div className="divide-y divide-border">
