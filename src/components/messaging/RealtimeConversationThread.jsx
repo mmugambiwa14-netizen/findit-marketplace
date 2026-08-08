@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ConversationThread from '@/components/messaging/ConversationThread';
 import { supabase } from '@/lib/supabaseClient';
@@ -8,16 +8,18 @@ const METADATA_REFRESH_MS = 15_000;
 
 /**
  * Adds realtime message delivery to the established thread implementation.
- * Polling inside ConversationThread remains as a fallback for interrupted or
- * unsupported realtime connections. Metadata is refreshed separately so a
- * remote block, closure, or listing-state change cannot remain stale while
- * the thread stays open without new messages.
+ * ConversationThread keeps a faster polling fallback while Realtime is not
+ * subscribed and automatically slows that backup once the channel is healthy.
+ * Metadata is refreshed separately so a remote block, closure, or listing-state
+ * change cannot remain stale while the thread stays open without new messages.
  */
 export default function RealtimeConversationThread(props) {
   const { conversationId, currentUser } = props;
   const queryClient = useQueryClient();
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
 
   useEffect(() => {
+    setRealtimeConnected(false);
     if (!UUID_PATTERN.test(String(conversationId || '')) || !currentUser?.id) return undefined;
 
     let cancelled = false;
@@ -51,7 +53,10 @@ export default function RealtimeConversationThread(props) {
         refreshAll,
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') refreshAll();
+        if (cancelled) return;
+        const subscribed = status === 'SUBSCRIBED';
+        setRealtimeConnected(subscribed);
+        if (subscribed) refreshAll();
       });
 
     const metadataInterval = window.setInterval(() => {
@@ -72,5 +77,5 @@ export default function RealtimeConversationThread(props) {
     };
   }, [conversationId, currentUser?.id, queryClient]);
 
-  return <ConversationThread {...props} />;
+  return <ConversationThread {...props} realtimeConnected={realtimeConnected} />;
 }
