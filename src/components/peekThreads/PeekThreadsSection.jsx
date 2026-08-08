@@ -34,7 +34,7 @@ const FILTERS = [
 ];
 const REQUEST_REFRESH_MS = 30_000;
 
-/** @param {{ requestId: string, supported: boolean }} input */
+/** @param {{ requestId: string, supported: boolean, fromComposer?: boolean }} input */
 function updatePeekRequestSupport({ requestId, supported }) {
   return supported ? withdrawPeekRequestSupport(requestId) : supportPeekRequest(requestId);
 }
