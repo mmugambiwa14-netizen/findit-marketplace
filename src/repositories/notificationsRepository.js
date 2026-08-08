@@ -1,16 +1,15 @@
 import { supabase } from '@/lib/supabaseClient';
 
-function rpc(name, parameters, message, signal) {
+async function rpc(name, parameters, message, signal) {
   let query = supabase.rpc(name, parameters);
   if (signal) query = query.abortSignal(signal);
-  return query.then(({ data, error }) => {
-    if (error) {
-      const failure = new Error(message);
-      failure.cause = error;
-      throw failure;
-    }
-    return data;
-  });
+  const { data, error } = await query;
+  if (error) {
+    const failure = new Error(message);
+    failure.cause = error;
+    throw failure;
+  }
+  return data;
 }
 
 export function findNotifications(request, signal) {
