@@ -30,11 +30,11 @@ export async function getNotifications(input = {}, signal) {
 
 export async function getNotificationsPage(input = {}, signal) {
   const request = normalizeNotificationPageRequest(input);
-  const rows = await findNotificationsPage(request, signal);
+  const response = await findNotificationsPage(request, signal);
   throwIfAborted(signal);
-  const values = Array.isArray(rows) ? rows : [];
-  const hasMore = values.length > request.limit;
-  const pageRows = values.slice(0, request.limit);
+  const rows = Array.isArray(response) ? response : [];
+  const hasMore = rows.length > request.limit;
+  const pageRows = rows.slice(0, request.limit);
   const items = pageRows.map(normalizeNotificationRow);
   const last = items.at(-1);
   return {
