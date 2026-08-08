@@ -15,6 +15,7 @@ import {
 import BusinessPublishingGate, { usePublishingAccess } from '@/components/business/BusinessPublishingGate';
 import PublishingOperationsPanel from '@/components/business/PublishingOperationsPanel';
 import { getCategoryTaxonomy, groupPostableNodes, marketplaceRoots } from '@/services/taxonomyService';
+import { seedListingSchemaValues } from '@/services/listingSchemaBinding';
 import StepNav from './StepNav';
 
 const FAMILY_PRESENTATION = Object.freeze({
@@ -68,6 +69,9 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
     () => [...grouped.values()].reduce((count, options) => count + options.length, 0),
     [grouped],
   );
+  const optionsByValue = useMemo(() => new Map(
+    [...grouped.values()].flat().map((option) => [option.value, option]),
+  ), [grouped]);
 
   const choose = (category) => {
     setError('');
@@ -83,6 +87,27 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
     update('category', '');
     update('type', category.key);
     update('detail', {});
+    update('taxonomy_binding', {});
+    update('taxonomy_context', {});
+  };
+
+  const chooseTaxonomyCategory = (value) => {
+    const option = optionsByValue.get(value);
+    if (!option || !selected) {
+      setError('That category is no longer available. Refresh the taxonomy and try again.');
+      return;
+    }
+    try {
+      const seed = seedListingSchemaValues(selected.key, option.schemaBinding);
+      update('category', option.value);
+      update('taxonomy_binding', option.schemaBinding);
+      update('taxonomy_context', seed.taxonomyDimensions);
+      update('detail', seed.values);
+      if (seed.offerType) update('listing_type', seed.offerType);
+      setError('');
+    } catch {
+      setError('That category is not compatible with the current listing schema. Refresh and try again.');
+    }
   };
 
   const continueToDetails = () => {
@@ -177,7 +202,7 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
         <div className="locked-control rounded-2xl p-4">
           <label htmlFor="listing-subcategory" className="mb-2 block text-sm font-bold">Choose a {selected.label.toLowerCase()} type</label>
           {postableCount > 0 ? (
-            <Select value={formData.category || ''} onValueChange={(value) => update('category', value)}>
+            <Select value={formData.category || ''} onValueChange={chooseTaxonomyCategory}>
               <SelectTrigger id="listing-subcategory" className="h-12 rounded-xl border-border bg-background/65">
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
