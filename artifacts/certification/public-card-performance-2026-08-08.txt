@@ -1,0 +1,3 @@
+Public card performance certification rerun trigger.
+Canonical main head: daceebf80dde5a70ebc394551b78522ba8ff2ea6
+Scope: cover-only listing/service media signing, page-level batching, parallel Peek summary enrichment, full-gallery detail preservation, and shared Peek-aware inventory contracts.
