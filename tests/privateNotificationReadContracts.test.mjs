@@ -36,7 +36,8 @@ test('notification wrappers preserve result types and volatility', () => {
 });
 
 test('active notification repository preserves the exact three RPC calls and safe user messages', () => {
-  assert.match(repository, /rpc\('notification_unread_count', \{\}, 'Unable to load notification count'\)/);
+  assert.match(repository, /rpc\('notification_unread_count', \{\}, 'Unable to load notification count', signal\)/);
+  assert.match(repository, /if \(signal\) query = query\.abortSignal\(signal\)/);
   assert.match(repository, /rpc\('mark_notification_read', \{/);
   assert.match(repository, /p_notification_id: notificationId/);
   assert.match(repository, /rpc\('mark_all_notifications_read', \{\}, 'Unable to mark notifications as read'\)/);
