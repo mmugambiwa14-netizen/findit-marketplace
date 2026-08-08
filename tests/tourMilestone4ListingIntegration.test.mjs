@@ -5,7 +5,7 @@ import { access, readFile } from 'node:fs/promises';
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
   migration,
-  scaleMigration,
+  searchCardMigration,
   rollback,
   tourRepository,
   tourService,
@@ -36,7 +36,7 @@ const [
   smoke,
 ] = await Promise.all([
   read('supabase/migrations/0037_v1_listing_tour_integration.sql'),
-  read('supabase/migrations/0041_v1_public_search_and_notification_scale.sql'),
+  read('supabase/migrations/20260808043000_public_listing_search_card_projection.sql'),
   read('supabase/rollback/0037_v1_listing_tour_integration.rollback.sql'),
   read('src/repositories/listingToursRepository.js'),
   read('src/services/listingToursService.js'),
@@ -105,9 +105,9 @@ test('cards and details use one canonical identity with explicit Peek deep links
   for (const functionBody of [latestFunction, suggestionsFunction]) {
     assert.match(functionBody, /\.in\('status', \['available', 'under_offer'\]\)/);
   }
-  assert.match(searchFunction, /public_listing_search_page/);
-  const publicSearchSql = scaleMigration.match(/create or replace function public\.public_listing_search_page[\s\S]*?\n\$\$;/)?.[0] || '';
-  assert.match(publicSearchSql, /l\.status in \('available', 'under_offer'\)/);
+  assert.match(searchFunction, /public_listing_search_card_page_v1/);
+  assert.match(searchCardMigration, /create or replace function public\.public_listing_search_card_page_v1/);
+  assert.match(searchCardMigration, /listing\.status in \('available', 'under_offer'\)/);
 });
 
 test('saved listings retain canonical unavailable rows and private images without a saved-Peek model', () => {
