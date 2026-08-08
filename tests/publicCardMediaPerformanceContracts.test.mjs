@@ -47,7 +47,8 @@ test('public listing card media and Peek summaries load in parallel', () => {
   assert.match(listingEnrichment, /hydrateListingCardImages\(source\)/);
   assert.match(listingEnrichment, /attachPublicTourSummaries\(baseListings, 'listing'\)/);
   assert.match(publicListings, /return enrichPublicListingCards\(rows\)/);
-  assert.match(publicListings, /items: await enrichPublicListingCards\(cleanRows\)/);
+  assert.match(publicListings, /const items = await enrichPublicListingCards\(cleanRows\)/);
+  assert.match(publicListings, /const items = await enrichPublicListingCards\(cleanRows\);\s+throwIfAborted\(signal\);\s+return \{\s+items,/);
 });
 
 test('all public listing inventory card surfaces use the shared cover-only enrichment boundary', () => {
