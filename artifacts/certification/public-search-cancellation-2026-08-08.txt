@@ -1,0 +1,3 @@
+Public Search cancellation certification rerun trigger.
+Canonical main head: 86c08eec36e6c5fab9bef9974db4e656052d3209
+Scope: abortable keyset result RPCs, abortable listing/location suggestions, TanStack signal propagation, post-enrichment cancellation, source contracts, and unchanged database behavior.
