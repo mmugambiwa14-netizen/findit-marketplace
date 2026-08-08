@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,14 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Camera, CheckCircle2, Film, Loader2, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Film, Loader2, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { V1_SERVICE_CATEGORIES, PRICING_TYPES, getServiceCategory } from "@/lib/serviceConstants";
-import { ZIMBABWE_LOCATIONS } from "@/lib/constants";
-import { getSupportedListingCurrencies } from "@/lib/marketConfig";
+import { PRICING_TYPES } from "@/lib/serviceConstants";
+import { getSupportedListingCurrencies, LAUNCH_COUNTRY_CODE } from "@/lib/marketConfig";
 import { customerErrorMessage } from "@/lib/customerErrors";
 import { usePersistentFormDraft } from "@/hooks/usePersistentFormDraft";
 import { createService } from "@/services/servicesService";
+import { getCategoryTaxonomy } from "@/services/taxonomyService";
+import { getActiveLocations } from "@/services/locationsService";
 import { removeStagedMarketplaceImage, uploadMarketplaceImage } from "@/services/marketplaceImagesService";
 import TourUploader from "@/components/tours/TourUploader";
 import TourUploadProgress from "@/components/tours/TourUploadProgress";
@@ -31,12 +32,34 @@ function freshServiceForm(user) {
     price: "",
     currency: "USD",
     pricing_type: "starting_from",
+    country_code: LAUNCH_COUNTRY_CODE,
     location_name: "",
     can_travel: false,
     contact_phone: user?.phone || "",
     contact_whatsapp: "",
     contact_email: user?.email || "",
   };
+}
+
+function buildServiceSpecializationGroups(taxonomy, selectedDomain) {
+  if (!selectedDomain) return [];
+  const groups = new Map();
+  for (const node of taxonomy) {
+    if (
+      node.marketplaceKind !== "service"
+      || node.nodeType !== "category"
+      || !node.isPostable
+      || node.supersededBy
+      || node.depth <= selectedDomain.depth
+      || node.pathSlugs[selectedDomain.depth] !== selectedDomain.canonicalSlug
+    ) continue;
+    const path = node.pathLabels.slice(selectedDomain.depth + 1, -1);
+    const label = path.length ? path.join(" / ") : "Services";
+    const current = groups.get(label) || [];
+    current.push(node);
+    groups.set(label, current);
+  }
+  return [...groups.entries()].map(([label, items]) => ({ label, items }));
 }
 
 export default function CreateService() {
@@ -56,12 +79,53 @@ export default function CreateService() {
   const [mediaError, setMediaError] = useState('');
   const [form, setForm] = useState(() => freshServiceForm(user));
   const [sameAsPhone, setSameAsPhone] = useState(false);
+  const marketCountry = String(form.country_code || LAUNCH_COUNTRY_CODE).toUpperCase();
+
+  const taxonomyQuery = useQuery({
+    queryKey: ["public-category-taxonomy", "service", marketCountry],
+    queryFn: () => getCategoryTaxonomy("service", marketCountry),
+    staleTime: 5 * 60 * 1000,
+  });
+  const locationsQuery = useQuery({
+    queryKey: ["locations", "city", marketCountry],
+    queryFn: () => getActiveLocations("city", null, marketCountry),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const taxonomy = taxonomyQuery.data || [];
+  const serviceRoot = useMemo(
+    () => taxonomy.find((node) => node.marketplaceKind === "service" && node.depth === 0 && node.nodeType === "group") || null,
+    [taxonomy],
+  );
+  const serviceDomains = useMemo(
+    () => serviceRoot
+      ? taxonomy
+        .filter((node) => node.parentId === serviceRoot.id && node.nodeType === "group" && !node.supersededBy)
+        .sort((left, right) => left.sortOrder - right.sortOrder || left.label.localeCompare(right.label))
+      : [],
+    [serviceRoot, taxonomy],
+  );
+  const selectedCategory = useMemo(
+    () => serviceDomains.find((category) => category.stableSlug === form.category) || null,
+    [form.category, serviceDomains],
+  );
+  const specializationGroups = useMemo(
+    () => buildServiceSpecializationGroups(taxonomy, selectedCategory),
+    [selectedCategory, taxonomy],
+  );
+  const validSpecializationSlugs = useMemo(
+    () => new Set(specializationGroups.flatMap((group) => group.items.map((item) => item.stableSlug))),
+    [specializationGroups],
+  );
+  const cities = locationsQuery.data || [];
+  const currencies = getSupportedListingCurrencies(marketCountry);
 
   const restoreDraft = useCallback((payload) => {
     if (payload?.form) {
       setForm({
         ...freshServiceForm(user),
         ...payload.form,
+        country_code: String(payload.form.country_code || LAUNCH_COUNTRY_CODE).toUpperCase(),
         subcategories: Array.isArray(payload.form.subcategories) ? payload.form.subcategories : [],
       });
     }
@@ -91,14 +155,30 @@ export default function CreateService() {
     }));
   }, [draftReady, user]);
 
+  useEffect(() => {
+    if (!taxonomyQuery.data || !form.category) return;
+    if (!serviceDomains.some((domain) => domain.stableSlug === form.category)) {
+      setForm((current) => ({ ...current, category: "", subcategory: "", subcategories: [] }));
+    }
+  }, [form.category, serviceDomains, taxonomyQuery.data]);
+
+  useEffect(() => {
+    if (!selectedCategory || !form.subcategories.length) return;
+    const retained = form.subcategories.filter((slug) => validSpecializationSlugs.has(slug));
+    if (retained.length !== form.subcategories.length) {
+      setForm((current) => ({
+        ...current,
+        subcategories: retained,
+        subcategory: retained[0] || "",
+      }));
+    }
+  }, [form.subcategories, selectedCategory, validSpecializationSlugs]);
+
   useEffect(() => () => {
     if (tourDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
   }, [tourDraft?.previewUrl]);
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-  const selectedCategory = getServiceCategory(form.category);
-  const cities = Object.keys(ZIMBABWE_LOCATIONS);
-  const currencies = getSupportedListingCurrencies("ZW");
   const priceDisabled = ["quote", "quote_required", "contact_for_price"].includes(form.pricing_type);
   const isDirty = Boolean(form.title || form.description || form.category || media.length || tourDraft);
 
@@ -128,6 +208,7 @@ export default function CreateService() {
   };
 
   const toggleSubcategory = (value) => {
+    if (!validSpecializationSlugs.has(value)) return;
     setForm((current) => {
       const exists = current.subcategories.includes(value);
       const next = exists
@@ -140,7 +221,7 @@ export default function CreateService() {
   const createMutation = useMutation({
     mutationFn: async () => {
       const service = await createService(form, user, media);
-      const shouldUploadTour = form.category !== "legal" && Boolean(tourDraft?.file);
+      const shouldUploadTour = Boolean(tourDraft?.file);
       if (!shouldUploadTour) return { service, tourError: null, tourQueued: false };
       try {
         await uploadListingTour({
@@ -215,8 +296,9 @@ export default function CreateService() {
     form.title.trim().length >= 3
     && form.title.trim().length <= 160
     && form.description.trim().length <= 5000
-    && form.category
+    && selectedCategory
     && form.subcategories.length
+    && form.subcategories.every((slug) => validSpecializationSlugs.has(slug))
     && (form.contact_phone.trim() || form.contact_whatsapp.trim()),
   );
 
@@ -321,33 +403,43 @@ export default function CreateService() {
         <div className="space-y-4">
           <div>
             <Label htmlFor="service-category">Service category *</Label>
-            <Select value={form.category} onValueChange={(value) => {
-              if (value === "legal" && tourDraft) {
-                if (tourDraft.previewUrl?.startsWith("blob:")) URL.revokeObjectURL(tourDraft.previewUrl);
-                setTourDraft(null);
-                setTourProgress(null);
-              }
-              setForm((current) => ({ ...current, category: value, subcategory: "", subcategories: [] }));
-            }}>
-              <SelectTrigger id="service-category" className="mt-1.5 h-11 rounded-xl"><SelectValue placeholder="Select category" /></SelectTrigger>
-              <SelectContent>
-                {V1_SERVICE_CATEGORIES.map((category) => <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {taxonomyQuery.isError ? (
+              <div className="mt-1.5 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+                <p className="text-sm text-destructive">Service categories are temporarily unavailable. No stale fallback list is used.</p>
+                <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => taxonomyQuery.refetch()}><RefreshCw className="mr-2 h-4 w-4" />Try again</Button>
+              </div>
+            ) : (
+              <Select value={form.category} disabled={taxonomyQuery.isLoading} onValueChange={(value) => {
+                setForm((current) => ({ ...current, category: value, subcategory: "", subcategories: [] }));
+              }}>
+                <SelectTrigger id="service-category" className="mt-1.5 h-11 rounded-xl"><SelectValue placeholder={taxonomyQuery.isLoading ? "Loading categories…" : "Select category"} /></SelectTrigger>
+                <SelectContent>
+                  {serviceDomains.map((category) => <SelectItem key={category.id} value={category.stableSlug}>{category.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
-          {selectedCategory && selectedCategory.value !== "legal" && (
+          {selectedCategory && (
             <fieldset>
               <legend className="text-sm font-medium">Service types * <span className="text-muted-foreground font-normal">(select all you offer)</span></legend>
-              <div className="mt-1.5 flex flex-wrap gap-2">
-                {selectedCategory.subcategories.map((subcategory) => {
-                  const active = form.subcategories.includes(subcategory.value);
-                  return (
-                    <button key={subcategory.value} type="button" aria-pressed={active} onClick={() => toggleSubcategory(subcategory.value)} className={`px-3 py-2 rounded-xl text-sm border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-muted"}`}>
-                      {subcategory.label}
-                    </button>
-                  );
-                })}
+              <div className="mt-2 space-y-3">
+                {specializationGroups.map((group) => (
+                  <div key={group.label}>
+                    {group.label !== "Services" && <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{group.label}</p>}
+                    <div className="flex flex-wrap gap-2">
+                      {group.items.map((subcategory) => {
+                        const active = form.subcategories.includes(subcategory.stableSlug);
+                        return (
+                          <button key={subcategory.id} type="button" aria-pressed={active} onClick={() => toggleSubcategory(subcategory.stableSlug)} className={`px-3 py-2 rounded-xl text-sm border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:bg-muted"}`}>
+                            {subcategory.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+                {specializationGroups.length === 0 && <p className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground">No active service specializations are currently available in {marketCountry}.</p>}
               </div>
             </fieldset>
           )}
@@ -374,12 +466,10 @@ export default function CreateService() {
             {mediaError && <p role="alert" className="text-sm text-destructive">{mediaError}</p>}
           </div>
 
-          {form.category !== "legal" && (
-            <>
-              <TourUploader parentType="service" category="service" value={tourDraft} onChange={setTourDraft} disabled={uploading || createMutation.isPending} onBusyChange={setTourBusy} />
-              {createMutation.isPending && tourDraft && tourProgress && <TourUploadProgress progress={tourProgress} />}
-            </>
-          )}
+          <>
+            <TourUploader parentType="service" category="service" value={tourDraft} onChange={setTourDraft} disabled={uploading || createMutation.isPending} onBusyChange={setTourBusy} />
+            {createMutation.isPending && tourDraft && tourProgress && <TourUploadProgress progress={tourProgress} />}
+          </>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -403,10 +493,17 @@ export default function CreateService() {
 
           <div>
             <Label htmlFor="service-location">City / Area</Label>
-            <select id="service-location" value={form.location_name} onChange={(event) => update("location_name", event.target.value)} className="mt-1.5 w-full h-11 rounded-xl border border-input bg-background px-3 text-sm">
-              <option value="">Select city</option>
-              {cities.map((city) => <option key={city} value={city}>{city}</option>)}
-            </select>
+            {locationsQuery.isError ? (
+              <div className="mt-1.5 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+                <p className="text-sm text-destructive">Locations are temporarily unavailable.</p>
+                <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => locationsQuery.refetch()}><RefreshCw className="mr-2 h-4 w-4" />Try again</Button>
+              </div>
+            ) : (
+              <select id="service-location" value={form.location_name} disabled={locationsQuery.isLoading} onChange={(event) => update("location_name", event.target.value)} className="mt-1.5 w-full h-11 rounded-xl border border-input bg-background px-3 text-sm">
+                <option value="">{locationsQuery.isLoading ? "Loading cities…" : "Select city"}</option>
+                {cities.map((city) => <option key={city.id} value={city.name}>{city.name}</option>)}
+              </select>
+            )}
             <label className="mt-2 flex items-center justify-between rounded-xl border border-border bg-card px-3 py-2.5 cursor-pointer">
               <span className="text-sm">Can travel to other areas<span className="block text-xs text-muted-foreground">I can work beyond this city</span></span>
               <Switch id="service-can-travel" aria-label="Can travel to other areas" checked={form.can_travel} onCheckedChange={(value) => update("can_travel", value)} />
@@ -430,7 +527,7 @@ export default function CreateService() {
             <Input id="service-email" name="email" type="email" autoComplete="email" value={form.contact_email} onChange={(event) => update("contact_email", event.target.value)} className="mt-1.5 h-11 rounded-xl" />
           </div>
 
-          <Button className="w-full h-12 rounded-xl" disabled={!canSubmit || createMutation.isPending || uploading || tourBusy} onClick={() => createMutation.mutate()}>
+          <Button className="w-full h-12 rounded-xl" disabled={!canSubmit || createMutation.isPending || uploading || tourBusy || taxonomyQuery.isLoading || taxonomyQuery.isError} onClick={() => createMutation.mutate()}>
             {createMutation.isPending ? (tourDraft ? "Publishing and uploading..." : "Publishing...") : "Publish Service"}
           </Button>
           {!canSubmit && <p className="text-xs text-muted-foreground text-center">Category, service type, title and a phone or WhatsApp number are required.</p>}

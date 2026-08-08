@@ -90,7 +90,7 @@ insert into public.listings (
   '[{"path":"one"},{"path":"two"}]'::jsonb,
   '20000000-0000-4000-8000-000000000101',
   'ZW',
-  'pickup-trucks',
+  'utility',
   'sale',
   'available',
   true,

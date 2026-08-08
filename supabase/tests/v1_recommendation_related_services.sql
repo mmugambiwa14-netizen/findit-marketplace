@@ -100,7 +100,7 @@ values (
   '[{"path":"one"},{"path":"two"}]'::jsonb,
   '73000000-0000-4000-8000-000000000101',
   'ZW',
-  'sedans',
+  'cars_sale',
   'sale',
   'available',
   true

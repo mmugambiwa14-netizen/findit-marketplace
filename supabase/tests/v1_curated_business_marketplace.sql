@@ -63,7 +63,7 @@ select extensions.lives_ok(
       '41000000-0000-4000-8000-000000000001', 'Approved Publisher',
       'Approved curated vehicle',
       'A complete certification listing proving that an approved Cars publisher can cross the authoritative database boundary.',
-      15000, 'USD', 15000, 'USD', '[]'::jsonb, 'cars', 'sale', 'draft'
+      15000, 'USD', 15000, 'USD', '[]'::jsonb, 'cars_sale', 'sale', 'draft'
     )$$,
   'approved matching-category listing insert succeeds'
 );
@@ -77,7 +77,7 @@ select extensions.throws_ok(
       '41000000-0000-4000-8000-000000000001', 'Approved Publisher',
       'Blocked curated property',
       'A complete certification listing that must fail because Property remains pending for this publisher.',
-      90000, 'USD', 90000, 'USD', '[]'::jsonb, 'houses', 'sale', 'draft'
+      90000, 'USD', 90000, 'USD', '[]'::jsonb, 'house_sale', 'sale', 'draft'
     )$$,
   '42501',
   'Business category is not approved for publishing',
@@ -93,7 +93,7 @@ select extensions.throws_ok(
       '41000000-0000-4000-8000-000000000002', 'Spoofed Publisher',
       'Spoofed curated vehicle',
       'A complete certification listing that must fail because the authenticated actor is impersonating another seller.',
-      14000, 'USD', 14000, 'USD', '[]'::jsonb, 'cars', 'sale', 'draft'
+      14000, 'USD', 14000, 'USD', '[]'::jsonb, 'cars_sale', 'sale', 'draft'
     )$$,
   '42501',
   'Listing publisher identity mismatch',
@@ -150,7 +150,7 @@ select extensions.throws_ok(
       '41000000-0000-4000-8000-000000000001', 'Approved Publisher',
       'Suspended curated vehicle',
       'A complete certification listing that must fail immediately after the Cars category is suspended.',
-      13000, 'USD', 13000, 'USD', '[]'::jsonb, 'cars', 'sale', 'draft'
+      13000, 'USD', 13000, 'USD', '[]'::jsonb, 'cars_sale', 'sale', 'draft'
     )$$,
   '42501',
   'Business category is not approved for publishing',

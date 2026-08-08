@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Briefcase, Car, ImageOff, MapPin } from 'lucide-react';
 import ContactButtons from '@/components/listings/ContactButtons';
 import MarketplaceCard from '@/components/marketplace/MarketplaceCard';
-import { getServiceCategory, getSubcategoryLabel } from '@/lib/serviceConstants';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { cn } from '@/lib/utils';
 
@@ -17,12 +16,11 @@ function serviceTour(service) {
 }
 
 export default function ServiceCard({ service, onOpen = null, layout = 'browse', className = null }) {
-  const category = getServiceCategory(service.category);
   const { format } = useCurrency();
   const priceLabel = service.pricing_type === 'quote' || !service.price
     ? 'Contact for quote'
     : `${service.pricing_type === 'starting_from' ? 'From ' : ''}${format(service.price)}${service.pricing_type === 'hourly' ? '/hr' : ''}`;
-  const subcategory = getSubcategoryLabel(service.category, service.subcategory);
+  const subcategory = service.subcategory_label || service.subcategory_labels?.[0] || null;
   const attributes = [
     subcategory && { icon: Briefcase, label: subcategory },
     service.can_travel && { icon: Car, label: 'Can travel' },
@@ -73,7 +71,7 @@ export default function ServiceCard({ service, onOpen = null, layout = 'browse',
       priceLabel={priceLabel}
       locationLabel={service.location_name}
       attributes={attributes}
-      meta={category?.label || 'Service'}
+      meta={service.category_label || 'Service'}
       tour={serviceTour(service)}
       tourLabel="Peek"
       sellerName={service.provider_name}

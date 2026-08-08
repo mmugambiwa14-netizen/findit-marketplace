@@ -71,7 +71,8 @@ test('service cards batch one cover per row instead of signing one gallery per s
 });
 
 test('public service browse and business service inventory use the batched service-card boundary', () => {
-  assert.match(services, /items: await enrichPublicServiceCards\(page\.items\)/);
+  assert.match(services, /const enriched = await enrichPublicServiceCards\(page\.items\)/);
+  assert.match(services, /items: await attachServiceTaxonomyPresentation\(enriched\)/);
   assert.match(services, /enrichPublicServiceCards\(rows, \{ includeTours: false \}\)/);
   assert.match(businessProfiles, /items: await enrichPublicServiceCards\(page\.items\)/);
 });

@@ -208,6 +208,7 @@ export function validateCategoryValues(category, rawValues = {}) {
   const visibleById = new Map(visible.map((field) => [field.id, field]));
   const knownIds = new Set(getSchema(category).fields.map((field) => field.id));
   const errors = [];
+  /** @type {Record<string, unknown>} */
   const values = {};
 
   for (const key of Object.keys(rawValues)) {

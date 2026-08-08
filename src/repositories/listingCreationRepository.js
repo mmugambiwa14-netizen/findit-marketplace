@@ -24,10 +24,11 @@ async function functionFailure(message, error) {
 }
 
 export async function insertListingSubmission(request) {
-  const { data, error } = await supabase.rpc('create_v1_listing_submission', {
+  const { data, error } = await supabase.rpc('create_v2_listing_submission', {
     p_submission_key: request.submissionKey,
     p_listing: request.listing,
     p_detail: request.detail,
+    p_attributes: request.attributes,
     p_media: request.media,
   });
   if (error) throw failure('Unable to submit the listing', error);

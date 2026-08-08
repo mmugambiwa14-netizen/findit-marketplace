@@ -93,7 +93,7 @@ insert into public.listings (
   '[{"path":"one"},{"path":"two"}]'::jsonb,
   '30000000-0000-4000-8000-000000000101',
   'ZW',
-  'pickup-trucks',
+  'utility',
   'sale',
   'available',
   true
@@ -174,7 +174,7 @@ insert into public.listing_recommendation_features (
   '30000000-0000-4000-8000-000000000201',
   '30000000-0000-4000-8000-000000000001',
   'car',
-  'pickup-trucks',
+  'utility',
   'ZW',
   '30000000-0000-4000-8000-000000000101',
   22000,

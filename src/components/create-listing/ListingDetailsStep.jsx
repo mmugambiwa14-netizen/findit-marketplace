@@ -1,69 +1,305 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import StepNav from './StepNav';
 import { getSupportedListingCurrencies } from '@/lib/marketConfig';
+import {
+  getSchema,
+  isFieldRequired,
+  resolveVisibleFields,
+} from '@/domain/listingSchema/registry';
+import { toStoragePayload } from '@/services/listingAttributes';
 
 const fieldClass = 'h-11 rounded-xl';
+const DEFAULT_OFFER_OPTIONS = Object.freeze([
+  { value: 'sale', label: 'For sale' },
+  { value: 'rent', label: 'For rent' },
+]);
+const SUPPORTED_LISTING_KINDS = new Set(['property', 'car', 'machinery']);
+const SECTION_LABELS = Object.freeze({
+  overview: 'Overview',
+  specifications: 'Specifications',
+  features: 'Features',
+  condition_history: 'Condition & history',
+  location: 'Location',
+  service_area: 'Service area',
+  pricing: 'Pricing details',
+  availability: 'Availability',
+  documents: 'Documents & status',
+});
+
+function additionalSelectOptions(field) {
+  const existing = new Set((field.options ?? []).map((option) => option.value));
+  const options = [];
+  if (field.allowUnknown && !existing.has('unknown')) options.push({ value: 'unknown', label: 'Unknown' });
+  if (field.allowNotApplicable && !existing.has('not_applicable')) options.push({ value: 'not_applicable', label: 'Not applicable' });
+  return options;
+}
 
 export default function ListingDetailsStep({ formData, update, onBack, onContinue }) {
   const [error, setError] = useState('');
   const kind = formData.listing_category;
   const detail = formData.detail ?? {};
   const currencies = getSupportedListingCurrencies(formData.country_code);
-  const setDetail = (key, value) => update('detail', { ...detail, [key]: value });
+  const schema = SUPPORTED_LISTING_KINDS.has(kind) ? getSchema(kind) : null;
+  const offerField = schema?.fields.find((field) => field.id === 'listing_type') ?? null;
+  const offerOptions = offerField?.options?.length ? offerField.options : DEFAULT_OFFER_OPTIONS;
+  const effectiveDetail = kind === 'property'
+    ? { ...detail, listing_type: formData.listing_type || detail.listing_type || '' }
+    : detail;
+
+  const sections = useMemo(() => {
+    if (!schema) return [];
+    const grouped = new Map();
+    for (const field of resolveVisibleFields(kind, effectiveDetail)) {
+      // Property offer type is represented once by the shared offer control.
+      if (field.id === 'listing_type') continue;
+      if (!grouped.has(field.section)) grouped.set(field.section, []);
+      grouped.get(field.section).push(field);
+    }
+    return [...grouped.entries()].map(([section, fields]) => ({ section, fields }));
+  }, [effectiveDetail, kind, schema]);
+
+  const setDetail = (key, value) => {
+    setError('');
+    update('detail', { ...detail, [key]: value });
+  };
+
+  const chooseOffer = (value) => {
+    setError('');
+    update('listing_type', value);
+    if (kind === 'property') update('detail', { ...detail, listing_type: value });
+  };
+
+  const toggleMultiselect = (fieldId, optionValue) => {
+    const current = Array.isArray(detail[fieldId]) ? detail[fieldId] : [];
+    const next = current.includes(optionValue)
+      ? current.filter((entry) => entry !== optionValue)
+      : [...current, optionValue];
+    setDetail(fieldId, next);
+  };
 
   const continueIfValid = () => {
-    if (!['sale', 'rent'].includes(formData.listing_type)) return setError('Choose whether this is for sale or rent.');
+    if (!schema) return setError('Choose a supported listing category first.');
+    if (!offerOptions.some((option) => option.value === formData.listing_type)) {
+      return setError('Choose an offer type.');
+    }
     if ((formData.title || '').trim().length < 10) return setError('Use a clear title with at least 10 characters.');
     if ((formData.description || '').trim().length < 50) return setError('Add at least 50 characters of useful description.');
     if (!(Number(formData.price) > 0)) return setError('Enter a valid price above zero.');
-    if (kind === 'property' && !detail.propertyType) return setError('Choose a property type.');
-    if (kind === 'car' && (!detail.brand || !detail.model || !detail.fuelType || !detail.transmission)) return setError('Add the vehicle make, model, fuel type, and transmission.');
-    if (kind === 'machinery' && (!detail.machineryType || !detail.brand || !detail.model || !detail.condition)) return setError('Add the machinery type, make, model, and condition.');
+
+    const preparedDetail = kind === 'property'
+      ? { ...detail, listing_type: formData.listing_type }
+      : detail;
+    const storage = toStoragePayload(kind, preparedDetail);
+    if ('errors' in storage) return setError(storage.errors[0]?.message || 'Review the listing details and try again.');
+
+    // Persist only values that remain visible and schema-valid. This clears
+    // answers that became irrelevant after a subtype or conditional choice
+    // changed, while preserving the subtype dimension in attributes.
+    update('detail', { ...storage.attributes.values, ...storage.columns });
     setError('');
     onContinue();
   };
 
-  return <div className="space-y-5">
-    <div><h2 className="text-2xl font-bold">Describe your advert</h2><p className="mt-1 text-sm text-muted-foreground">Give buyers the facts they need to evaluate it.</p></div>
-    <fieldset className="space-y-2"><legend className="text-sm font-semibold">Offer type *</legend><div className="grid grid-cols-2 gap-2">{[['sale', 'For sale'], ['rent', 'For rent']].map(([value, label]) => <button type="button" key={value} onClick={() => update('listing_type', value)} className={`h-11 rounded-xl border-2 text-sm font-semibold ${formData.listing_type === value ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card'}`}>{label}</button>)}</div></fieldset>
-    <div><Label htmlFor="listing-title">Title *</Label><Input id="listing-title" maxLength={160} className={`${fieldClass} mt-1`} value={formData.title || ''} onChange={(event) => update('title', event.target.value)} placeholder="A clear, specific title" /><p className="mt-1 text-right text-xs text-muted-foreground">{(formData.title || '').length}/160</p></div>
-    <div><Label htmlFor="listing-description">Description *</Label><Textarea id="listing-description" maxLength={5000} className="mt-1 min-h-36 rounded-xl" value={formData.description || ''} onChange={(event) => update('description', event.target.value)} placeholder="Condition, history, important features, and anything a buyer should know" /><p className="mt-1 text-right text-xs text-muted-foreground">{(formData.description || '').length}/5000</p></div>
-    <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
-      <div><Label htmlFor="listing-price">Price *</Label><Input id="listing-price" type="number" min="0.01" step="0.01" inputMode="decimal" className={`${fieldClass} mt-1`} value={formData.price || ''} onChange={(event) => update('price', event.target.value)} placeholder="0.00" /></div>
-      <div><Label htmlFor="listing-currency">Currency *</Label><select id="listing-currency" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={formData.currency || 'USD'} onChange={(event) => update('currency', event.target.value)}>{currencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}</select></div>
+  const renderField = (field) => {
+    const id = `listing-detail-${field.id}`;
+    const required = isFieldRequired(field, effectiveDetail);
+    const value = detail[field.id];
+    const label = `${field.label}${required ? ' *' : ''}`;
+    const unit = field.unit ? <span className="ml-1 text-xs font-normal text-muted-foreground">({field.unit})</span> : null;
+
+    if (field.input === 'boolean') {
+      return (
+        <div key={field.id} className="flex min-h-14 items-center justify-between gap-4 rounded-xl border bg-card p-3">
+          <div>
+            <Label htmlFor={id}>{label}</Label>
+            {field.unit && <p className="mt-0.5 text-xs text-muted-foreground">Unit: {field.unit}</p>}
+          </div>
+          <Switch
+            id={id}
+            checked={Boolean(value)}
+            onCheckedChange={(checked) => setDetail(field.id, checked)}
+          />
+        </div>
+      );
+    }
+
+    if (field.input === 'multiselect') {
+      const selected = Array.isArray(value) ? value : [];
+      return (
+        <fieldset key={field.id} className="sm:col-span-2">
+          <legend className="text-sm font-medium">{label}{unit}</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {(field.options ?? []).map((option) => (
+              <label key={option.value} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border bg-card px-3 py-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-border"
+                  checked={selected.includes(option.value)}
+                  onChange={() => toggleMultiselect(field.id, option.value)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      );
+    }
+
+    if (field.input === 'select') {
+      const options = [...(field.options ?? []), ...additionalSelectOptions(field)];
+      return (
+        <div key={field.id}>
+          <Label htmlFor={id}>{label}{unit}</Label>
+          <select
+            id={id}
+            className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`}
+            value={value ?? ''}
+            onChange={(event) => setDetail(field.id, event.target.value)}
+          >
+            <option value="">Choose {field.label.toLowerCase()}</option>
+            {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </div>
+      );
+    }
+
+    if (field.input === 'textarea') {
+      return (
+        <div key={field.id} className="sm:col-span-2">
+          <Label htmlFor={id}>{label}{unit}</Label>
+          <Textarea
+            id={id}
+            className="mt-1 min-h-28 rounded-xl"
+            maxLength={field.validation?.maxLength}
+            value={value ?? ''}
+            onChange={(event) => setDetail(field.id, event.target.value)}
+          />
+        </div>
+      );
+    }
+
+    if (field.input === 'number') {
+      return (
+        <div key={field.id}>
+          <Label htmlFor={id}>{label}{unit}</Label>
+          <Input
+            id={id}
+            type="number"
+            inputMode="decimal"
+            min={field.validation?.min}
+            max={field.validation?.max}
+            step={field.validation?.step}
+            className={`${fieldClass} mt-1`}
+            value={value ?? ''}
+            onChange={(event) => setDetail(field.id, event.target.value)}
+          />
+        </div>
+      );
+    }
+
+    if (field.input === 'date') {
+      return (
+        <div key={field.id}>
+          <Label htmlFor={id}>{label}{unit}</Label>
+          <Input
+            id={id}
+            type="date"
+            className={`${fieldClass} mt-1`}
+            value={value ?? ''}
+            onChange={(event) => setDetail(field.id, event.target.value)}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div key={field.id}>
+        <Label htmlFor={id}>{label}{unit}</Label>
+        <Input
+          id={id}
+          maxLength={field.validation?.maxLength}
+          className={`${fieldClass} mt-1`}
+          value={value ?? ''}
+          onChange={(event) => setDetail(field.id, event.target.value)}
+        />
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-2xl font-bold">Describe your advert</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Give buyers structured facts they can compare, filter, and verify.</p>
+      </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold">Offer type *</legend>
+        <div className={`grid gap-2 ${offerOptions.length > 2 ? 'sm:grid-cols-4' : 'grid-cols-2'}`}>
+          {offerOptions.map((option) => (
+            <button
+              type="button"
+              key={option.value}
+              onClick={() => chooseOffer(option.value)}
+              className={`min-h-11 rounded-xl border-2 px-3 text-sm font-semibold ${formData.listing_type === option.value ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card'}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <div>
+        <Label htmlFor="listing-title">Title *</Label>
+        <Input id="listing-title" maxLength={160} className={`${fieldClass} mt-1`} value={formData.title || ''} onChange={(event) => update('title', event.target.value)} placeholder="A clear, specific title" />
+        <p className="mt-1 text-right text-xs text-muted-foreground">{(formData.title || '').length}/160</p>
+      </div>
+
+      <div>
+        <Label htmlFor="listing-description">Description *</Label>
+        <Textarea id="listing-description" maxLength={5000} className="mt-1 min-h-36 rounded-xl" value={formData.description || ''} onChange={(event) => update('description', event.target.value)} placeholder="Condition, history, important features, and anything a buyer should know" />
+        <p className="mt-1 text-right text-xs text-muted-foreground">{(formData.description || '').length}/5000</p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-[1fr_140px]">
+        <div>
+          <Label htmlFor="listing-price">Price *</Label>
+          <Input id="listing-price" type="number" min="0.01" step="0.01" inputMode="decimal" className={`${fieldClass} mt-1`} value={formData.price || ''} onChange={(event) => update('price', event.target.value)} placeholder="0.00" />
+        </div>
+        <div>
+          <Label htmlFor="listing-currency">Currency *</Label>
+          <select id="listing-currency" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={formData.currency || 'USD'} onChange={(event) => update('currency', event.target.value)}>
+            {currencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.code}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl border bg-card p-3">
+        <div>
+          <p className="text-sm font-semibold">Price is negotiable</p>
+          <p className="text-xs text-muted-foreground">Buyers will see a clear negotiable label.</p>
+        </div>
+        <Switch id="listing-negotiable" aria-label="Price is negotiable" checked={Boolean(formData.negotiable)} onCheckedChange={(value) => update('negotiable', value)} />
+      </div>
+
+      {sections.map(({ section, fields }) => (
+        <section key={section} className="rounded-2xl border bg-card/45 p-4">
+          <div className="mb-4">
+            <h3 className="text-base font-bold">{SECTION_LABELS[section] || section}</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">Only fields relevant to this listing are shown.</p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {fields.map(renderField)}
+          </div>
+        </section>
+      ))}
+
+      {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+      <StepNav onBack={onBack} onContinue={continueIfValid} />
     </div>
-    <div className="flex items-center justify-between rounded-xl border bg-card p-3"><div><p className="text-sm font-semibold">Price is negotiable</p><p className="text-xs text-muted-foreground">Buyers will see a clear negotiable label.</p></div><Switch id="listing-negotiable" aria-label="Price is negotiable" checked={Boolean(formData.negotiable)} onCheckedChange={(value) => update('negotiable', value)} /></div>
-
-    {kind === 'property' && <div className="grid gap-4 sm:grid-cols-2">
-      <div><Label htmlFor="property-type">Property type *</Label><select id="property-type" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={detail.propertyType || ''} onChange={(event) => setDetail('propertyType', event.target.value)}><option value="">Choose type</option><option value="house">House</option><option value="apartment">Apartment</option><option value="land">Land</option><option value="commercial">Commercial</option><option value="other">Other</option></select></div>
-      <div><Label htmlFor="property-size">Size (m²)</Label><Input id="property-size" type="number" min="0" className={`${fieldClass} mt-1`} value={detail.sizeSqm || ''} onChange={(event) => setDetail('sizeSqm', event.target.value)} /></div>
-      <div><Label htmlFor="bedrooms">Bedrooms</Label><Input id="bedrooms" type="number" min="0" className={`${fieldClass} mt-1`} value={detail.bedrooms ?? ''} onChange={(event) => setDetail('bedrooms', event.target.value)} /></div>
-      <div><Label htmlFor="bathrooms">Bathrooms</Label><Input id="bathrooms" type="number" min="0" className={`${fieldClass} mt-1`} value={detail.bathrooms ?? ''} onChange={(event) => setDetail('bathrooms', event.target.value)} /></div>
-    </div>}
-
-    {kind === 'car' && <div className="grid gap-4 sm:grid-cols-2">
-      <div><Label htmlFor="car-brand">Make *</Label><Input id="car-brand" className={`${fieldClass} mt-1`} value={detail.brand || ''} onChange={(event) => setDetail('brand', event.target.value)} /></div>
-      <div><Label htmlFor="car-model">Model *</Label><Input id="car-model" className={`${fieldClass} mt-1`} value={detail.model || ''} onChange={(event) => setDetail('model', event.target.value)} /></div>
-      <div><Label htmlFor="car-year">Year</Label><Input id="car-year" type="number" min="1900" max={new Date().getFullYear() + 1} className={`${fieldClass} mt-1`} value={detail.year || ''} onChange={(event) => setDetail('year', event.target.value)} /></div>
-      <div><Label htmlFor="car-mileage">Mileage (km)</Label><Input id="car-mileage" type="number" min="0" className={`${fieldClass} mt-1`} value={detail.mileage || ''} onChange={(event) => setDetail('mileage', event.target.value)} /></div>
-      <div><Label htmlFor="fuel-type">Fuel type *</Label><select id="fuel-type" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={detail.fuelType || ''} onChange={(event) => setDetail('fuelType', event.target.value)}><option value="">Choose fuel</option><option value="petrol">Petrol</option><option value="diesel">Diesel</option><option value="electric">Electric</option><option value="hybrid">Hybrid</option></select></div>
-      <div><Label htmlFor="transmission">Transmission *</Label><select id="transmission" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={detail.transmission || ''} onChange={(event) => setDetail('transmission', event.target.value)}><option value="">Choose transmission</option><option value="manual">Manual</option><option value="automatic">Automatic</option></select></div>
-      <div className="sm:col-span-2"><Label htmlFor="car-condition">Condition</Label><Input id="car-condition" className={`${fieldClass} mt-1`} value={detail.condition || ''} onChange={(event) => setDetail('condition', event.target.value)} placeholder="e.g. Good" /></div>
-    </div>}
-
-    {kind === 'machinery' && <div className="grid gap-4 sm:grid-cols-2">
-      <div><Label htmlFor="machinery-type">Machinery type *</Label><select id="machinery-type" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={detail.machineryType || ''} onChange={(event) => setDetail('machineryType', event.target.value)}><option value="">Choose type</option><option value="construction">Construction</option><option value="agricultural">Agricultural</option><option value="industrial">Industrial</option><option value="transport">Transport</option><option value="other">Other</option></select></div>
-      <div><Label htmlFor="machinery-condition">Condition *</Label><select id="machinery-condition" className={`${fieldClass} mt-1 w-full border bg-background px-3 text-sm`} value={detail.condition || ''} onChange={(event) => setDetail('condition', event.target.value)}><option value="">Choose condition</option><option value="new">New</option><option value="excellent">Excellent</option><option value="good">Good</option><option value="fair">Fair</option><option value="needs_repair">Needs repair</option></select></div>
-      <div><Label htmlFor="machinery-brand">Make *</Label><Input id="machinery-brand" className={`${fieldClass} mt-1`} value={detail.brand || ''} onChange={(event) => setDetail('brand', event.target.value)} /></div>
-      <div><Label htmlFor="machinery-model">Model *</Label><Input id="machinery-model" className={`${fieldClass} mt-1`} value={detail.model || ''} onChange={(event) => setDetail('model', event.target.value)} /></div>
-      <div><Label htmlFor="machinery-year">Year</Label><Input id="machinery-year" type="number" min="1900" max={new Date().getFullYear() + 1} className={`${fieldClass} mt-1`} value={detail.year || ''} onChange={(event) => setDetail('year', event.target.value)} /></div>
-      <div><Label htmlFor="usage-hours">Usage hours</Label><Input id="usage-hours" type="number" min="0" className={`${fieldClass} mt-1`} value={detail.usageHours || ''} onChange={(event) => setDetail('usageHours', event.target.value)} /></div>
-    </div>}
-    {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
-    <StepNav onBack={onBack} onContinue={continueIfValid} />
-  </div>;
+  );
 }

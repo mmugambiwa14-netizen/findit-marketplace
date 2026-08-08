@@ -1,5 +1,6 @@
 import {
   SCHEMA_VERSION,
+  getSubtypes,
   publicDetailFields,
   splitStorage,
   validateCategoryValues,
@@ -18,22 +19,44 @@ import {
  * it is asserted in tests/listingAttributes.test.mjs.
  */
 
+/** @typedef {{ version: number, values: Record<string, unknown> }} AttributeDocument */
+
 /** Shape written for a listing that has no category answers yet. */
 export const EMPTY_ATTRIBUTES = Object.freeze({ version: SCHEMA_VERSION, values: {} });
 
 /**
  * Validates raw answers and produces the database payload.
  *
+ * `subtype` is a schema dimension rather than a normal field definition. It
+ * drives conditional visibility, so it must survive the storage round trip even
+ * though it is not routed to a normalized column by `splitStorage()`.
+ *
  * @param {string} category
  * @param {Record<string, unknown>} rawValues
- * @returns {{ ok: true, columns: Record<string, unknown>, attributes: object }
+ * @returns {{ ok: true, columns: Record<string, unknown>, attributes: AttributeDocument }
  *          | { ok: false, errors: Array<{field: string, message: string}> }}
  */
 export function toStoragePayload(category, rawValues = {}) {
+  let subtype = null;
+  const rawSubtype = rawValues?.subtype;
+  if (rawSubtype !== undefined && rawSubtype !== null && rawSubtype !== '') {
+    if (typeof rawSubtype !== 'string') {
+      return { ok: false, errors: [{ field: 'subtype', message: 'Subtype is invalid' }] };
+    }
+    subtype = rawSubtype.trim();
+    const allowedSubtypes = new Set(getSubtypes(category).map((entry) => entry.value));
+    if (!allowedSubtypes.has(subtype)) {
+      return { ok: false, errors: [{ field: 'subtype', message: 'Subtype is invalid' }] };
+    }
+  }
+
   const { valid, errors, values } = validateCategoryValues(category, rawValues);
   if (!valid) return { ok: false, errors };
 
-  const { columns, attributes } = splitStorage(category, values);
+  const storage = splitStorage(category, values);
+  const columns = /** @type {Record<string, unknown>} */ (storage.columns);
+  const attributes = /** @type {AttributeDocument} */ (storage.attributes);
+  if (subtype) attributes.values.subtype = subtype;
   return { ok: true, columns, attributes };
 }
 
@@ -51,11 +74,16 @@ export function toStoragePayload(category, rawValues = {}) {
  */
 export function fromStorageRow(category, row = {}) {
   const stored = row?.attributes;
-  const documentValues = stored && typeof stored === 'object' && stored.values
-    && typeof stored.values === 'object'
-    ? stored.values
-    : {};
+  /** @type {Record<string, unknown>} */
+  let documentValues = {};
+  if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+    const candidate = /** @type {{ values?: unknown }} */ (stored).values;
+    if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+      documentValues = /** @type {Record<string, unknown>} */ (candidate);
+    }
+  }
 
+  /** @type {Record<string, unknown>} */
   const values = { ...documentValues };
 
   // Detail tables arrive either as a nested object or already flattened.

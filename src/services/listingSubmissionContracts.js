@@ -1,13 +1,10 @@
+import { toStoragePayload } from './listingAttributes.js';
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
 const KINDS = new Set(['property', 'car', 'machinery']);
-const OFFER_TYPES = new Set(['sale', 'rent']);
+const ASSET_OFFER_TYPES = new Set(['sale', 'rent']);
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const PROPERTY_TYPES = new Set(['house', 'apartment', 'land', 'commercial', 'other']);
-const FUEL_TYPES = new Set(['petrol', 'diesel', 'electric', 'hybrid']);
-const TRANSMISSIONS = new Set(['manual', 'automatic']);
-const MACHINERY_TYPES = new Set(['construction', 'agricultural', 'industrial', 'transport', 'other']);
-const MACHINERY_CONDITIONS = new Set(['new', 'excellent', 'good', 'fair', 'needs_repair']);
 const OWNER_ACTIONS = new Set(['submit', 'pause', 'resume', 'unavailable']);
 const SUPPORTED_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
 
@@ -44,34 +41,42 @@ function normalizeEmail(value) {
   return email;
 }
 
-function normalizeDetail(kind, input = {}) {
-  const currentYear = new Date().getFullYear() + 1;
+function objectValue(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+/**
+ * The versioned listingSchema registry is the live classification contract.
+ * It validates the answers, removes conditionally hidden values and produces
+ * both the normalized detail columns and sparse versioned attributes document.
+ */
+function normalizeSchemaDetail(kind, listingType, input) {
+  const rawDetail = objectValue(input);
+  const schemaInput = kind === 'property'
+    ? { ...rawDetail, listing_type: listingType }
+    : rawDetail;
+  const storage = toStoragePayload(kind, schemaInput);
+  if (storage.ok === false) {
+    throw new TypeError(storage.errors[0]?.message || 'Listing details are invalid');
+  }
+
+  const detail = { ...storage.columns };
+  let normalizedListingType = listingType;
   if (kind === 'property') {
-    return {
-      propertyType: oneOf(input.propertyType, PROPERTY_TYPES, 'Property type'),
-      bedrooms: optionalNumber(input.bedrooms, 'Bedrooms', 0, 100, { integer: true }),
-      bathrooms: optionalNumber(input.bathrooms, 'Bathrooms', 0, 100, { integer: true }),
-      sizeSqm: optionalNumber(input.sizeSqm, 'Property size', 0.01, 100_000_000),
-    };
+    // Property offer type is a registry field and therefore validated by the
+    // same source of truth as every other property classification.
+    normalizedListingType = detail.listing_type;
+    delete detail.listing_type;
+  } else {
+    // Vehicles and machinery currently expose the shared marketplace sale/rent
+    // transaction axis rather than a category-specific registry field.
+    normalizedListingType = oneOf(listingType, ASSET_OFFER_TYPES, 'Offer type');
   }
-  if (kind === 'car') {
-    return {
-      brand: text(input.brand, 'Vehicle make', 1, 80),
-      model: text(input.model, 'Vehicle model', 1, 80),
-      year: optionalNumber(input.year, 'Vehicle year', 1900, currentYear, { integer: true }),
-      mileage: optionalNumber(input.mileage, 'Mileage', 0, 10_000_000, { integer: true }),
-      fuelType: oneOf(input.fuelType, FUEL_TYPES, 'Fuel type'),
-      transmission: oneOf(input.transmission, TRANSMISSIONS, 'Transmission'),
-      condition: text(input.condition, 'Condition', 0, 40, { optional: true }).toLowerCase(),
-    };
-  }
+
   return {
-    machineryType: oneOf(input.machineryType, MACHINERY_TYPES, 'Machinery type'),
-    brand: text(input.brand, 'Machinery make', 1, 80),
-    model: text(input.model, 'Machinery model', 1, 80),
-    condition: oneOf(input.condition, MACHINERY_CONDITIONS, 'Machinery condition'),
-    year: optionalNumber(input.year, 'Machinery year', 1900, currentYear, { integer: true }),
-    usageHours: optionalNumber(input.usageHours, 'Usage hours', 0, 10_000_000, { integer: true }),
+    listingType: normalizedListingType,
+    detail,
+    attributes: storage.attributes,
   };
 }
 
@@ -104,12 +109,14 @@ export function normalizeListingSubmission(ownerId, input) {
   const contactEmail = normalizeEmail(input?.contactEmail);
   if (!contactPhone && !contactWhatsapp && !contactEmail) throw new TypeError('Add at least one contact method');
 
+  const schema = normalizeSchemaDetail(kind, input?.listingType, input?.detail);
+
   return {
     submissionKey: uuid(input?.submissionKey, 'Submission key'),
     listing: {
       kind,
       category,
-      listingType: oneOf(input?.listingType, OFFER_TYPES, 'Offer type'),
+      listingType: schema.listingType,
       title: text(input?.title, 'Title', 10, 160),
       description: text(input?.description, 'Description', 50, 5000),
       price,
@@ -120,7 +127,8 @@ export function normalizeListingSubmission(ownerId, input) {
       contactWhatsapp,
       contactEmail,
     },
-    detail: normalizeDetail(kind, input?.detail),
+    detail: schema.detail,
+    attributes: schema.attributes,
     media: normalizeMedia(normalizedOwnerId, input?.media),
   };
 }

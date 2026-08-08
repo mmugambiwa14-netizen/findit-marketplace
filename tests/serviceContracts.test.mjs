@@ -14,8 +14,12 @@ import {
 } from '../src/services/marketplaceImageContracts.js';
 
 const provider = { id: '00000000-0000-4000-8000-000000000001', full_name: 'Tariro' };
+const mechanicTaxonomy = {
+  allowedCategories: new Set(['mechanic']),
+  allowedSubcategories: new Set(['pre_purchase_inspection', 'maintenance_repair']),
+};
 
-test('normalizes a bounded V1 service create contract', () => {
+test('normalizes a bounded service create contract against the supplied canonical taxonomy', () => {
   const result = normalizeServiceCreate({
     title: ' Mobile vehicle inspection ',
     description: ' Careful pre-purchase checks ',
@@ -29,7 +33,7 @@ test('normalizes a bounded V1 service create contract', () => {
     currency: 'ZWL',
     location_name: 'Harare',
     can_travel: true,
-  }, provider);
+  }, provider, mechanicTaxonomy);
 
   assert.equal(result.title, 'Mobile vehicle inspection');
   assert.equal(result.price, 40);
@@ -40,12 +44,21 @@ test('normalizes a bounded V1 service create contract', () => {
   assert.equal(result.status, 'active');
 });
 
-test('legal services are excluded from the V1 create and browse contracts', () => {
+test('service creation cannot invent category or specialization vocabulary locally', () => {
   assert.throws(() => normalizeServiceCreate({
     title: 'Legal advice', category: 'legal', subcategories: ['consultation'],
     pricing_type: 'quote', contact_phone: '+263771234567',
-  }, provider), /category is invalid/);
-  assert.throws(() => normalizePublicServiceRequest({ category: 'legal' }), /category is invalid/);
+  }, provider, mechanicTaxonomy), /category is not active in the current taxonomy/);
+
+  assert.throws(() => normalizeServiceCreate({
+    title: 'Vehicle help', category: 'mechanic', subcategories: ['invented_service'],
+    pricing_type: 'quote', contact_phone: '+263771234567',
+  }, provider, mechanicTaxonomy), /Service type is not active in the current taxonomy/);
+
+  assert.throws(() => normalizeServiceCreate({
+    title: 'Vehicle help', category: 'mechanic', subcategories: ['pre_purchase_inspection'],
+    pricing_type: 'quote', contact_phone: '+263771234567',
+  }, provider), /taxonomy is unavailable/);
 });
 
 test('service edit rejects privileged fields and requires a contact path', () => {
@@ -59,10 +72,13 @@ test('service edit rejects privileged fields and requires a contact path', () =>
   }), /Phone or WhatsApp is required/);
 });
 
-test('normalizes public service search and validates status', () => {
+test('normalizes public service search only against a supplied canonical category set', () => {
   const locationId = '22222222-2222-4222-8222-222222222222';
   assert.deepEqual(
-    normalizePublicServiceRequest({ query: ' mechanic,(Harare)%_ ', category: 'mechanic', locationId, limit: 500 }),
+    normalizePublicServiceRequest(
+      { query: ' mechanic,(Harare)%_ ', category: 'mechanic', locationId, limit: 500 },
+      { allowedCategories: new Set(['mechanic']) },
+    ),
     { query: 'mechanic Harare', category: 'mechanic', locationId, limit: 48, cursor: null },
   );
   assert.deepEqual(normalizePublicServiceRequest({
@@ -72,6 +88,11 @@ test('normalizes public service search and validates status', () => {
     createdAt: '2026-07-27T01:02:03.000Z',
     id: '11111111-1111-4111-8111-111111111111',
   });
+  assert.throws(
+    () => normalizePublicServiceRequest({ category: 'legal' }, { allowedCategories: new Set(['mechanic']) }),
+    /not active in the current taxonomy/,
+  );
+  assert.throws(() => normalizePublicServiceRequest({ category: 'bad category!' }, { allowedCategories: new Set() }), /category is invalid/);
   assert.throws(() => normalizePublicServiceRequest({ locationId: 'not-a-location' }), /Location is invalid/);
   assert.equal(normalizeServiceStatus('paused'), 'paused');
   assert.throws(() => normalizeServiceStatus('deleted'), /status is invalid/);

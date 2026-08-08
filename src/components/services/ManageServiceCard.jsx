@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { MapPin, Trash2, Pause, Play, Loader2, Pencil } from "lucide-react";
+import { MapPin, Trash2, Pause, Play, Loader2, Pencil, Wrench } from "lucide-react";
 import EditServiceDialog from "@/components/services/EditServiceDialog";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { getServiceCategory } from "@/lib/serviceConstants";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { toast } from "sonner";
 import { deleteService, setServiceStatus } from "@/services/servicesService";
@@ -31,8 +30,7 @@ export default function ManageServiceCard({ service, onChanged }) {
   const { format } = useCurrency();
   const [busy, setBusy] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const category = getServiceCategory(service.category);
-  const Icon = category?.icon;
+  const categoryLabel = service.category_label || "Service";
 
   const priceDisplay =
     service.pricing_type === "quote" || !service.price
@@ -78,8 +76,8 @@ export default function ManageServiceCard({ service, onChanged }) {
           {service.photos?.[0] ? (
             <img src={service.photos[0]} alt={service.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
           ) : (
-            <div className={`w-full h-full flex items-center justify-center ${category?.color || "bg-muted"}`}>
-              {Icon && <Icon className="w-8 h-8 text-white/90" />}
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <Wrench className="w-8 h-8 text-muted-foreground" />
             </div>
           )}
         </div>
@@ -88,7 +86,7 @@ export default function ManageServiceCard({ service, onChanged }) {
             <Badge className={`text-[10px] border-transparent ${STATUS_STYLES[service.status] || STATUS_STYLES.unavailable}`}>
               {service.status}
             </Badge>
-            {category && <Badge variant="secondary" className="text-[10px]">{category.label}</Badge>}
+            <Badge variant="secondary" className="text-[10px]">{categoryLabel}</Badge>
           </div>
           <h3 className="font-semibold text-sm line-clamp-1">{service.title}</h3>
           <p className="text-primary font-bold text-sm mt-1">{priceDisplay}</p>

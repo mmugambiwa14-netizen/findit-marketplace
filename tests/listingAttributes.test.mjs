@@ -47,6 +47,23 @@ test('a payload round-trips back to the same values', () => {
   }
 });
 
+test('schema subtype is validated and survives the storage round trip', () => {
+  const input = { ...VEHICLE, subtype: 'suv' };
+  const result = toStoragePayload('car', input);
+  assert.equal(result.ok, true);
+  assert.equal(result.attributes.values.subtype, 'suv');
+
+  const restored = fromStorageRow('car', { ...result.columns, attributes: result.attributes });
+  assert.equal(restored.subtype, 'suv');
+});
+
+test('unsupported schema subtype is rejected before storage', () => {
+  const result = toStoragePayload('car', { ...VEHICLE, subtype: 'spaceship' });
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [{ field: 'subtype', message: 'Subtype is invalid' }]);
+  assert.equal(result.columns, undefined);
+});
+
 test('column values win over a stale duplicate in the document', () => {
   // A mileage edit writes the column; a document left holding the old value
   // must not shadow it, or the edit appears to revert.
