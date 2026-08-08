@@ -6,9 +6,7 @@ import {
   insertFavourite,
 } from '@/repositories/favouritesRepository';
 import { findSavedListingsByIds } from '@/repositories/publicListingsRepository';
-import { hydrateListingImages } from '@/services/listingCreationService';
-import { mapPublicListing } from '@/services/listingMappers';
-import { attachPublicTourSummaries } from '@/services/listingToursService';
+import { enrichPublicListingCards } from '@/services/listingCardEnrichmentService';
 import { createKeysetPage, normalizeKeysetCursor, normalizePageLimit } from '@/services/keysetPagination';
 
 function requireId(value, label) {
@@ -51,9 +49,8 @@ export async function getFavouriteListingsPage(userId, input = {}) {
   const request = normalizeFavouriteListRequest(userId, input);
   const page = createKeysetPage(await findFavouriteRows(request), request.limit);
   const listingIds = page.items.map((row) => row.listing_id);
-  const listings = await hydrateListingImages(await findSavedListingsByIds(listingIds));
-  const mapped = await attachPublicTourSummaries(listings.map(mapPublicListing), 'listing');
-  const byId = new Map(mapped.map((row) => [row.id, row]));
+  const listings = await enrichPublicListingCards(await findSavedListingsByIds(listingIds));
+  const byId = new Map(listings.map((row) => [row.id, row]));
   return {
     items: page.items.map((row) => byId.get(row.listing_id)).filter(Boolean),
     nextCursor: page.nextCursor,
