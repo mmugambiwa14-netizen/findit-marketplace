@@ -16,8 +16,15 @@ immutable
 parallel safe
 set search_path to ''
 as $function$
-  select coalesce(bool_and(value ~ '^[a-z0-9]+(?:_[a-z0-9]+)*$'), true)
-     and cardinality(p_values) = cardinality(array(select distinct value from unnest(p_values) value));
+  select
+    coalesce((
+      select bool_and(value ~ '^[a-z0-9]+(?:_[a-z0-9]+)*$')
+      from unnest(coalesce(p_values, '{}'::text[])) as values(value)
+    ), true)
+    and cardinality(coalesce(p_values, '{}'::text[])) = cardinality(array(
+      select distinct value
+      from unnest(coalesce(p_values, '{}'::text[])) as values(value)
+    ));
 $function$;
 
 create or replace function public.is_valid_taxonomy_synonyms(p_values text[])
@@ -27,8 +34,15 @@ immutable
 parallel safe
 set search_path to ''
 as $function$
-  select coalesce(bool_and(length(trim(value)) between 1 and 80), true)
-     and cardinality(p_values) = cardinality(array(select distinct lower(trim(value)) from unnest(p_values) value));
+  select
+    coalesce((
+      select bool_and(length(trim(value)) between 1 and 80)
+      from unnest(coalesce(p_values, '{}'::text[])) as values(value)
+    ), true)
+    and cardinality(coalesce(p_values, '{}'::text[])) = cardinality(array(
+      select distinct lower(trim(value))
+      from unnest(coalesce(p_values, '{}'::text[])) as values(value)
+    ));
 $function$;
 
 create or replace function public.is_valid_taxonomy_markets(p_values text[])
@@ -38,8 +52,15 @@ immutable
 parallel safe
 set search_path to ''
 as $function$
-  select coalesce(bool_and(value ~ '^[A-Z]{2}$'), true)
-     and cardinality(p_values) = cardinality(array(select distinct value from unnest(p_values) value));
+  select
+    coalesce((
+      select bool_and(value ~ '^[A-Z]{2}$')
+      from unnest(coalesce(p_values, '{}'::text[])) as values(value)
+    ), true)
+    and cardinality(coalesce(p_values, '{}'::text[])) = cardinality(array(
+      select distinct value
+      from unnest(coalesce(p_values, '{}'::text[])) as values(value)
+    ));
 $function$;
 
 do $constraints$
