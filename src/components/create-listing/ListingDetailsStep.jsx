@@ -94,7 +94,7 @@ export default function ListingDetailsStep({ formData, update, onBack, onContinu
       ? { ...detail, listing_type: formData.listing_type }
       : detail;
     const storage = toStoragePayload(kind, preparedDetail);
-    if (!storage.ok) return setError(storage.errors[0]?.message || 'Review the listing details and try again.');
+    if ('errors' in storage) return setError(storage.errors[0]?.message || 'Review the listing details and try again.');
 
     // Persist only values that remain visible and schema-valid. This clears
     // answers that became irrelevant after a subtype or conditional choice
