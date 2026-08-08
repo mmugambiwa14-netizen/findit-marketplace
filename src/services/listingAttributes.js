@@ -19,6 +19,8 @@ import {
  * it is asserted in tests/listingAttributes.test.mjs.
  */
 
+/** @typedef {{ version: number, values: Record<string, unknown> }} AttributeDocument */
+
 /** Shape written for a listing that has no category answers yet. */
 export const EMPTY_ATTRIBUTES = Object.freeze({ version: SCHEMA_VERSION, values: {} });
 
@@ -31,7 +33,7 @@ export const EMPTY_ATTRIBUTES = Object.freeze({ version: SCHEMA_VERSION, values:
  *
  * @param {string} category
  * @param {Record<string, unknown>} rawValues
- * @returns {{ ok: true, columns: Record<string, unknown>, attributes: object }
+ * @returns {{ ok: true, columns: Record<string, unknown>, attributes: AttributeDocument }
  *          | { ok: false, errors: Array<{field: string, message: string}> }}
  */
 export function toStoragePayload(category, rawValues = {}) {
@@ -70,11 +72,16 @@ export function toStoragePayload(category, rawValues = {}) {
  */
 export function fromStorageRow(category, row = {}) {
   const stored = row?.attributes;
-  const documentValues = stored && typeof stored === 'object' && stored.values
-    && typeof stored.values === 'object'
-    ? stored.values
-    : {};
+  /** @type {Record<string, unknown>} */
+  let documentValues = {};
+  if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+    const candidate = /** @type {{ values?: unknown }} */ (stored).values;
+    if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+      documentValues = /** @type {Record<string, unknown>} */ (candidate);
+    }
+  }
 
+  /** @type {Record<string, unknown>} */
   const values = { ...documentValues };
 
   // Detail tables arrive either as a nested object or already flattened.
