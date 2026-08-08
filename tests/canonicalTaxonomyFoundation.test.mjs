@@ -106,7 +106,14 @@ test('database taxonomy separates tree structure from postability and lifecycle'
   ]) assert.match(foundationMigration, new RegExp(token));
 
   assert.match(foundationMigration, /c\.is_postable[\s\S]*c\.node_type = 'category'[\s\S]*c\.superseded_by is null/);
-  assert.doesNotMatch(foundationMigration, /parent_id is not null[\s\S]*raise exception 'listing category/i);
+  assert.match(
+    foundationMigration,
+    /-- Postability is explicit\. Tree depth is not an authorization rule anymore\.[\s\S]*where c\.marketplace_kind = new\.kind::text[\s\S]*c\.is_postable[\s\S]*c\.node_type = 'category'/,
+  );
+  assert.doesNotMatch(
+    foundationMigration,
+    /where c\.marketplace_kind = new\.kind::text[\s\S]{0,500}c\.parent_id is not null/i,
+  );
   assert.match(foundationMigration, /with recursive tree/);
   assert.match(foundationMigration, /'land_regime', land_regimes\.regime/);
   assert.match(foundationMigration, /'offer_type', 'rent'/);
