@@ -24,15 +24,21 @@ const ADMIN_ID = "97965916-11ee-4d94-894d-fe66f58a11ab";
 const SEED_NAMESPACE = "peekalisting-staging-catalogue-2026-08";
 const COUNTRY_CODE = "ZW";
 const MODE = process.argv[2] ?? "default";
+const EMIT_CATALOGUE_SQL = MODE === "emit-catalogue-sql";
+const EMIT_TOURS_SQL = MODE === "emit-tours-sql";
+const EMIT_SQL_MODE = EMIT_CATALOGUE_SQL || EMIT_TOURS_SQL;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error("FINDIT_SUPABASE_URL, FINDIT_SUPABASE_ANON_KEY and FINDIT_SUPABASE_SECRET_KEY are required");
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error("FINDIT_SUPABASE_URL and FINDIT_SUPABASE_ANON_KEY are required");
 }
-if (!FFMPEG_PATH || !fs.existsSync(FFMPEG_PATH)) {
+if (!EMIT_SQL_MODE && !SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("FINDIT_SUPABASE_SECRET_KEY is required for direct privileged writes");
+}
+if (EMIT_TOURS_SQL && (!FFMPEG_PATH || !fs.existsSync(FFMPEG_PATH))) {
   throw new Error("FFMPEG_PATH must point to the ffmpeg executable used for staging media");
 }
 
-const root = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+const root = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY ?? SUPABASE_ANON_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 let supabase = root;
@@ -1050,13 +1056,15 @@ async function verifyRemotePhotos(parents) {
 }
 
 async function main() {
-  const { data: admin, error: adminError } = await root
-    .from("users")
-    .select("id,email,role,super_admin")
-    .eq("id", ADMIN_ID)
-    .single();
-  if (adminError) throw new Error(`admin query failed: ${adminError.message}`);
-  if (admin.role !== "admin" || admin.super_admin !== true) throw new Error("staging owner is not the expected admin/super-admin");
+  if (!EMIT_SQL_MODE) {
+    const { data: admin, error: adminError } = await root
+      .from("users")
+      .select("id,email,role,super_admin")
+      .eq("id", ADMIN_ID)
+      .single();
+    if (adminError) throw new Error(`admin query failed: ${adminError.message}`);
+    if (admin.role !== "admin" || admin.super_admin !== true) throw new Error("staging owner is not the expected admin/super-admin");
+  }
 
   const taxonomy = await fetchTaxonomy();
   const locations = await fetchLocations();
