@@ -8,10 +8,10 @@ const METADATA_REFRESH_MS = 15_000;
 
 /**
  * Adds realtime message delivery to the established thread implementation.
- * ConversationThread keeps a faster polling fallback while Realtime is not
- * subscribed and automatically slows that backup once the channel is healthy.
- * Metadata is refreshed separately so a remote block, closure, or listing-state
- * change cannot remain stale while the thread stays open without new messages.
+ * ConversationThread keeps a bounded tail-polling fallback while Realtime is
+ * unavailable and slows that backup once the channel is healthy. Older message
+ * history is never invalidated by live delivery. Metadata is refreshed separately
+ * so a remote block, closure, or listing-state change cannot remain stale.
  */
 export default function RealtimeConversationThread(props) {
   const { conversationId, currentUser } = props;
@@ -31,12 +31,15 @@ export default function RealtimeConversationThread(props) {
       });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
     };
-    const refreshAll = () => {
+    const refreshMessages = () => {
       if (cancelled) return;
       queryClient.invalidateQueries({
-        queryKey: ['message-thread', conversationId],
+        queryKey: ['message-thread-tail', conversationId],
         exact: true,
       });
+    };
+    const refreshAll = () => {
+      refreshMessages();
       refreshMetadata();
     };
 
