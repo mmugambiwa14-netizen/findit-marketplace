@@ -15,6 +15,7 @@ import PersonalizationSettings from "@/components/settings/PersonalizationSettin
 import PushNotificationSettings from "@/components/settings/PushNotificationSettings";
 import DeleteAccountSection from "@/components/settings/DeleteAccountSection";
 import MfaSettings from "@/components/settings/MfaSettings";
+import PermissionStatusPanel from "@/components/settings/PermissionStatusPanel";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -69,12 +70,13 @@ export default function Settings() {
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-4">
         <Section icon={BellRing} title="Push notifications"><PushNotificationSettings /></Section>
+        <Section icon={ShieldCheck} title="Permissions & privacy"><PermissionStatusPanel /></Section>
 
         <Section icon={User} title="Account profile">
           <div className="space-y-3">
             <div><Label htmlFor="settings-name" className="text-xs font-medium">Full name</Label><Input id="settings-name" className="mt-1 rounded-xl" value={fullName} maxLength={120} onChange={(event) => setFullName(event.target.value)} /></div>
-            <div><Label htmlFor="settings-email" className="text-xs font-medium">Email</Label><Input id="settings-email" className="mt-1 rounded-xl" value={user?.email || ""} disabled /><p className="mt-1 text-[11px] text-muted-foreground">Email changes are not available in Version 1.</p></div>
-            <div><Label htmlFor="settings-phone" className="text-xs font-medium">Phone</Label><Input id="settings-phone" className="mt-1 rounded-xl" value={user?.phone || ""} disabled /><p className="mt-1 text-[11px] text-muted-foreground">Phone changes require secure re-verification and are temporarily unavailable.</p></div>
+            <div><Label htmlFor="settings-email" className="text-xs font-medium">Email</Label><div id="settings-email" className="mt-1 min-h-11 rounded-xl border border-border bg-surface-secondary px-3 py-2.5 text-sm" role="status">{user?.email || "Not provided"}</div><p className="mt-1 text-[11px] text-muted-foreground">Your sign-in email is managed by your authentication provider.</p></div>
+            <div><Label htmlFor="settings-phone" className="text-xs font-medium">Phone</Label><div id="settings-phone" className="mt-1 min-h-11 rounded-xl border border-border bg-surface-secondary px-3 py-2.5 text-sm" role="status">{user?.phone || "Not provided"}</div><p className="mt-1 text-[11px] text-muted-foreground">Phone changes require secure re-verification; contact support if you need help.</p></div>
             <Button onClick={handleSaveProfile} disabled={savingProfile || !fullName.trim()} size="sm" className="rounded-xl">{savingProfile ? "Saving..." : <><Check className="mr-1 h-3 w-3" />Save profile</>}</Button>
           </div>
 

@@ -114,7 +114,7 @@ export default function SellerProfile() {
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-xl font-bold">{sellerName}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{listings.length} active {listings.length === 1 ? "listing" : "listings"} loaded</p>
+              <p className="mt-1 text-sm text-muted-foreground">Showing {listings.length} active {listings.length === 1 ? "listing" : "listings"}</p>
             </div>
           </div>
 

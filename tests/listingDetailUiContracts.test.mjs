@@ -50,7 +50,7 @@ test('listing summaries share one elevated hierarchy across every public detail 
     assert.match(source, /<ListingSummary/);
     assert.match(source, /grid grid-cols-1 gap-3 min-\[430px\]:grid-cols-2/);
     assert.match(source, /tour\?\.status === "ready"/);
-    assert.match(source, />Public Peek<\/Badge>/);
+    assert.match(source, />Video proof available<\/Badge>/);
   }
 });
 
@@ -70,9 +70,12 @@ test('listing section navigation is a sticky elevated segmented surface', () => 
   assert.match(detailTabs, /sticky top-\[calc\(env\(safe-area-inset-top,0px\)\+3\.75rem\)\]/);
   assert.match(detailTabs, /rounded-2xl border border-border\/80 bg-card\/90 p-1 shadow-floating/);
   assert.match(detailTabs, /bg-primary\/12 text-primary shadow-sm/);
-  for (const label of ['Listing info', 'Description', 'Location', 'Seller']) {
+  for (const label of ['Details', 'Description', 'Location', 'Seller']) {
     assert.match(detailTabs, new RegExp(label));
   }
+  assert.match(detailTabs, /role="tablist"/);
+  assert.match(detailTabs, /role="tabpanel"/);
+  assert.match(detailTabs, /data-listing-detail-tab/);
 });
 
 test('listing information uses reusable raised cards', () => {

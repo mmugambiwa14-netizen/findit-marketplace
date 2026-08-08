@@ -79,7 +79,8 @@ export default function AdminManagedListings() {
             {row.price_expectation && <p className="mt-2 text-sm"><span className="font-bold">Price expectation:</span> {row.price_expectation}</p>}
             {row.reviewer_message && <div className="mt-3 rounded-xl border border-border bg-background/45 p-3 text-sm">{row.reviewer_message}</div>}
 
-            <Textarea className="mt-4" rows={2} placeholder="Required when requesting information or declining" value={messages[row.id] || ''} onChange={(event) => setMessages((current) => ({ ...current, [row.id]: event.target.value }))} />
+            <label htmlFor={`managed-message-${row.id}`} className="sr-only">Message for managed listing request</label>
+            <Textarea id={`managed-message-${row.id}`} className="mt-4" rows={2} placeholder="Required when requesting information or declining" value={messages[row.id] || ''} onChange={(event) => setMessages((current) => ({ ...current, [row.id]: event.target.value }))} />
             <div className="mt-3 flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => update(row, 'reviewing')} disabled={busyId === row.id}>Start review</Button>
               <Button onClick={() => update(row, 'accepted')} disabled={busyId === row.id}>Accept</Button>

@@ -1,58 +1,88 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Children, isValidElement, useId, useMemo, useState } from 'react';
 import { ExternalLink, MapPin, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const TABS = [
-  { id: 'listing-info', label: 'Listing info' },
+  { id: 'listing-info', label: 'Details' },
   { id: 'description', label: 'Description' },
   { id: 'location', label: 'Location' },
   { id: 'seller', label: 'Seller' },
 ];
 
+function childId(child) {
+  if (!isValidElement(child)) return null;
+  const props = /** @type {{ id?: unknown }} */ (child.props);
+  return typeof props.id === 'string' && props.id ? props.id : null;
+}
+
+function childTitle(child) {
+  if (!isValidElement(child)) return null;
+  const props = /** @type {{ title?: unknown }} */ (child.props);
+  return typeof props.title === 'string' && props.title.trim() ? props.title.trim() : null;
+}
+
 export function ListingDetailTabs({ children }) {
-  const [active, setActive] = useState(TABS[0].id);
-  const observerRef = useRef(null);
+  const tabRootId = useId().replaceAll(':', '');
+  const allChildren = useMemo(() => Children.toArray(children), [children]);
+  const panelChildren = useMemo(() => allChildren.filter((child) => childId(child)), [allChildren]);
+  const supplementalChildren = useMemo(() => allChildren.filter((child) => !childId(child)), [allChildren]);
+  const availableTabs = useMemo(() => TABS
+    .map((tab) => {
+      const panel = panelChildren.find((child) => childId(child) === tab.id);
+      return panel ? { ...tab, label: childTitle(panel) || tab.label } : null;
+    })
+    .filter(Boolean), [panelChildren]);
+  const [active, setActive] = useState(availableTabs[0]?.id || TABS[0].id);
+  const activeTab = availableTabs.find((tab) => tab.id === active) || availableTabs[0] || TABS[0];
+  const activePanel = panelChildren.find((child) => childId(child) === activeTab.id) || panelChildren[0] || null;
 
-  useEffect(() => {
-    observerRef.current?.disconnect();
-    const sections = TABS.map(({ id }) => document.getElementById(id)).filter(Boolean);
-    if (!sections.length) return undefined;
+  const selectTab = (id) => {
+    if (availableTabs.some((tab) => tab.id === id)) setActive(id);
+  };
 
-    observerRef.current = new IntersectionObserver((entries) => {
-      const visible = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (visible?.target?.id) setActive(visible.target.id);
-    }, {
-      rootMargin: '-28% 0px -58% 0px',
-      threshold: [0.05, 0.2, 0.45, 0.7],
-    });
-    sections.forEach((section) => observerRef.current.observe(section));
-    return () => observerRef.current?.disconnect();
-  }, []);
-
-  const goTo = (id) => {
-    setActive(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const handleTabKeyDown = (event, index) => {
+    if (!availableTabs.length) return;
+    if (event.key === 'Home' || event.key === 'End') {
+      event.preventDefault();
+      const targetIndex = event.key === 'Home' ? 0 : availableTabs.length - 1;
+      const target = availableTabs[targetIndex];
+      selectTab(target.id);
+      document.getElementById(`${tabRootId}-tab-${target.id}`)?.focus();
+      return;
+    }
+    const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown'
+      ? 1
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
+    if (!direction) return;
+    event.preventDefault();
+    const target = availableTabs[(index + direction + availableTabs.length) % availableTabs.length];
+    selectTab(target.id);
+    document.getElementById(`${tabRootId}-tab-${target.id}`)?.focus();
   };
 
   return (
     <>
       <nav
         className="sticky top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-30 bg-background/88 px-3 py-2 backdrop-blur-xl md:top-[3.75rem] md:px-5"
-        aria-label="Listing sections"
+        aria-label="Listing details"
       >
-        <div className="no-scrollbar mx-auto flex max-w-4xl overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-1 shadow-floating">
-          {TABS.map((tab) => (
+        <div id={`${tabRootId}-list`} role="tablist" aria-label="Listing detail sections" className="no-scrollbar mx-auto flex max-w-4xl overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-1 shadow-floating">
+          {availableTabs.map((tab, index) => (
             <button
               key={tab.id}
               type="button"
-              onClick={() => goTo(tab.id)}
-              aria-current={active === tab.id ? 'page' : undefined}
+              id={`${tabRootId}-tab-${tab.id}`}
+              role="tab"
+              aria-selected={activeTab.id === tab.id}
+              aria-controls={`${tabRootId}-panel-${tab.id}`}
+              tabIndex={activeTab.id === tab.id ? 0 : -1}
+              data-listing-detail-tab={tab.id}
+              onClick={() => selectTab(tab.id)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
               className={cn(
                 'min-h-11 flex-1 whitespace-nowrap rounded-xl px-3 text-xs font-bold text-muted-foreground transition-colors sm:text-sm',
-                active === tab.id && 'bg-primary/12 text-primary shadow-sm',
+                activeTab.id === tab.id && 'bg-primary/12 text-primary shadow-sm',
               )}
             >
               {tab.label}
@@ -60,7 +90,20 @@ export function ListingDetailTabs({ children }) {
           ))}
         </div>
       </nav>
-      <div className="mx-auto max-w-4xl space-y-10 px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7">{children}</div>
+      <div className="mx-auto max-w-4xl px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7">
+        {activePanel && (
+          <div
+            id={`${tabRootId}-panel-${activeTab.id}`}
+            role="tabpanel"
+            tabIndex={0}
+            aria-labelledby={`${tabRootId}-tab-${activeTab.id}`}
+            className="outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            {activePanel}
+          </div>
+        )}
+        {supplementalChildren.length > 0 && <div className="mt-8 space-y-6">{supplementalChildren}</div>}
+      </div>
     </>
   );
 }
@@ -95,11 +138,12 @@ export function ListingDescription({ value }) {
   );
 }
 
-export function ListingLocation({ label, latitude, longitude }) {
+export function ListingLocation({ label, latitude, longitude, approximate = false }) {
+  const hasCoordinates = Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude));
   const query = useMemo(() => {
-    if (Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude))) return `${Number(latitude)},${Number(longitude)}`;
+    if (hasCoordinates) return `${Number(latitude)},${Number(longitude)}`;
     return String(label || '').trim();
-  }, [label, latitude, longitude]);
+  }, [hasCoordinates, label, latitude, longitude]);
   const mapsUrl = query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
   const embedUrl = query ? `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed` : null;
 
@@ -114,7 +158,7 @@ export function ListingLocation({ label, latitude, longitude }) {
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Public location</p>
           <p className="mt-1 truncate font-bold">{label || 'Location not supplied'}</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">The map shows the public listing area, not a seller’s private live location.</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">{approximate || !hasCoordinates ? 'The map shows an approximate public area, not a seller’s private live location.' : 'The map shows the public listing area, not a seller’s private live location.'}</p>
         </div>
         {mapsUrl && <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold transition hover:border-primary/40 hover:bg-primary/8"><ExternalLink className="h-4 w-4" />Open map</a>}
       </div>
@@ -131,6 +175,7 @@ export function ListingSeller({
   actions,
   profilePath = null,
   profileLabel = 'View listings',
+  roleLabel = 'Seller',
 }) {
   const [avatarFailed, setAvatarFailed] = useState(false);
   const listingMetadata = actions?.props?.listing || {};
@@ -149,6 +194,10 @@ export function ListingSeller({
     ?? listingMetadata.seller_active_listing_count
     ?? listingMetadata.provider_active_listing_count
     ?? null;
+  const hasActiveListingCount = resolvedActiveListingCount !== null
+    && resolvedActiveListingCount !== undefined
+    && String(resolvedActiveListingCount).trim() !== ''
+    && Number.isFinite(Number(resolvedActiveListingCount));
   const joined = resolvedJoinedAt ? new Date(resolvedJoinedAt) : null;
   const validJoined = joined && Number.isFinite(joined.getTime());
   const resolvedProfilePath = profilePath || (sellerId ? `/seller/${encodeURIComponent(sellerId)}` : null);
@@ -163,7 +212,7 @@ export function ListingSeller({
         <p className="truncate text-lg font-black">{name || 'PeekaListing seller'}</p>
         <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {validJoined && <span>Joined {joined.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>}
-          {Number.isFinite(Number(resolvedActiveListingCount)) && <span>{Number(resolvedActiveListingCount)} active listings</span>}
+          {hasActiveListingCount && <span>{Number(resolvedActiveListingCount)} active {roleLabel === 'Provider' ? 'services' : 'listings'}</span>}
         </div>
       </div>
     </div>

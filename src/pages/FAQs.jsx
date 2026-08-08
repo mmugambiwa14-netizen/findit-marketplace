@@ -22,7 +22,7 @@ const FAQS = [
   },
   {
     question: "How do I save listings for later?",
-    answer: "Select the heart on a listing card or detail page. Your saved items appear in Favourites. Sign in so they remain available across visits."
+    answer: "Select the heart on a listing or service card or detail page. Your saved items appear in Saved. Sign in so they remain available across visits."
   },
   {
     question: "Does PeekaListing process payments?",

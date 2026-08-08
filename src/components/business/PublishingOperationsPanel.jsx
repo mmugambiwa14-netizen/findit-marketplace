@@ -120,7 +120,8 @@ export default function PublishingOperationsPanel({ access, onRefresh }) {
               <p className="mt-1 text-sm text-muted-foreground">{access.reviewerMessage || 'Please provide the requested application information.'}</p>
             </div>
           </div>
-          <Textarea className="mt-3" rows={4} minLength={5} maxLength={3000} value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write your response" />
+          <label htmlFor="publishing-response" className="mt-3 block text-xs font-semibold">Response to PeekaListing</label>
+          <Textarea id="publishing-response" className="mt-1" rows={4} minLength={5} maxLength={3000} value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write your response" />
           <Button className="mt-3" onClick={submitInformation} disabled={busyAction === 'information' || response.trim().length < 5}>
             {busyAction === 'information' ? 'Sending…' : 'Send information'}
           </Button>

@@ -124,7 +124,7 @@ export default function MyListings() {
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => navigate(-1)} className="p-1" aria-label="Go back"><ArrowLeft className="w-5 h-5" /></button>
-          <div><h1 className="font-bold text-lg">My Listings</h1>{!isLoading && allListings.length > 0 && <p className="text-xs text-muted-foreground">{allListings.length} loaded</p>}</div>
+          <div><h1 className="font-bold text-lg">My Listings</h1>{!isLoading && allListings.length > 0 && <p className="text-xs text-muted-foreground">Showing {allListings.length}</p>}</div>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild size="sm" className="rounded-xl">

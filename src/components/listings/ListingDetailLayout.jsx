@@ -5,7 +5,7 @@ import { Shield } from "lucide-react";
 export function DetailLoading() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="h-9 w-9 animate-spin rounded-full border-4 border-primary/20 border-t-primary" aria-label="Loading" />
+      <div role="status" aria-label="Loading listing" className="h-9 w-9 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
     </div>
   );
 }
@@ -15,7 +15,7 @@ export function DetailError({ label = "Listing", onRetry }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="clay-card max-w-sm rounded-2xl p-6 text-center">
         <h1 className="text-xl font-bold">We could not load this {label.toLowerCase()}.</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Check your connection and try again. The item has not been classified as missing.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Check your connection and try again. We could not confirm whether this item was removed.</p>
         <Button type="button" variant="outline" className="clay-control mt-5" onClick={onRetry}>Try again</Button>
       </div>
     </div>
@@ -25,7 +25,11 @@ export function DetailError({ label = "Listing", onRetry }) {
 export function DetailMissing({ label }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center text-muted-foreground">
-      <div className="clay-card rounded-2xl px-6 py-10">{label} not found</div>
+      <div className="clay-card max-w-sm rounded-2xl px-6 py-10">
+        <p className="font-semibold">This {label.toLowerCase()} is no longer available.</p>
+        <p className="mt-2 text-sm">It may have been removed or is temporarily unavailable.</p>
+        <Link to={label === 'Service' ? '/services' : '/search'} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">Browse more</Link>
+      </div>
     </div>
   );
 }

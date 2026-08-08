@@ -17,6 +17,7 @@ const SELF_CONTAINED_ROUTES = [
   '/machinery/',
   '/service/',
   '/search',
+  '/services',
   '/tours',
   '/peek',
   '/chats',

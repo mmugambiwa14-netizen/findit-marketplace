@@ -24,6 +24,7 @@ export const PUBLIC_SERVICE_SELECT = `
   photos,
   location_id,
   location_name,
+  location:locations!services_location_id_fkey(latitude, longitude),
   can_travel,
   status,
   views,

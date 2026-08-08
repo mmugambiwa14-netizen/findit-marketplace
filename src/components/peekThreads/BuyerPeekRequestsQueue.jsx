@@ -305,7 +305,7 @@ export default function BuyerPeekRequestsQueue() {
           <h2 id="buyer-peek-requests-heading" className="mt-1 text-lg font-black">Buyer Peek Requests</h2>
           <p className="mt-1 text-sm text-muted-foreground">Prioritised by buyer interest and how long each request has waited.</p>
         </div>
-        {items.length > 0 && <Badge variant="secondary">{items.length} loaded</Badge>}
+        {items.length > 0 && <Badge variant="secondary">Showing {items.length}</Badge>}
       </div>
 
       {queue.isLoading ? (

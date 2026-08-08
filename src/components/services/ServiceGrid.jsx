@@ -1,7 +1,20 @@
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import ServiceCard from "./ServiceCard";
 import { Briefcase } from "lucide-react";
+import { useAuth } from '@/lib/AuthContext';
+import { getServiceFavouriteIds } from '@/services/serviceFavouritesService';
 
 export default function ServiceGrid({ services, isLoading }) {
+  const { user } = useAuth();
+  const serviceIds = useMemo(() => (services || []).map((service) => service.id).filter(Boolean), [services]);
+  const savedQuery = useQuery({
+    queryKey: ['service-favourites', user?.id, serviceIds],
+    queryFn: () => getServiceFavouriteIds(user.id, serviceIds),
+    enabled: Boolean(user?.id && serviceIds.length),
+    staleTime: 60_000,
+  });
+  const savedIds = useMemo(() => new Set(savedQuery.data || []), [savedQuery.data]);
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -34,7 +47,7 @@ export default function ServiceGrid({ services, isLoading }) {
   return (
     <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {services.map((service) => (
-        <ServiceCard key={service.id} service={service} />
+        <ServiceCard key={service.id} service={service} isSaved={savedIds.has(service.id)} />
       ))}
     </div>
   );

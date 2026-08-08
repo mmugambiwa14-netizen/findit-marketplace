@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Loader2, Plus, Search, X } from 'lucide-react';
+import { List, Loader2, Map as MapIcon, Plus, Search, X } from 'lucide-react';
 import CategoryResultsHeader from '@/components/search/CategoryResultsHeader';
+import SearchResultsMap from '@/components/search/SearchResultsMap';
 import ServiceGrid from '@/components/services/ServiceGrid';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { featureFlags } from '@/lib/featureFlags';
 import { getPublicServicesPage } from '@/services/servicesService';
 
 export default function Services() {
@@ -15,6 +17,7 @@ export default function Services() {
   const query = searchParams.get('q') || '';
   const locationId = searchParams.get('location') || '';
   const locationName = searchParams.get('locationName') || '';
+  const showMap = featureFlags.maps && searchParams.get('view') === 'map';
   const [searchInput, setSearchInput] = useState(query);
 
   useEffect(() => setSearchInput(query), [query]);
@@ -70,6 +73,13 @@ export default function Services() {
       if (value) params.set(key, value);
     }
     navigate(`/search?${params.toString()}`);
+  };
+
+  const setView = (view) => {
+    const next = new URLSearchParams(searchParams);
+    if (view === 'map') next.set('view', 'map');
+    else next.delete('view');
+    setSearchParams(next, { replace: true });
   };
 
   return (
@@ -128,11 +138,19 @@ export default function Services() {
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Results</h2>
-            <p className="text-sm text-muted-foreground">{isLoading ? 'Loading results' : `${services.length} service${services.length === 1 ? '' : 's'} loaded`}</p>
+            <p className="text-sm text-muted-foreground">{isLoading ? 'Loading results' : `Showing ${services.length} service${services.length === 1 ? '' : 's'}`}</p>
           </div>
-          <Button asChild variant="outline" className="sm:hidden">
-            <Link to="/create-service"><Plus className="mr-1.5 h-4 w-4" />Offer service</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {featureFlags.maps && (
+              <div className="flex items-center rounded-xl border border-border bg-card p-1" role="group" aria-label="Service result view">
+                <button type="button" onClick={() => setView('list')} aria-pressed={!showMap} className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold ${!showMap ? 'bg-primary/12 text-primary' : 'text-muted-foreground'}`}><List className="h-4 w-4" />List</button>
+                <button type="button" onClick={() => setView('map')} aria-pressed={showMap} className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold ${showMap ? 'bg-primary/12 text-primary' : 'text-muted-foreground'}`}><MapIcon className="h-4 w-4" />Map</button>
+              </div>
+            )}
+            <Button asChild variant="outline" className="sm:hidden">
+              <Link to="/create-service"><Plus className="mr-1.5 h-4 w-4" />Offer service</Link>
+            </Button>
+          </div>
         </div>
 
         {error ? (
@@ -143,7 +161,9 @@ export default function Services() {
           </div>
         ) : (
           <>
-            <ServiceGrid services={services} isLoading={isLoading} />
+            {showMap && !isLoading ? (
+              <SearchResultsMap listings={services.map((service) => ({ ...service, _type: 'service', city: service.location_name }))} type="service" />
+            ) : <ServiceGrid services={services} isLoading={isLoading} />}
             {hasNextPage && (
               <div className="mt-6 flex justify-center">
                 <Button type="button" variant="outline" className="min-w-48" disabled={isFetchingNextPage} onClick={() => fetchNextPage()}>

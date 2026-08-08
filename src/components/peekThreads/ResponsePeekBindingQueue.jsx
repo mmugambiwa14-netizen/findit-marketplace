@@ -93,7 +93,7 @@ export default function ResponsePeekBindingQueue() {
                 const checked = selected.includes(item.requestId);
                 return (
                   <label key={item.requestId} className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${checked ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                    <input type="checkbox" checked={checked} onChange={() => toggle(item.requestId)} className="mt-1 h-4 w-4" />
+                    <input type="checkbox" aria-label={`Select Peek request: ${item.body}`} checked={checked} onChange={() => toggle(item.requestId)} className="mt-1 h-4 w-4" />
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{peekRequestCategoryLabel(item.category)}</Badge><span className="text-xs font-semibold text-primary">{item.supporterCount} interested</span></span>
                       <span className="mt-2 block text-sm font-semibold">{item.body}</span>

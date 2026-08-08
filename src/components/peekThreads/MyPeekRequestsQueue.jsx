@@ -125,7 +125,7 @@ export default function MyPeekRequestsQueue() {
           <h2 id="my-peek-requests-heading" className="mt-1 text-lg font-black">My requests</h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">Track visual evidence you requested or supported across the marketplace.</p>
         </div>
-        {items.length > 0 && <Badge variant="secondary">{items.length} loaded</Badge>}
+        {items.length > 0 && <Badge variant="secondary">Showing {items.length}</Badge>}
       </div>
 
       {activity.isLoading ? (

@@ -13,6 +13,7 @@ import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
+import PeekRequestIntentHandler from "@/components/peekThreads/PeekRequestIntentHandler";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -61,6 +62,7 @@ export default function CarDetail() {
 
   return (
     <div className="findit-screen pb-24">
+      <PeekRequestIntentHandler />
       <ListingDetailActions onBack={() => navigate(-1)} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
@@ -72,7 +74,7 @@ export default function CarDetail() {
           badges={(
             <>
               {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
-              {car.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
+              {car.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
               {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
               {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
             </>
@@ -89,7 +91,7 @@ export default function CarDetail() {
         />
 
         <ListingDetailTabs>
-          <ListingTabSection id="listing-info" title="Listing info">
+          <ListingTabSection id="listing-info" title="Details">
             <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               <ListingFeatureItem icon={Calendar} label="Year" value={car.year} />
               <ListingFeatureItem icon={Gauge} label="Mileage" value={`${(car.mileage || 0).toLocaleString()} km`} />

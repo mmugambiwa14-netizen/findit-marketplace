@@ -187,7 +187,8 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
               {PEEK_REQUEST_CATEGORIES.map((entry) => <option key={entry.value} value={entry.value}>{entry.label}</option>)}
             </select>
             <p className="mt-2 text-xs text-muted-foreground">{PEEK_REQUEST_CATEGORIES.find((entry) => entry.value === category)?.hint}</p>
-            <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={280} rows={3} placeholder="Describe one clear thing the seller can show" className="mt-3 w-full resize-none rounded-xl border border-border bg-card p-3 text-sm outline-none focus:ring-2 focus:ring-primary" />
+            <label htmlFor={`peek-body-${parentId}`} className="sr-only">Describe what you want the seller to show</label>
+            <textarea id={`peek-body-${parentId}`} value={body} onChange={(event) => setBody(event.target.value)} maxLength={280} rows={3} placeholder="Describe one clear thing the seller can show" className="mt-3 w-full resize-none rounded-xl border border-border bg-card p-3 text-sm outline-none focus:ring-2 focus:ring-primary" />
             <div className="mt-2 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>{body.trim().length}/280</span>
               <div className="flex flex-wrap gap-2 sm:justify-end">

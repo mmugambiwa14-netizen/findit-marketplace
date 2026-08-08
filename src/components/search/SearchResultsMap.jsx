@@ -20,6 +20,7 @@ const CITY_COORDS = {
 
 function detailPath(listing, fallbackType) {
   const kind = listing._type || listing.kind || fallbackType;
+  if (kind === 'service') return `/service/${listing.id}`;
   if (kind === 'car') return `/car/${listing.id}`;
   if (kind === 'machinery') return `/machinery/${listing.id}`;
   return `/property/${listing.id}`;
@@ -49,6 +50,7 @@ function getPoint(listing) {
 }
 
 function priceLabel(listing) {
+  if ((listing._type || listing.kind) === 'service' && (listing.pricing_type === 'quote' || listing.price == null)) return 'Contact for quote';
   if (listing.price == null) return 'Contact';
   const currency = listing.currency === 'USD' ? 'US$' : listing.currency || '';
   return `${currency} ${Number(listing.price).toLocaleString()}`.trim();
@@ -78,7 +80,7 @@ function popupContent(listing, point, onOpen) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'mt-2 min-h-9 w-full rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground';
-  button.textContent = 'View listing';
+  button.textContent = (listing._type || listing.kind) === 'service' ? 'View service' : 'View listing';
   button.addEventListener('click', onOpen);
   container.append(button);
   return container;
@@ -180,7 +182,7 @@ export default function SearchResultsMap({ listings = [], type = 'property' }) {
         <div
           ref={mapNode}
           role="region"
-          aria-label="Mapped listing results"
+          aria-label="Mapped search results"
           className="h-[min(68vh,520px)] min-h-[390px] w-full"
         />
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg border border-border bg-background/95 px-3 py-2 text-xs shadow-md backdrop-blur">

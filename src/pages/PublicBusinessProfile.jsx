@@ -114,7 +114,7 @@ export default function PublicBusinessProfile() {
       <main className="mx-auto max-w-5xl space-y-8 px-4 py-7">
         <section aria-labelledby="business-inventory-heading">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div><h2 id="business-inventory-heading" className="text-xl font-bold">{dealer ? 'Vehicle inventory' : 'Listings'}</h2><p className="mt-1 text-sm text-muted-foreground">{inventory.length} active {inventory.length === 1 ? 'listing' : 'listings'} loaded</p></div>
+            <div><h2 id="business-inventory-heading" className="text-xl font-bold">{dealer ? 'Vehicle inventory' : 'Listings'}</h2><p className="mt-1 text-sm text-muted-foreground">Showing {inventory.length} active {inventory.length === 1 ? 'listing' : 'listings'}</p></div>
             {dealer && (
               <form className="flex w-full gap-2 sm:max-w-sm" onSubmit={(event) => { event.preventDefault(); const next = search.trim(); setSearchParams(next ? { q: next } : {}); }}>
                 <label htmlFor="dealer-inventory-search" className="sr-only">Search dealer inventory</label>

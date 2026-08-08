@@ -29,7 +29,7 @@ export default function ListingResults({
         <div>
           <h2 id="listing-results-title" className="findit-section-title">Results</h2>
           <p className="mt-0.5 text-xs text-muted-foreground" aria-live="polite">
-            {isLoading ? 'Loading listings...' : loaded === 0 ? 'No listings found' : `${loaded.toLocaleString()} listing${loaded === 1 ? '' : 's'} loaded`}
+            {isLoading ? 'Loading listings...' : loaded === 0 ? 'No listings found' : `Showing ${loaded.toLocaleString()} listing${loaded === 1 ? '' : 's'}`}
           </p>
         </div>
         <div className="flex items-center gap-2">

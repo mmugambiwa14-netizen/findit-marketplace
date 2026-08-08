@@ -21,11 +21,11 @@ function number(value) { const parsed = Number(value); return Number.isFinite(pa
 function coordinates(item) {
   const latitude = number(item.coordinates?.latitude ?? item.latitude);
   const longitude = number(item.coordinates?.longitude ?? item.longitude);
-  if (latitude !== null && longitude !== null) return { latitude, longitude };
+  if (latitude !== null && longitude !== null) return { latitude, longitude, approximate: false };
   const labels = [item.city, item.location_name, item.publicLocation, item.location_id].filter(Boolean).map((value) => String(value).toLowerCase());
   for (const label of labels) {
     const match = Object.entries(CITY_COORDS).find(([name]) => label.includes(name));
-    if (match) return { latitude: match[1][0], longitude: match[1][1] };
+    if (match) return { latitude: match[1][0], longitude: match[1][1], approximate: true };
   }
   return null;
 }
@@ -55,7 +55,7 @@ function createCategoryMarker(item) {
   element.dataset.category = item._kind;
   element.dataset.selected = 'false';
   element.style.setProperty('--marker-color', visual.color);
-  element.setAttribute('aria-label', `Preview ${visual.label.toLowerCase()} listing: ${item.title}`);
+  element.setAttribute('aria-label', `Preview ${visual.label.toLowerCase()}: ${item.title}`);
   element.title = `${visual.label}: ${item.title}`;
   pin.className = 'findit-map-marker-pin';
   iconSlot.className = 'findit-map-marker-icon';
@@ -67,7 +67,7 @@ function createCategoryMarker(item) {
   return { element, iconRoot };
 }
 
-function MapListingPreview({ item, onOpen, onClose }) {
+function MapListingPreview({ item, point, onOpen, onClose }) {
   const visual = CATEGORY_VISUALS[item._kind];
   return (
     <article className="findit-map-listing-preview" aria-label={`${item.title} preview`}>
@@ -90,8 +90,9 @@ function MapListingPreview({ item, onOpen, onClose }) {
           <p className="text-base font-extrabold text-primary">{price(item)}</p>
           <h2 className="mt-0.5 line-clamp-1 text-sm font-bold text-foreground">{item.title}</h2>
           <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{place(item)}</p>
+          {point.approximate && <p className="mt-1 text-[11px] text-amber-700">Approximate city location</p>}
           <span className="mt-2.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-primary text-xs font-bold text-primary-foreground">
-            View listing <ChevronRight className="h-4 w-4" />
+            {item._kind === 'service' ? 'View service' : 'View listing'} <ChevronRight className="h-4 w-4" />
           </span>
         </div>
       </button>
@@ -184,6 +185,7 @@ export default function DiscoverMapView({ location }) {
       activePopupRoot.render(
         <MapListingPreview
           item={item}
+          point={point}
           onOpen={() => navigate(path(item))}
           onClose={closePreview}
         />,

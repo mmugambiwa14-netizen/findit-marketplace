@@ -13,6 +13,7 @@ import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
+import PeekRequestIntentHandler from "@/components/peekThreads/PeekRequestIntentHandler";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -62,6 +63,7 @@ export default function MachineryDetail() {
 
   return (
     <div className="findit-screen pb-24">
+      <PeekRequestIntentHandler />
       <ListingDetailActions onBack={() => navigate(-1)} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
@@ -73,7 +75,7 @@ export default function MachineryDetail() {
           badges={(
             <>
               <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getMachineryLabel(item.category)}</Badge>
-              {item.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
+              {item.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
               {item.status !== "available" && <Badge variant="destructive" className="capitalize">{String(item.status).replaceAll("_", " ")}</Badge>}
               {item.negotiable && <Badge variant="outline">Negotiable</Badge>}
             </>
@@ -90,7 +92,7 @@ export default function MachineryDetail() {
         />
 
         <ListingDetailTabs>
-          <ListingTabSection id="listing-info" title="Listing info">
+          <ListingTabSection id="listing-info" title="Details">
             <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               {item.year && <ListingFeatureItem icon={Zap} label="Year" value={item.year} />}
               {item.equipment_hours > 0 && <ListingFeatureItem icon={Gauge} label="Hours" value={`${item.equipment_hours.toLocaleString()} h`} />}

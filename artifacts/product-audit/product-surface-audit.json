@@ -1,31 +1,30 @@
 {
-  "generatedAt": "2026-08-07T03:58:40.433Z",
+  "generatedAt": "2026-08-08T19:36:00.967Z",
   "scope": {
-    "sourceModules": 312,
+    "sourceModules": 324,
     "routedPatterns": 48,
     "pageModules": 40,
-    "uniqueControlInstances": 728,
-    "pageExpandedControlInstances": 1098
+    "uniqueControlInstances": 757,
+    "pageExpandedControlInstances": 1133
   },
   "controlsByElement": {
     "a": 6,
     "AlertDialog": 13,
-    "button": 125,
-    "Button": 251,
+    "button": 127,
+    "Button": 263,
     "Checkbox": 1,
     "Dialog": 22,
     "DropdownMenuTrigger": 2,
     "form": 13,
-    "Input": 98,
-    "Link": 95,
+    "Input": 100,
+    "Link": 97,
     "PopoverTrigger": 1,
-    "Select": 28,
-    "SelectTrigger": 28,
+    "Select": 30,
+    "SelectTrigger": 30,
     "Sheet": 5,
-    "Slider": 1,
-    "Switch": 7,
+    "Switch": 10,
     "TabsTrigger": 3,
-    "Textarea": 29
+    "Textarea": 34
   },
   "routes": [
     {
@@ -33,355 +32,344 @@
       "kind": "public",
       "component": "Login",
       "source": "src/pages/Login",
-      "line": 156
+      "line": 157
     },
     {
       "path": "/register",
       "kind": "public",
       "component": "Register",
       "source": "src/pages/Register",
-      "line": 157
+      "line": 158
     },
     {
       "path": "/forgot-password",
       "kind": "public",
       "component": "ForgotPassword",
       "source": "src/pages/ForgotPassword",
-      "line": 158
+      "line": 159
     },
     {
       "path": "/reset-password",
       "kind": "public",
       "component": "ResetPassword",
       "source": "src/pages/ResetPassword",
-      "line": 159
+      "line": 160
     },
     {
       "path": "/",
       "kind": "public",
       "component": "Home",
       "source": "src/pages/Home",
-      "line": 161
+      "line": 162
     },
     {
       "path": "/search",
       "kind": "public",
       "component": "Search",
       "source": "src/pages/Search",
-      "line": 162
+      "line": 163
     },
     {
       "path": "/property/:id",
       "kind": "public",
       "component": "PropertyDetail",
       "source": "src/pages/PropertyDetail",
-      "line": 163
+      "line": 164
     },
     {
       "path": "/car/:id",
       "kind": "public",
       "component": "CarDetail",
       "source": "src/pages/CarDetail",
-      "line": 164
+      "line": 165
     },
     {
       "path": "/machinery/:id",
       "kind": "public",
       "component": "MachineryDetail",
       "source": "src/pages/MachineryDetail",
-      "line": 165
+      "line": 166
     },
     {
       "path": "/seller/:sellerId",
       "kind": "public",
       "component": "SellerProfile",
       "source": "src/pages/SellerProfile",
-      "line": 166
+      "line": 167
     },
     {
       "path": "/business/:id",
       "kind": "public",
       "component": "PublicBusinessProfile",
       "source": "src/pages/PublicBusinessProfile",
-      "line": 167
+      "line": 168
     },
     {
       "path": "/dealer/:id",
       "kind": "public",
       "component": "PublicBusinessProfile",
       "source": "src/pages/PublicBusinessProfile",
-      "line": 168
+      "line": 169
     },
     {
       "path": "/services",
       "kind": "public",
       "component": "Services",
       "source": "src/pages/Services",
-      "line": 169
+      "line": 170
     },
     {
       "path": "/service/:id",
       "kind": "public",
       "component": "ServiceDetail",
       "source": "src/pages/ServiceDetail",
-      "line": 170
+      "line": 171
     },
     {
       "path": "/peek",
       "kind": "public",
       "component": "",
       "source": "",
-      "line": 171
+      "line": 172
     },
     {
       "path": "/tours",
       "kind": "public",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 172
+      "line": 173
     },
     {
       "path": "/help",
       "kind": "public",
       "component": "FAQs",
       "source": "src/pages/FAQs",
-      "line": 173
+      "line": 174
     },
     {
       "path": "/help/contact",
       "kind": "public",
       "component": "ContactSupport",
       "source": "src/pages/ContactSupport",
-      "line": 174
+      "line": 175
     },
     {
       "path": "/legal",
       "kind": "public",
       "component": "LegalPage",
       "source": "src/pages/LegalPage",
-      "line": 175
+      "line": 176
     },
     {
       "path": "/legal/:document",
       "kind": "public",
       "component": "LegalPage",
       "source": "src/pages/LegalPage",
-      "line": 176
+      "line": 177
     },
     {
       "path": "/faqs",
       "kind": "compatibility",
       "component": "Navigate",
       "source": "",
-      "line": 177
+      "line": 178
     },
     {
       "path": "/support",
       "kind": "compatibility",
       "component": "Navigate",
       "source": "",
-      "line": 178
+      "line": 179
     },
     {
       "path": "/create",
       "kind": "compatibility",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 179
+      "line": 180
     },
     {
       "path": "/messages",
       "kind": "compatibility",
       "component": "LegacyPathRedirect",
       "source": "",
-      "line": 180
+      "line": 181
     },
     {
       "path": "/messages/:conversationId",
       "kind": "compatibility",
       "component": "LegacyConversationRedirect",
       "source": "",
-      "line": 181
+      "line": 182
     },
     {
       "path": "/post",
       "kind": "protected",
-      "component": "CreateListing",
-      "source": "src/pages/CreateListing",
-      "line": 185
+      "component": "BusinessPublishingGate",
+      "source": "",
+      "line": 186
     },
     {
       "path": "/create-service",
       "kind": "protected",
       "component": "CuratedCreateService",
       "source": "src/pages/CuratedCreateService",
-      "line": 186
+      "line": 187
     },
     {
       "path": "/my-services",
       "kind": "protected",
       "component": "MyServices",
       "source": "src/pages/MyServices",
-      "line": 187
+      "line": 188
     },
     {
       "path": "/saved",
       "kind": "protected",
       "component": "Saved",
       "source": "src/pages/Saved",
-      "line": 188
+      "line": 189
     },
     {
       "path": "/profile",
       "kind": "protected",
       "component": "Profile",
       "source": "src/pages/Profile",
-      "line": 189
+      "line": 190
     },
     {
       "path": "/my-listings",
       "kind": "protected",
       "component": "MyListings",
       "source": "src/pages/MyListings",
-      "line": 190
+      "line": 191
     },
     {
       "path": "/peek-requests",
       "kind": "public",
       "component": "BuyerPeekRequests",
       "source": "src/pages/BuyerPeekRequests",
-      "line": 191
+      "line": 192
     },
     {
       "path": "/settings",
       "kind": "protected",
       "component": "Settings",
       "source": "src/pages/Settings",
-      "line": 192
+      "line": 193
     },
     {
       "path": "/chats",
       "kind": "protected",
       "component": "Inquiries",
       "source": "src/pages/Inquiries",
-      "line": 193
+      "line": 194
     },
     {
       "path": "/chats/:conversationId",
       "kind": "protected",
       "component": "Inquiries",
       "source": "src/pages/Inquiries",
-      "line": 194
+      "line": 195
     },
     {
       "path": "/business-profiles",
       "kind": "protected",
       "component": "BusinessProfiles",
       "source": "src/pages/BusinessProfiles",
-      "line": 195
+      "line": 196
     },
     {
       "path": "/notifications",
       "kind": "protected",
       "component": "NotificationCenter",
       "source": "src/pages/NotificationCenter",
-      "line": 196
+      "line": 197
     },
     {
       "path": "/admin",
       "kind": "admin",
       "component": "AdminDashboard",
       "source": "src/pages/admin/AdminDashboard",
-      "line": 201
+      "line": 202
     },
     {
       "path": "/admin/listings",
       "kind": "admin",
       "component": "AdminListings",
       "source": "src/pages/admin/AdminListings",
-      "line": 202
+      "line": 203
     },
     {
       "path": "/admin/peeks",
       "kind": "admin",
       "component": "AdminPeeks",
       "source": "src/pages/admin/AdminPeeks",
-      "line": 203
+      "line": 204
     },
     {
       "path": "/admin/users",
       "kind": "admin",
       "component": "AdminUsers",
       "source": "src/pages/admin/AdminUsers",
-      "line": 204
+      "line": 205
     },
     {
       "path": "/admin/reports",
       "kind": "admin",
       "component": "AdminReports",
       "source": "src/pages/admin/AdminReports",
-      "line": 205
+      "line": 206
     },
     {
       "path": "/admin/support",
       "kind": "admin",
       "component": "AdminSupportRequests",
       "source": "src/pages/admin/AdminSupportRequests",
-      "line": 206
+      "line": 207
     },
     {
       "path": "/admin/categories",
       "kind": "admin",
       "component": "AdminCategories",
       "source": "src/pages/admin/AdminCategories",
-      "line": 207
+      "line": 208
     },
     {
       "path": "/admin/business-applications",
       "kind": "admin",
       "component": "AdminBusinessApplications",
       "source": "src/pages/admin/AdminBusinessApplications",
-      "line": 208
+      "line": 209
     },
     {
       "path": "/admin/managed-listings",
       "kind": "admin",
       "component": "AdminManagedListings",
       "source": "src/pages/admin/AdminManagedListings",
-      "line": 209
+      "line": 210
     },
     {
       "path": "/admin/audit-log",
       "kind": "admin",
       "component": "AdminAuditLog",
       "source": "src/pages/admin/AdminAuditLog",
-      "line": 210
+      "line": 211
     },
     {
       "path": "*",
       "kind": "fallback",
       "component": "PageNotFound",
       "source": "src/lib/PageNotFound",
-      "line": 213
+      "line": 214
     }
   ],
-  "failures": [
-    {
-      "severity": "medium",
-      "code": "UNSAFE_BROWSER_STORAGE",
-      "file": "src/lib/traceContext.js",
-      "line": null,
-      "message": "Browser storage is accessed outside the guarded storage boundary.",
-      "evidence": ""
-    }
-  ],
+  "failures": [],
   "warnings": [],
   "summary": {
-    "failureCount": 1,
+    "failureCount": 0,
     "warningCount": 0,
-    "failureSeverity": {
-      "medium": 1
-    },
+    "failureSeverity": {},
     "warningSeverity": {}
   }
 }

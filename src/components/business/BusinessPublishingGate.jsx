@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState } from 'react';
 import { Building2, CheckCircle2, Loader2, Megaphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -62,10 +62,10 @@ function PublishingChoice({ access, onBusiness, onManaged }) {
     <main className="mx-auto max-w-3xl px-4 py-8">
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Publish on PeekaListing</p>
       <h1 className="mt-2 text-3xl font-black tracking-tight">Choose how you want to list</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Direct publishing is reserved for approved businesses. Owners who do not need a business account can ask PeekaListing to prepare and advertise a listing for them.</p>
+      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Direct publishing is available to approved businesses. If you are listing an item personally, you can ask PeekaListing to prepare and advertise it for you.</p>
       {pending && <div className="mt-5 rounded-2xl border border-primary/25 bg-primary/5 p-4"><p className="font-bold">Business application: {access.applicationStatus.replace('_', ' ')}</p>{access.reviewerMessage && <p className="mt-1 text-sm text-muted-foreground">{access.reviewerMessage}</p>}</div>}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <ChoiceCard icon={Building2} title="Become an approved business" description="Apply for category-specific publishing rights and manage your own inventory, Peeks and buyer requests." action={pending ? 'View application' : 'Apply as a business'} onClick={onBusiness} />
+        <ChoiceCard icon={Building2} title="Become an approved business" description="Apply to publish directly in selected categories and manage your inventory, Peeks and buyer requests." action={pending ? 'View application' : 'Apply as a business'} onClick={onBusiness} />
         <ChoiceCard icon={Megaphone} title="Advertise through PeekaListing" description="Send us the item details. PeekaListing reviews, prepares and publishes the listing on behalf of the owner." action="Request a managed listing" onClick={onManaged} />
       </div>
     </main>
@@ -149,4 +149,8 @@ function ManagedListingRequest({ onBack }) {
 }
 
 function StatusPage({ title, description, onBack }) { return <main className="mx-auto flex min-h-[65vh] max-w-lg items-center px-4"><section className="clay-card w-full rounded-2xl p-6 text-center"><CheckCircle2 className="mx-auto h-10 w-10 text-primary" /><h1 className="mt-4 text-2xl font-black">{title}</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p><Button className="mt-5" variant="outline" onClick={onBack}>Back</Button></section></main>; }
-function Field({ label, children }) { return <label className="block"><span className="mb-1.5 block text-sm font-bold">{label}</span>{children}</label>; }
+function Field({ label, id = null, children }) {
+  const fieldId = id || `publishing-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const control = isValidElement(children) ? cloneElement(children, { id: children.props.id || fieldId }) : children;
+  return <div className="block"><label htmlFor={fieldId} className="mb-1.5 block text-sm font-bold">{label}</label>{control}</div>;
+}

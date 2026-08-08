@@ -10,7 +10,6 @@ import {
   useParams,
 } from 'react-router-dom';
 import { Toaster as SonnerToaster } from 'sonner';
-import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import * as authService from '@/services/authService';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
@@ -229,7 +228,6 @@ function App() {
             <GlobalRefreshButton />
             <InstallPrompt />
           </PwaProvider>
-          <Toaster />
           <DarkSonner />
         </QueryClientProvider>
       </CurrencyProvider>

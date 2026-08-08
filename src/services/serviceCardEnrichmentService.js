@@ -2,8 +2,11 @@ import { hydrateMarketplaceCardImages } from '@/services/marketplaceImagesServic
 import { attachPublicTourSummaries } from '@/services/listingToursService';
 
 function mapServiceCard(row) {
+  const location = Array.isArray(row.location) ? row.location[0] : row.location;
   return {
     ...row,
+    latitude: row.latitude ?? location?.latitude ?? null,
+    longitude: row.longitude ?? location?.longitude ?? null,
     price: row.price == null ? null : Number(row.price),
     subcategories: Array.isArray(row.subcategories) ? row.subcategories : [],
   };

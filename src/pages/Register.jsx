@@ -9,7 +9,7 @@ import PhoneInput from "@/components/ui/PhoneInput";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import AppleIcon from "@/components/AppleIcon";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { hasEnabledOAuthProvider, oauthProviders } from "@/lib/oauthProviders";
 import { createLoginPath, sanitizeReturnTo } from "@/lib/authNavigation";
 import { PASSWORD_MIN_LENGTH, passwordPolicyError } from "@/lib/passwordPolicy";
@@ -70,10 +70,7 @@ export default function Register() {
     setResending(true);
     try {
       await authService.resendSignupConfirmation(email, returnTo);
-      toast({
-        title: "Email sent",
-        description: "Check your inbox for the confirmation link.",
-      });
+      toast.success("Email sent", { description: "Check your inbox for the confirmation link." });
     } catch (err) {
       setError(err.message || "Failed to resend confirmation email");
     } finally {

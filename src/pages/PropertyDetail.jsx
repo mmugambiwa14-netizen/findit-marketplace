@@ -12,6 +12,7 @@ import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
+import PeekRequestIntentHandler from "@/components/peekThreads/PeekRequestIntentHandler";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -68,6 +69,7 @@ export default function PropertyDetail() {
 
   return (
     <div className="findit-screen pb-24">
+      <PeekRequestIntentHandler />
       <ListingDetailActions onBack={() => navigate(-1)} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
@@ -79,7 +81,7 @@ export default function PropertyDetail() {
           badges={(
             <>
               <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getCategoryLabel(property.category)}</Badge>
-              {property.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
+              {property.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
               {property.status !== "available" && <Badge variant="destructive">{statusLabel(property.status)}</Badge>}
               {property.negotiable && <Badge variant="outline">Negotiable</Badge>}
             </>
@@ -96,7 +98,7 @@ export default function PropertyDetail() {
         />
 
         <ListingDetailTabs>
-          <ListingTabSection id="listing-info" title="Listing info">
+          <ListingTabSection id="listing-info" title="Details">
             <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               {property.bedrooms > 0 && <ListingFeatureItem icon={Bed} label="Bedrooms" value={property.bedrooms} />}
               {property.bathrooms > 0 && <ListingFeatureItem icon={Bath} label="Bathrooms" value={property.bathrooms} />}

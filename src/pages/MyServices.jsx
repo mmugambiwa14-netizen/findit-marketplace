@@ -34,7 +34,7 @@ export default function MyServices() {
             <BackButton className="-ml-2" />
             <div>
               <h1 className="text-2xl font-bold">My Services</h1>
-              {!isLoading && services.length > 0 && <p className="text-xs text-muted-foreground">{services.length} loaded</p>}
+              {!isLoading && services.length > 0 && <p className="text-xs text-muted-foreground">Showing {services.length}</p>}
             </div>
           </div>
           <Link to="/create-service" className="flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">

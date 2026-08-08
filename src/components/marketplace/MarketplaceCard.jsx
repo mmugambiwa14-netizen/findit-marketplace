@@ -27,6 +27,7 @@ export default function MarketplaceCard({
   tour = null,
   tourLabel = 'Peek',
   sellerName = null,
+  sellerLabel = 'Seller',
   views = null,
   actions = null,
   layout = 'grid',
@@ -83,7 +84,7 @@ export default function MarketplaceCard({
         <button
           type="button"
           onClick={save.onToggle}
-          aria-label={save.active ? 'Remove from saved' : 'Save listing'}
+          aria-label={save.active ? 'Remove from saved' : 'Save item'}
           aria-pressed={save.active}
           className={cn(
             'absolute right-2.5 top-2.5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white shadow-lg backdrop-blur-md hover:scale-105 focus-visible:ring-offset-0 active:scale-95',
@@ -197,7 +198,7 @@ export default function MarketplaceCard({
             <div className="grid grid-cols-2 divide-x divide-border bg-surface-secondary/35">
               <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5">
                 <span className="clay-icon h-9 w-9 shrink-0 text-muted-foreground"><Building2 className="h-4 w-4" /></span>
-                <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Seller</p><p className="truncate text-xs font-semibold text-foreground">{sellerName || 'Private seller'}</p></div>
+                <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{sellerLabel}</p><p className="truncate text-xs font-semibold text-foreground">{sellerName || `Private ${sellerLabel.toLowerCase()}`}</p></div>
               </div>
               <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5">
                 <span className="clay-icon h-9 w-9 shrink-0 text-muted-foreground"><Eye className="h-4 w-4" /></span>
