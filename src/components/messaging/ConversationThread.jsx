@@ -29,7 +29,7 @@ import {
 
 const THREAD_PAGE_SIZE = 50;
 const DISCONNECTED_THREAD_REFRESH_MS = 4000;
-const CONNECTED_THREAD_REFRESH_MS = 15_000;
+const CONNECTED_THREAD_REFRESH_MS = 30_000;
 const listingPath = (conversation, tour = false) => `/${conversation.listing_kind}/${conversation.listing_id}${tour ? '?media=tour' : ''}`;
 
 function statusLabel(status) {
@@ -84,12 +84,58 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(conversationId && currentUser?.id),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const tailQuery = useQuery({
+    queryKey: ['message-thread-tail', conversationId],
+    queryFn: ({ signal }) => getMessageThreadPage(conversationId, { limit: THREAD_PAGE_SIZE }, signal),
+    enabled: Boolean(conversationId && currentUser?.id && messagesQuery.data),
     staleTime: 2_000,
     refetchInterval: realtimeConnected ? CONNECTED_THREAD_REFRESH_MS : DISCONNECTED_THREAD_REFRESH_MS,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: 'always',
     refetchOnReconnect: 'always',
   });
+
+  useEffect(() => {
+    const incomingPage = tailQuery.data;
+    const incomingItems = Array.isArray(incomingPage?.items) ? incomingPage.items : [];
+    if (!incomingItems.length) return;
+
+    queryClient.setQueryData(['message-thread', conversationId], (current) => {
+      if (!current?.pages?.length) return current;
+      const firstPage = current.pages[0];
+      const currentItems = Array.isArray(firstPage?.items) ? firstPage.items : [];
+      if (!currentItems.length) {
+        return { ...current, pages: [incomingPage, ...current.pages.slice(1)] };
+      }
+
+      const currentIds = new Set(currentItems.map((item) => item.message_id));
+      const overlaps = incomingItems.some((item) => currentIds.has(item.message_id));
+      if (!overlaps) {
+        firstScrollRef.current = true;
+        olderScrollRef.current = null;
+        return { ...current, pages: [incomingPage], pageParams: [null] };
+      }
+
+      const mergedItems = [...currentItems];
+      let changed = false;
+      for (const item of incomingItems) {
+        if (currentIds.has(item.message_id)) continue;
+        currentIds.add(item.message_id);
+        mergedItems.push(item);
+        changed = true;
+      }
+      if (!changed) return current;
+      return {
+        ...current,
+        pages: [{ ...firstPage, items: mergedItems }, ...current.pages.slice(1)],
+      };
+    });
+  }, [conversationId, queryClient, tailQuery.data]);
 
   const messages = useMemo(() => {
     const byId = new Map();
@@ -129,7 +175,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     onSuccess: async () => {
       setText('');
       scrollAfterSendRef.current = true;
-      await queryClient.resetQueries({ queryKey: ['message-thread', conversationId], exact: true });
+      await queryClient.refetchQueries({ queryKey: ['message-thread-tail', conversationId], exact: true, type: 'active' });
       queryClient.invalidateQueries({ queryKey: ['message-conversation-metadata', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
     },
