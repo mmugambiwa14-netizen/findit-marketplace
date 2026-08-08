@@ -12,9 +12,14 @@ import {
   normalizeNotificationRow,
 } from '@/services/notificationContracts';
 
-export async function getNotifications(input = {}) {
+function throwIfAborted(signal) {
+  if (signal?.aborted) throw signal.reason ?? new DOMException('The operation was aborted', 'AbortError');
+}
+
+export async function getNotifications(input = {}, signal) {
   const request = normalizeNotificationRequest(input);
-  const rows = await findNotifications(request);
+  const rows = await findNotifications(request, signal);
+  throwIfAborted(signal);
   return {
     items: (rows ?? []).map(normalizeNotificationRow),
     total: Number(rows?.[0]?.total_count ?? 0),
@@ -23,11 +28,13 @@ export async function getNotifications(input = {}) {
   };
 }
 
-export async function getNotificationsPage(input = {}) {
+export async function getNotificationsPage(input = {}, signal) {
   const request = normalizeNotificationPageRequest(input);
-  const rows = await findNotificationsPage(request);
-  const hasMore = rows.length > request.limit;
-  const pageRows = rows.slice(0, request.limit);
+  const rows = await findNotificationsPage(request, signal);
+  throwIfAborted(signal);
+  const values = Array.isArray(rows) ? rows : [];
+  const hasMore = values.length > request.limit;
+  const pageRows = values.slice(0, request.limit);
   const items = pageRows.map(normalizeNotificationRow);
   const last = items.at(-1);
   return {
@@ -37,8 +44,10 @@ export async function getNotificationsPage(input = {}) {
   };
 }
 
-export async function getUnreadNotificationCount() {
-  return Number(await fetchUnreadNotificationCount() ?? 0);
+export async function getUnreadNotificationCount(signal) {
+  const value = await fetchUnreadNotificationCount(signal);
+  throwIfAborted(signal);
+  return Math.max(0, Number(value) || 0);
 }
 
 export function markNotificationRead(notificationId) {
