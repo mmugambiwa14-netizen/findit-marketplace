@@ -71,7 +71,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
 
   const conversationQuery = useQuery({
     queryKey: ['message-conversation-metadata', conversationId],
-    queryFn: () => getMessageConversationMetadata(conversationId),
+    queryFn: ({ signal }) => getMessageConversationMetadata(conversationId, signal),
     enabled: Boolean(conversationId && currentUser?.id),
     staleTime: 15_000,
     refetchOnWindowFocus: 'always',
@@ -79,7 +79,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
 
   const messagesQuery = useInfiniteQuery({
     queryKey: ['message-thread', conversationId],
-    queryFn: ({ pageParam }) => getMessageThreadPage(conversationId, { cursor: pageParam || null, limit: THREAD_PAGE_SIZE }),
+    queryFn: ({ pageParam, signal }) => getMessageThreadPage(conversationId, { cursor: pageParam || null, limit: THREAD_PAGE_SIZE }, signal),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(conversationId && currentUser?.id),
