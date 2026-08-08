@@ -32,23 +32,35 @@ function requireValid(result) {
   throw error;
 }
 
-export async function getPeekThreadPage(input) {
+function throwIfAborted(signal) {
+  if (signal?.aborted) throw signal.reason ?? new DOMException('The operation was aborted', 'AbortError');
+}
+
+export async function getPeekThreadPage(input, signal) {
   const request = normalizePeekThreadReadRequest(input);
-  return normalizePeekThreadPage(await readPeekThreadPage(request), request.limit);
+  const rows = await readPeekThreadPage(request, signal);
+  throwIfAborted(signal);
+  return normalizePeekThreadPage(rows, request.limit);
 }
 
-export async function getMyPeekRequestActivityPage(input = {}) {
+export async function getMyPeekRequestActivityPage(input = {}, signal) {
   const request = normalizePeekActivityRequest(input);
-  return normalizePeekActivityPage(await readMyPeekRequestActivityPage(request), request.limit);
+  const rows = await readMyPeekRequestActivityPage(request, signal);
+  throwIfAborted(signal);
+  return normalizePeekActivityPage(rows, request.limit);
 }
 
-export async function getSellerPeekRequestQueue(input = {}) {
+export async function getSellerPeekRequestQueue(input = {}, signal) {
   const request = normalizeSellerPeekQueueRequest(input);
-  return normalizeSellerPeekQueuePage(await readSellerPeekRequestQueue(request), request.limit);
+  const rows = await readSellerPeekRequestQueue(request, signal);
+  throwIfAborted(signal);
+  return normalizeSellerPeekQueuePage(rows, request.limit);
 }
 
-export async function getUnboundResponsePeeks() {
-  return (await readUnboundResponsePeeks()).map((row) => ({
+export async function getUnboundResponsePeeks(signal) {
+  const rows = await readUnboundResponsePeeks(signal);
+  throwIfAborted(signal);
+  return rows.map((row) => ({
     tourId: row.tour_id,
     parentType: row.parent_type,
     parentId: row.listing_id ?? row.service_id,
@@ -59,9 +71,11 @@ export async function getUnboundResponsePeeks() {
   }));
 }
 
-export async function getResponsePeekRequestCandidates(tourId) {
+export async function getResponsePeekRequestCandidates(tourId, signal) {
   const id = requireValid(normalizeRequestId(tourId));
-  return (await readResponsePeekRequestCandidates(id)).map((row) => ({
+  const rows = await readResponsePeekRequestCandidates(id, signal);
+  throwIfAborted(signal);
+  return rows.map((row) => ({
     requestId: row.request_id,
     category: row.category,
     body: row.body,
