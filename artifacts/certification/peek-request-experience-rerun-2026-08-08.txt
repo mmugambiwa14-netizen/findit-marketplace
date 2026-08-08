@@ -1,0 +1,3 @@
+Peek Request experience certification rerun trigger.
+Canonical main head: a8b0a2ebb169e28376a6f7a560174f466dfbbb7a
+Reason: active V1 type contract corrected for optional fromComposer support-mutation context.
