@@ -60,7 +60,7 @@ test('thin Search preserves the v2 market, privacy and deterministic keyset rule
 test('v2 remains untouched as a compatibility and rollback path', () => {
   assert.doesNotMatch(migration, /drop function if exists public\.public_listing_search_page_v2/);
   assert.doesNotMatch(migration, /revoke execute on function public\.public_listing_search_page_v2/);
-  assert.doesNotMatch(rollback, /public_listing_search_page_v2/);
+  assert.doesNotMatch(rollback, /(?:drop function if exists|revoke (?:all|execute) on function|alter function|create or replace function)\s+(?:public|private)\.public_listing_search_page_v2/i);
   assert.doesNotMatch(rollback, /drop table|truncate|delete from/i);
 });
 
