@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const repositoryUrl = new URL('../../src/repositories/publicListingsRepository.js', import.meta.url);
-const migrationUrl = new URL('../../supabase/migrations/20260808020000_currency_safe_public_listing_search_v2.sql', import.meta.url);
+const v2MigrationUrl = new URL('../../supabase/migrations/20260808020000_currency_safe_public_listing_search_v2.sql', import.meta.url);
+const cardMigrationUrl = new URL('../../supabase/migrations/20260808043000_public_listing_search_card_projection.sql', import.meta.url);
 
 async function repositorySource() {
   return readFile(repositoryUrl, 'utf8');
@@ -38,23 +39,25 @@ test('public listing projection remains explicit and excludes raw seller contact
   assert.match(projection, /longitude:public_longitude/);
 });
 
-test('active public search remains on the currency-safe bounded v2 keyset RPC path', async () => {
+test('active public search uses the thin currency-safe bounded keyset RPC path', async () => {
   const source = await repositorySource();
   const body = functionBody(source, 'findPublicListingsPage', 'findPublicListingTitleSuggestions');
 
-  assert.match(body, /supabase\.rpc\(['"]public_listing_search_page_v2['"]/);
+  assert.match(body, /supabase\.rpc\(['"]public_listing_search_card_page_v1['"]/);
+  assert.doesNotMatch(body, /supabase\.rpc\(['"]public_listing_search_page_v2['"]/);
   assert.doesNotMatch(body, /supabase\.rpc\(['"]public_listing_search_page['"]/);
   assert.match(body, /p_country_code:\s*request\.countryCode/);
   assert.match(body, /p_currency:\s*request\.currency/);
   assert.match(body, /p_cursor_value:/);
   assert.match(body, /p_cursor_id:/);
   assert.match(body, /p_limit:\s*request\.pageSize/);
+  assert.match(body, /abortSignal\(signal\)/);
   assert.doesNotMatch(body, /count:\s*['"]exact['"]/);
   assert.doesNotMatch(body, /\.range\(/);
 });
 
-test('v2 database search projects public coordinates and no raw contact values', async () => {
-  const migration = await readFile(migrationUrl, 'utf8');
+test('v2 compatibility search still projects public coordinates and no raw contact values', async () => {
+  const migration = await readFile(v2MigrationUrl, 'utf8');
   const privateStart = migration.indexOf('create or replace function private.public_listing_search_page_v2');
   const publicStart = migration.indexOf('create or replace function public.public_listing_search_page_v2');
   assert.notEqual(privateStart, -1);
@@ -67,6 +70,25 @@ test('v2 database search projects public coordinates and no raw contact values',
   assert.match(privateFunction, /listing\.native_currency/);
   assert.match(privateFunction, /listing\.native_price/);
   assert.doesNotMatch(privateFunction.match(/returns table \([\s\S]*?\)\s*language plpgsql/i)?.[0] ?? '', /\bcontact_phone text\b|\bcontact_whatsapp text\b|\bcontact_email text\b/);
+});
+
+test('thin card search keeps public coordinates and excludes detail-only payload', async () => {
+  const migration = await readFile(cardMigrationUrl, 'utf8');
+  const privateStart = migration.indexOf('create or replace function private.public_listing_search_card_page_v1');
+  const publicStart = migration.indexOf('create or replace function public.public_listing_search_card_page_v1');
+  assert.notEqual(privateStart, -1);
+  assert.notEqual(publicStart, -1);
+  const privateFunction = migration.slice(privateStart, publicStart);
+  const result = privateFunction.match(/returns table \([\s\S]*?\)\s*language plpgsql/i)?.[0] ?? '';
+
+  assert.match(privateFunction, /listing\.public_latitude/);
+  assert.match(privateFunction, /listing\.public_longitude/);
+  assert.match(privateFunction, /listing\.content_suspended_at is null/);
+  assert.match(privateFunction, /listing\.native_currency/);
+  assert.match(privateFunction, /listing\.native_price/);
+  assert.match(privateFunction, /jsonb_build_array\(listing\.photos -> 0\)/);
+  assert.doesNotMatch(result, /\bcontact_phone text\b|\bcontact_whatsapp text\b|\bcontact_email text\b/);
+  assert.doesNotMatch(result, /description text|deposit numeric|agent_fee numeric|additional_fees numeric|created_via text|updated_at timestamptz/);
 });
 
 test('public listing reads always preserve enquiry-eligible status filtering', async () => {
@@ -91,7 +113,7 @@ test('public seller pagination uses a stable descending cursor and limit plus on
   assert.doesNotMatch(body, /\.range\(/);
 });
 
-test('title suggestions remain kind-scoped, status-scoped, escaped, and bounded', async () => {
+test('title suggestions remain kind-scoped, status-scoped, escaped, bounded and abortable', async () => {
   const source = await repositorySource();
   const body = functionBody(source, 'findPublicListingTitleSuggestions', 'findPublicListingById');
 
@@ -99,4 +121,5 @@ test('title suggestions remain kind-scoped, status-scoped, escaped, and bounded'
   assert.match(body, /escapeLikePattern\(searchTerm\)/);
   assert.match(body, /\.in\(['"]status['"],\s*\[['"]available['"],\s*['"]under_offer['"]\]\)/);
   assert.match(body, /\.limit\(limit\)/);
+  assert.match(body, /abortSignal\(signal\)/);
 });
