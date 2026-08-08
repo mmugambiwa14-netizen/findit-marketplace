@@ -3,9 +3,25 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [migration, rollback, messaging, support, listingMedia, marketplaceMedia, tourUpload, tourReports, contactReveal, peekWrites, business] = await Promise.all([
+const [
+  migration,
+  rollback,
+  boundaryRepair,
+  boundaryRepairRollback,
+  messaging,
+  support,
+  listingMedia,
+  marketplaceMedia,
+  tourUpload,
+  tourReports,
+  contactReveal,
+  peekWrites,
+  business,
+] = await Promise.all([
   read('supabase/migrations/20260808070000_abuse_rate_limit_buckets.sql'),
   read('supabase/rollback/20260808070000_abuse_rate_limit_buckets.rollback.sql'),
+  read('supabase/migrations/20260808071000_restore_private_boundary_after_abuse_limits.sql'),
+  read('supabase/rollback/20260808071000_restore_private_boundary_after_abuse_limits.rollback.sql'),
   read('supabase/migrations/0018_v1_messaging.sql'),
   read('supabase/migrations/0025_v1_contact_support.sql'),
   read('supabase/migrations/0021_v1_listing_creation_and_media.sql'),
@@ -78,15 +94,28 @@ test('bucket budgets preserve established public limits and add bounded business
   assert.match(business, /submit_managed_listing_request/);
 });
 
-test('rate-limit maintenance is service-only and bounded', () => {
+test('private helper schema reachability is restored without exposing limiter internals', () => {
+  assert.match(boundaryRepair, /grant usage on schema private to anon, authenticated/);
+  assert.match(boundaryRepair, /has_schema_privilege\('anon', 'private', 'USAGE'\)/);
+  assert.match(boundaryRepair, /has_schema_privilege\('authenticated', 'private', 'USAGE'\)/);
+  assert.match(boundaryRepair, /has_schema_privilege\('authenticated', 'private', 'CREATE'\)/);
+  assert.doesNotMatch(boundaryRepair, /grant create on schema private/i);
+  assert.match(boundaryRepair, /revoke all on table private\.abuse_rate_limit_buckets[\s\S]*service_role/);
+  assert.match(boundaryRepair, /revoke all on function private\.consume_abuse_rate_limit[\s\S]*service_role/);
+  assert.match(boundaryRepair, /revoke all on function private\.require_abuse_rate_limit[\s\S]*service_role/);
+});
+
+test('rate-limit maintenance is service-only, bounded and NULL-safe', () => {
   assert.match(migration, /create or replace function public\.prune_abuse_rate_limit_buckets/);
-  assert.match(migration, /p_limit not between 1 and 50000/);
-  assert.match(migration, /limit p_limit[\s\S]*for update skip locked/);
-  assert.match(migration, /grant execute on function public\.prune_abuse_rate_limit_buckets\(integer\)[\s\S]*to service_role/);
+  assert.match(boundaryRepair, /create or replace function public\.prune_abuse_rate_limit_buckets/);
+  assert.match(boundaryRepair, /coalesce\(auth\.role\(\), ''\) <> 'service_role'/);
+  assert.match(boundaryRepair, /p_limit not between 1 and 50000/);
+  assert.match(boundaryRepair, /limit p_limit[\s\S]*for update skip locked/);
+  assert.match(boundaryRepair, /grant execute on function public\.prune_abuse_rate_limit_buckets\(integer\)[\s\S]*to service_role/);
   assert.doesNotMatch(migration, /grant execute on function private\.consume_abuse_rate_limit[^;]+to (?:anon|authenticated)/i);
 });
 
-test('rollback disables new enforcement without deleting compact abuse evidence', () => {
+test('rollbacks preserve limiter evidence and do not reintroduce the private-boundary regression', () => {
   for (const trigger of [
     'trg_inquiries_abuse_budget',
     'trg_support_requests_abuse_budget',
@@ -101,4 +130,8 @@ test('rollback disables new enforcement without deleting compact abuse evidence'
   ]) assert.match(rollback, new RegExp(`drop trigger if exists ${trigger}`));
   assert.doesNotMatch(rollback, /drop table|truncate|delete from/i);
   assert.match(rollback, /preserve private\.abuse_rate_limit_buckets/);
+  assert.match(boundaryRepairRollback, /grant usage on schema private to anon, authenticated/);
+  assert.match(boundaryRepairRollback, /coalesce\(auth\.role\(\), ''\) <> 'service_role'/);
+  assert.doesNotMatch(boundaryRepairRollback, /revoke .*schema private from (?:anon|authenticated)/i);
+  assert.doesNotMatch(boundaryRepairRollback, /drop table|truncate|delete from/i);
 });
