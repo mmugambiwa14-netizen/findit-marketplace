@@ -27,22 +27,26 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       NODE_ENV: production
       VITE_MODE: staging
-      VITE_DEPLOY_ENV: preview
+      # This is an isolated staging deployment, not a disposable preview.
+      # `preview` intentionally unregisters the service worker, which makes
+      # the installed PWA unusable on the staging URL.
+      VITE_DEPLOY_ENV: staging
       VITE_BASE_PATH: /
       FINDIT_STAGING_ORIGIN: https://staging.peekalisting.pages.dev
+      FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
       # Prefer environment-scoped browser configuration. The fallback keeps
       # this staging-only workflow compatible with the existing public staging
       # Supabase configuration while the owner finishes environment setup.
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || vars.FINDIT_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.FINDIT_SUPABASE_ANON_KEY }}
-      VITE_AUTH_GOOGLE_ENABLED: "false"
+      VITE_AUTH_GOOGLE_ENABLED: "true"
       VITE_AUTH_APPLE_ENABLED: "false"
       VITE_FEATURE_BUSINESS_PROFILES: "true"
       VITE_FEATURE_MESSAGING: "true"
       VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
-      VITE_FEATURE_GOOGLE_OAUTH: "false"
+      VITE_FEATURE_GOOGLE_OAUTH: "true"
       VITE_FEATURE_MAPS: "false"
-      VITE_FEATURE_CURRENT_LOCATION: "false"
+      VITE_FEATURE_CURRENT_LOCATION: "true"
       VITE_FEATURE_MANUAL_LOCATION: "true"
       VITE_FEATURE_REPORTING: "true"
       VITE_FEATURE_CURRENCY_CONVERSION: "false"
@@ -51,7 +55,7 @@ jobs:
       VITE_FEATURE_SERVICE_RADIUS: "false"
       VITE_FEATURE_LISTING_EXPIRY: "false"
       VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
-      VITE_FEATURE_TOURS: "false"
+      VITE_FEATURE_TOURS: "true"
       VITE_FEATURE_TOURS_PREVIEW: "false"
       VITE_FEATURE_PREVIEW_FIXTURES: "false"
       VITE_PREVIEW_AUTH_BYPASS: "false"
@@ -65,9 +69,17 @@ jobs:
       VITE_FEATURE_AI_SUPPORT_CHAT: "false"
       VITE_FEATURE_SCHEDULED_REMINDERS: "false"
       VITE_FEATURE_MARKETING_EMAILS: "false"
-      TOURS_BACKEND_ENABLED: "false"
-      FINDIT_TOURS_WORKERS_ENABLED: "false"
-      FINDIT_TOURS_RELEASE_ACCEPTED: "false"
+      TOURS_BACKEND_ENABLED: "true"
+      FINDIT_TOURS_WORKERS_ENABLED: "true"
+      FINDIT_TOURS_RELEASE_ACCEPTED: "true"
+      FINDIT_TOUR_PROCESSOR_MODE: "github-actions"
+      FINDIT_TOUR_CLEANUP_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
+      FINDIT_TOUR_CACHE_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
+      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
+      FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
+      FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
+      FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"
+      FINDIT_RECOMMENDATION_WORKER_SECRET: ${{ secrets.FINDIT_RECOMMENDATION_WORKER_SECRET }}
 
     steps:
       - name: Check out staging source

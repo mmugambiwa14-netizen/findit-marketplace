@@ -37,7 +37,7 @@ test('Cloudflare staging restores deep links without a GitHub Pages or Vercel ru
   assert.match(previewWorkflow, /confirmation/);
   assert.match(previewWorkflow, /name: cloudflare-staging/);
   assert.match(previewWorkflow, /VITE_MODE: staging/);
-  assert.match(previewWorkflow, /VITE_DEPLOY_ENV: preview/);
+  assert.match(previewWorkflow, /VITE_DEPLOY_ENV: staging/);
   assert.match(previewWorkflow, /VITE_BASE_PATH: \//);
   assert.match(previewWorkflow, /npx wrangler pages deploy dist/);
   assert.match(previewWorkflow, /--project-name=peekalisting/);

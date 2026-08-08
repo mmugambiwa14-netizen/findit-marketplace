@@ -67,6 +67,8 @@ try {
   if (!response.headers.get('content-type')?.includes('manifest')) failures.push('/manifest.webmanifest: wrong content type');
   const manifest = JSON.parse(body);
   if (manifest.display !== 'standalone') failures.push('/manifest.webmanifest: display must be standalone');
+  if (manifest.start_url !== '/') failures.push('/manifest.webmanifest: start_url must be /');
+  if (manifest.scope !== '/') failures.push('/manifest.webmanifest: scope must be /');
   if (!Array.isArray(manifest.icons) || manifest.icons.length < 1) failures.push('/manifest.webmanifest: icons missing');
 } catch (error) {
   failures.push(`/manifest.webmanifest: ${error instanceof Error ? error.message : String(error)}`);
@@ -76,6 +78,7 @@ try {
   const { response, body } = await request('/sw.js');
   if (response.status !== 200) failures.push(`/sw.js: expected HTTP 200, got ${response.status}`);
   if (!response.headers.get('content-type')?.includes('javascript')) failures.push('/sw.js: wrong content type');
+  if (response.headers.get('service-worker-allowed') !== '/') failures.push('/sw.js: Service-Worker-Allowed must be /');
   if (!body.includes("addEventListener('fetch'")) failures.push('/sw.js: fetch handler missing');
 } catch (error) {
   failures.push(`/sw.js: ${error instanceof Error ? error.message : String(error)}`);
@@ -88,11 +91,78 @@ if (supabaseUrl || supabaseAnonKey) {
     failures.push('Supabase connectivity check requires both VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
   } else {
     try {
-      const api = new URL('/auth/v1/settings', supabaseUrl);
-      const response = await fetch(api, { headers: { apikey: supabaseAnonKey } });
-      if (response.status !== 200) failures.push(`Supabase Auth settings: expected HTTP 200, got ${response.status}`);
+      const supabaseOrigin = new URL(supabaseUrl);
+      const expectedProjectRef = process.env.FINDIT_EXPECTED_PROJECT_REF?.trim();
+      if (expectedProjectRef && supabaseOrigin.hostname !== `${expectedProjectRef}.supabase.co`) {
+        failures.push('Supabase connectivity: configured project does not match the guarded staging project');
+      }
+      const headers = {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      };
+      const settingsResponse = await fetch(new URL('/auth/v1/settings', supabaseUrl), { headers });
+      if (settingsResponse.status !== 200) {
+        failures.push(`Supabase Auth settings: expected HTTP 200, got ${settingsResponse.status}`);
+      } else {
+        const settings = await settingsResponse.json();
+        if (settings.external?.google !== true) failures.push('Supabase Auth: Google provider is not enabled');
+      }
+
+      const listingsResponse = await fetch(new URL('/rest/v1/listings?select=id&limit=1', supabaseUrl), { headers });
+      if (listingsResponse.status !== 200) {
+        failures.push(`Supabase listings: expected HTTP 200, got ${listingsResponse.status}`);
+      }
+
+      const listingSearchResponse = await fetch(new URL('/rest/v1/rpc/public_listing_search_card_page_v1', supabaseUrl), {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          p_kind: 'property',
+          p_country_code: 'ZW',
+          p_currency: '',
+          p_query: '',
+          p_category: '',
+          p_location_id: '',
+          p_min_price: null,
+          p_max_price: null,
+          p_min_bedrooms: null,
+          p_brand: '',
+          p_condition: '',
+          p_fuel_type: '',
+          p_transmission: '',
+          p_sort: 'newest',
+          p_cursor_value: null,
+          p_cursor_id: null,
+          p_limit: 24,
+        }),
+      });
+      if (listingSearchResponse.status !== 200) {
+        failures.push(`Supabase listing search: expected HTTP 200, got ${listingSearchResponse.status}`);
+      } else if ((await listingSearchResponse.json()).length < 1) {
+        failures.push('Supabase listing search: staging returned no public listings');
+      }
+
+      const tourFeedResponse = await fetch(new URL('/functions/v1/tour-feed', supabaseUrl), {
+        method: 'POST',
+        headers: { ...headers, Origin: base.origin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category: 'all', location: '', query: '', cursor: null, limit: 24 }),
+      });
+      if (tourFeedResponse.status !== 200) {
+        failures.push(`Supabase Peek feed: expected HTTP 200, got ${tourFeedResponse.status}`);
+      } else if ((await tourFeedResponse.json()).items?.length < 1) {
+        failures.push('Supabase Peek feed: staging returned no public Peeks');
+      }
+
+      const redirectTo = encodeURIComponent(new URL('/auth/callback?next=/', base).toString());
+      const googleResponse = await fetch(
+        new URL(`/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`, supabaseUrl),
+        { headers: { apikey: supabaseAnonKey }, redirect: 'manual' },
+      );
+      if (googleResponse.status !== 302 || !googleResponse.headers.get('location')?.startsWith('https://accounts.google.com/')) {
+        failures.push('Supabase Auth: Google OAuth did not produce a Google authorization redirect');
+      }
     } catch (error) {
-      failures.push(`Supabase Auth settings: ${error instanceof Error ? error.message : String(error)}`);
+      failures.push(`Supabase staging checks: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
@@ -103,4 +173,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Cloudflare staging verification passed for ${base.host}: SPA, PWA, security headers, and configured Supabase connectivity verified.`);
+console.log(`Cloudflare staging verification passed for ${base.host}: SPA, PWA, security headers, Google OAuth, listings, Peeks, and Supabase connectivity verified.`);
