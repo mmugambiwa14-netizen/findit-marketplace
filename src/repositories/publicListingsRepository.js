@@ -198,9 +198,9 @@ export async function findPublicListingsPage(request, signal) {
   return data ?? [];
 }
 
-export async function findPublicListingTitleSuggestions(kind, searchTerm, limit = 5) {
+export async function findPublicListingTitleSuggestions(kind, searchTerm, limit = 5, signal = null) {
   assertKind(kind);
-  const { data, error } = await supabase
+  let query = supabase
     .from('listings')
     .select('id, title')
     .eq('kind', kind)
@@ -209,7 +209,9 @@ export async function findPublicListingTitleSuggestions(kind, searchTerm, limit 
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .limit(limit);
+  if (signal) query = query.abortSignal(signal);
 
+  const { data, error } = await query;
   if (error) {
     const repositoryError = new Error('Unable to load listing suggestions');
     repositoryError.cause = error;
