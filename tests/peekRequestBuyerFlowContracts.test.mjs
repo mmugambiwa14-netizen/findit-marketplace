@@ -102,12 +102,12 @@ test('buyer activity contract is bounded and maps safe relationship state', () =
 });
 
 test('Peek Requests workspace separates buyer tracking from seller fulfilment', () => {
-  assert.match(workspace, />My requests</);
-  assert.match(workspace, />Requests to answer</);
+  assert.match(workspace, /My requests/);
+  assert.match(workspace, /Requests to answer/);
   assert.match(workspace, /requestedResponse \|\| searchParams\.get\('view'\) === 'answer'/);
   assert.match(workspace, /<MyPeekRequestsQueue \/>/);
   assert.match(workspace, /<ResponsePeekBindingQueue \/>/);
-  assert.match(workspace, /<BuyerPeekRequestsQueue \/>/);
+  assert.match(workspace, /<SellerPeekRequestsQueueLive \/>/);
 });
 
 test('My requests supports keyset activity, response playback and pending interest withdrawal', () => {
