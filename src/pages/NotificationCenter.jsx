@@ -101,7 +101,17 @@ export default function NotificationCenter() {
     const incomingItems = Array.isArray(tailQuery.data?.items) ? tailQuery.data.items : [];
     const firstHistoryPage = notificationsQuery.data?.pages?.[0];
     const historyItems = Array.isArray(firstHistoryPage?.items) ? firstHistoryPage.items : [];
-    if (!incomingItems.length || !historyItems.length) return;
+    if (!incomingItems.length) return;
+
+    if (!historyItems.length) {
+      if (firstHistoryPage) {
+        queryClient.setQueryData(historyKey, {
+          pages: [tailQuery.data],
+          pageParams: [null],
+        });
+      }
+      return;
+    }
 
     const historyIds = new Set(historyItems.map((item) => item.id));
     const overlaps = incomingItems.some((item) => historyIds.has(item.id));
