@@ -161,13 +161,13 @@ export async function findPublicListings(request) {
 }
 
 /**
- * Reads one bounded public search page through the currency-safe, privacy-safe
- * keyset RPC. The database returns limit+1 rows so the service can derive the
- * next cursor without requesting an exact count or using deep offsets.
+ * Reads one bounded public Search card page through the currency-safe,
+ * privacy-safe thin projection. The database returns limit+1 rows so the
+ * service can derive the next cursor without exact counts or deep offsets.
  */
 export async function findPublicListingsPage(request, signal) {
   assertKind(request.kind);
-  let query = supabase.rpc('public_listing_search_page_v2', {
+  let query = supabase.rpc('public_listing_search_card_page_v1', {
     p_kind: request.kind,
     p_country_code: request.countryCode,
     p_currency: request.currency,
