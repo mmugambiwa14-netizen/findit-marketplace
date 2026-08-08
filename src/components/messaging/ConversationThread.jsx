@@ -105,7 +105,8 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     const incomingItems = Array.isArray(incomingPage?.items) ? incomingPage.items : [];
     if (!incomingItems.length) return;
 
-    queryClient.setQueryData(['message-thread', conversationId], (current) => {
+    queryClient.setQueryData(['message-thread', conversationId], (currentValue) => {
+      const current = /** @type {any} */ (currentValue);
       if (!current?.pages?.length) return current;
       const firstPage = current.pages[0];
       const currentItems = Array.isArray(firstPage?.items) ? firstPage.items : [];
