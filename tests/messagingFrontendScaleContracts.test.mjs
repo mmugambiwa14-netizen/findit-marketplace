@@ -61,10 +61,11 @@ test('TanStack cancellation reaches every active messaging read RPC', () => {
 });
 
 test('cancellation is checked again before and after non-abortable media hydration', () => {
-  const hydration = service.slice(
-    service.indexOf('async function hydrateConversationListings'),
-    service.indexOf('async function hydrateConversationListing'),
-  );
+  const start = service.indexOf('async function hydrateConversationListings');
+  const end = service.indexOf('async function hydrateConversationListing(value, signal)', start);
+  assert.notEqual(start, -1);
+  assert.notEqual(end, -1);
+  const hydration = service.slice(start, end);
   assert.match(hydration, /throwIfAborted\(signal\);[\s\S]*await hydrateListingCardImages/);
   assert.match(hydration, /await hydrateListingCardImages[\s\S]*throwIfAborted\(signal\);/);
 });
