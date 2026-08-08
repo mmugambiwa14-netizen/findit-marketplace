@@ -8,6 +8,7 @@ export default function ListingSummary({
   title,
   location = '',
   metadata = [],
+  embedded = false,
   className = '',
 }) {
   const items = metadata.filter(Boolean);
@@ -16,7 +17,10 @@ export default function ListingSummary({
     <section
       aria-label="Listing summary"
       className={cn(
-        'relative z-10 mx-3 -mt-3 rounded-[1.75rem] border border-border/80 bg-background/95 p-5 shadow-floating backdrop-blur-xl sm:mx-5 sm:p-6 md:mx-0 md:mt-5 md:rounded-3xl md:bg-card/90',
+        'relative z-10 rounded-[1.75rem] border border-border/80 p-5 shadow-floating backdrop-blur-xl sm:p-6 md:rounded-3xl',
+        embedded
+          ? 'mx-0 mt-0 bg-card/90'
+          : 'mx-3 -mt-3 bg-background/95 sm:mx-5 md:mx-0 md:mt-5 md:bg-card/90',
         className,
       )}
     >

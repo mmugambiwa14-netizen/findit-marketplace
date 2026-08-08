@@ -40,17 +40,31 @@ test('listing detail routes use a self-contained mobile shell', () => {
 
 test('listing summaries share one elevated hierarchy across every public detail type', () => {
   assert.match(listingSummary, /aria-label="Listing summary"/);
-  assert.match(listingSummary, /-mt-3 rounded-\[1\.75rem\]/);
+  assert.match(listingSummary, /embedded = false/);
+  assert.match(listingSummary, /mx-0 mt-0 bg-card\/90/);
   assert.match(listingSummary, /shadow-floating backdrop-blur-xl/);
   assert.match(listingSummary, /text-\[2rem\] font-black/);
   assert.match(listingSummary, /rounded-full border border-border\/70 bg-muted\/35/);
 
   for (const source of [propertyDetail, carDetail, machineryDetail, serviceDetail]) {
     assert.match(source, /import ListingSummary from "@\/components\/listings\/ListingSummary"/);
-    assert.match(source, /<ListingSummary/);
-    assert.match(source, /grid grid-cols-1 gap-3 min-\[430px\]:grid-cols-2/);
+    assert.match(source, /<ListingSummary\s+embedded/);
+    assert.match(source, /mt-5 grid grid-cols-1 gap-3 min-\[430px\]:grid-cols-2/);
     assert.match(source, /tour\?\.status === "ready"/);
     assert.match(source, />Video proof available<\/Badge>/);
+  }
+});
+
+test('section tabs follow media and the listing summary belongs only to Details', () => {
+  for (const source of [propertyDetail, carDetail, machineryDetail, serviceDetail]) {
+    const mediaIndex = source.indexOf('<ListingMediaViewer');
+    const tabsIndex = source.indexOf('<ListingDetailTabs>');
+    const detailsIndex = source.indexOf('<ListingTabSection id="listing-info"');
+    const summaryIndex = source.indexOf('<ListingSummary');
+    assert.ok(mediaIndex >= 0, 'listing media must be present');
+    assert.ok(tabsIndex > mediaIndex, 'section tabs must follow listing media');
+    assert.ok(detailsIndex > tabsIndex, 'Details must be a tab panel');
+    assert.ok(summaryIndex > detailsIndex, 'the listing summary must render inside Details');
   }
 });
 

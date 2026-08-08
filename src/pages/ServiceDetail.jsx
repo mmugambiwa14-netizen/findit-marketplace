@@ -78,27 +78,27 @@ export default function ServiceDetail() {
           <ListingMediaActions onShare={shareService} onSave={serviceFavourite.toggle} isSaved={serviceFavourite.isSaved} isSaving={serviceFavourite.isSaving} />
         </div>
 
-        <ListingSummary
-          badges={(
-            <>
-              <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{categoryLabel}</Badge>
-              {service.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
-              {subcategoryLabels.map((label, index) => <Badge key={`${label}-${index}`} variant="outline">{label}</Badge>)}
-            </>
-          )}
-          price={priceDisplay}
-          pricePrefix={pricePrefix}
-          title={service.title}
-          location={service.location_name}
-          metadata={[
-            `${Number(service.views || 0).toLocaleString()} views`,
-            service.can_travel ? "Travels to customers" : null,
-          ]}
-        />
-
         <ListingDetailTabs>
           <ListingTabSection id="listing-info" title="Details">
-            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+            <ListingSummary
+              embedded
+              badges={(
+                <>
+                  <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{categoryLabel}</Badge>
+                  {service.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
+                  {subcategoryLabels.map((label, index) => <Badge key={`${label}-${index}`} variant="outline">{label}</Badge>)}
+                </>
+              )}
+              price={priceDisplay}
+              pricePrefix={pricePrefix}
+              title={service.title}
+              location={service.location_name}
+              metadata={[
+                `${Number(service.views || 0).toLocaleString()} views`,
+                service.can_travel ? "Travels to customers" : null,
+              ]}
+            />
+            <div className="mt-5 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               <ListingFeatureItem icon={Briefcase} label="Category" value={categoryLabel} />
               <ListingFeatureItem icon={MapPin} label="Area" value={service.location_name || "Location arranged"} />
               <ListingFeatureItem icon={Car} label="Travel" value={service.can_travel ? "Available" : "Local area"} />

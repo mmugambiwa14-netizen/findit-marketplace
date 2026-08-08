@@ -70,29 +70,29 @@ export default function CarDetail() {
           <ListingMediaActions onShare={() => shareListing("car", car)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
         </div>
 
-        <ListingSummary
-          badges={(
-            <>
-              {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
-              {car.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
-              {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
-              {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
-            </>
-          )}
-          price={format(activePrice)}
-          pricePrefix={variants.length > 1 ? "From" : null}
-          title={car.title}
-          location={location}
-          metadata={[
-            `Listed ${listedAgo}`,
-            `${Number(car.views || 0).toLocaleString()} views`,
-            <ListingCode key="car-code" type="car" id={car.id} />,
-          ]}
-        />
-
         <ListingDetailTabs>
           <ListingTabSection id="listing-info" title="Details">
-            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+            <ListingSummary
+              embedded
+              badges={(
+                <>
+                  {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
+                  {car.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
+                  {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
+                  {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
+                </>
+              )}
+              price={format(activePrice)}
+              pricePrefix={variants.length > 1 ? "From" : null}
+              title={car.title}
+              location={location}
+              metadata={[
+                `Listed ${listedAgo}`,
+                `${Number(car.views || 0).toLocaleString()} views`,
+                <ListingCode key="car-code" type="car" id={car.id} />,
+              ]}
+            />
+            <div className="mt-5 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
               <ListingFeatureItem icon={Calendar} label="Year" value={car.year} />
               <ListingFeatureItem icon={Gauge} label="Mileage" value={`${(car.mileage || 0).toLocaleString()} km`} />
               <ListingFeatureItem icon={Fuel} label="Fuel" value={car.fuel_type} />
