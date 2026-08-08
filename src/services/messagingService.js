@@ -4,6 +4,7 @@ import {
   findMessageInboxPage,
   findMessageThread,
   findMessageThreadPage,
+  findMessageUnreadCount,
   insertConversationMessage,
   insertConversationReport,
   startConversationRow,
@@ -78,6 +79,12 @@ export async function getMessageInbox(input, signal) {
     limit: request.limit,
     offset: request.offset,
   };
+}
+
+export async function getUnreadMessageCount(signal) {
+  const value = await findMessageUnreadCount(signal);
+  throwIfAborted(signal);
+  return Math.max(0, Number(value) || 0);
 }
 
 export async function getMessageConversation(conversationId, signal) {
