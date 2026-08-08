@@ -140,28 +140,28 @@ where parent_id is not null;
 update public.categories
 set schema_binding = jsonb_build_object(
   'schema', 'property', 'subtype', 'residential',
-  'defaults', jsonb_build_object('property_type', 'house', 'listing_type', 'sale')
+  'defaults', jsonb_build_object('property_type', 'house', 'offer_type', 'sale')
 )
 where marketplace_kind = 'property' and slug = 'house_sale';
 
 update public.categories
 set schema_binding = jsonb_build_object(
   'schema', 'property', 'subtype', 'residential',
-  'defaults', jsonb_build_object('property_type', 'house', 'listing_type', 'rent')
+  'defaults', jsonb_build_object('property_type', 'house', 'offer_type', 'rent')
 )
 where marketplace_kind = 'property' and slug = 'house_rent';
 
 update public.categories
 set schema_binding = jsonb_build_object(
   'schema', 'property', 'subtype', 'residential',
-  'defaults', jsonb_build_object('property_type', 'apartment', 'listing_type', 'sale')
+  'defaults', jsonb_build_object('property_type', 'apartment', 'offer_type', 'sale')
 )
 where marketplace_kind = 'property' and slug = 'apartment_sale';
 
 update public.categories
 set schema_binding = jsonb_build_object(
   'schema', 'property', 'subtype', 'residential',
-  'defaults', jsonb_build_object('property_type', 'apartment', 'listing_type', 'rent')
+  'defaults', jsonb_build_object('property_type', 'apartment', 'offer_type', 'rent')
 )
 where marketplace_kind = 'property' and slug = 'apartment_rent';
 
