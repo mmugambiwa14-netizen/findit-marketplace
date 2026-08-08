@@ -129,8 +129,9 @@ test('saved listings retain canonical unavailable rows and private images withou
 });
 
 test('seller and business inventory surfaces reuse standard Peek-aware cards', () => {
-  assert.match(sellerProfiles, /attachPublicTourSummaries/);
-  assert.match(businessProfiles, /attachPublicTourSummaries/);
+  assert.match(sellerProfiles, /enrichPublicListingCards/);
+  assert.match(businessProfiles, /enrichPublicListingCards/);
+  assert.match(businessProfiles, /enrichPublicServiceCards/);
   assert.match(dealerListings, /<ListingCard/);
   assert.match(publicBusiness, /<ServiceCard/);
   assert.doesNotMatch(`${dealerListings}\n${publicBusiness}`, /Reels|Videos tab|followers|creator statistics/i);
