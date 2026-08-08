@@ -1,36 +1,39 @@
 import { supabase } from '@/lib/supabaseClient';
 
-async function rpc(name, parameters, message) {
-  const { data, error } = await supabase.rpc(name, parameters);
-  if (error) {
-    const failure = new Error(message);
-    failure.cause = error;
-    throw failure;
-  }
-  return data;
+function rpc(name, parameters, message, signal) {
+  let query = supabase.rpc(name, parameters);
+  if (signal) query = query.abortSignal(signal);
+  return query.then(({ data, error }) => {
+    if (error) {
+      const failure = new Error(message);
+      failure.cause = error;
+      throw failure;
+    }
+    return data;
+  });
 }
 
-export function findNotifications(request) {
+export function findNotifications(request, signal) {
   return rpc('notification_rows', {
     p_event_type: request.eventType,
     p_unread_only: request.unreadOnly,
     p_limit: request.limit,
     p_offset: request.offset,
-  }, 'Unable to load notifications');
+  }, 'Unable to load notifications', signal);
 }
 
-export function findNotificationsPage(request) {
+export function findNotificationsPage(request, signal) {
   return rpc('notification_rows_page', {
     p_event_type: request.eventType,
     p_unread_only: request.unreadOnly,
     p_cursor_at: request.cursor?.createdAt ?? null,
     p_cursor_id: request.cursor?.id ?? null,
     p_limit: request.limit,
-  }, 'Unable to load notifications');
+  }, 'Unable to load notifications', signal);
 }
 
-export function fetchUnreadNotificationCount() {
-  return rpc('notification_unread_count', {}, 'Unable to load notification count');
+export function fetchUnreadNotificationCount(signal) {
+  return rpc('notification_unread_count', {}, 'Unable to load notification count', signal);
 }
 
 export function updateNotificationRead(notificationId) {
