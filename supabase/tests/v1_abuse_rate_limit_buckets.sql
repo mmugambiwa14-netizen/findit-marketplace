@@ -94,11 +94,25 @@ select extensions.is(
   'pruned state is removed without touching active buckets'
 );
 
+select extensions.ok(
+  has_schema_privilege('anon', 'private', 'USAGE'),
+  'anonymous clients retain the established private helper schema usage boundary'
+);
+select extensions.ok(
+  has_schema_privilege('authenticated', 'private', 'USAGE'),
+  'authenticated clients retain the established private helper schema usage boundary'
+);
+select extensions.is(
+  has_schema_privilege('authenticated', 'private', 'CREATE'),
+  false,
+  'authenticated clients cannot create objects in the private schema'
+);
+
 set local role authenticated;
 select extensions.throws_ok(
   $$select * from private.abuse_rate_limit_buckets$$,
-  '42501', 'permission denied for schema private',
-  'authenticated clients cannot inspect hashed limiter state'
+  '42501', 'permission denied for table abuse_rate_limit_buckets',
+  'authenticated clients have schema usage but cannot inspect hashed limiter state'
 );
 select extensions.throws_ok(
   $$select public.prune_abuse_rate_limit_buckets(10)$$,
