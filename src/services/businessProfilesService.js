@@ -14,8 +14,7 @@ import {
   normalizeBusinessServicesPageRequest,
   normalizeDealerInventoryQuery,
 } from '@/services/businessProfileContracts';
-import { mapPublicListing } from '@/services/listingMappers';
-import { hydrateListingImages } from '@/services/listingCreationService';
+import { enrichPublicListingCards } from '@/services/listingCardEnrichmentService';
 import {
   attachMarketplaceImage,
   detachMarketplaceImage,
@@ -116,9 +115,8 @@ export async function getPublicBusinessProfile(profileId) {
 export async function getPublicBusinessInventoryPage(ownerId, input = {}) {
   const request = normalizeBusinessInventoryPageRequest(ownerId, input);
   const page = createKeysetPage(await findPublicBusinessInventory(request), request.limit);
-  const mapped = (await hydrateListingImages(page.items)).map(mapPublicListing);
   return {
-    items: await attachPublicTourSummaries(mapped, 'listing'),
+    items: await enrichPublicListingCards(page.items),
     nextCursor: page.nextCursor,
   };
 }
