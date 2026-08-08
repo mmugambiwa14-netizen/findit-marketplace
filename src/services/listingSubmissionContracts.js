@@ -56,7 +56,7 @@ function normalizeSchemaDetail(kind, listingType, input) {
     ? { ...rawDetail, listing_type: listingType }
     : rawDetail;
   const storage = toStoragePayload(kind, schemaInput);
-  if (!storage.ok) {
+  if (storage.ok === false) {
     throw new TypeError(storage.errors[0]?.message || 'Listing details are invalid');
   }
 
