@@ -171,7 +171,7 @@ export default function Search() {
 
   const { data: suggestions } = useQuery({
     queryKey: ['public-search-suggestions', type, suggestionQuery],
-    queryFn: () => getPublicSearchSuggestions(type, suggestionQuery),
+    queryFn: ({ signal }) => getPublicSearchSuggestions(type, suggestionQuery, { signal }),
     enabled: suggestionQuery.length >= 2,
     staleTime: 1000 * 60,
   });
