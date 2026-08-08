@@ -75,6 +75,41 @@ function serviceMarketCountry(inputCountryCode) {
   return countryCode;
 }
 
+function humanizeTaxonomyKey(value) {
+  return String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+async function attachServiceTaxonomyPresentation(services, countryCode = LAUNCH_COUNTRY_CODE) {
+  if (!Array.isArray(services) || services.length === 0) return services;
+  let taxonomy = [];
+  try {
+    taxonomy = await getCategoryTaxonomy('service', countryCode);
+  } catch {
+    // Service data remains usable if reference-data presentation is temporarily
+    // unavailable. The fallback derives only from the stored stable key; it is
+    // not a competing category registry.
+  }
+  const byStableSlug = new Map(taxonomy.map((node) => [node.stableSlug, node]));
+  return services.map((service) => {
+    if (!service) return service;
+    const categoryNode = byStableSlug.get(service.category);
+    const subcategoryKeys = Array.isArray(service.subcategories) && service.subcategories.length
+      ? service.subcategories
+      : (service.subcategory ? [service.subcategory] : []);
+    const subcategoryLabels = subcategoryKeys.map((key) => (
+      byStableSlug.get(key)?.label || humanizeTaxonomyKey(key)
+    ));
+    return {
+      ...service,
+      category_label: categoryNode?.label || humanizeTaxonomyKey(service.category) || 'Service',
+      subcategory_labels: subcategoryLabels,
+      subcategory_label: subcategoryLabels[0] || null,
+    };
+  });
+}
+
 async function resolveServiceTaxonomySelection({ countryCode, category, subcategories = [] }) {
   const taxonomy = await getCategoryTaxonomy('service', countryCode);
   const domains = serviceDomainNodes(taxonomy);
@@ -126,8 +161,9 @@ async function mapService(row) {
 export async function getPublicServicesPage(request = {}) {
   const normalized = await normalizeCanonicalPublicServiceRequest(request);
   const page = createKeysetPage(await findPublicServices(normalized), normalized.limit);
+  const enriched = await enrichPublicServiceCards(page.items);
   return {
-    items: await enrichPublicServiceCards(page.items),
+    items: await attachServiceTaxonomyPresentation(enriched),
     nextCursor: page.nextCursor,
   };
 }
@@ -140,7 +176,8 @@ export async function getPublicService(id) {
   const service = await mapService(await findPublicServiceById(normalizeServiceId(id)));
   if (!service) return null;
   const [withTour] = await attachPublicTourSummaries([service], 'service');
-  return withTour;
+  const [withTaxonomy] = await attachServiceTaxonomyPresentation([withTour]);
+  return withTaxonomy;
 }
 
 /**
@@ -151,15 +188,17 @@ export async function getPublicServicesByIds(ids, { signal } = {}) {
   const uniqueIds = [...new Set(ids)].slice(0, 24);
   const rows = await findPublicServicesByIds(uniqueIds, { signal });
   const services = await enrichPublicServiceCards(rows, { includeTours: false });
-  const byId = new Map(services.map((service) => [service.id, service]));
+  const presented = await attachServiceTaxonomyPresentation(services);
+  const byId = new Map(presented.map((service) => [service.id, service]));
   return uniqueIds.map((id) => byId.get(id)).filter(Boolean);
 }
 
 export async function getOwnerServicesPage(providerId, request = {}) {
   const normalized = normalizeOwnerServicePageRequest(providerId, request);
   const page = createKeysetPage(await findOwnerServices(normalized), normalized.limit);
+  const services = await Promise.all(page.items.map(mapService));
   return {
-    items: await Promise.all(page.items.map(mapService)),
+    items: await attachServiceTaxonomyPresentation(services),
     nextCursor: page.nextCursor,
   };
 }
@@ -198,7 +237,9 @@ export async function createService(input, provider, uploads = []) {
     )));
     throw error;
   }
-  return await mapService({ ...created, photos: uploads.map((upload) => upload.path) });
+  const mapped = await mapService({ ...created, photos: uploads.map((upload) => upload.path) });
+  const [presented] = await attachServiceTaxonomyPresentation([mapped], countryCode);
+  return presented;
 }
 
 export async function updateService(providerId, id, input, mediaChange = null) {
@@ -209,7 +250,11 @@ export async function updateService(providerId, id, input, mediaChange = null) {
     normalizedId,
     normalizeServiceEdit(input),
   );
-  if (!mediaChange) return await mapService(updated);
+  if (!mediaChange) {
+    const mapped = await mapService(updated);
+    const [presented] = await attachServiceTaxonomyPresentation([mapped]);
+    return presented;
+  }
 
   const uploads = Array.isArray(mediaChange.uploads) ? mediaChange.uploads : [];
   try {
@@ -222,7 +267,9 @@ export async function updateService(providerId, id, input, mediaChange = null) {
     await Promise.all(removedPaths.map((path) => (
       removeStagedMarketplaceImage(path, 'service_photo').catch(() => {})
     )));
-    return await mapService({ ...updated, photos: replacement?.photos ?? [] });
+    const mapped = await mapService({ ...updated, photos: replacement?.photos ?? [] });
+    const [presented] = await attachServiceTaxonomyPresentation([mapped]);
+    return presented;
   } catch (error) {
     await Promise.all(uploads.map((upload) => (
       removeStagedMarketplaceImage(upload.path, 'service_photo').catch(() => {})
@@ -236,11 +283,13 @@ export async function updateService(providerId, id, input, mediaChange = null) {
 }
 
 export async function setServiceStatus(providerId, id, status) {
-  return await mapService(await updateOwnerServiceRow(
+  const mapped = await mapService(await updateOwnerServiceRow(
     normalizeProviderId(providerId),
     normalizeServiceId(id),
     { status: normalizeServiceStatus(status) },
   ));
+  const [presented] = await attachServiceTaxonomyPresentation([mapped]);
+  return presented;
 }
 
 export async function deleteService(providerId, id) {
