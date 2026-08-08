@@ -13,11 +13,16 @@ const [
   adminContracts,
   createListing,
   locationStep,
+  createService,
+  servicesService,
+  serviceContracts,
   foundationMigration,
   metadataMigration,
   adminMigration,
   hierarchyMigration,
   privilegeMigration,
+  privateAdminMigration,
+  serviceTaxonomyMigration,
 ] = await Promise.all([
   read('src/components/create-listing/Step1Category.jsx'),
   read('src/repositories/taxonomyRepository.js'),
@@ -27,11 +32,16 @@ const [
   read('src/services/taxonomyAdminContracts.js'),
   read('src/pages/CreateListing.jsx'),
   read('src/components/create-listing/ListingLocationStep.jsx'),
+  read('src/pages/CreateService.jsx'),
+  read('src/services/servicesService.js'),
+  read('src/services/serviceContracts.js'),
   read('supabase/migrations/20260808080000_canonical_taxonomy_foundation.sql'),
   read('supabase/migrations/20260808080500_taxonomy_metadata_integrity.sql'),
   read('supabase/migrations/20260808080700_taxonomy_admin_v2.sql'),
   read('supabase/migrations/20260808080800_taxonomy_hierarchy_integrity.sql'),
   read('supabase/migrations/20260808080900_taxonomy_function_privilege_boundary.sql'),
+  read('supabase/migrations/20260808081000_private_taxonomy_admin_implementations.sql'),
+  read('supabase/migrations/20260808081100_service_specialization_taxonomy.sql'),
 ]);
 
 test('listing category selection consumes the canonical database taxonomy, not vertical arrays', () => {
@@ -58,6 +68,27 @@ test('listing draft and location selection keep taxonomy market scope explicit',
   assert.match(createListing, /getActiveLocations\('city', null, formData\.country_code \|\| LAUNCH_COUNTRY_CODE\)/);
   assert.match(locationStep, /update\('country_code', String\(selected\.country_code\)\.toUpperCase\(\)\)/);
   assert.match(locationStep, /queryKey: \['locations', 'city', marketCountry\]/);
+});
+
+test('service posting consumes canonical taxonomy and location registries without stale V1 lists', () => {
+  assert.match(createService, /getCategoryTaxonomy\("service", marketCountry\)/);
+  assert.match(createService, /getActiveLocations\("city", null, marketCountry\)/);
+  assert.match(createService, /specializationGroups/);
+  assert.match(createService, /validSpecializationSlugs/);
+  assert.doesNotMatch(createService, /V1_SERVICE_CATEGORIES|getServiceCategory|ZIMBABWE_LOCATIONS/);
+  assert.match(createService, /No stale fallback list is used/);
+});
+
+test('service contracts receive taxonomy capability sets instead of defining service vocabulary', () => {
+  assert.doesNotMatch(serviceContracts, /V1_CATEGORIES|property_developer.*mechanic.*construction.*geological/);
+  assert.match(serviceContracts, /requireAllowedSet\(taxonomy\.allowedCategories/);
+  assert.match(serviceContracts, /requireAllowedSet\(allowedSubcategories/);
+  assert.match(serviceContracts, /Service category is not active in the current taxonomy/);
+  assert.match(serviceContracts, /Service type is not active in the current taxonomy/);
+  assert.match(servicesService, /getCategoryTaxonomy\('service', countryCode\)/);
+  assert.match(servicesService, /serviceDomainNodes\(taxonomy\)/);
+  assert.match(servicesService, /serviceSpecializationNodes\(taxonomy, domain\)/);
+  assert.match(servicesService, /schemaBinding\?\.defaults\?\.service_specialization/);
 });
 
 test('database taxonomy separates tree structure from postability and lifecycle', () => {
@@ -116,4 +147,24 @@ test('taxonomy functions close PostgreSQL default PUBLIC execute privileges', ()
   assert.match(privilegeMigration, /grant execute on function public\.public_category_taxonomy_v2\(text, text\) to anon, authenticated/);
   assert.match(privilegeMigration, /grant execute on function public\.admin_taxonomy_rows_v2\(\) to authenticated/);
   assert.match(privilegeMigration, /revoke all on function public\.taxonomy_terms_collide[\s\S]*from public, anon, authenticated, service_role/);
+});
+
+test('privileged taxonomy administration follows the private implementation/public invoker pattern', () => {
+  assert.match(privateAdminMigration, /alter function %s set schema private/);
+  assert.match(privateAdminMigration, /security invoker/);
+  assert.match(privateAdminMigration, /implementation\.prosecdef/);
+  assert.match(privateAdminMigration, /wrapper\.proconfig = array\['search_path=""'\]::text\[\]/);
+  assert.match(privateAdminMigration, /taxonomy admin private\/public boundary did not converge/);
+});
+
+test('service specialization taxonomy preserves stable slugs while adding coherent hierarchy', () => {
+  assert.match(serviceTaxonomyMigration, /slug in \('property_developer', 'mechanic', 'construction', 'geological'\)/);
+  assert.match(serviceTaxonomyMigration, /construction_design_professional/);
+  assert.match(serviceTaxonomyMigration, /construction_trades/);
+  assert.match(serviceTaxonomyMigration, /construction_infrastructure/);
+  assert.match(serviceTaxonomyMigration, /construction_plant_services/);
+  assert.match(serviceTaxonomyMigration, /'pre_purchase_inspection', 'Pre-Purchase Inspections'/);
+  assert.match(serviceTaxonomyMigration, /'plumbing', 'Plumbing & Drainage'/);
+  assert.match(serviceTaxonomyMigration, /'land_surveying', 'Land Surveying & Mapping'/);
+  assert.doesNotMatch(serviceTaxonomyMigration, /\('legal'/);
 });
