@@ -16,6 +16,7 @@ const [
   uploader,
   management,
   service,
+  serviceTaxonomy,
   packageJson,
   sellerSmoke,
   smokeFixtures,
@@ -33,6 +34,7 @@ const [
   read('src/components/tours/TourUploader.jsx'),
   read('src/components/tours/TourManagementPanel.jsx'),
   read('src/services/listingToursService.js'),
+  read('supabase/migrations/20260808081100_service_specialization_taxonomy.sql'),
   read('package.json'),
   read('scripts/tours-seller-workflow-smoke-local.mjs'),
   read('scripts/lib/tour-smoke-fixtures.mjs'),
@@ -92,10 +94,16 @@ test('seller can add, replace, remove and retry Tours from listing and service e
   assert.match(management, /onUploadFailed=\{refresh\}/);
   assert.match(management, /listingTourQueryKeys\.all/);
   assert.match(management, /row\.moderation_status === 'rejected'/);
-  assert.match(createService, /form\.category !== \"legal\"/);
-  assert.match(createService, /const shouldUploadTour = form\.category !== \"legal\"/);
+
+  // New service creation no longer carries a second `legal` taxonomy rule.
+  // Legal is absent from the active canonical V1 taxonomy, so a seller cannot
+  // choose it in CreateService. Historical legal rows remain protected by the
+  // edit/Tour boundary until those records are migrated or retired.
+  assert.doesNotMatch(createService, /form\.category !== ["']legal["']/);
+  assert.match(createService, /const shouldUploadTour = Boolean\(tourDraft\?\.file\)/);
+  assert.doesNotMatch(serviceTaxonomy, /\('legal'/);
   assert.match(editService, /service\.category !== \"legal\"/);
-  assert.equal((editService.match(/service\.category !== ["\']legal["\']/g) || []).length, 1, 'legal-service Tour exclusion is rendered once');
+  assert.equal((editService.match(/service\.category !== ["\']legal["\']/g) || []).length, 1, 'legacy legal-service Tour exclusion is rendered once');
 });
 
 test('record and upload controls enforce the two-minute, direct-storage contract', () => {
