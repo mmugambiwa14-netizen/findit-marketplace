@@ -1,5 +1,6 @@
 import {
   SCHEMA_VERSION,
+  getSubtypes,
   publicDetailFields,
   splitStorage,
   validateCategoryValues,
@@ -24,16 +25,34 @@ export const EMPTY_ATTRIBUTES = Object.freeze({ version: SCHEMA_VERSION, values:
 /**
  * Validates raw answers and produces the database payload.
  *
+ * `subtype` is a schema dimension rather than a normal field definition. It
+ * drives conditional visibility, so it must survive the storage round trip even
+ * though it is not routed to a normalized column by `splitStorage()`.
+ *
  * @param {string} category
  * @param {Record<string, unknown>} rawValues
  * @returns {{ ok: true, columns: Record<string, unknown>, attributes: object }
  *          | { ok: false, errors: Array<{field: string, message: string}> }}
  */
 export function toStoragePayload(category, rawValues = {}) {
+  let subtype = null;
+  const rawSubtype = rawValues?.subtype;
+  if (rawSubtype !== undefined && rawSubtype !== null && rawSubtype !== '') {
+    if (typeof rawSubtype !== 'string') {
+      return { ok: false, errors: [{ field: 'subtype', message: 'Subtype is invalid' }] };
+    }
+    subtype = rawSubtype.trim();
+    const allowedSubtypes = new Set(getSubtypes(category).map((entry) => entry.value));
+    if (!allowedSubtypes.has(subtype)) {
+      return { ok: false, errors: [{ field: 'subtype', message: 'Subtype is invalid' }] };
+    }
+  }
+
   const { valid, errors, values } = validateCategoryValues(category, rawValues);
   if (!valid) return { ok: false, errors };
 
   const { columns, attributes } = splitStorage(category, values);
+  if (subtype) attributes.values.subtype = subtype;
   return { ok: true, columns, attributes };
 }
 
