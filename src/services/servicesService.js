@@ -24,6 +24,7 @@ import {
 } from '@/services/marketplaceImagesService';
 import { isTrustedMarketplaceImagePath } from '@/services/marketplaceImageContracts';
 import { attachPublicTourSummaries } from '@/services/listingToursService';
+import { enrichPublicServiceCards } from '@/services/serviceCardEnrichmentService';
 import { createKeysetPage } from '@/services/keysetPagination';
 
 async function mapService(row) {
@@ -43,9 +44,8 @@ async function mapService(row) {
 export async function getPublicServicesPage(request = {}) {
   const normalized = normalizePublicServiceRequest(request);
   const page = createKeysetPage(await findPublicServices(normalized), normalized.limit);
-  const services = await Promise.all(page.items.map(mapService));
   return {
-    items: await attachPublicTourSummaries(services, 'service'),
+    items: await enrichPublicServiceCards(page.items),
     nextCursor: page.nextCursor,
   };
 }
@@ -68,9 +68,8 @@ export async function getPublicService(id) {
 export async function getPublicServicesByIds(ids, { signal } = {}) {
   const uniqueIds = [...new Set(ids)].slice(0, 24);
   const rows = await findPublicServicesByIds(uniqueIds, { signal });
-  const byId = new Map(
-    (await Promise.all(rows.map(mapService))).map((service) => [service.id, service]),
-  );
+  const services = await enrichPublicServiceCards(rows, { includeTours: false });
+  const byId = new Map(services.map((service) => [service.id, service]));
   return uniqueIds.map((id) => byId.get(id)).filter(Boolean);
 }
 
