@@ -32,9 +32,11 @@ test('open threads refresh remote metadata even when no new message is inserted'
   assert.match(realtimeThread, /document\.addEventListener\('visibilitychange', refreshWhenVisible\)/);
 });
 
-test('message delivery retains realtime plus bounded foreground polling fallback', () => {
-  assert.match(thread, /const ACTIVE_THREAD_REFRESH_MS = 4000/);
-  assert.match(thread, /refetchInterval:\s*ACTIVE_THREAD_REFRESH_MS/);
+test('message delivery uses realtime with adaptive bounded foreground polling fallback', () => {
+  assert.match(thread, /const DISCONNECTED_THREAD_REFRESH_MS = 4000/);
+  assert.match(thread, /const CONNECTED_THREAD_REFRESH_MS = 15_000/);
+  assert.match(thread, /realtimeConnected = false/);
+  assert.match(thread, /refetchInterval:\s*realtimeConnected \? CONNECTED_THREAD_REFRESH_MS : DISCONNECTED_THREAD_REFRESH_MS/);
   assert.match(thread, /refetchIntervalInBackground:\s*false/);
   assert.match(thread, /refetchOnWindowFocus:\s*'always'/);
   assert.match(thread, /refetchOnReconnect:\s*'always'/);
@@ -42,6 +44,10 @@ test('message delivery retains realtime plus bounded foreground polling fallback
   assert.match(thread, /resetQueries\(\{ queryKey: \['message-thread', conversationId\], exact: true \}\)/);
   assert.match(realtimeThread, /table:\s*'inquiries'/);
   assert.match(realtimeThread, /event:\s*'INSERT'/);
+  assert.match(realtimeThread, /const \[realtimeConnected, setRealtimeConnected\] = useState\(false\)/);
+  assert.match(realtimeThread, /const subscribed = status === 'SUBSCRIBED'/);
+  assert.match(realtimeThread, /setRealtimeConnected\(subscribed\)/);
+  assert.match(realtimeThread, /realtimeConnected=\{realtimeConnected\}/);
 });
 
 test('global unread count refreshes after focus and reconnect without background polling', () => {
