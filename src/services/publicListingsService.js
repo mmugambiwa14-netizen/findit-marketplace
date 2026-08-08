@@ -8,6 +8,7 @@ import {
 import { findActiveLocationSuggestions } from '@/repositories/locationsRepository';
 import { mapPublicListing } from '@/services/listingMappers';
 import { hydrateListingImages } from '@/services/listingCreationService';
+import { enrichPublicListingCards } from '@/services/listingCardEnrichmentService';
 import { normalizePublicSearchPageRequest, normalizePublicSearchRequest } from '@/services/searchContracts';
 import { attachPublicTourSummaries } from '@/services/listingToursService';
 import {
@@ -64,8 +65,7 @@ export async function getLatestPublicListings(kind, limit) {
     return attachPublicTourSummaries(rows.map(mapPublicListing), 'listing');
   }
   const rows = await findLatestAvailableListings(kind, normalizeLimit(limit));
-  const listings = (await hydrateListingImages(rows)).map(mapPublicListing);
-  return await attachPublicTourSummaries(listings, 'listing');
+  return enrichPublicListingCards(rows);
 }
 
 export async function getPublicListing(kind, id) {
@@ -107,11 +107,9 @@ export async function getPublicListingsByIds(listingIds, { signal } = {}) {
 
   const rows = await findPublicListingsByIds(ids, signal);
   if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
-  const hydrated = (await hydrateListingImages(rows)).map(mapPublicListing);
+  const enriched = await enrichPublicListingCards(rows);
   if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
-  const withTours = await attachPublicTourSummaries(hydrated, 'listing');
-  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
-  const byId = new Map(withTours.map((listing) => [listing.id, listing]));
+  const byId = new Map(enriched.map((listing) => [listing.id, listing]));
   return ids.map((id) => byId.get(id)).filter(Boolean);
 }
 
@@ -144,7 +142,7 @@ export async function searchPublicListingsPage(input) {
   const cleanRows = pageRows.map(({ cursor_value: _cursorValue, ...row }) => row);
 
   return {
-    items: await attachPublicTourSummaries((await hydrateListingImages(cleanRows)).map(mapPublicListing), 'listing'),
+    items: await enrichPublicListingCards(cleanRows),
     nextCursor: cursorRow ? { value: cursorRow.cursor_value, id: cursorRow.id } : null,
   };
 }
