@@ -26,6 +26,7 @@ TEST_FILES=(
   supabase/tests/v1_currency_safe_public_listing_search_v2.sql
   supabase/tests/v1_peek_request_buyer_state_and_activity.sql
   supabase/tests/v1_private_notification_read_implementations.sql
+  supabase/tests/v1_notification_peek_request_delivery.sql
   supabase/tests/v1_essential_notifications.sql
   supabase/tests/v1_recommendation_foundation.sql
   supabase/tests/v1_recommendation_projection_queue.sql
