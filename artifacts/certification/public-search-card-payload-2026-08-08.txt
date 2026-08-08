@@ -1,0 +1,3 @@
+Public Search card payload certification trigger.
+Canonical main head: f891daffe7e201882fa1f1bb022b2c1441e049bc
+Scope: thin card-specific Search RPC, v2 compatibility preservation, one-cover payload, detail-field omission, currency/privacy/keyset parity, 42-suite clean-database certification, and scale smoke coverage.
