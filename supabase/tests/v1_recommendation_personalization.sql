@@ -98,7 +98,7 @@ values
     '[{"path":"one"},{"path":"two"}]'::jsonb,
     '71000000-0000-4000-8000-000000000101',
     'ZW',
-    'pickup-trucks',
+    'utility',
     'sale',
     'available',
     true
@@ -117,7 +117,7 @@ values
     '[{"path":"one"},{"path":"two"}]'::jsonb,
     '71000000-0000-4000-8000-000000000101',
     'ZW',
-    'houses',
+    'house_sale',
     'sale',
     'available',
     true
