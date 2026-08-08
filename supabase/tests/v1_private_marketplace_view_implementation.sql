@@ -183,11 +183,11 @@ select set_config(
 );
 
 insert into public.listings (
-  id, kind, seller_id, title, price, currency, status, location_id, country_code, views
+  id, kind, seller_id, title, price, currency, status, location_id, country_code, category, views
 )
 values
-  ('92000000-0000-4000-8000-000000000011', 'property', '92000000-0000-4000-8000-000000000001', 'Public counter listing', 100, 'USD', 'available', '92000000-0000-4000-8000-000000000010', 'ZW', 5),
-  ('92000000-0000-4000-8000-000000000012', 'property', '92000000-0000-4000-8000-000000000001', 'Paused counter listing', 100, 'USD', 'paused', '92000000-0000-4000-8000-000000000010', 'ZW', 9);
+  ('92000000-0000-4000-8000-000000000011', 'property', '92000000-0000-4000-8000-000000000001', 'Public counter listing', 100, 'USD', 'available', '92000000-0000-4000-8000-000000000010', 'ZW', 'house_sale', 5),
+  ('92000000-0000-4000-8000-000000000012', 'property', '92000000-0000-4000-8000-000000000001', 'Paused counter listing', 100, 'USD', 'paused', '92000000-0000-4000-8000-000000000010', 'ZW', 'house_sale', 9);
 
 insert into public.services (
   id, provider_id, title, category, status, location_id, views
