@@ -20,9 +20,8 @@ import {
   detachMarketplaceImage,
   removeStagedMarketplaceImage,
   resolveMarketplaceImage,
-  resolveMarketplaceImages,
 } from '@/services/marketplaceImagesService';
-import { attachPublicTourSummaries } from '@/services/listingToursService';
+import { enrichPublicServiceCards } from '@/services/serviceCardEnrichmentService';
 import { createKeysetPage } from '@/services/keysetPagination';
 
 function safeHttpUrl(value) {
@@ -50,17 +49,6 @@ async function mapProfile(row) {
     website: safeHttpUrl(row.website),
     social_links: socialLinks,
     public_path: `${row.profile_type === 'dealer' ? '/dealer' : '/business'}/${row.id}`,
-  };
-}
-
-async function mapService(row) {
-  return {
-    ...row,
-    price: row.price == null ? null : Number(row.price),
-    photo_paths: Array.isArray(row.photos)
-      ? row.photos.filter((value) => typeof value === 'string' && value.includes('/service_photo/staging/'))
-      : [],
-    photos: await resolveMarketplaceImages(row.photos, 'service_photo'),
   };
 }
 
@@ -124,9 +112,8 @@ export async function getPublicBusinessInventoryPage(ownerId, input = {}) {
 export async function getPublicBusinessServicesPage(ownerId, input = {}) {
   const request = normalizeBusinessServicesPageRequest(ownerId, input);
   const page = createKeysetPage(await findPublicBusinessServices(request), request.limit);
-  const mapped = await Promise.all(page.items.map(mapService));
   return {
-    items: await attachPublicTourSummaries(mapped, 'service'),
+    items: await enrichPublicServiceCards(page.items),
     nextCursor: page.nextCursor,
   };
 }
