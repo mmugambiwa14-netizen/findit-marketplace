@@ -28,7 +28,8 @@ import {
 } from '@/services/messagingService';
 
 const THREAD_PAGE_SIZE = 50;
-const ACTIVE_THREAD_REFRESH_MS = 4000;
+const DISCONNECTED_THREAD_REFRESH_MS = 4000;
+const CONNECTED_THREAD_REFRESH_MS = 15_000;
 const listingPath = (conversation, tour = false) => `/${conversation.listing_kind}/${conversation.listing_id}${tour ? '?media=tour' : ''}`;
 
 function statusLabel(status) {
@@ -44,7 +45,7 @@ function durationLabel(seconds) {
   return `${Math.floor(total / 60)}:${String(Math.floor(total % 60)).padStart(2, '0')}`;
 }
 
-export default function ConversationThread({ conversationId, currentUser, onBack }) {
+export default function ConversationThread({ conversationId, currentUser, onBack, realtimeConnected = false }) {
   const queryClient = useQueryClient();
   const { format } = useCurrency();
   const scrollRef = useRef(null);
@@ -84,7 +85,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     enabled: Boolean(conversationId && currentUser?.id),
     staleTime: 2_000,
-    refetchInterval: ACTIVE_THREAD_REFRESH_MS,
+    refetchInterval: realtimeConnected ? CONNECTED_THREAD_REFRESH_MS : DISCONNECTED_THREAD_REFRESH_MS,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: 'always',
     refetchOnReconnect: 'always',
