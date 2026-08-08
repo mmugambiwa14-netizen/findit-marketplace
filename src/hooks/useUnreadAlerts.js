@@ -3,6 +3,8 @@ import { useAuth } from "@/lib/AuthContext";
 import { featureFlags } from "@/lib/featureFlags";
 import { getUnreadNotificationCount } from "@/services/notificationsService";
 
+const UNREAD_REFRESH_MS = 30_000;
+
 export function useUnreadAlerts() {
   const { user } = useAuth();
 
@@ -10,7 +12,11 @@ export function useUnreadAlerts() {
     queryKey: ["notifications", "unread-count", user?.id],
     queryFn: getUnreadNotificationCount,
     enabled: featureFlags.essentialNotifications && Boolean(user?.id),
-    staleTime: 30_000,
+    staleTime: 10_000,
+    refetchInterval: UNREAD_REFRESH_MS,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: "always",
+    refetchOnReconnect: "always",
   });
 
   return count;
