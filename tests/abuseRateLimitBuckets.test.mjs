@@ -131,7 +131,9 @@ test('rollbacks preserve limiter evidence and do not reintroduce the private-bou
   assert.doesNotMatch(rollback, /drop table|truncate|delete from/i);
   assert.match(rollback, /preserve private\.abuse_rate_limit_buckets/);
   assert.match(boundaryRepairRollback, /grant usage on schema private to anon, authenticated/);
-  assert.match(boundaryRepairRollback, /coalesce\(auth\.role\(\), ''\) <> 'service_role'/);
+  assert.doesNotMatch(boundaryRepairRollback, /create or replace function public\.prune_abuse_rate_limit_buckets/i);
+  assert.match(boundaryRepairRollback, /revoke all on function public\.prune_abuse_rate_limit_buckets\(integer\)[\s\S]*from public, anon, authenticated/);
+  assert.match(boundaryRepairRollback, /grant execute on function public\.prune_abuse_rate_limit_buckets\(integer\)[\s\S]*to service_role/);
   assert.doesNotMatch(boundaryRepairRollback, /revoke .*schema private from (?:anon|authenticated)/i);
   assert.doesNotMatch(boundaryRepairRollback, /drop table|truncate|delete from/i);
 });
