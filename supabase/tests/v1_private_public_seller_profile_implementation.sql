@@ -192,10 +192,11 @@ select set_config(
   true
 );
 
-insert into public.listings (id, kind, seller_id, title, price, currency, status, location_id, country_code)
+insert into public.listings (id, kind, category, seller_id, title, price, currency, status, location_id, country_code)
 values (
   '90000000-0000-4000-8000-000000000011',
   'property',
+  'house_sale',
   '90000000-0000-4000-8000-000000000001',
   'Public seller listing',
   100,
@@ -212,10 +213,11 @@ select set_config(
   true
 );
 
-insert into public.listings (id, kind, seller_id, title, price, currency, status, location_id, country_code)
+insert into public.listings (id, kind, category, seller_id, title, price, currency, status, location_id, country_code)
 values (
   '90000000-0000-4000-8000-000000000012',
   'property',
+  'house_sale',
   '90000000-0000-4000-8000-000000000003',
   'Suspended seller listing',
   100,
