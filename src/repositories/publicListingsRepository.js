@@ -165,9 +165,9 @@ export async function findPublicListings(request) {
  * keyset RPC. The database returns limit+1 rows so the service can derive the
  * next cursor without requesting an exact count or using deep offsets.
  */
-export async function findPublicListingsPage(request) {
+export async function findPublicListingsPage(request, signal) {
   assertKind(request.kind);
-  const { data, error } = await supabase.rpc('public_listing_search_page_v2', {
+  let query = supabase.rpc('public_listing_search_page_v2', {
     p_kind: request.kind,
     p_country_code: request.countryCode,
     p_currency: request.currency,
@@ -186,6 +186,8 @@ export async function findPublicListingsPage(request) {
     p_cursor_id: request.cursor?.id ?? null,
     p_limit: request.pageSize,
   });
+  if (signal) query = query.abortSignal(signal);
+  const { data, error } = await query;
 
   if (error) {
     const repositoryError = new Error('Unable to search public listings');
