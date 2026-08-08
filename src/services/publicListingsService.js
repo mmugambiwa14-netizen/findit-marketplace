@@ -46,6 +46,10 @@ function normalizeLimit(limit) {
   return limit;
 }
 
+function throwIfAborted(signal) {
+  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+}
+
 export async function getLatestPublicListings(kind, limit) {
   if (localPreviewListingsEnabled()) {
     const rows = filterLocalPreviewListings({
@@ -91,7 +95,7 @@ export async function getPublicListing(kind, id) {
 export async function getPublicListingsByIds(listingIds, { signal } = {}) {
   const ids = normalizeListingIds(listingIds);
   if (ids.length === 0) return [];
-  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+  throwIfAborted(signal);
 
   if (localPreviewListingsEnabled()) {
     const listings = ids.flatMap((id) => (
@@ -106,15 +110,20 @@ export async function getPublicListingsByIds(listingIds, { signal } = {}) {
   }
 
   const rows = await findPublicListingsByIds(ids, signal);
-  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+  throwIfAborted(signal);
   const enriched = await enrichPublicListingCards(rows);
-  if (signal?.aborted) throw new DOMException('Request cancelled', 'AbortError');
+  throwIfAborted(signal);
   const byId = new Map(enriched.map((listing) => [listing.id, listing]));
   return ids.map((id) => byId.get(id)).filter(Boolean);
 }
 
-export async function searchPublicListingsPage(input) {
+/**
+ * @param {object} input
+ * @param {{ signal?: AbortSignal }} [options]
+ */
+export async function searchPublicListingsPage(input, { signal } = {}) {
   const request = normalizePublicSearchPageRequest(input);
+  throwIfAborted(signal);
   if (localPreviewListingsEnabled()) {
     // Preview fixtures are intentionally USD-only. Preserve truthful currency
     // behavior instead of relabeling fixture amounts as another currency.
@@ -134,15 +143,18 @@ export async function searchPublicListingsPage(input) {
       nextCursor: page.nextCursor,
     };
   }
-  const rows = await findPublicListingsPage(request);
+  const rows = await findPublicListingsPage(request, signal);
+  throwIfAborted(signal);
   const values = Array.isArray(rows) ? rows : [];
   const hasMore = values.length > request.pageSize;
   const pageRows = values.slice(0, request.pageSize);
   const cursorRow = hasMore ? pageRows.at(-1) : null;
   const cleanRows = pageRows.map(({ cursor_value: _cursorValue, ...row }) => row);
+  const items = await enrichPublicListingCards(cleanRows);
+  throwIfAborted(signal);
 
   return {
-    items: await enrichPublicListingCards(cleanRows),
+    items,
     nextCursor: cursorRow ? { value: cursorRow.cursor_value, id: cursorRow.id } : null,
   };
 }
