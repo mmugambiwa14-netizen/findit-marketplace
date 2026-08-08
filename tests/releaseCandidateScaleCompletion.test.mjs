@@ -14,6 +14,7 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
   migration,
   searchV2Migration,
+  searchCardMigration,
   rollback,
   observabilityMigration,
   observabilityRollback,
@@ -35,6 +36,7 @@ const [
 ] = await Promise.all([
   read('supabase/migrations/0041_v1_public_search_and_notification_scale.sql'),
   read('supabase/migrations/20260808020000_currency_safe_public_listing_search_v2.sql'),
+  read('supabase/migrations/20260808043000_public_listing_search_card_projection.sql'),
   read('supabase/rollback/0041_v1_public_search_and_notification_scale.rollback.sql'),
   read('supabase/migrations/0042_v1_release_observability_completion.sql'),
   read('supabase/rollback/0042_v1_release_observability_completion.rollback.sql'),
@@ -58,7 +60,7 @@ const [
 const UUID_A = '11111111-1111-4111-8111-111111111111';
 const UUID_B = '22222222-2222-4222-8222-222222222222';
 
-test('public browse keeps generated search indexing and promotes currency-safe deterministic keysets', () => {
+test('public browse keeps generated search indexing and promotes thin currency-safe deterministic keysets', () => {
   assert.match(migration, /search_document tsvector generated always/);
   assert.match(migration, /idx_listings_search_document/);
   for (const index of ['idx_listings_public_newest', 'idx_listings_public_views']) {
@@ -67,17 +69,20 @@ test('public browse keeps generated search indexing and promotes currency-safe d
   for (const index of ['idx_listings_public_currency_price_asc', 'idx_listings_public_currency_price_desc']) {
     assert.match(searchV2Migration, new RegExp(index));
   }
-  const rpc = searchV2Migration.match(/create or replace function private\.public_listing_search_page_v2[\s\S]*?\n\$\$;/)?.[0] || '';
+  const rpc = searchCardMigration.match(/create or replace function private\.public_listing_search_card_page_v1[\s\S]*?\n\$\$;/)?.[0] || '';
   assert.match(rpc, /\(listing\.created_at, listing\.id\) < \(cursor_time, p_cursor_id\)/);
   assert.match(rpc, /\(coalesce\(listing\.native_price, listing\.price\), listing\.id\) > \(cursor_number, p_cursor_id\)/);
   assert.match(rpc, /\(coalesce\(listing\.native_price, listing\.price\), listing\.id\) < \(cursor_number, p_cursor_id\)/);
   assert.match(rpc, /\(listing\.views, listing\.id\) < \(cursor_views, p_cursor_id\)/);
   assert.match(rpc, /listing\.content_suspended_at is null/);
+  assert.match(rpc, /jsonb_build_array\(listing\.photos -> 0\)/);
   assert.match(rpc, /limit p_limit \+ 1/);
   assert.doesNotMatch(rpc, /offset|count\(\*\).*over|count\(\*\).*total/i);
+  const resultBlock = rpc.match(/returns table \([\s\S]*?\)\s*language plpgsql/i)?.[0] || '';
+  assert.doesNotMatch(resultBlock, /description text|deposit numeric|agent_fee numeric|additional_fees numeric|created_via text|updated_at timestamptz/);
 });
 
-test('active Search page uses bounded infinite pages and no exact totals', () => {
+test('active Search page uses bounded infinite thin-card pages and no exact totals', () => {
   assert.match(searchPage, /useInfiniteQuery/);
   assert.match(searchPage, /searchPublicListingsPage/);
   assert.match(searchPage, /getNextPageParam/);
@@ -87,7 +92,7 @@ test('active Search page uses bounded infinite pages and no exact totals', () =>
   assert.match(listingResults, /Load more/);
   assert.doesNotMatch(searchPage, /totalPages|setPage\(|pageSize\s*\*|count:\s*['"]exact['"]/);
   assert.doesNotMatch(listingResults, /total results|page \d|totalPages/i);
-  assert.match(searchRepository, /public_listing_search_page_v2/);
+  assert.match(searchRepository, /public_listing_search_card_page_v1/);
   assert.match(searchService, /values\.length > request\.pageSize/);
   assert.match(searchService, /nextCursor/);
 });
