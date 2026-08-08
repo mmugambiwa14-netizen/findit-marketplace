@@ -6,12 +6,14 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
   inbox,
   thread,
+  realtimeThread,
   repository,
   service,
   listingImages,
 ] = await Promise.all([
   read('src/pages/Inquiries.jsx'),
   read('src/components/messaging/ConversationThread.jsx'),
+  read('src/components/messaging/RealtimeConversationThread.jsx'),
   read('src/repositories/messagingRepository.js'),
   read('src/services/messagingService.js'),
   read('src/services/listingCreationService.js'),
@@ -68,4 +70,32 @@ test('cancellation is checked again before and after non-abortable media hydrati
   const hydration = service.slice(start, end);
   assert.match(hydration, /throwIfAborted\(signal\);[\s\S]*await hydrateListingCardImages/);
   assert.match(hydration, /await hydrateListingCardImages[\s\S]*throwIfAborted\(signal\);/);
+});
+
+test('open thread refresh cost stays constant as older history pages accumulate', () => {
+  const historyStart = thread.indexOf('const messagesQuery = useInfiniteQuery');
+  const tailStart = thread.indexOf('const tailQuery = useQuery', historyStart);
+  const mergeStart = thread.indexOf('queryClient.setQueryData', tailStart);
+  assert.notEqual(historyStart, -1);
+  assert.notEqual(tailStart, -1);
+  assert.notEqual(mergeStart, -1);
+
+  const historyBlock = thread.slice(historyStart, tailStart);
+  const tailBlock = thread.slice(tailStart, mergeStart);
+  assert.match(historyBlock, /queryKey: \['message-thread', conversationId\]/);
+  assert.match(historyBlock, /staleTime:\s*Infinity/);
+  assert.match(historyBlock, /refetchOnWindowFocus:\s*false/);
+  assert.match(historyBlock, /refetchOnReconnect:\s*false/);
+  assert.doesNotMatch(historyBlock, /refetchInterval:/);
+
+  assert.match(tailBlock, /queryKey: \['message-thread-tail', conversationId\]/);
+  assert.match(tailBlock, /getMessageThreadPage\(conversationId, \{ limit: THREAD_PAGE_SIZE \}, signal\)/);
+  assert.match(tailBlock, /refetchInterval:\s*realtimeConnected \? CONNECTED_THREAD_REFRESH_MS : DISCONNECTED_THREAD_REFRESH_MS/);
+  assert.match(thread, /const overlaps = incomingItems\.some/);
+  assert.match(thread, /pages: \[incomingPage\], pageParams: \[null\]/);
+  assert.match(thread, /refetchQueries\(\{ queryKey: \['message-thread-tail', conversationId\], exact: true, type: 'active' \}\)/);
+  assert.doesNotMatch(thread, /resetQueries\(\{ queryKey: \['message-thread', conversationId\]/);
+
+  assert.match(realtimeThread, /queryKey: \['message-thread-tail', conversationId\]/);
+  assert.doesNotMatch(realtimeThread, /queryKey: \['message-thread', conversationId\]/);
 });
