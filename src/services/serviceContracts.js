@@ -3,7 +3,7 @@ import { normalizeKeysetCursor, normalizePageLimit } from './keysetPagination.js
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const V1_CATEGORIES = new Set(['property_developer', 'mechanic', 'construction', 'geological']);
+const TAXONOMY_SLUG_PATTERN = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
 const PRICING_TYPES = new Set(['fixed', 'starting_from', 'hourly', 'daily', 'quote', 'quote_required', 'contact_for_price']);
 const SERVICE_STATUSES = new Set(['active', 'paused', 'unavailable']);
 const SUPPORTED_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
@@ -20,16 +20,23 @@ function optionalUuid(value, label) {
   return requireUuid(String(value).trim().toLowerCase(), label);
 }
 
-// See ownerListingContracts.js: sanitize before measuring, and measure in
-// characters rather than UTF-16 code units.
 function text(value, label, max, { required = false, min = 0, singleLine = false } = {}) {
-  // See ownerListingContracts: a newline in a title or a name is a display
-  // spoofing vector, so those collapse to a space.
   const normalized = singleLine ? sanitizeSingleLine(value) : sanitizeText(value);
   const length = characterLength(normalized);
   if (required && length < min) throw new TypeError(`${label} is required`);
   if (length > max) throw new TypeError(`${label} is too long`);
   return normalized;
+}
+
+function taxonomySlug(value, label) {
+  const normalized = text(value, label, 80, { required: true, min: 1, singleLine: true }).toLowerCase();
+  if (!TAXONOMY_SLUG_PATTERN.test(normalized)) throw new TypeError(`${label} is invalid`);
+  return normalized;
+}
+
+function requireAllowedSet(value, label) {
+  if (!(value instanceof Set)) throw new TypeError(`${label} taxonomy is unavailable`);
+  return value;
 }
 
 function contactEmail(value) {
@@ -66,14 +73,13 @@ function contacts(input) {
   return { contact_phone: phone || null, contact_whatsapp: whatsapp || null, contact_email: email || null };
 }
 
-function normalizeSubcategories(value) {
+function normalizeSubcategories(value, allowedSubcategories) {
   if (!Array.isArray(value) || value.length === 0 || value.length > 20) {
     throw new TypeError('At least one service type is required');
   }
-  const normalized = [...new Set(value.map((item) => text(item, 'Service type', 80, { required: true, min: 1 })))];
-  if (normalized.some((item) => !/^[a-z0-9_-]+$/.test(item))) {
-    throw new TypeError('Service type is invalid');
-  }
+  const allowed = requireAllowedSet(allowedSubcategories, 'Service type');
+  const normalized = [...new Set(value.map((item) => taxonomySlug(item, 'Service type')))];
+  if (normalized.some((item) => !allowed.has(item))) throw new TypeError('Service type is not active in the current taxonomy');
   return normalized;
 }
 
@@ -85,7 +91,7 @@ export function normalizeProviderId(value) {
   return requireUuid(value, 'Provider id');
 }
 
-export function normalizePublicServiceRequest(input = {}) {
+export function normalizePublicServiceRequest(input = {}, taxonomy = {}) {
   const rawQuery = text(input.query, 'Search query', 80);
   const query = rawQuery
     .normalize('NFKC')
@@ -93,9 +99,13 @@ export function normalizePublicServiceRequest(input = {}) {
     .replace(/\s+/g, ' ')
     .trim();
   const category = input.category ?? 'all';
-  if (category !== 'all' && !V1_CATEGORIES.has(category)) throw new TypeError('Service category is invalid');
+  if (category !== 'all') {
+    const normalizedCategory = taxonomySlug(category, 'Service category');
+    const allowed = requireAllowedSet(taxonomy.allowedCategories, 'Service category');
+    if (!allowed.has(normalizedCategory)) throw new TypeError('Service category is not active in the current taxonomy');
+  }
   return {
-    category,
+    category: category === 'all' ? 'all' : taxonomySlug(category, 'Service category'),
     query,
     locationId: optionalUuid(input.locationId, 'Location'),
     limit: normalizePageLimit(input.limit, { fallback: 24, maximum: 48 }),
@@ -111,10 +121,11 @@ export function normalizeOwnerServicePageRequest(providerId, input = {}) {
   };
 }
 
-export function normalizeServiceCreate(input, provider) {
-  const category = input?.category;
-  if (!V1_CATEGORIES.has(category)) throw new TypeError('Service category is invalid');
-  const subcategories = normalizeSubcategories(input.subcategories);
+export function normalizeServiceCreate(input, provider, taxonomy = {}) {
+  const category = taxonomySlug(input?.category, 'Service category');
+  const allowedCategories = requireAllowedSet(taxonomy.allowedCategories, 'Service category');
+  if (!allowedCategories.has(category)) throw new TypeError('Service category is not active in the current taxonomy');
+  const subcategories = normalizeSubcategories(input.subcategories, taxonomy.allowedSubcategories);
   const selectedPricingType = pricingType(input.pricing_type ?? 'starting_from');
   return {
     provider_id: normalizeProviderId(provider.id),
