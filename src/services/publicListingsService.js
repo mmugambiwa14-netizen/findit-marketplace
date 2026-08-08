@@ -159,17 +159,24 @@ export async function searchPublicListingsPage(input, { signal } = {}) {
   };
 }
 
-export async function getPublicSearchSuggestions(kind, query) {
+/**
+ * @param {string} kind
+ * @param {string} query
+ * @param {{ signal?: AbortSignal }} [options]
+ */
+export async function getPublicSearchSuggestions(kind, query, { signal } = {}) {
   const normalized = normalizePublicSearchRequest({ kind, query });
   if (normalized.query.length < 2) return { listings: [], locations: [] };
+  throwIfAborted(signal);
   if (localPreviewListingsEnabled()) {
     return findLocalPreviewSuggestions(normalized.kind, normalized.query);
   }
 
   const [listings, locations] = await Promise.all([
-    findPublicListingTitleSuggestions(normalized.kind, normalized.query),
-    findActiveLocationSuggestions(normalized.query),
+    findPublicListingTitleSuggestions(normalized.kind, normalized.query, 5, signal),
+    findActiveLocationSuggestions(normalized.query, { signal }),
   ]);
+  throwIfAborted(signal);
   return { listings, locations };
 }
 
