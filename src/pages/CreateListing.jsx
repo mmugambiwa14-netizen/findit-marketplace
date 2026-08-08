@@ -13,6 +13,7 @@ import StepProgress from '@/components/create-listing/StepProgress';
 import { usePersistentFormDraft } from '@/hooks/usePersistentFormDraft';
 import { useAuth } from '@/lib/AuthContext';
 import { customerErrorMessage } from '@/lib/customerErrors';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { resolveListingImages, submitListing } from '@/services/listingCreationService';
 import { removeListingTour, uploadListingTour } from '@/services/listingToursService';
 import { getActiveLocations } from '@/services/locationsService';
@@ -21,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 function freshForm(user) {
   return {
     submission_key: crypto.randomUUID(),
+    country_code: LAUNCH_COUNTRY_CODE,
     currency: 'USD',
     contact_phone: user?.phone || '',
     contact_whatsapp: user?.phone || '',
@@ -77,7 +79,7 @@ export default function CreateListing() {
     }
 
     let cancelled = false;
-    getActiveLocations('city')
+    getActiveLocations('city', null, formData.country_code || LAUNCH_COUNTRY_CODE)
       .then((locations) => {
         if (cancelled) return;
         const match = locations.find((item) => item.id === formData.location_id);
@@ -88,7 +90,7 @@ export default function CreateListing() {
       });
 
     return () => { cancelled = true; };
-  }, [formData.location_id]);
+  }, [formData.country_code, formData.location_id]);
 
   useEffect(() => () => {
     if (tourDraft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(tourDraft.previewUrl);
