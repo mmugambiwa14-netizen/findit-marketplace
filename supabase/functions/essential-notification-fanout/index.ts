@@ -17,6 +17,8 @@ type FanoutResult = {
   complete?: boolean;
 };
 
+const MAX_RECIPIENTS_PER_INVOCATION = 2_000;
+
 Deno.serve(async (req: Request) => {
   const early = requireJsonRequest(req);
   if (early) return early;
@@ -44,9 +46,14 @@ Deno.serve(async (req: Request) => {
       return json(req, 400, { requestId, code: "invalid_recipient_limit", message: "recipientLimit must be from 1 to 500." });
     }
 
+    const claimLimit = Math.min(
+      jobLimit,
+      Math.max(1, Math.floor(MAX_RECIPIENTS_PER_INVOCATION / recipientLimit)),
+    );
+
     const admin = adminClient();
     const { data, error: claimError } = await admin.rpc("claim_notification_fanout_jobs", {
-      p_limit: jobLimit,
+      p_limit: claimLimit,
       p_lease_seconds: 120,
     });
     if (claimError) throw new Error(`Notification fan-out claim failed: ${claimError.message}`);
