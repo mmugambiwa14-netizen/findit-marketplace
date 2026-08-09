@@ -20,6 +20,22 @@ function explicitSharedOriginPreview() {
   return String(viteEnv.VITE_PREVIEW_DEPLOYMENT || '').trim().toLowerCase() === 'true';
 }
 
+function stagingLikeOrigin() {
+  if (typeof window === 'undefined') return false;
+  const hostname = String(window.location.hostname || '').trim().toLowerCase();
+  return hostname.includes('staging')
+    || hostname.startsWith('findit-marketplace-stagi')
+    || hostname.startsWith('peekalisting-stagi');
+}
+
+function activateWaitingStagingWorker() {
+  if (!stagingLikeOrigin()) return false;
+  const waiting = registration?.waiting;
+  if (!waiting) return false;
+  waiting.postMessage({ type: 'SKIP_WAITING' });
+  return true;
+}
+
 export function previewDeployment() {
   return explicitSharedOriginPreview()
     || String(viteEnv.VITE_VERCEL_ENV || '').trim() === 'preview'
@@ -93,17 +109,25 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
   if (!serviceWorkerSupported() || previewDeployment()) return null;
 
   try {
-    registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: '/' });
+    registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: '/', updateViaCache: 'none' });
   } catch {
     // A failed registration must never break the application. The app works
     // exactly as before without a worker; it simply loses offline support.
     return null;
   }
 
+  // Staging is an operational test surface, not a draft-preserving production
+  // surface. Always force a byte check on startup and activate a waiting build
+  // immediately so an installed iOS PWA cannot stay pinned to yesterday's JS.
+  if (stagingLikeOrigin()) {
+    try { await registration.update(); } catch { /* best effort */ }
+    activateWaitingStagingWorker();
+  }
+
   // A worker already waiting means the user loaded the page with an update
   // pending from a previous visit.
   if (registration.waiting && navigator.serviceWorker.controller) {
-    onUpdateReady?.();
+    if (!activateWaitingStagingWorker()) onUpdateReady?.();
   }
 
   registration.addEventListener('updatefound', () => {
@@ -113,7 +137,7 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
       if (installing.state !== 'installed') return;
       if (navigator.serviceWorker.controller) {
         // An existing controller means this is an update, not a first install.
-        onUpdateReady?.();
+        if (!activateWaitingStagingWorker()) onUpdateReady?.();
       } else {
         onReady?.();
       }
@@ -150,6 +174,7 @@ export async function checkForUpdate() {
   if (!registration || previewDeployment()) return false;
   try {
     await registration.update();
+    if (activateWaitingStagingWorker()) return false;
     return Boolean(registration.waiting);
   } catch {
     return false;
