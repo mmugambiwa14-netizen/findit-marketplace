@@ -4,6 +4,7 @@ import {
   LogOut, MessageCircle, MessageSquareMore, ScrollText, Settings, ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import BackButton from '@/components/layout/BackButton';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import { featureFlags } from '@/lib/featureFlags';
 import { toast } from 'sonner';
@@ -16,7 +17,7 @@ export default function Profile() {
     if (signedOut === false) toast.error('Could not sign out. Check your connection and try again.');
   };
 
-  if (isLoading) return <div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
+  if (isLoading) return <div className="relative flex min-h-screen items-center justify-center"><BackButton className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))]" fallback="/" label="Back to Discover" /><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" role="status" aria-label="Loading profile" /></div>;
 
   const marketplaceLinks = [
     { icon: ListChecks, label: 'My listings', description: 'Manage posts, availability and enquiries', to: '/my-listings' },
@@ -37,7 +38,10 @@ export default function Profile() {
   return (
     <div className="findit-screen">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-4 pt-5">
-        <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Your PeekaListing</p><h1 className="mt-1 text-2xl font-black tracking-tight">Profile</h1></div>
+        <div className="flex min-w-0 items-center gap-2">
+          <BackButton className="-ml-2" fallback="/" label="Back to Discover" />
+          <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Your PeekaListing</p><h1 className="mt-1 text-2xl font-black tracking-tight">Profile</h1></div>
+        </div>
         <Link to="/settings" aria-label="Open settings" className="clay-icon h-11 w-11"><Settings className="h-5 w-5" /></Link>
       </header>
 

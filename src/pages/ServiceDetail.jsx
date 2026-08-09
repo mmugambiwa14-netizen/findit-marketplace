@@ -1,10 +1,9 @@
 import { useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BadgeCheck, Briefcase, Clock3, Globe2, MapPin, Route } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
 import ContactButtons from "@/components/listings/ContactButtons";
 import ListingDetailActions from "@/components/listings/ListingDetailActions";
@@ -21,7 +20,7 @@ import {
   ListingSeller,
   ListingTabSection,
 } from "@/components/listings/ListingDetailTabs";
-import { ContactBar, DetailLoading, SafetyPanel } from "@/components/listings/ListingDetailLayout";
+import { ContactBar, DetailError, DetailLoading, DetailMissing, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useServiceFavourite } from "@/hooks/useServiceFavourite";
 import { useAuth } from "@/lib/AuthContext";
@@ -51,9 +50,9 @@ export default function ServiceDetail() {
     applyListingDocumentMetadata({ title: service.title, description: service.description, imageUrl: service.photos?.[0], path: `/service/${service.id}` });
   }, [service]);
 
-  if (isLoading) return <DetailLoading />;
-  if (error) return <ServiceError onRetry={refetch} />;
-  if (!service) return <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-4"><div className="clay-card rounded-2xl px-6 py-10 text-center"><p className="text-muted-foreground">Service not found.</p><Link to="/services" className="mt-3 inline-block font-medium text-primary">Back to Services</Link></div></div>;
+  if (isLoading) return <DetailLoading fallback="/services" />;
+  if (error) return <DetailError label="Service" fallback="/services" onRetry={refetch} />;
+  if (!service) return <DetailMissing label="Service" />;
 
   const categoryLabel = service.category_label || "Service";
   const subcategoryLabels = service.subcategory_labels?.length
@@ -149,8 +148,4 @@ export default function ServiceDetail() {
       <GuestPromptSheet open={guestOpen} onClose={closeGuest} action={guestAction} />
     </div>
   );
-}
-
-function ServiceError({ onRetry }) {
-  return <div className="flex min-h-screen items-center justify-center bg-background px-4"><div className="clay-card rounded-2xl px-6 py-10 text-center"><p className="font-semibold">We could not load this service.</p><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="clay-control mt-5" onClick={onRetry}>Try again</Button></div></div>;
 }

@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import BackButton from '@/components/layout/BackButton';
 import {
   getMyPublishingAccess,
   requestAdditionalBusinessCategories,
@@ -53,13 +54,14 @@ export default function BusinessPublishingGate({ children }) {
 }
 
 function GateLoading() {
-  return <main className="mx-auto flex min-h-[70vh] max-w-xl items-center justify-center px-4"><Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Checking publishing access" /></main>;
+  return <main className="relative mx-auto flex min-h-[70vh] max-w-xl items-center justify-center px-4"><BackButton className="absolute left-4 top-4" fallback="/" label="Back to Discover" /><Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Checking publishing access" /></main>;
 }
 
 function PublishingChoice({ access, onBusiness, onManaged }) {
   const pending = ['submitted', 'reviewing', 'needs_information'].includes(access?.applicationStatus);
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
+      <BackButton className="-ml-2 mb-4" fallback="/" label="Back to Discover" />
       <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Publish on PeekaListing</p>
       <h1 className="mt-2 text-3xl font-black tracking-tight">Choose how you want to list</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Direct publishing is available to approved businesses. If you are listing an item personally, you can ask PeekaListing to prepare and advertise it for you.</p>

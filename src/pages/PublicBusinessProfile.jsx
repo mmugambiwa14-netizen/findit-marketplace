@@ -5,6 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import DealerListings from '@/components/dealers/DealerListings';
 import ServiceCard from '@/components/services/ServiceCard';
 import VerifiedBusinessBadge from '@/components/business/VerifiedBusinessBadge';
+import BackButton from '@/components/layout/BackButton';
 import { Button } from '@/components/ui/button';
 import { safeExternalUrl } from '@/lib/safeUrl';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +24,17 @@ function flattenUnique(pages = []) {
   const byId = new Map();
   for (const page of pages) for (const item of page.items) byId.set(item.id, item);
   return [...byId.values()];
+}
+
+function PublicBusinessProfileState({ children }) {
+  return (
+    <div className="min-h-[70vh] bg-muted/20 px-4 py-5">
+      <div className="mx-auto max-w-5xl">
+        <BackButton className="-ml-2" fallback="/search" label="Back to marketplace" />
+        <div className="mx-auto max-w-lg py-12 text-center">{children}</div>
+      </div>
+    </div>
+  );
 }
 
 export default function PublicBusinessProfile() {
@@ -63,13 +75,13 @@ export default function PublicBusinessProfile() {
   const services = useMemo(() => flattenUnique(servicePages.data?.pages), [servicePages.data]);
 
   if (profileQuery.isLoading) {
-    return <div className="flex justify-center py-20" role="status"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /><span className="sr-only">Loading business profile</span></div>;
+    return <PublicBusinessProfileState><div className="flex justify-center" role="status"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /><span className="sr-only">Loading business profile</span></div></PublicBusinessProfileState>;
   }
   if (profileQuery.error) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">We could not load this profile</h1><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="mt-5" onClick={() => profileQuery.refetch()}>Try again</Button></div>;
+    return <PublicBusinessProfileState><h1 className="text-xl font-semibold">We could not load this profile</h1><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="mt-5" onClick={() => profileQuery.refetch()}>Try again</Button></PublicBusinessProfileState>;
   }
   if (!profile) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">Profile not found</h1><p className="mt-2 text-sm text-muted-foreground">This business is unavailable or no longer active.</p><Button asChild variant="outline" className="mt-5"><Link to="/search">Browse PeekaListing</Link></Button></div>;
+    return <PublicBusinessProfileState><h1 className="text-xl font-semibold">Profile not found</h1><p className="mt-2 text-sm text-muted-foreground">This business is unavailable or no longer active.</p><Button asChild variant="outline" className="mt-5"><Link to="/search">Browse PeekaListing</Link></Button></PublicBusinessProfileState>;
   }
 
   const whatsapp = contactNumber(profile.phone);
@@ -82,6 +94,7 @@ export default function PublicBusinessProfile() {
     <div className="min-h-screen bg-muted/20">
       <section className="border-b bg-card px-4 py-8">
         <div className="mx-auto max-w-5xl">
+          <BackButton className="-ml-2 mb-5" fallback="/search" label="Back to marketplace" />
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10">
               {profile.avatar_url ? <img src={profile.avatar_url} alt={`${profile.company_name} logo`} loading="eager" decoding="async" className="h-full w-full object-cover" /> : <Building2 className="h-11 w-11 text-primary" />}

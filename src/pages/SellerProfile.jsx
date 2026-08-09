@@ -4,11 +4,23 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, MessageCircle, Phone, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DealerListings from "@/components/dealers/DealerListings";
+import BackButton from "@/components/layout/BackButton";
 import { useAuth } from "@/lib/AuthContext";
 import { isSellerProfileId } from "@/services/sellerProfileContracts";
 import { getPublicSellerListingsPage, getPublicSellerProfile } from "@/services/sellerProfilesService";
 import { revealContactDetails } from "@/repositories/contactRevealRepository";
 import { goBackOrHome } from "@/lib/navigation";
+
+function SellerProfileState({ children }) {
+  return (
+    <div className="min-h-[70vh] px-4 py-5">
+      <div className="mx-auto max-w-3xl">
+        <BackButton className="-ml-2" fallback="/search" label="Back to marketplace" />
+        <div className="mx-auto max-w-lg py-12 text-center">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function SellerProfile() {
   const { sellerId = "" } = useParams();
@@ -57,36 +69,36 @@ export default function SellerProfile() {
 
   if (!validSellerId) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <SellerProfileState>
         <h1 className="text-xl font-semibold">Seller not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">This seller link is unavailable or no longer supported.</p>
         <Button type="button" variant="outline" className="mt-5" onClick={() => goBackOrHome(navigate, '/')}>Go back</Button>
-      </div>
+      </SellerProfileState>
     );
   }
 
   if (profileQuery.isLoading) {
-    return <div className="flex items-center justify-center py-12" role="status"><div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" /><span className="sr-only">Loading seller profile</span></div>;
+    return <SellerProfileState><div className="flex justify-center" role="status"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /><span className="sr-only">Loading seller profile</span></div></SellerProfileState>;
   }
 
   if (profileQuery.error) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <SellerProfileState>
         <h1 className="text-xl font-semibold">We could not load this seller</h1>
         <p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p>
         <Button type="button" variant="outline" className="mt-5" onClick={() => profileQuery.refetch()}>Try again</Button>
-      </div>
+      </SellerProfileState>
     );
   }
 
   const profile = profileQuery.data;
   if (!profile) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <SellerProfileState>
         <h1 className="text-xl font-semibold">Seller not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">This profile is unavailable or has no active public listings.</p>
         <Button type="button" variant="outline" className="mt-5" onClick={() => goBackOrHome(navigate, '/')}>Go back</Button>
-      </div>
+      </SellerProfileState>
     );
   }
 

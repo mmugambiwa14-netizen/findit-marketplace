@@ -1,24 +1,24 @@
 {
-  "generatedAt": "2026-08-09T00:39:05.147Z",
-  "sourceFiles": 332,
+  "generatedAt": "2026-08-09T02:56:07.759Z",
+  "sourceFiles": 333,
   "pageModules": 40,
-  "directControlDeclarations": 762,
-  "pageExpandedControlInstances": 1174,
+  "directControlDeclarations": 761,
+  "pageExpandedControlInstances": 1183,
   "byElement": {
     "AlertDialog": 13,
-    "Button": 266,
+    "Button": 265,
     "Checkbox": 1,
     "Dialog": 22,
     "DropdownMenuTrigger": 2,
     "Input": 100,
-    "Link": 99,
+    "Link": 98,
     "PopoverTrigger": 1,
     "Select": 30,
     "SelectTrigger": 30,
     "Sheet": 5,
     "Switch": 10,
     "Textarea": 34,
-    "a": 6,
+    "a": 7,
     "button": 130,
     "form": 13
   },
@@ -28,7 +28,7 @@
       "page": "BusinessProfiles.jsx",
       "directControls": 5,
       "expandedControls": 20,
-      "localModulesInClosure": 46
+      "localModulesInClosure": 47
     },
     {
       "page": "BuyerPeekRequests.jsx",
@@ -39,32 +39,32 @@
     {
       "page": "CarDetail.jsx",
       "directControls": 0,
-      "expandedControls": 80,
-      "localModulesInClosure": 113
+      "expandedControls": 81,
+      "localModulesInClosure": 114
     },
     {
       "page": "ContactSupport.jsx",
       "directControls": 9,
       "expandedControls": 9,
-      "localModulesInClosure": 20
+      "localModulesInClosure": 21
     },
     {
       "page": "CreateListing.jsx",
       "directControls": 2,
-      "expandedControls": 81,
-      "localModulesInClosure": 65
+      "expandedControls": 82,
+      "localModulesInClosure": 67
     },
     {
       "page": "CreateService.jsx",
       "directControls": 21,
       "expandedControls": 27,
-      "localModulesInClosure": 48
+      "localModulesInClosure": 49
     },
     {
       "page": "CuratedCreateService.jsx",
       "directControls": 2,
-      "expandedControls": 58,
-      "localModulesInClosure": 51
+      "expandedControls": 59,
+      "localModulesInClosure": 53
     },
     {
       "page": "FAQs.jsx",
@@ -76,7 +76,7 @@
       "page": "ForgotPassword.jsx",
       "directControls": 4,
       "expandedControls": 10,
-      "localModulesInClosure": 13
+      "localModulesInClosure": 14
     },
     {
       "page": "Home.jsx",
@@ -88,7 +88,7 @@
       "page": "Inquiries.jsx",
       "directControls": 7,
       "expandedControls": 27,
-      "localModulesInClosure": 38
+      "localModulesInClosure": 39
     },
     {
       "page": "LegalPage.jsx",
@@ -105,44 +105,44 @@
     {
       "page": "MachineryDetail.jsx",
       "directControls": 0,
-      "expandedControls": 80,
-      "localModulesInClosure": 113
+      "expandedControls": 81,
+      "localModulesInClosure": 114
     },
     {
       "page": "MyListings.jsx",
       "directControls": 14,
       "expandedControls": 52,
-      "localModulesInClosure": 67
+      "localModulesInClosure": 68
     },
     {
       "page": "MyServices.jsx",
       "directControls": 4,
       "expandedControls": 35,
-      "localModulesInClosure": 54
+      "localModulesInClosure": 55
     },
     {
       "page": "NotificationCenter.jsx",
       "directControls": 6,
       "expandedControls": 6,
-      "localModulesInClosure": 16
+      "localModulesInClosure": 17
     },
     {
       "page": "Profile.jsx",
       "directControls": 3,
-      "expandedControls": 4,
-      "localModulesInClosure": 29
+      "expandedControls": 5,
+      "localModulesInClosure": 33
     },
     {
       "page": "PropertyDetail.jsx",
       "directControls": 0,
-      "expandedControls": 80,
-      "localModulesInClosure": 113
+      "expandedControls": 81,
+      "localModulesInClosure": 114
     },
     {
       "page": "PublicBusinessProfile.jsx",
       "directControls": 15,
-      "expandedControls": 40,
-      "localModulesInClosure": 78
+      "expandedControls": 41,
+      "localModulesInClosure": 80
     },
     {
       "page": "Register.jsx",
@@ -154,7 +154,7 @@
       "page": "ResetPassword.jsx",
       "directControls": 7,
       "expandedControls": 13,
-      "localModulesInClosure": 14
+      "localModulesInClosure": 15
     },
     {
       "page": "Saved.jsx",
@@ -171,14 +171,14 @@
     {
       "page": "SellerProfile.jsx",
       "directControls": 8,
-      "expandedControls": 32,
-      "localModulesInClosure": 61
+      "expandedControls": 33,
+      "localModulesInClosure": 62
     },
     {
       "page": "ServiceDetail.jsx",
-      "directControls": 2,
-      "expandedControls": 60,
-      "localModulesInClosure": 87
+      "directControls": 0,
+      "expandedControls": 59,
+      "localModulesInClosure": 88
     },
     {
       "page": "Services.jsx",
@@ -190,19 +190,19 @@
       "page": "Settings.jsx",
       "directControls": 7,
       "expandedControls": 26,
-      "localModulesInClosure": 36
+      "localModulesInClosure": 37
     },
     {
       "page": "Tours.jsx",
       "directControls": 6,
-      "expandedControls": 31,
-      "localModulesInClosure": 58
+      "expandedControls": 32,
+      "localModulesInClosure": 60
     },
     {
       "page": "ToursPlaceholder.jsx",
       "directControls": 3,
-      "expandedControls": 3,
-      "localModulesInClosure": 3
+      "expandedControls": 4,
+      "localModulesInClosure": 5
     },
     {
       "page": "admin\\AdminAuditLog.jsx",
@@ -262,14 +262,14 @@
       "page": "admin\\AdminUsers.jsx",
       "directControls": 10,
       "expandedControls": 23,
-      "localModulesInClosure": 27
+      "localModulesInClosure": 28
     }
   ],
   "controls": [
     {
       "file": "src\\App.jsx",
       "page": "",
-      "line": 84,
+      "line": 85,
       "element": "button",
       "name": "Try again",
       "type": "button",
@@ -280,7 +280,7 @@
     {
       "file": "src\\App.jsx",
       "page": "",
-      "line": 85,
+      "line": 86,
       "element": "button",
       "name": "Sign out",
       "type": "button",
@@ -291,7 +291,7 @@
     {
       "file": "src\\App.jsx",
       "page": "",
-      "line": 89,
+      "line": 90,
       "element": "Link",
       "name": "Privacy",
       "type": "",
@@ -302,7 +302,7 @@
     {
       "file": "src\\App.jsx",
       "page": "",
-      "line": 90,
+      "line": 91,
       "element": "Link",
       "name": "Data protection",
       "type": "",
@@ -313,7 +313,7 @@
     {
       "file": "src\\App.jsx",
       "page": "",
-      "line": 91,
+      "line": 92,
       "element": "Link",
       "name": "Terms",
       "type": "",
@@ -412,7 +412,7 @@
     {
       "file": "src\\components\\ProtectedRoute.jsx",
       "page": "",
-      "line": 94,
+      "line": 96,
       "element": "button",
       "name": "Try again",
       "type": "button",
@@ -1246,6 +1246,17 @@
       "disabled": "loadingFactor || verifying || code.length < CODE_LENGTH || !factorId"
     },
     {
+      "file": "src\\components\\auth\\OAuthCallback.jsx",
+      "page": "",
+      "line": 41,
+      "element": "a",
+      "name": "Return to sign in",
+      "type": "",
+      "handler": "",
+      "destination": "authService.appUrl('/login')",
+      "disabled": ""
+    },
+    {
       "file": "src\\components\\business\\BusinessProfileForm.jsx",
       "page": "",
       "line": 83,
@@ -1413,7 +1424,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 76,
+      "line": 78,
       "element": "Button",
       "name": "{action}",
       "type": "",
@@ -1424,7 +1435,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 101,
+      "line": 103,
       "element": "button",
       "name": "Back",
       "type": "button",
@@ -1435,7 +1446,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 101,
+      "line": 103,
       "element": "form",
       "name": "'Sending…' 'Send information'",
       "type": "",
@@ -1446,7 +1457,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 101,
+      "line": 103,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -1457,7 +1468,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 101,
+      "line": 103,
       "element": "Button",
       "name": "'Sending…' 'Send information'",
       "type": "",
@@ -1468,7 +1479,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "button",
       "name": "Back",
       "type": "button",
@@ -1479,7 +1490,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "form",
       "name": "1–10 11–50 51–200 200+ Requested categories 'Submitting…' 'Submit application'",
       "type": "",
@@ -1490,7 +1501,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1501,7 +1512,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1512,7 +1523,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1523,7 +1534,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "email",
@@ -1534,7 +1545,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1545,7 +1556,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1556,7 +1567,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -1567,7 +1578,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "url",
@@ -1578,7 +1589,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Input",
       "name": "",
       "type": "url",
@@ -1589,7 +1600,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 114,
+      "line": 116,
       "element": "Button",
       "name": "'Submitting…' 'Submit application'",
       "type": "",
@@ -1600,7 +1611,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 138,
+      "line": 140,
       "element": "Button",
       "name": "'Submitting…' 'Request categories'",
       "type": "",
@@ -1611,7 +1622,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "button",
       "name": "Back",
       "type": "button",
@@ -1622,7 +1633,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "form",
       "name": "'Submitting…' 'Submit advertising request'",
       "type": "",
@@ -1633,7 +1644,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1644,7 +1655,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1655,7 +1666,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Input",
       "name": "",
       "type": "email",
@@ -1666,7 +1677,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1677,7 +1688,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1688,7 +1699,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -1699,7 +1710,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Input",
       "name": "",
       "type": "",
@@ -1710,7 +1721,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 148,
+      "line": 150,
       "element": "Button",
       "name": "'Submitting…' 'Submit advertising request'",
       "type": "",
@@ -1721,7 +1732,7 @@
     {
       "file": "src\\components\\business\\BusinessPublishingGate.jsx",
       "page": "",
-      "line": 151,
+      "line": 153,
       "element": "Button",
       "name": "Back",
       "type": "",
@@ -2271,7 +2282,7 @@
     {
       "file": "src\\components\\discover\\DiscoverMapView.jsx",
       "page": "",
-      "line": 293,
+      "line": 292,
       "element": "button",
       "name": "{visual.label}",
       "type": "button",
@@ -2359,7 +2370,7 @@
     {
       "file": "src\\components\\layout\\AdminLayout.jsx",
       "page": "",
-      "line": 18,
+      "line": 20,
       "element": "button",
       "name": "Open admin navigation",
       "type": "button",
@@ -2381,9 +2392,9 @@
     {
       "file": "src\\components\\layout\\BackButton.jsx",
       "page": "",
-      "line": 15,
+      "line": 16,
       "element": "button",
-      "name": "Go back",
+      "name": "label",
       "type": "button",
       "handler": "handleBack",
       "destination": "",
@@ -2689,7 +2700,7 @@
     {
       "file": "src\\components\\listings\\ListingDetailLayout.jsx",
       "page": "",
-      "line": 19,
+      "line": 29,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -2700,18 +2711,18 @@
     {
       "file": "src\\components\\listings\\ListingDetailLayout.jsx",
       "page": "",
-      "line": 31,
+      "line": 42,
       "element": "Link",
       "name": "Browse more",
       "type": "",
       "handler": "",
-      "destination": "label === 'Service' ? '/services' : '/search'",
+      "destination": "fallback",
       "disabled": ""
     },
     {
       "file": "src\\components\\listings\\ListingDetailLayout.jsx",
       "page": "",
-      "line": 55,
+      "line": 66,
       "element": "Link",
       "name": "{content}",
       "type": "",
@@ -5318,7 +5329,7 @@
     {
       "file": "src\\lib\\PageNotFound.jsx",
       "page": "",
-      "line": 24,
+      "line": 26,
       "element": "Button",
       "name": "Go home",
       "type": "",
@@ -5329,7 +5340,7 @@
     {
       "file": "src\\lib\\PageNotFound.jsx",
       "page": "",
-      "line": 24,
+      "line": 26,
       "element": "Link",
       "name": "Go home",
       "type": "",
@@ -5340,7 +5351,7 @@
     {
       "file": "src\\lib\\PageNotFound.jsx",
       "page": "",
-      "line": 25,
+      "line": 27,
       "element": "Button",
       "name": "Get help",
       "type": "",
@@ -5351,7 +5362,7 @@
     {
       "file": "src\\lib\\PageNotFound.jsx",
       "page": "",
-      "line": 25,
+      "line": 27,
       "element": "Link",
       "name": "Get help",
       "type": "",
@@ -6451,7 +6462,7 @@
     {
       "file": "src\\pages\\Profile.jsx",
       "page": "Profile.jsx",
-      "line": 41,
+      "line": 45,
       "element": "Link",
       "name": "Open settings",
       "type": "",
@@ -6462,7 +6473,7 @@
     {
       "file": "src\\pages\\Profile.jsx",
       "page": "Profile.jsx",
-      "line": 62,
+      "line": 66,
       "element": "button",
       "name": "Log out",
       "type": "button",
@@ -6473,7 +6484,7 @@
     {
       "file": "src\\pages\\Profile.jsx",
       "page": "Profile.jsx",
-      "line": 80,
+      "line": 84,
       "element": "Link",
       "name": "{label} {description}",
       "type": "",
@@ -6484,7 +6495,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 69,
+      "line": 81,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -6495,7 +6506,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 72,
+      "line": 84,
       "element": "Button",
       "name": "Browse PeekaListing",
       "type": "",
@@ -6506,7 +6517,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 72,
+      "line": 84,
       "element": "Link",
       "name": "Browse PeekaListing",
       "type": "",
@@ -6517,7 +6528,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 100,
+      "line": 113,
       "element": "Button",
       "name": "Call",
       "type": "",
@@ -6528,7 +6539,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 101,
+      "line": 114,
       "element": "Button",
       "name": "WhatsApp",
       "type": "",
@@ -6539,7 +6550,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 102,
+      "line": 115,
       "element": "Button",
       "name": "Email",
       "type": "",
@@ -6550,7 +6561,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 107,
+      "line": 120,
       "element": "a",
       "name": "Website",
       "type": "",
@@ -6561,7 +6572,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 108,
+      "line": 121,
       "element": "a",
       "name": "{network}",
       "type": "",
@@ -6572,7 +6583,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 119,
+      "line": 132,
       "element": "form",
       "name": "Search dealer inventory",
       "type": "",
@@ -6583,7 +6594,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 121,
+      "line": 134,
       "element": "Input",
       "name": "Search this inventory",
       "type": "",
@@ -6594,7 +6605,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 122,
+      "line": 135,
       "element": "Button",
       "name": "Search inventory",
       "type": "submit",
@@ -6605,7 +6616,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 127,
+      "line": 140,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -6616,7 +6627,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 128,
+      "line": 141,
       "element": "Button",
       "name": "<><Loader2 className=\"h-4 w-4 animate-spin\" /> Loading</> 'Load more listings'",
       "type": "button",
@@ -6627,7 +6638,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 135,
+      "line": 148,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -6638,7 +6649,7 @@
     {
       "file": "src\\pages\\PublicBusinessProfile.jsx",
       "page": "PublicBusinessProfile.jsx",
-      "line": 136,
+      "line": 149,
       "element": "Button",
       "name": "<><Loader2 className=\"h-4 w-4 animate-spin\" /> Loading</> 'Load more services'",
       "type": "button",
@@ -6946,7 +6957,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 63,
+      "line": 75,
       "element": "Button",
       "name": "Go back",
       "type": "button",
@@ -6957,7 +6968,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 77,
+      "line": 89,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -6968,7 +6979,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 88,
+      "line": 100,
       "element": "Button",
       "name": "Go back",
       "type": "button",
@@ -6979,7 +6990,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 106,
+      "line": 118,
       "element": "button",
       "name": "Go back",
       "type": "button",
@@ -6990,7 +7001,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 127,
+      "line": 139,
       "element": "Button",
       "name": "WhatsApp",
       "type": "",
@@ -7001,7 +7012,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 133,
+      "line": 145,
       "element": "Button",
       "name": "Call",
       "type": "",
@@ -7012,7 +7023,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 144,
+      "line": 156,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -7023,35 +7034,13 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 150,
+      "line": 162,
       "element": "Button",
       "name": "<><Loader2 className=\"h-4 w-4 animate-spin\" /> Loading</> 'Load more listings'",
       "type": "button",
       "handler": "() => listingsQuery.fetchNextPage()",
       "destination": "",
       "disabled": "listingsQuery.isFetchingNextPage"
-    },
-    {
-      "file": "src\\pages\\ServiceDetail.jsx",
-      "page": "ServiceDetail.jsx",
-      "line": 56,
-      "element": "Link",
-      "name": "Back to Services",
-      "type": "",
-      "handler": "",
-      "destination": "/services",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\ServiceDetail.jsx",
-      "page": "ServiceDetail.jsx",
-      "line": 155,
-      "element": "Button",
-      "name": "Try again",
-      "type": "button",
-      "handler": "onRetry",
-      "destination": "",
-      "disabled": ""
     },
     {
       "file": "src\\pages\\Services.jsx",
@@ -7254,7 +7243,7 @@
     {
       "file": "src\\pages\\Tours.jsx",
       "page": "Tours.jsx",
-      "line": 169,
+      "line": 177,
       "element": "button",
       "name": "`Peek settings. Autoplay is ${autoplay ? 'on' : 'off'}`",
       "type": "button",
@@ -7265,7 +7254,7 @@
     {
       "file": "src\\pages\\Tours.jsx",
       "page": "Tours.jsx",
-      "line": 182,
+      "line": 190,
       "element": "button",
       "name": "{label}",
       "type": "button",
@@ -7276,7 +7265,7 @@
     {
       "file": "src\\pages\\Tours.jsx",
       "page": "Tours.jsx",
-      "line": 202,
+      "line": 210,
       "element": "Button",
       "name": "Try again",
       "type": "",
@@ -7287,7 +7276,7 @@
     {
       "file": "src\\pages\\Tours.jsx",
       "page": "Tours.jsx",
-      "line": 229,
+      "line": 237,
       "element": "Sheet",
       "name": "Peeks settings Control how videos behave while you browse. Autoplay Play the visible Peek and continue when it ends. Muted by default Start each Peek without sound. PeekaListing keeps only the current, previous, and next Peek ready. Other videos are released from memory, and playback pauses whenever the app goes into the background.",
       "type": "",
@@ -7298,7 +7287,7 @@
     {
       "file": "src\\pages\\Tours.jsx",
       "page": "Tours.jsx",
-      "line": 238,
+      "line": 246,
       "element": "Switch",
       "name": "",
       "type": "",
@@ -7309,7 +7298,7 @@
     {
       "file": "src\\pages\\Tours.jsx",
       "page": "Tours.jsx",
-      "line": 242,
+      "line": 250,
       "element": "Switch",
       "name": "",
       "type": "",
@@ -7320,7 +7309,7 @@
     {
       "file": "src\\pages\\ToursPlaceholder.jsx",
       "page": "ToursPlaceholder.jsx",
-      "line": 21,
+      "line": 25,
       "element": "Link",
       "name": "Search listings",
       "type": "",
@@ -7331,7 +7320,7 @@
     {
       "file": "src\\pages\\ToursPlaceholder.jsx",
       "page": "ToursPlaceholder.jsx",
-      "line": 38,
+      "line": 42,
       "element": "Button",
       "name": "Browse listings",
       "type": "",
@@ -7342,7 +7331,7 @@
     {
       "file": "src\\pages\\ToursPlaceholder.jsx",
       "page": "ToursPlaceholder.jsx",
-      "line": 39,
+      "line": 43,
       "element": "Link",
       "name": "Browse listings",
       "type": "",

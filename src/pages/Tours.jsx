@@ -3,6 +3,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Loader2, RefreshCw, Settings2, WifiOff } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import BrandLogo from '@/components/BrandLogo';
+import BackButton from '@/components/layout/BackButton';
 import NotificationBell from '@/components/layout/NotificationBell';
 import GlobalRefreshButton from '@/components/pwa/GlobalRefreshButton';
 import ImmersivePeekSlide from '@/components/tours/ImmersivePeekSlide';
@@ -156,11 +157,18 @@ export default function Tours() {
     <div className="fixed inset-0 z-40 bg-black text-white">
       <div className="pointer-events-none absolute inset-x-0 top-0 z-50 px-[var(--findit-page-gutter)] pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between gap-3">
-          <BrandLogo
-            className="pointer-events-auto drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]"
-            markClassName="h-8 w-8"
-            wordmarkClassName="text-xl text-white"
-          />
+          <div className="pointer-events-auto flex min-w-0 items-center gap-1.5">
+            <BackButton
+              fallback="/"
+              label="Back to Discover"
+              className="h-10 w-10 rounded-full bg-black/45 text-white shadow-lg backdrop-blur-xl hover:bg-black/65"
+            />
+            <BrandLogo
+              className="min-w-0 drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]"
+              markClassName="h-8 w-8"
+              wordmarkClassName="text-xl text-white"
+            />
+          </div>
           <div className="pointer-events-auto flex items-center gap-1 text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
             <GlobalRefreshButton inline className="text-white/90 hover:bg-black/20 hover:text-white" />
             {user && featureFlags.essentialNotifications && (

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Building2, Car, Search, Tractor, Video, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import BackButton from '@/components/layout/BackButton';
 
 const PREVIEW_CATEGORIES = [
   { label: 'Property', icon: Building2 },
@@ -14,9 +15,12 @@ export default function ToursPlaceholder() {
     <div className="min-h-[100dvh] bg-background">
       <header className="glass-bar sticky top-0 z-40 border-b px-4 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">FindIt Peek</p>
-            <h1 className="mt-1 text-xl font-bold">A clearer way to inspect listings</h1>
+          <div className="flex min-w-0 items-center gap-2">
+            <BackButton className="-ml-2" fallback="/" label="Back to Discover" />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">FindIt Peek</p>
+              <h1 className="mt-1 truncate text-xl font-bold">A clearer way to inspect listings</h1>
+            </div>
           </div>
           <Link to="/search" aria-label="Search listings" className="flex h-11 w-11 items-center justify-center rounded-xl border border-border-strong bg-card text-muted-foreground hover:text-foreground">
             <Search className="h-5 w-5" />
