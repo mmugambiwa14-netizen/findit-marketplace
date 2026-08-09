@@ -1,7 +1,17 @@
 import { supabase } from '@/lib/supabaseClient';
 
+const STAGING_PROJECT_REF = 'bwgklpxoetrrkutottdb';
+const STAGING_PUBLIC_VAPID_KEY = 'BLuirAxWgQ7PVQ2EyEORk_oSeN2N5jwwxBQjIM_5UrdHQmGoGFLZ_0zyDNcRQ0fInqZdgcH6_efeFy6tu478xJ4';
+
+function configuredPublicKey() {
+  const explicit = String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || '').trim();
+  if (explicit) return explicit;
+  const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
+  return supabaseUrl.includes(STAGING_PROJECT_REF) ? STAGING_PUBLIC_VAPID_KEY : '';
+}
+
 function applicationServerKey() {
-  const value = String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || '').trim();
+  const value = configuredPublicKey();
   if (!value) throw new Error('Web Push is not configured for this deployment.');
   return value;
 }
@@ -33,7 +43,7 @@ export function webPushSupport() {
   );
   return {
     supported,
-    configured: Boolean(String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || '').trim()),
+    configured: Boolean(configuredPublicKey()),
     standalone,
     permission: supported ? Notification.permission : 'unsupported',
   };
