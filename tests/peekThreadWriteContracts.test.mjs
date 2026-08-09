@@ -23,6 +23,26 @@ test('create request normalizes directly to RPC arguments', () => {
   });
 });
 
+test('create request accepts the parentType/parentId shape used by PeekThreadsSection', () => {
+  const listing = normalizeCreatePeekRequest({ parentType: 'listing', parentId: A, category: 'condition', body: 'Show the rear tyres clearly' });
+  assert.equal(listing.ok, true);
+  assert.deepEqual(listing.value, {
+    p_listing_id: A,
+    p_service_id: null,
+    p_category: 'condition',
+    p_body: 'Show the rear tyres clearly',
+  });
+
+  const service = normalizeCreatePeekRequest({ parentType: 'service', parentId: B, category: 'condition', body: 'Show the work area clearly' });
+  assert.equal(service.ok, true);
+  assert.deepEqual(service.value, {
+    p_listing_id: null,
+    p_service_id: B,
+    p_category: 'condition',
+    p_body: 'Show the work area clearly',
+  });
+});
+
 test('create request requires one parent', () => {
   assert.equal(normalizeCreatePeekRequest({ category: 'custom', body: 'Show this area please' }).ok, false);
   assert.equal(normalizeCreatePeekRequest({ listingId: A, serviceId: B, category: 'custom', body: 'Show this area please' }).ok, false);
