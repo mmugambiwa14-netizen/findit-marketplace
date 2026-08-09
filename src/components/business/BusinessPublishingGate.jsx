@@ -20,6 +20,13 @@ const CATEGORY_OPTIONS = [
   ['service', 'Services'],
 ];
 
+function reportInvalidForm(formElement, message) {
+  if (formElement?.checkValidity?.()) return false;
+  formElement?.reportValidity?.();
+  toast.error(message);
+  return true;
+}
+
 export function usePublishingAccess() {
   return useContext(PublishingAccessContext);
 }
@@ -84,8 +91,8 @@ function BusinessApplication({ access, onBack, onSubmitted }) {
   const toggleCategory = (category) => update('requestedCategories', form.requestedCategories.includes(category) ? form.requestedCategories.filter((item) => item !== category) : [...form.requestedCategories, category]);
 
   if (access?.applicationStatus === 'needs_information') {
-    const submitResponse = async (event) => {
-      event.preventDefault();
+    const sendResponse = async (formElement) => {
+      if (reportInvalidForm(formElement, 'Complete the required information before sending.')) return;
       setSubmitting(true);
       try {
         await respondToBusinessApplication(access.applicationId, response);
@@ -98,24 +105,42 @@ function BusinessApplication({ access, onBack, onSubmitted }) {
         setSubmitting(false);
       }
     };
-    return <main className="mx-auto max-w-2xl px-4 py-8"><button type="button" className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">More information required</h1><div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4 text-sm">{access.reviewerMessage || 'PeekaListing requested more information about your application.'}</div><form className="mt-5 space-y-4" onSubmit={submitResponse}><Field label="Your response"><Textarea required minLength={5} maxLength={3000} rows={6} value={response} onChange={(event) => setResponse(event.target.value)} /></Field><Button type="submit" className="w-full" disabled={submitting}>{submitting ? 'Sending…' : 'Send information'}</Button></form></main>;
+    const submitResponse = (event) => {
+      event.preventDefault();
+      void sendResponse(event.currentTarget);
+    };
+    return <main className="mx-auto max-w-2xl px-4 py-8"><button type="button" className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">More information required</h1><div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4 text-sm">{access.reviewerMessage || 'PeekaListing requested more information about your application.'}</div><form noValidate className="mt-5 space-y-4" onSubmit={submitResponse}><Field label="Your response"><Textarea required minLength={5} maxLength={3000} rows={6} value={response} onChange={(event) => setResponse(event.target.value)} /></Field><Button type="button" className="w-full" disabled={submitting} onClick={(event) => void sendResponse(event.currentTarget.form)}>{submitting ? 'Sending…' : 'Send information'}</Button></form></main>;
   }
 
   if (['submitted', 'reviewing'].includes(access?.applicationStatus)) return <StatusPage title="Application under review" description="You can continue using PeekaListing as a buyer. Direct publishing will unlock only after at least one requested category is approved." onBack={onBack} />;
 
-  const submit = async (event) => {
-    event.preventDefault();
+  const submitApplication = async (formElement) => {
+    if (reportInvalidForm(formElement, 'Complete the highlighted required fields before submitting.')) return;
+    if (form.requestedCategories.length === 0) {
+      toast.error('Choose at least one business category.');
+      return;
+    }
     setSubmitting(true);
-    try { await submitBusinessApplication(form); toast.success('Business application submitted'); await onSubmitted(); onBack(); }
-    catch (error) { toast.error(error.message || 'Application could not be submitted.'); }
-    finally { setSubmitting(false); }
+    try {
+      await submitBusinessApplication(form);
+      toast.success('Business application submitted');
+      await onSubmitted();
+      onBack();
+    } catch (error) {
+      toast.error(error.message || 'Application could not be submitted.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  const submit = (event) => {
+    event.preventDefault();
+    void submitApplication(event.currentTarget);
   };
 
-  return <main className="mx-auto max-w-2xl px-4 py-8"><button type="button" className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">Business application</h1><p className="mt-2 text-sm text-muted-foreground">Approval is category-specific. You will only be able to publish in categories approved by PeekaListing.</p><form className="mt-6 space-y-4" onSubmit={submit}><Field label="Business name"><Input required minLength={2} maxLength={160} value={form.businessName} onChange={(e) => update('businessName', e.target.value)} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Contact person"><Input required minLength={2} maxLength={120} value={form.contactName} onChange={(e) => update('contactName', e.target.value)} /></Field><Field label="City"><Input required minLength={2} maxLength={120} value={form.city} onChange={(e) => update('city', e.target.value)} /></Field><Field label="Business email"><Input required type="email" value={form.businessEmail} onChange={(e) => update('businessEmail', e.target.value)} /></Field><Field label="Business phone"><Input required value={form.businessPhone} onChange={(e) => update('businessPhone', e.target.value)} /></Field><Field label="Country code"><Input required pattern="[A-Za-z]{2}" maxLength={2} value={form.countryCode} onChange={(e) => update('countryCode', e.target.value.toUpperCase())} /></Field><Field label="Expected active listings"><select className="h-11 w-full rounded-xl border border-border bg-background px-3" value={form.expectedInventoryBand} onChange={(e) => update('expectedInventoryBand', e.target.value)}><option value="1-10">1–10</option><option value="11-50">11–50</option><option value="51-200">51–200</option><option value="200+">200+</option></select></Field></div><Field label="Business description"><Textarea required minLength={20} maxLength={3000} rows={4} value={form.description} onChange={(e) => update('description', e.target.value)} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Website (optional)"><Input type="url" value={form.websiteUrl} onChange={(e) => update('websiteUrl', e.target.value)} /></Field><Field label="Social profile (optional)"><Input type="url" value={form.socialUrl} onChange={(e) => update('socialUrl', e.target.value)} /></Field></div><fieldset><legend className="text-sm font-bold">Requested categories</legend><div className="mt-2 grid grid-cols-2 gap-2">{CATEGORY_OPTIONS.map(([key, label]) => <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3"><input type="checkbox" checked={form.requestedCategories.includes(key)} onChange={() => toggleCategory(key)} />{label}</label>)}</div></fieldset><Button type="submit" className="w-full" disabled={submitting || form.requestedCategories.length === 0}>{submitting ? 'Submitting…' : 'Submit application'}</Button></form></main>;
+  return <main className="mx-auto max-w-2xl px-4 py-8"><button type="button" className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">Business application</h1><p className="mt-2 text-sm text-muted-foreground">Approval is category-specific. You will only be able to publish in categories approved by PeekaListing.</p><form noValidate className="mt-6 space-y-4" onSubmit={submit}><Field label="Business name"><Input required minLength={2} maxLength={160} value={form.businessName} onChange={(e) => update('businessName', e.target.value)} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Contact person"><Input required minLength={2} maxLength={120} value={form.contactName} onChange={(e) => update('contactName', e.target.value)} /></Field><Field label="City"><Input required minLength={2} maxLength={120} value={form.city} onChange={(e) => update('city', e.target.value)} /></Field><Field label="Business email"><Input required type="email" value={form.businessEmail} onChange={(e) => update('businessEmail', e.target.value)} /></Field><Field label="Business phone"><Input required value={form.businessPhone} onChange={(e) => update('businessPhone', e.target.value)} /></Field><Field label="Country code"><Input required pattern="[A-Za-z]{2}" maxLength={2} value={form.countryCode} onChange={(e) => update('countryCode', e.target.value.toUpperCase())} /></Field><Field label="Expected active listings"><select className="h-11 w-full rounded-xl border border-border bg-background px-3" value={form.expectedInventoryBand} onChange={(e) => update('expectedInventoryBand', e.target.value)}><option value="1-10">1–10</option><option value="11-50">11–50</option><option value="51-200">51–200</option><option value="200+">200+</option></select></Field></div><Field label="Business description"><Textarea required minLength={20} maxLength={3000} rows={4} value={form.description} onChange={(e) => update('description', e.target.value)} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Website (optional)"><Input type="url" value={form.websiteUrl} onChange={(e) => update('websiteUrl', e.target.value)} /></Field><Field label="Social profile (optional)"><Input type="url" value={form.socialUrl} onChange={(e) => update('socialUrl', e.target.value)} /></Field></div><fieldset><legend className="text-sm font-bold">Requested categories</legend><div className="mt-2 grid grid-cols-2 gap-2">{CATEGORY_OPTIONS.map(([key, label]) => <label key={key} className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3"><input type="checkbox" checked={form.requestedCategories.includes(key)} onChange={() => toggleCategory(key)} />{label}</label>)}</div></fieldset><Button type="button" className="w-full" disabled={submitting} onClick={(event) => void submitApplication(event.currentTarget.form)}>{submitting ? 'Submitting…' : 'Submit application'}</Button></form></main>;
 }
 
 export function AdditionalCategoryRequest({ access, onComplete }) {
-  // A suspended category is a moderation decision and is never requestable.
   const unavailable = CATEGORY_OPTIONS.filter(([key]) => !access.approvedCategories.includes(key)
     && !access.pendingCategories.includes(key)
     && !access.suspendedCategories?.includes(key));
@@ -144,8 +169,25 @@ function ManagedListingRequest({ onBack }) {
   const [busy, setBusy] = useState(false);
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   if (submitted) return <StatusPage title="Advertising request received" description="PeekaListing will review the information before deciding whether to prepare and publish the listing. Submission does not guarantee acceptance." onBack={onBack} />;
-  const submit = async (event) => { event.preventDefault(); setBusy(true); try { await submitManagedListingRequest(form); setSubmitted(true); } catch (error) { toast.error(error.message || 'Request could not be submitted.'); } finally { setBusy(false); } };
-  return <main className="mx-auto max-w-2xl px-4 py-8"><button type="button" className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">Advertise through PeekaListing</h1><p className="mt-2 text-sm text-muted-foreground">PeekaListing may prepare and publish an approved listing on behalf of the owner. The owner remains responsible for the item and transaction.</p><form className="mt-6 space-y-4" onSubmit={submit}><Field label="Category"><select className="h-11 w-full rounded-xl border border-border bg-background px-3" value={form.category} onChange={(e) => update('category', e.target.value)}>{CATEGORY_OPTIONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Owner name"><Input required minLength={2} maxLength={160} value={form.ownerName} onChange={(e) => update('ownerName', e.target.value)} /></Field><Field label="City"><Input required minLength={2} maxLength={120} value={form.city} onChange={(e) => update('city', e.target.value)} /></Field><Field label="Email"><Input required type="email" value={form.contactEmail} onChange={(e) => update('contactEmail', e.target.value)} /></Field><Field label="Phone"><Input required value={form.contactPhone} onChange={(e) => update('contactPhone', e.target.value)} /></Field><Field label="Country code"><Input required pattern="[A-Za-z]{2}" maxLength={2} value={form.countryCode} onChange={(e) => update('countryCode', e.target.value.toUpperCase())} /></Field></div><Field label="What do you want advertised?"><Textarea required minLength={20} maxLength={5000} rows={5} value={form.itemSummary} onChange={(e) => update('itemSummary', e.target.value)} /></Field><Field label="Expected price (optional)"><Input value={form.priceExpectation} onChange={(e) => update('priceExpectation', e.target.value)} /></Field><Button type="submit" className="w-full" disabled={busy}>{busy ? 'Submitting…' : 'Submit advertising request'}</Button></form></main>;
+
+  const submitManaged = async (formElement) => {
+    if (reportInvalidForm(formElement, 'Complete the highlighted required fields before submitting.')) return;
+    setBusy(true);
+    try {
+      await submitManagedListingRequest(form);
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(error.message || 'Request could not be submitted.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const submit = (event) => {
+    event.preventDefault();
+    void submitManaged(event.currentTarget);
+  };
+
+  return <main className="mx-auto max-w-2xl px-4 py-8"><button type="button" className="text-sm text-muted-foreground" onClick={onBack}>Back</button><h1 className="mt-4 text-3xl font-black">Advertise through PeekaListing</h1><p className="mt-2 text-sm text-muted-foreground">PeekaListing may prepare and publish an approved listing on behalf of the owner. The owner remains responsible for the item and transaction.</p><form noValidate className="mt-6 space-y-4" onSubmit={submit}><Field label="Category"><select className="h-11 w-full rounded-xl border border-border bg-background px-3" value={form.category} onChange={(e) => update('category', e.target.value)}>{CATEGORY_OPTIONS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Owner name"><Input required minLength={2} maxLength={160} value={form.ownerName} onChange={(e) => update('ownerName', e.target.value)} /></Field><Field label="City"><Input required minLength={2} maxLength={120} value={form.city} onChange={(e) => update('city', e.target.value)} /></Field><Field label="Email"><Input required type="email" value={form.contactEmail} onChange={(e) => update('contactEmail', e.target.value)} /></Field><Field label="Phone"><Input required value={form.contactPhone} onChange={(e) => update('contactPhone', e.target.value)} /></Field><Field label="Country code"><Input required pattern="[A-Za-z]{2}" maxLength={2} value={form.countryCode} onChange={(e) => update('countryCode', e.target.value.toUpperCase())} /></Field></div><Field label="What do you want advertised?"><Textarea required minLength={20} maxLength={5000} rows={5} value={form.itemSummary} onChange={(e) => update('itemSummary', e.target.value)} /></Field><Field label="Expected price (optional)"><Input value={form.priceExpectation} onChange={(e) => update('priceExpectation', e.target.value)} /></Field><Button type="button" className="w-full" disabled={busy} onClick={(event) => void submitManaged(event.currentTarget.form)}>{busy ? 'Submitting…' : 'Submit advertising request'}</Button></form></main>;
 }
 
 function StatusPage({ title, description, onBack }) { return <main className="mx-auto flex min-h-[65vh] max-w-lg items-center px-4"><section className="clay-card w-full rounded-2xl p-6 text-center"><CheckCircle2 className="mx-auto h-10 w-10 text-primary" /><h1 className="mt-4 text-2xl font-black">{title}</h1><p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p><Button className="mt-5" variant="outline" onClick={onBack}>Back</Button></section></main>; }
