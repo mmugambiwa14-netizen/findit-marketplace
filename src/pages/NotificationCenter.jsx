@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Bell,
+  BriefcaseBusiness,
   CheckCheck,
   CheckCircle2,
   Clock3,
@@ -42,6 +43,10 @@ const EVENT_STYLE = {
   saved_listing_unavailable: { label: 'Saved listing update', icon: AlertCircle, className: 'text-amber-600 dark:text-amber-400' },
   peek_request_created: { label: 'New Peek Request', icon: MessageSquareMore, className: 'text-primary' },
   peek_request_answered: { label: 'Peek Request answered', icon: Film, className: 'text-green-600 dark:text-green-400' },
+  new_message: { label: 'New message', icon: MessageSquareMore, className: 'text-primary' },
+  business_application_updated: { label: 'Business application', icon: BriefcaseBusiness, className: 'text-primary' },
+  business_category_updated: { label: 'Business category', icon: BriefcaseBusiness, className: 'text-primary' },
+  managed_listing_updated: { label: 'Managed listing', icon: BriefcaseBusiness, className: 'text-primary' },
 };
 
 function markPageRead(page, notificationId = null, readAt = new Date().toISOString()) {
@@ -179,7 +184,7 @@ export default function NotificationCenter() {
             <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted" aria-label="Go back">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <div><h1 className="font-bold text-lg">Notifications</h1><p className="text-xs text-muted-foreground">Important account and marketplace updates only</p></div>
+            <div><h1 className="font-bold text-lg">Notifications</h1><p className="text-xs text-muted-foreground">Important messages and marketplace updates</p></div>
           </div>
           {(unreadQuery.data ?? 0) > 0 && (
             <Button variant="ghost" size="sm" disabled={markAllRead.isPending} onClick={() => markAllRead.mutate()}>
@@ -194,7 +199,7 @@ export default function NotificationCenter() {
       ) : notificationsQuery.isError && items.length === 0 ? (
         <div className="mx-4 mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center" role="alert"><p className="font-medium">We could not load notifications</p><p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p><Button className="mt-4" variant="outline" onClick={() => notificationsQuery.refetch()}>Try again</Button></div>
       ) : items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center px-4 py-20 text-center text-muted-foreground"><Bell className="mb-3 h-12 w-12 stroke-1" /><p className="font-medium">No notifications yet</p><p className="mt-1 max-w-sm text-sm">PeekaListing only sends essential listing, Peek, report and account updates.</p></div>
+        <div className="flex flex-col items-center justify-center px-4 py-20 text-center text-muted-foreground"><Bell className="mb-3 h-12 w-12 stroke-1" /><p className="font-medium">No notifications yet</p><p className="mt-1 max-w-sm text-sm">Messages, Peek activity, listing changes, business updates and important account notices will appear here.</p></div>
       ) : (
         <>
           <div className="divide-y divide-border">
