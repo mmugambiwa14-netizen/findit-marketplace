@@ -873,7 +873,11 @@ function buildPeeks(parents) {
   }));
 }
 
-const VIDEO_FALLBACK_POOL = PHOTO_POOLS.machinery;
+const VIDEO_FALLBACK_POOL = [
+  ...PHOTO_POOLS.property,
+  ...PHOTO_POOLS.car,
+  ...PHOTO_POOLS.service,
+];
 
 function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -905,10 +909,8 @@ async function generateMedia(tempDir, parent) {
   const thumbnailPath = path.join(tempDir, `${slug}.webp`);
   const sourceImageUrl = parent.photos?.[0] || photoUrl(VIDEO_FALLBACK_POOL[parent.index % VIDEO_FALLBACK_POOL.length], parent.index, 0);
   if (!sourceImageUrl) throw new Error(`no real source photo available for ${slug}`);
-  const response = await fetchSourceImage([
-    sourceImageUrl,
-    photoUrl(VIDEO_FALLBACK_POOL[parent.index % VIDEO_FALLBACK_POOL.length], parent.index, 0),
-  ], slug);
+  const fallbackUrls = VIDEO_FALLBACK_POOL.map((base, index) => photoUrl(base, parent.index + index, 0));
+  const response = await fetchSourceImage([sourceImageUrl, ...fallbackUrls], slug);
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.startsWith("image/")) throw new Error(`source photo for ${slug} was not an image: ${contentType}`);
   fs.writeFileSync(sourceImagePath, Buffer.from(await response.arrayBuffer()));
