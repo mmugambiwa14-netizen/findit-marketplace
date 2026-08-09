@@ -21,6 +21,19 @@ body {
   overflow-x: hidden;
 }
 
+/* Keep iOS Safari and installed PWAs from auto-zooming the document when a
+ * user focuses a small form control. 16px is the platform threshold; this
+ * preserves normal pinch-to-zoom and therefore does not reduce accessibility. */
+@media (max-width: 767px) {
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+    select,
+    textarea
+  ) {
+    font-size: 16px;
+  }
+}
+
 .findit-screen {
   min-height: 100svh;
   min-height: var(--findit-viewport-height, 100dvh);

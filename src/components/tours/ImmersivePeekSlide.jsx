@@ -69,6 +69,7 @@ export default function ImmersivePeekSlide({
   const detailPath = publicTourDetailPath(item);
   const listingOnly = item.parentType === 'listing';
   const isOwner = Boolean(user?.id && user.id === item.sellerId);
+  const canRequestPeek = !isOwner && listingOnly;
   const poster = item.thumbnailUrl || item.coverImageUrl || undefined;
   const requestPath = `${detailPath}${detailPath.includes('?') ? '&' : '?'}requestPeek=1`;
 
@@ -316,12 +317,10 @@ export default function ImmersivePeekSlide({
           </div>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <Link to={detailPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] bg-primary px-3 text-sm font-bold text-primary-foreground">View listing</Link>
-          {!isOwner && listingOnly ? (
+        <div className={cn('mt-2 grid gap-2', canRequestPeek ? 'grid-cols-2' : 'grid-cols-1')}>
+          <Link to={detailPath} className="flex h-[var(--findit-control-height-lg)] w-full items-center justify-center rounded-[var(--findit-control-radius)] bg-primary px-3 text-sm font-bold text-primary-foreground">View listing</Link>
+          {canRequestPeek && (
             <Link to={requestPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] border border-white/25 bg-black/25 px-3 text-sm font-bold text-white backdrop-blur-sm">Request a Peek</Link>
-          ) : (
-            <Link to={detailPath} className="flex h-[var(--findit-control-height-lg)] items-center justify-center rounded-[var(--findit-control-radius)] border border-white/20 bg-black/20 px-3 text-sm font-bold text-white/90 backdrop-blur-sm">More details</Link>
           )}
         </div>
 
