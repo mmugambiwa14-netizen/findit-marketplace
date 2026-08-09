@@ -10,11 +10,13 @@ export function AnimatedTabs({
   className,
   tabClassName,
   indicatorClassName,
+  semantics = 'tabs',
 }) {
   const items = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
   const containerRef = React.useRef(null);
   const tabRefs = React.useRef(new Map());
   const [indicator, setIndicator] = React.useState({ x: 0, width: 0, ready: false });
+  const tabSemantics = semantics === 'tabs';
 
   const measure = React.useCallback(() => {
     const active = tabRefs.current.get(value);
@@ -54,7 +56,7 @@ export function AnimatedTabs({
     <div
       ref={containerRef}
       className={cn('fluid-tabs no-scrollbar', className)}
-      role="tablist"
+      role={tabSemantics ? 'tablist' : 'group'}
       aria-label={ariaLabel}
     >
       <span
@@ -73,10 +75,11 @@ export function AnimatedTabs({
               else tabRefs.current.delete(tab.value);
             }}
             type="button"
-            role="tab"
-            aria-selected={selected}
-            aria-controls={tab.controls}
-            tabIndex={selected ? 0 : -1}
+            role={tabSemantics ? 'tab' : undefined}
+            aria-selected={tabSemantics ? selected : undefined}
+            aria-current={!tabSemantics && selected ? 'location' : undefined}
+            aria-controls={tabSemantics ? tab.controls : undefined}
+            tabIndex={tabSemantics ? (selected ? 0 : -1) : undefined}
             onClick={() => onValueChange?.(tab.value)}
             className={cn('fluid-tab', selected && 'fluid-tab--active', tabClassName, tab.className)}
           >
