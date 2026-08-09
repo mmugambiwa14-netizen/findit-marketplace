@@ -46,7 +46,7 @@ try {
   failures.push(`/: ${error instanceof Error ? error.message : String(error)}`);
 }
 
-for (const path of ['/search', '/login', '/admin', '/staging-deep-link-check']) await requirePage(path);
+for (const path of ['/search', '/login', '/admin', '/auth/callback?returnTo=%2F', '/staging-deep-link-check']) await requirePage(path);
 
 const requiredHeaders = [
   ['content-security-policy', (value) => value?.includes("script-src 'self'") && !value.includes("script-src 'unsafe-inline'")],
