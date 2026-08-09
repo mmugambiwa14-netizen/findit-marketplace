@@ -46,9 +46,31 @@ export function AnimatedTabs({
   }, [items.length, measure]);
 
   React.useEffect(() => {
+    const container = containerRef.current;
     const active = tabRefs.current.get(value);
-    active?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    if (!container || !active) return;
+    const left = active.offsetLeft;
+    const right = left + active.offsetWidth;
+    const visibleLeft = container.scrollLeft;
+    const visibleRight = visibleLeft + container.clientWidth;
+    if (left < visibleLeft) container.scrollTo({ left: Math.max(0, left - 8), behavior: 'auto' });
+    else if (right > visibleRight) container.scrollTo({ left: right - container.clientWidth + 8, behavior: 'auto' });
   }, [value]);
+
+  const handleTabKeyDown = (event, index) => {
+    if (!tabSemantics) return;
+    const last = items.length - 1;
+    let nextIndex = null;
+    if (event.key === 'ArrowRight') nextIndex = index === last ? 0 : index + 1;
+    else if (event.key === 'ArrowLeft') nextIndex = index === 0 ? last : index - 1;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = last;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const next = items[nextIndex];
+    onValueChange?.(next.value);
+    window.requestAnimationFrame(() => tabRefs.current.get(next.value)?.focus());
+  };
 
   if (!items.length) return null;
 
@@ -64,7 +86,7 @@ export function AnimatedTabs({
         className={cn('fluid-tabs-indicator', !indicator.ready && 'opacity-0', indicatorClassName)}
         style={{ width: indicator.width, transform: `translate3d(${indicator.x}px, 0, 0)` }}
       />
-      {items.map((tab) => {
+      {items.map((tab, index) => {
         const Icon = tab.icon;
         const selected = tab.value === value;
         return (
@@ -80,6 +102,7 @@ export function AnimatedTabs({
             aria-current={!tabSemantics && selected ? 'location' : undefined}
             aria-controls={tabSemantics ? tab.controls : undefined}
             tabIndex={tabSemantics ? (selected ? 0 : -1) : undefined}
+            onKeyDown={(event) => handleTabKeyDown(event, index)}
             onClick={() => onValueChange?.(tab.value)}
             className={cn('fluid-tab', selected && 'fluid-tab--active', tabClassName, tab.className)}
           >
