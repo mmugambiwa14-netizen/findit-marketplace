@@ -28,7 +28,7 @@ export function SegmentedControl({
         aria-hidden="true"
         className={cn('fluid-segmented-indicator', indicatorClassName)}
         style={{
-          width: `${100 / columns}%`,
+          width: `calc((100% - 0.5rem) / ${columns})`,
           transform: `translate3d(${activeIndex * 100}%, 0, 0)`,
         }}
       />
