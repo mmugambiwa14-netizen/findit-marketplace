@@ -873,18 +873,52 @@ function buildPeeks(parents) {
   }));
 }
 
+const VIDEO_FALLBACK_POOL = PHOTO_POOLS.machinery;
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function fetchSourceImage(urls, slug) {
+  let lastStatus = "unknown";
+  for (const url of urls.filter(Boolean)) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(url, {
+        headers: {
+          accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+          "user-agent": "PeekaListing staging seed media verifier",
+        },
+      });
+      if (response.ok) return response;
+      lastStatus = String(response.status);
+      if (response.status === 429 || response.status >= 500) await wait(500 * (attempt + 1));
+      else break;
+    }
+  }
+  throw new Error("source photo download failed for " + slug + ": " + lastStatus);
+}
+
 async function generateMedia(tempDir, parent) {
   const slug = `${parent.kind}-${String(parent.index + 1).padStart(2, "0")}`;
   const sourceImagePath = path.join(tempDir, `${slug}-source.jpg`);
   const videoPath = path.join(tempDir, `${slug}.mp4`);
   const thumbnailPath = path.join(tempDir, `${slug}.webp`);
-  const sourceImageUrl = parent.photos?.[0];
+  const sourceImageUrl = parent.photos?.[0] || photoUrl(VIDEO_FALLBACK_POOL[parent.index % VIDEO_FALLBACK_POOL.length], parent.index, 0);
   if (!sourceImageUrl) throw new Error(`no real source photo available for ${slug}`);
-  const response = await fetch(sourceImageUrl, { headers: { "user-agent": "Peekalisting staging seed" } });
-  if (!response.ok) throw new Error(`source photo download failed for ${slug}: ${response.status}`);
+  const response = await fetchSourceImage([
+    sourceImageUrl,
+    photoUrl(VIDEO_FALLBACK_POOL[parent.index % VIDEO_FALLBACK_POOL.length], parent.index, 0),
+  ], slug);
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.startsWith("image/")) throw new Error(`source photo for ${slug} was not an image: ${contentType}`);
   fs.writeFileSync(sourceImagePath, Buffer.from(await response.arrayBuffer()));
+  const brightness = (((parent.index % 7) - 3) / 100).toFixed(3);
+  const saturation = (0.9 + (parent.index % 5) * 0.04).toFixed(2);
+  const orientation = parent.index % 2 === 1 ? "hflip," : "";
+  const mediaFilter = orientation
+    + "scale=800:450:force_original_aspect_ratio=increase,crop=800:450,"
+    + "eq=brightness=" + brightness + ":saturation=" + saturation + ","
+    + "zoompan=z='min(zoom+0.0015,1.06)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=45:s=640x360:fps=15";
   const result = spawnSync(
     FFMPEG_PATH,
     [
@@ -897,7 +931,7 @@ async function generateMedia(tempDir, parent) {
       "-i",
       sourceImagePath,
       "-vf",
-      "scale=800:450:force_original_aspect_ratio=increase,crop=800:450,zoompan=z='min(zoom+0.0015,1.06)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=45:s=640x360:fps=15",
+      mediaFilter,
       "-t",
       "3",
       "-c:v",
