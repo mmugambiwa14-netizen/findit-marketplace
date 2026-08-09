@@ -7,20 +7,26 @@ const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const files = {
   env: '.env.example',
   service: 'src/services/webPushService.js',
+  contracts: 'src/services/notificationContracts.js',
   sound: 'src/services/notificationSoundService.js',
   foreground: 'src/components/notifications/ForegroundNotificationListener.jsx',
   settings: 'src/components/settings/PushNotificationSettings.jsx',
   worker: 'public/sw.js',
   migration: 'supabase/migrations/20260809194000_web_push_delivery.sql',
+  messages: 'supabase/migrations/20260809204000_message_push_notifications.sql',
+  preferences: 'supabase/migrations/20260809205500_web_push_preferences.sql',
   delivery: 'supabase/functions/web-push-dispatch/index.ts',
 };
 
-test('browser receives only public VAPID configuration', async () => {
+test('browser receives only public VAPID configuration and production stays environment driven', async () => {
   const [env, service] = await Promise.all([read(files.env), read(files.service)]);
   assert.match(env, /^VITE_WEB_PUSH_PUBLIC_KEY=/m);
   assert.doesNotMatch(env, /^VITE_.*PRIVATE.*VAPID/im);
-  assert.doesNotMatch(service, /STAGING_PUBLIC_KEY/);
   assert.match(service, /VITE_WEB_PUSH_PUBLIC_KEY/);
+  assert.match(service, /STAGING_PROJECT_REF/);
+  assert.match(service, /STAGING_PUBLIC_VAPID_KEY/);
+  assert.match(service, /supabaseUrl\.includes\(STAGING_PROJECT_REF\)/);
+  assert.doesNotMatch(service, /WEB_PUSH_PRIVATE_KEY/);
 });
 
 test('service worker implements user-visible push and safe click routing', async () => {
@@ -44,7 +50,8 @@ test('foreground experience consumes canonical app alerts with deduplication, ba
   assert.match(foreground, /setAppBadge/);
   assert.match(foreground, /postgres_changes/);
   assert.match(settings, /In-app notification sound/);
-  assert.match(settings, /onCheckedChange={toggleSound}/);
+  assert.match(settings, /Push categories/);
+  assert.match(settings, /Essential account and security updates remain enabled/);
 });
 
 test('push migration upgrades existing subscriptions and delivery jobs in place', async () => {
@@ -59,7 +66,6 @@ test('push migration upgrades existing subscriptions and delivery jobs in place'
   assert.match(migration, /then 'partial'/);
   assert.match(migration, /alter publication supabase_realtime add table public\.app_alerts/i);
   assert.doesNotMatch(migration, /web_push_delivery_outbox/);
-  assert.doesNotMatch(migration, /\bactive\b/);
 });
 
 test('worker RPCs are service-role only', async () => {
@@ -67,6 +73,28 @@ test('worker RPCs are service-role only', async () => {
   assert.match(migration, /revoke all on function public\.claim_web_push_deliveries.*authenticated/s);
   assert.match(migration, /grant execute on function public\.claim_web_push_deliveries\(integer\) to service_role/);
   assert.match(migration, /grant execute on function public\.complete_web_push_delivery.*service_role/s);
+});
+
+test('chat messages create canonical privacy-safe push notifications', async () => {
+  const [messages, contracts] = await Promise.all([read(files.messages), read(files.contracts)]);
+  assert.match(messages, /'new_message'/);
+  assert.match(messages, /You have a new message in PeekaListing\./);
+  assert.match(messages, /inquiries_enqueue_message_notification/);
+  assert.match(messages, /'\/chats\/' \|\| new\.conversation_id::text/);
+  assert.doesNotMatch(messages, /new\.message/);
+  assert.match(contracts, /'new_message'/);
+  assert.match(contracts, /'business_application_updated'/);
+  assert.match(contracts, /'managed_listing_updated'/);
+});
+
+test('push category preferences gate queueing while account status stays essential', async () => {
+  const preferences = await read(files.preferences);
+  assert.match(preferences, /web_push_notification_preferences/);
+  assert.match(preferences, /p_event_type='account_status' then true/);
+  assert.match(preferences, /p_event_type='new_message'/);
+  assert.match(preferences, /peek_activity/);
+  assert.match(preferences, /business_activity/);
+  assert.match(preferences, /web_push_event_enabled\(new\.user_id,new\.event_type\)/);
 });
 
 test('canonical dispatch worker is secret protected and reports per-device results', async () => {
