@@ -137,6 +137,10 @@ const bootstrapPosition = html.indexOf('/src/documentBootstrap.js');
 const applicationPosition = html.indexOf('/src/main.jsx');
 failUnless(bootstrapPosition >= 0, 'index.html must load documentBootstrap.js');
 failUnless(applicationPosition > bootstrapPosition, 'document bootstrap must load before the React application');
+failUnless(
+  /<meta\s+name=["']viewport["']\s+content=["'][^"']*maximum-scale=1(?:\.0)?[^"']*user-scalable=no[^"']*["']/i.test(html),
+  'index.html must keep the document at the app viewport scale',
+);
 
 failUnless(/MAPLIBRE_VERSION = '5\.12\.0'/.test(mapProvider), 'MapLibre runtime version must remain exactly pinned');
 failUnless(!/unpkg\.com/.test(mapProvider), 'MapLibre runtime must not be loaded from a public CDN');

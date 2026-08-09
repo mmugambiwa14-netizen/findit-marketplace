@@ -5,7 +5,10 @@
     <!-- viewport-fit=cover is what makes env(safe-area-inset-*) resolve to real
          values on notched and rounded displays; without it the app renders in
          the safe rectangle and standalone mode looks letterboxed. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Keep the document at the app viewport scale. Intentional in-app
+         gestures (MapLibre map zoom and the image viewer) remain available;
+         this only prevents the browser from scaling the entire application. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="description" content="Browse local listings, view public Peeks, and request current evidence before you commit on PeekaListing." />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="PeekaListing" />

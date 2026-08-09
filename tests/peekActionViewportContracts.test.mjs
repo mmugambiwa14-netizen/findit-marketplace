@@ -4,11 +4,12 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [peekSlide, catalogueHeader, publishingGate, viewport] = await Promise.all([
+const [peekSlide, catalogueHeader, publishingGate, viewport, indexHtml] = await Promise.all([
   read('src/components/tours/ImmersivePeekSlide.jsx'),
   read('src/components/tours/TourCatalogueHeader.jsx'),
   read('src/components/business/BusinessPublishingGate.jsx'),
   read('src/pwa-viewport.css'),
+  read('index.html'),
 ]);
 
 test('Peek action row has one listing destination and a conditional request action', () => {
@@ -26,5 +27,6 @@ test('mobile publishing and Peek search controls stay above the Safari auto-zoom
   assert.match(viewport, /@media \(max-width: 767px\)/);
   assert.match(viewport, /input:not\(\[type='checkbox'\]\):not\(\[type='radio'\]\):not\(\[type='range'\]\):not\(\[type='file'\]\)/);
   assert.match(viewport, /font-size: 16px/);
-  assert.doesNotMatch(viewport, /user-scalable\s*:\s*no/);
+  assert.match(indexHtml, /maximum-scale=1(?:\.0)?/);
+  assert.match(indexHtml, /user-scalable=no/);
 });

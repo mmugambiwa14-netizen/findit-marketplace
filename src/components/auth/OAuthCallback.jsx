@@ -46,7 +46,7 @@ export default function OAuthCallback() {
           <>
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" aria-hidden="true" />
             <h1 className="mt-4 text-xl font-semibold">{message}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">This window will close automatically.</p>
+            <p className="mt-2 text-sm text-muted-foreground">{bridgeId ? 'This window will close automatically.' : 'Returning you to PeekaListing.'}</p>
           </>
         )}
       </section>

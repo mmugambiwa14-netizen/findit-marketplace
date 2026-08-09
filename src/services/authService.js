@@ -92,6 +92,19 @@ function buildFullWindowOAuthCallbackUrl(returnTo) {
   return callbackUrl.toString();
 }
 
+function shouldUseOAuthPopup() {
+  try {
+    const standalone = Boolean(window.navigator.standalone)
+      || Boolean(window.matchMedia?.('(display-mode: standalone)').matches)
+      || Boolean(window.matchMedia?.('(display-mode: minimal-ui)').matches);
+    const touchDevice = Boolean(window.matchMedia?.('(pointer: coarse)').matches);
+    const narrowViewport = Boolean(window.matchMedia?.('(max-width: 767px)').matches);
+    return !standalone && !touchDevice && !narrowViewport;
+  } catch {
+    return false;
+  }
+}
+
 function readOAuthCallbackError() {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   const query = new URLSearchParams(window.location.search);
@@ -279,19 +292,24 @@ export async function changePassword(currentPassword, newPassword) {
 export async function signInWithOAuth(provider, redirectPath = '/') {
   if (!['google', 'apple'].includes(provider)) throw new Error('Unsupported sign-in provider.');
   if (!isOAuthProviderEnabled(provider)) throw new Error(`${provider === 'google' ? 'Google' : 'Apple'} sign-in is not available.`);
-  const bridgeId = createOAuthBridgeId();
+  const usePopup = shouldUseOAuthPopup();
+  const bridgeId = usePopup ? createOAuthBridgeId() : '';
   let popup;
 
   // Open the window before the Supabase request so popup blockers still allow
   // the provider flow when this function is called from a sign-in button.
-  try {
-    popup = window.open(
-      'about:blank',
-      'peekalisting-oauth',
-      'popup=yes,width=520,height=720,resizable=yes,scrollbars=yes,noopener,noreferrer',
-    );
-  } catch {
-    popup = null;
+  // Mobile Safari and standalone PWAs use the full-window path below: opening
+  // about:blank first can strand a blank child window outside the PWA shell.
+  if (usePopup) {
+    try {
+      popup = window.open(
+        'about:blank',
+        'peekalisting-oauth',
+        'popup=yes,width=520,height=720,resizable=yes,scrollbars=yes,noopener,noreferrer',
+      );
+    } catch {
+      popup = null;
+    }
   }
 
   try {
