@@ -73,7 +73,7 @@ const sourceEntries = await Promise.all(sourceFiles.map(async (path) => ({ path,
 
 test('the complete routed product surface is declared and has a fallback', () => {
   const routePatterns = [...app.matchAll(/<Route\b[\s\S]*?\bpath=["']([^"']+)["']/g)].map((match) => match[1]);
-  assert.equal(routePatterns.length, 48);
+  assert.equal(routePatterns.length, 49);
   assert.equal(routePatterns.filter((path) => path === '/peek').length, 1);
   for (const path of [
     '/', '/search', '/property/:id', '/car/:id', '/machinery/:id', '/services', '/service/:id',
@@ -96,7 +96,7 @@ test('registration and OAuth preserve protected return destinations through conf
   assert.match(register, /resendSignupConfirmation\(email, returnTo\)/);
   assert.match(register, /signInWithOAuth\(provider, returnTo\)/);
   assert.match(authService, /emailRedirectTo:\s*appUrl\(redirectPath\)/);
-  assert.match(authService, /redirectTo:\s*appUrl\(redirectPath\)/);
+  assert.match(authService, /buildOAuthCallbackUrl\(bridgeId, redirectPath\)/);
 });
 
 test('registration and password reset reject weak passwords and expose errors accessibly', () => {

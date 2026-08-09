@@ -33,7 +33,10 @@ test('disabled or unsupported providers cannot reach Supabase Auth', () => {
   assert.match(authSource, /\['google', 'apple'\]\.includes\(provider\)/);
   assert.match(authSource, /isOAuthProviderEnabled\(provider\)/);
   assert.match(authSource, /signInWithOAuth\(\{/);
-  assert.match(authSource, /redirectTo: appUrl\(redirectPath\)/);
+  assert.match(authSource, /buildOAuthCallbackUrl\(bridgeId, redirectPath\)/);
+  assert.match(authSource, /buildFullWindowOAuthCallbackUrl\(redirectPath\)/);
+  assert.match(authSource, /skipBrowserRedirect:\s*true/);
+  assert.match(authSource, /setOAuthSessionFromPayload\(message\.session\)/);
 });
 
 test('Login and Register hide unavailable OAuth providers', () => {

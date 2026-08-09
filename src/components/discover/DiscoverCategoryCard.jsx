@@ -33,19 +33,19 @@ export default function DiscoverCategoryCard({
         <ArrowUpRight className="h-3.5 w-3.5" />
       </span>
 
-      <div className="relative z-10 flex min-h-[132px] w-[73%] items-center gap-2.5 p-3 sm:min-h-[156px] sm:w-[68%] sm:gap-3 sm:p-4">
-        <span className="locked-icon-tile h-10 w-10 shrink-0 rounded-[0.8rem] sm:h-12 sm:w-12">
-          <Icon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth="1.75" />
-        </span>
-        <div className="min-w-0">
-          <h2 className="text-base font-black tracking-[-0.03em] text-foreground sm:text-xl">{label}</h2>
-          <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-muted-foreground sm:text-xs sm:leading-5">{description}</p>
-          {countLabel && (
-            <p className="mt-1.5 inline-flex rounded-full border border-primary/15 bg-primary/[0.07] px-2 py-0.5 text-[9px] font-bold text-primary sm:text-[10px]">
-              {countLabel}
-            </p>
-          )}
+      <div className="relative z-10 flex min-h-[132px] w-[82%] flex-col justify-center gap-1.5 p-2.5 sm:min-h-[156px] sm:w-[72%] sm:gap-2 sm:p-4">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+          <span className="locked-icon-tile h-9 w-9 shrink-0 rounded-[0.75rem] sm:h-12 sm:w-12 sm:rounded-[0.8rem]">
+            <Icon className="h-4 w-4 sm:h-6 sm:w-6" strokeWidth="1.75" />
+          </span>
+          <h2 className="min-w-0 truncate text-base font-black tracking-[-0.03em] text-foreground sm:text-xl">{label}</h2>
         </div>
+        {countLabel && (
+          <p className="w-fit max-w-full whitespace-nowrap rounded-full border border-primary/15 bg-primary/[0.07] px-2 py-0.5 text-[9px] font-bold text-primary sm:text-[10px]">
+            {countLabel}
+          </p>
+        )}
+        <p className="line-clamp-2 text-[10px] leading-4 text-muted-foreground sm:text-xs sm:leading-5">{description}</p>
       </div>
     </Link>
   );

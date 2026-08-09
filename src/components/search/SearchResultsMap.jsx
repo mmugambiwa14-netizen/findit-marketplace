@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LocateFixed, MapPin, RefreshCw } from 'lucide-react';
 import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
-import { ZIMBABWE_MAP_BOUNDS, ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
+import { ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
 
 const CITY_COORDS = {
   harare: { latitude: -17.8216, longitude: 31.0492 },
@@ -113,8 +113,7 @@ export default function SearchResultsMap({ listings = [], type = 'property' }) {
           style: mapTilerStyleUrl(),
           center: ZIMBABWE_MAP_CENTER,
           zoom: 5.5,
-          maxBounds: ZIMBABWE_MAP_BOUNDS,
-          minZoom: 5.5,
+          minZoom: 0,
           renderWorldCopies: false,
           attributionControl: true,
           dragRotate: false,
@@ -135,6 +134,7 @@ export default function SearchResultsMap({ listings = [], type = 'property' }) {
           new maplibregl.Marker({
             color: point.approximate ? '#b45309' : '#087f5b',
             scale: 0.82,
+            subpixelPositioning: true,
           })
             .setLngLat([point.longitude, point.latitude])
             .setPopup(popup)

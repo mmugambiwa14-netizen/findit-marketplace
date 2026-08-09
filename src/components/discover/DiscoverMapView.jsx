@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
 import { searchPublicListingsPage } from '@/services/publicListingsService';
 import { getPublicServicesPage } from '@/services/servicesService';
-import { LAUNCH_COUNTRY_CODE, ZIMBABWE_MAP_BOUNDS, ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
+import { LAUNCH_COUNTRY_CODE, ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
 import './discover-map-popup.css';
 
 const CATEGORY_KEYS = ['property', 'car', 'machinery', 'service'];
@@ -219,8 +219,7 @@ export default function DiscoverMapView({ location }) {
           style: mapTilerStyleUrl(),
           center: ZIMBABWE_MAP_CENTER,
           zoom: 5.5,
-          maxBounds: ZIMBABWE_MAP_BOUNDS,
-          minZoom: 5.5,
+          minZoom: 0,
           renderWorldCopies: false,
           dragRotate: false,
           pitchWithRotate: false,
@@ -233,7 +232,7 @@ export default function DiscoverMapView({ location }) {
 
         visible.forEach(({ item, point }) => {
           const { element, iconRoot } = createCategoryMarker(item);
-          const marker = new maplibregl.Marker({ element, anchor: 'bottom', subpixelPositioning: false })
+          const marker = new maplibregl.Marker({ element, anchor: 'bottom', subpixelPositioning: true })
             .setLngLat([point.longitude, point.latitude])
             .addTo(map);
 

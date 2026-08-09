@@ -29,6 +29,7 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import AppLayout from '@/components/layout/AppLayout';
 
 const Login = lazy(() => import('@/pages/Login'));
+const OAuthCallback = lazy(() => import('@/components/auth/OAuthCallback'));
 const Register = lazy(() => import('@/pages/Register'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
@@ -135,6 +136,20 @@ const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, blockedAccount, isAuthenticated, authChecked, checkUserAuth, logout } = useAuth();
   const location = useLocation();
   const mfaGate = useMfaGate({ isAuthenticated, authChecked });
+
+  // OAuth callbacks must render before the normal auth/MFA gate. The callback
+  // may be the first page loaded in a browser window opened by an installed
+  // PWA, and it is responsible for handing the session back to that PWA.
+  const isOAuthCallbackRoute = location.pathname.replace(/\/+$/, '').endsWith('/auth/callback');
+  if (isOAuthCallbackRoute) {
+    return (
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
+          <Route path="/auth/callback" element={<OAuthCallback />} />
+        </Routes>
+      </Suspense>
+    );
+  }
 
   if (isLoadingPublicSettings || isLoadingAuth) return <LoadingScreen />;
   if (blockedAccount) return <AccountBlocked status={blockedAccount.status} reason={blockedAccount.reason} banUntil={blockedAccount.banUntil} />;

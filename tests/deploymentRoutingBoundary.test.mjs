@@ -25,7 +25,7 @@ test('browser routing consumes the Vite deployment base path', () => {
 
 test('all provider-driven auth callbacks use the deployment-aware URL helper', () => {
   assert.match(authSource, /new URL\(import\.meta\.env\.BASE_URL, window\.location\.origin\)/);
-  assert.match(authSource, /redirectTo: appUrl\(redirectPath\)/);
+  assert.match(authSource, /buildOAuthCallbackUrl\(bridgeId, redirectPath\)/);
   assert.match(authSource, /emailRedirectTo: appUrl\(redirectPath\)/);
   assert.match(registerSource, /redirectPath: returnTo/);
   assert.match(registerSource, /resendSignupConfirmation\(email, returnTo\)/);

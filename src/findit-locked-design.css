@@ -118,6 +118,7 @@
   border: 0;
   background: transparent;
   padding: 0;
+  will-change: transform;
 }
 
 .findit-map-marker-pin {
