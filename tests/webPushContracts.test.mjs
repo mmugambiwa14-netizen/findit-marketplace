@@ -12,7 +12,7 @@ const files = {
   settings: 'src/components/settings/PushNotificationSettings.jsx',
   worker: 'public/sw.js',
   migration: 'supabase/migrations/20260809194000_web_push_delivery.sql',
-  delivery: 'supabase/functions/web-push-delivery/index.ts',
+  delivery: 'supabase/functions/web-push-dispatch/index.ts',
 };
 
 test('browser receives only public VAPID configuration', async () => {
@@ -69,11 +69,11 @@ test('worker RPCs are service-role only', async () => {
   assert.match(migration, /grant execute on function public\.complete_web_push_delivery.*service_role/s);
 });
 
-test('delivery worker requires dedicated secret, invalidates dead endpoints and reports per-device results', async () => {
+test('canonical dispatch worker is secret protected and reports per-device results', async () => {
   const delivery = await read(files.delivery);
-  assert.match(delivery, /FINDIT_WEB_PUSH_WORKER_SECRET/);
-  assert.match(delivery, /FINDIT_WEB_PUSH_VAPID_PRIVATE_KEY/);
-  assert.match(delivery, /status === 404 \|\| status === 410/);
+  assert.match(delivery, /PUSH_DISPATCH_TOKEN/);
+  assert.match(delivery, /WEB_PUSH_PRIVATE_KEY/);
+  assert.match(delivery, /statusCode === 404 \|\| statusCode === 410/);
   assert.match(delivery, /record_web_push_subscription_result/);
   assert.match(delivery, /p_delivered_count/);
   assert.match(delivery, /p_failed_count/);
