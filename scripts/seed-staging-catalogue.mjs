@@ -44,6 +44,29 @@ const root = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY ?? SUPABASE_AN
 });
 let supabase = root;
 
+async function createAdminSession(email) {
+  const { data: linkData, error: linkError } = await root.auth.admin.generateLink({
+    type: "magiclink",
+    email,
+  });
+  const tokenHash = linkData?.properties?.hashed_token;
+  if (linkError || !tokenHash) {
+    throw new Error("admin session link generation failed: " + (linkError?.message ?? "missing token hash"));
+  }
+
+  const sessionClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const { data: sessionData, error: sessionError } = await sessionClient.auth.verifyOtp({
+    type: "email",
+    token_hash: tokenHash,
+  });
+  if (sessionError || sessionData?.user?.id !== ADMIN_ID || !sessionData.session?.access_token) {
+    throw new Error("admin session verification failed: " + (sessionError?.message ?? "missing admin session"));
+  }
+  return sessionClient;
+}
+
 const PROPERTY_CATEGORY_PLAN = [
   "house_sale",
   "house_rent",
@@ -1067,6 +1090,7 @@ async function main() {
       .single();
     if (adminError) throw new Error(`admin query failed: ${adminError.message}`);
     if (admin.role !== "admin" || admin.super_admin !== true) throw new Error("staging owner is not the expected admin/super-admin");
+    if (DIRECT_SEED) supabase = await createAdminSession(admin.email);
   }
 
   const taxonomy = await fetchTaxonomy();
