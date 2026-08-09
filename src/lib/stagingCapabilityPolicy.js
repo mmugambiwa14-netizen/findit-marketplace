@@ -6,8 +6,22 @@ export const TRUSTED_STAGING_BRANCHES = Object.freeze([
   'continuation/release-certification-ci',
 ]);
 
+export const TRUSTED_NON_PRODUCTION_DEPLOYMENTS = Object.freeze([
+  'preview',
+  'staging',
+]);
+
 const trustedStagingBranches = new Set(TRUSTED_STAGING_BRANCHES);
-const STAGING_HOST_PREFIX = 'findit-marketplace-stagi';
+const trustedNonProductionDeployments = new Set(TRUSTED_NON_PRODUCTION_DEPLOYMENTS);
+const LEGACY_STAGING_HOST_PREFIX = 'findit-marketplace-stagi';
+const TRUSTED_STAGING_HOSTS = new Set([
+  'staging.peekalisting.com',
+]);
+
+export function isTrustedStagingDeployment(env = {}) {
+  const deployment = String(env.VITE_DEPLOY_ENV ?? '').trim().toLowerCase();
+  return trustedNonProductionDeployments.has(deployment);
+}
 
 export function isTrustedStagingBranch(env = {}) {
   const branch = String(
@@ -20,12 +34,18 @@ export function isTrustedStagingBranch(env = {}) {
 
 export function isTrustedStagingHost(hostname = globalThis.location?.hostname ?? '') {
   const normalized = String(hostname || '').trim().toLowerCase();
-  return normalized.startsWith(STAGING_HOST_PREFIX)
+  if (TRUSTED_STAGING_HOSTS.has(normalized)) return true;
+
+  // Preserve the old staging preview boundary during the Cloudflare cutover.
+  // It is compatibility-only; staging.peekalisting.com is the canonical host.
+  return normalized.startsWith(LEGACY_STAGING_HOST_PREFIX)
     && normalized.endsWith('.vercel.app');
 }
 
 export function isTrustedStagingEnvironment(env = {}) {
-  return isTrustedStagingBranch(env) || isTrustedStagingHost();
+  return isTrustedStagingDeployment(env)
+    || isTrustedStagingBranch(env)
+    || isTrustedStagingHost();
 }
 
 export function readBooleanFlag(env = {}, envVar, fallback = false) {
