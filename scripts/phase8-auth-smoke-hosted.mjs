@@ -6,6 +6,20 @@ const supabaseUrl = process.env.FINDIT_SUPABASE_URL;
 const anonKey = process.env.FINDIT_SUPABASE_ANON_KEY;
 const secretKey = process.env.FINDIT_SUPABASE_SECRET_KEY;
 const expectedProjectRef = process.env.FINDIT_EXPECTED_PROJECT_REF;
+const AUTH_PROFILE_SELECT = [
+  'id',
+  'email',
+  'full_name',
+  'phone',
+  'status',
+  'role',
+  'bio',
+  'display_name',
+  'public_address',
+  'website_url',
+  'avatar_url',
+  'avatar_storage_path',
+].join(',');
 
 if (process.env.FINDIT_ALLOW_HOSTED_SMOKE !== 'staging') {
   throw new Error('Set FINDIT_ALLOW_HOSTED_SMOKE=staging to authorize disposable hosted fixtures.');
@@ -44,7 +58,7 @@ async function waitForProfile(id) {
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const result = await root
       .from('users')
-      .select('id,email,full_name,phone,status,role')
+      .select(AUTH_PROFILE_SELECT)
       .eq('id', id)
       .maybeSingle();
     if (result.error) throw new Error(`read generated profile failed: ${result.error.message}`);
@@ -91,13 +105,32 @@ try {
   const ownProfile = success(
     await browser
       .from('users')
-      .select('id,email,full_name,phone,status,role')
+      .select(AUTH_PROFILE_SELECT)
       .eq('id', userId)
       .single(),
     'read own hosted profile through RLS',
   );
   assert.equal(ownProfile.id, userId);
   assert.equal(ownProfile.email, email);
+
+  const enrichedProfile = success(
+    await browser
+      .from('users')
+      .update({
+        display_name: 'Phase 8 Seller',
+        bio: 'Disposable hosted authentication smoke profile.',
+        public_address: 'Harare, Zimbabwe',
+        website_url: 'https://example.com/',
+      })
+      .eq('id', userId)
+      .select(AUTH_PROFILE_SELECT)
+      .single(),
+    'update enriched hosted profile through RLS',
+  );
+  assert.equal(enrichedProfile.display_name, 'Phase 8 Seller');
+  assert.equal(enrichedProfile.public_address, 'Harare, Zimbabwe');
+  assert.equal(enrichedProfile.website_url, 'https://example.com/');
+  assert.equal(enrichedProfile.avatar_storage_path, null);
 
   const anonymous = createClient(supabaseUrl, anonKey, clientOptions);
   const anonymousRead = await anonymous
@@ -112,7 +145,7 @@ try {
   assert.equal(signedOut.session, null);
 
   console.log(
-    'Phase 8 hosted Auth smoke passed: confirmed account, profile trigger, login, own-profile RLS, anonymous denial, logout, and cleanup.',
+    'Phase 8 hosted Auth smoke passed: confirmed account, enriched profile schema, login, own-profile RLS, anonymous denial, logout, and cleanup.',
   );
 } finally {
   if (userId) {

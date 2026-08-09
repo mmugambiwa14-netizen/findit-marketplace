@@ -10,6 +10,7 @@
 import { supabase } from '@/lib/supabaseClient';
 import { isOAuthProviderEnabled } from '@/lib/oauthProviders';
 import { sanitizeReturnTo } from '@/lib/authNavigation';
+import { isOptionalProfileSchemaError, isTerminalSessionError } from '@/lib/authState';
 
 const AUTH_PROFILE_SELECT = `
   id,
@@ -24,6 +25,25 @@ const AUTH_PROFILE_SELECT = `
   website_url,
   avatar_url,
   avatar_storage_path,
+  status,
+  ban_reason,
+  ban_until,
+  created_at,
+  updated_at
+`;
+
+// These fields have existed since the original users migration. If a staged
+// frontend reaches PostgREST a few seconds before a newly added optional
+// seller-profile column is visible, authentication must still complete.
+const CORE_AUTH_PROFILE_SELECT = `
+  id,
+  email,
+  full_name,
+  role,
+  phone,
+  phone_verified,
+  bio,
+  avatar_url,
   status,
   ban_reason,
   ban_until,
@@ -55,6 +75,53 @@ export function appUrl(path = '/') {
 
 function withAuthFailure(error, finditAuthFailure) {
   return Object.assign(new Error(error.message), { cause: error, finditAuthFailure });
+}
+
+function persistedAuthStorageKey() {
+  try {
+    const projectRef = new URL(String(import.meta.env.VITE_SUPABASE_URL || '')).hostname.split('.')[0];
+    return projectRef ? `sb-${projectRef}-auth-token` : '';
+  } catch {
+    return '';
+  }
+}
+
+function removePersistedAuthSession() {
+  const storageKey = persistedAuthStorageKey();
+  if (!storageKey || typeof window === 'undefined') return;
+
+  try {
+    const storage = window.localStorage;
+    const ownedKeys = [];
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (key && (
+        key === storageKey
+        || key === `${storageKey}-user`
+        || key === `${storageKey}-code-verifier`
+        || key === `${storageKey}-flows-code-verifier`
+        || key.startsWith(`${storageKey}-flow-`)
+      )) ownedKeys.push(key);
+    }
+    ownedKeys.forEach((key) => storage.removeItem(key));
+  } catch {
+    // Storage may be unavailable in privacy-restricted browser contexts. The
+    // SDK sign-out attempts surrounding this cleanup remain the fallback.
+  }
+}
+
+async function discardInvalidLocalSession() {
+  try {
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (!error) return;
+  } catch {
+    // A rejected refresh token can prevent the SDK's first sign-out attempt.
+  }
+
+  // Remove only this Supabase project's auth entries, then ask the SDK to
+  // publish SIGNED_OUT from an empty session. App drafts and preferences stay.
+  removePersistedAuthSession();
+  try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* local state is already clear */ }
 }
 
 const OAUTH_CALLBACK_PATH = '/auth/callback';
@@ -366,7 +433,12 @@ export async function hasRequiredRole(requiredRole) {
 }
 
 async function readUserProfile(userId) {
-  return supabase.from('users').select(AUTH_PROFILE_SELECT).eq('id', userId).single();
+  const enriched = await supabase.from('users').select(AUTH_PROFILE_SELECT).eq('id', userId).single();
+  if (!enriched.error || !isOptionalProfileSchemaError(enriched.error)) return enriched;
+
+  // Optional public seller fields must never become a login dependency. This
+  // fallback also covers PostgREST schema-cache propagation during deployment.
+  return supabase.from('users').select(CORE_AUTH_PROFILE_SELECT).eq('id', userId).single();
 }
 
 function isRefreshableProfileError(error) {
@@ -404,6 +476,10 @@ export async function getCurrentUser() {
     await waitForAuthReadRetry();
     sessionResult = await readSession();
   }
+  if (sessionResult.error && isTerminalSessionError(sessionResult.error)) {
+    await discardInvalidLocalSession();
+    return null;
+  }
   if (sessionResult.error) throw withAuthFailure(sessionResult.error, 'auth_unavailable');
   const { session } = sessionResult.data;
   if (!session?.user) return null;
@@ -415,6 +491,10 @@ export async function getCurrentUser() {
   // user out on a temporary connection or token race.
   if (profileError && isRefreshableProfileError(profileError)) {
     const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError && isTerminalSessionError(refreshError)) {
+      await discardInvalidLocalSession();
+      return null;
+    }
     if (!refreshError && refreshed?.session?.user?.id === session.user.id) {
       ({ data: profile, error: profileError } = await readUserProfile(session.user.id));
     }
@@ -423,7 +503,10 @@ export async function getCurrentUser() {
     ({ data: profile, error: profileError } = await readUserProfile(session.user.id));
   }
 
-  if (profileError) throw withAuthFailure(profileError, profileError.code === 'PGRST116' ? 'profile_missing' : 'auth_unavailable');
+  if (profileError) throw withAuthFailure(
+    profileError,
+    profileError.code === 'PGRST116' ? 'profile_missing' : 'profile_unavailable',
+  );
   return profile;
 }
 
