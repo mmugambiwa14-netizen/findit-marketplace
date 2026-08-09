@@ -107,3 +107,35 @@ export async function disableWebPush() {
   if (error) throw error;
   await subscription.unsubscribe();
 }
+
+export async function getWebPushPreferences() {
+  const { data, error } = await supabase.rpc('get_web_push_notification_preferences');
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    messages: row?.messages !== false,
+    peekActivity: row?.peek_activity !== false,
+    listingActivity: row?.listing_activity !== false,
+    businessActivity: row?.business_activity !== false,
+    moderation: row?.moderation !== false,
+  };
+}
+
+export async function updateWebPushPreferences(preferences) {
+  const { data, error } = await supabase.rpc('update_web_push_notification_preferences', {
+    p_messages: Boolean(preferences.messages),
+    p_peek_activity: Boolean(preferences.peekActivity),
+    p_listing_activity: Boolean(preferences.listingActivity),
+    p_business_activity: Boolean(preferences.businessActivity),
+    p_moderation: Boolean(preferences.moderation),
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    messages: row?.messages !== false,
+    peekActivity: row?.peek_activity !== false,
+    listingActivity: row?.listing_activity !== false,
+    businessActivity: row?.business_activity !== false,
+    moderation: row?.moderation !== false,
+  };
+}
