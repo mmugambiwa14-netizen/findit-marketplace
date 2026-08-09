@@ -24,7 +24,8 @@ test('browser routing consumes the Vite deployment base path', () => {
 });
 
 test('all provider-driven auth callbacks use the deployment-aware URL helper', () => {
-  assert.match(authSource, /new URL\(import\.meta\.env\.BASE_URL, window\.location\.origin\)/);
+  assert.match(authSource, /VITE_PUBLIC_APP_ORIGIN/);
+  assert.match(authSource, /new URL\(import\.meta\.env\.BASE_URL, configuredAppOrigin\(\)\)/);
   assert.match(authSource, /buildOAuthCallbackUrl\(bridgeId, redirectPath\)/);
   assert.match(authSource, /emailRedirectTo: appUrl\(redirectPath\)/);
   assert.match(registerSource, /redirectPath: returnTo/);
@@ -39,6 +40,7 @@ test('Cloudflare staging restores deep links without a GitHub Pages or Vercel ru
   assert.match(previewWorkflow, /VITE_MODE: staging/);
   assert.match(previewWorkflow, /VITE_DEPLOY_ENV: staging/);
   assert.match(previewWorkflow, /VITE_BASE_PATH: \//);
+  assert.match(previewWorkflow, /VITE_PUBLIC_APP_ORIGIN: https:\/\/staging\.peekalisting\.pages\.dev/);
   assert.match(previewWorkflow, /npx wrangler pages deploy dist/);
   assert.match(previewWorkflow, /--project-name=peekalisting/);
   assert.match(previewWorkflow, /--branch=staging/);

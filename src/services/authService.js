@@ -30,9 +30,22 @@ const AUTH_PROFILE_SELECT = `
 const passwordRecoveryMarkerKey = 'peekalisting.password-recovery-user';
 let passwordRecoveryUserId = null;
 
+function configuredAppOrigin() {
+  const configuredOrigin = String(import.meta.env.VITE_PUBLIC_APP_ORIGIN ?? '').trim();
+  if (!configuredOrigin) return window.location.origin;
+
+  try {
+    const parsedOrigin = new URL(configuredOrigin);
+    if (!['http:', 'https:'].includes(parsedOrigin.protocol)) return window.location.origin;
+    return parsedOrigin.origin;
+  } catch {
+    return window.location.origin;
+  }
+}
+
 export function appUrl(path = '/') {
   if (/^https?:\/\//i.test(path)) return path;
-  const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
+  const baseUrl = new URL(import.meta.env.BASE_URL, configuredAppOrigin());
   return new URL(path.replace(/^\/+/, ''), baseUrl).toString();
 }
 
