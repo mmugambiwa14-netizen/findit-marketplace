@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { featureFlags } from '@/lib/featureFlags';
 import { getPublicServicesPage } from '@/services/servicesService';
+import { MapPanelSkeleton } from '@/components/loading/LoadingSkeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Services() {
   const navigate = useNavigate();
@@ -138,7 +140,7 @@ export default function Services() {
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold">Results</h2>
-            <p className="text-sm text-muted-foreground">{isLoading ? 'Loading results' : `Showing ${services.length} service${services.length === 1 ? '' : 's'}`}</p>
+            {isLoading ? <Skeleton className="mt-1 h-4 w-32" /> : <p className="text-sm text-muted-foreground">Showing {services.length} service{services.length === 1 ? '' : 's'}</p>}
           </div>
           <div className="flex items-center gap-2">
             {featureFlags.maps && (
@@ -161,8 +163,8 @@ export default function Services() {
           </div>
         ) : (
           <>
-            {showMap && !isLoading ? (
-              <SearchResultsMap listings={services.map((service) => ({ ...service, _type: 'service', city: service.location_name }))} type="service" />
+            {showMap ? (
+              isLoading ? <MapPanelSkeleton label="Loading service map" /> : <SearchResultsMap listings={services.map((service) => ({ ...service, _type: 'service', city: service.location_name }))} type="service" />
             ) : <ServiceGrid services={services} isLoading={isLoading} />}
             {hasNextPage && (
               <div className="mt-6 flex justify-center">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Megaphone, RefreshCw } from 'lucide-react';
+import { Megaphone, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,7 @@ import {
   listManagedListingRequests,
   updateManagedListingRequest,
 } from '@/services/adminBusinessPublishingService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const STATUSES = ['', 'submitted', 'reviewing', 'accepted', 'needs_information', 'declined', 'published', 'cancelled'];
 
@@ -60,7 +61,7 @@ export default function AdminManagedListings() {
         </select>
       </label>
 
-      {loading && <div className="flex min-h-48 items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>}
+      {loading && <ListRowsSkeleton rows={5} label="Loading managed listing requests" />}
       {!loading && rows.length === 0 && <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">No managed listing requests match this filter.</div>}
 
       <div className="space-y-4">

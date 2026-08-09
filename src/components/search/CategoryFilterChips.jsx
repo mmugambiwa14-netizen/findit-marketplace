@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Car, HardHat, Home, LayoutGrid, Wrench } from 'lucide-react';
 import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { getCategoryTaxonomy } from '@/services/taxonomyService';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const TYPE_ICON = Object.freeze({
   property: Home,
@@ -62,10 +63,14 @@ export default function CategoryFilterChips({
     ];
   }, [supported, taxonomyQuery.data, type]);
 
+  if (taxonomyQuery.isLoading) {
+    return <SkeletonRegion label="Loading category filters" className="no-scrollbar -mx-4 flex gap-2 overflow-hidden px-4 pt-3">{Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-11 w-28 shrink-0 rounded-full" />)}</SkeletonRegion>;
+  }
+
   if (!chips.length) return null;
 
   return (
-    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pt-3" aria-busy={taxonomyQuery.isLoading || undefined}>
+    <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pt-3">
       {chips.map(({ value, label, icon: Icon }) => {
         const active = (category || '') === value;
         return (

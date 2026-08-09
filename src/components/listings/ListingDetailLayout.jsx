@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/layout/BackButton";
 import { Shield } from "lucide-react";
+import { DetailPageSkeleton } from '@/components/loading/LoadingSkeletons';
 
 function DetailStateShell({ children, fallback }) {
   return (
@@ -14,9 +15,10 @@ function DetailStateShell({ children, fallback }) {
 
 export function DetailLoading({ fallback = '/search' }) {
   return (
-    <DetailStateShell fallback={fallback}>
-      <div role="status" aria-label="Loading listing" className="h-9 w-9 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-    </DetailStateShell>
+    <div className="relative min-h-screen bg-background">
+      <BackButton className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] z-20" fallback={fallback} />
+      <DetailPageSkeleton />
+    </div>
   );
 }
 

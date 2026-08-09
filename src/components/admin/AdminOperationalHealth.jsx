@@ -1,6 +1,7 @@
 import { Activity, AlertTriangle, CheckCircle2, Database, Gauge, HardDrive } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AdminCardsSkeleton, ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 function number(value) {
   return Number(value ?? 0).toLocaleString();
@@ -28,6 +29,16 @@ export default function AdminOperationalHealth({ data, isLoading, error }) {
   const feedLatency = metrics.feed_latency_ms?.maximum ?? 0;
   const messageLatency = metrics.message_send_latency_ms?.maximum ?? 0;
 
+  if (isLoading) {
+    return (
+      <section aria-labelledby="operational-health-title" className="space-y-4">
+        <div><h2 id="operational-health-title" className="text-xl font-bold">Operational health</h2><p className="text-sm text-muted-foreground">Loading server health and release alerts.</p></div>
+        <AdminCardsSkeleton label="Loading operational health" />
+        <div className="grid gap-4 md:grid-cols-2"><Card className="p-4"><ListRowsSkeleton rows={5} showThumbnail={false} label="Loading worker queues" /></Card><Card className="p-4"><ListRowsSkeleton rows={4} showThumbnail={false} label="Loading retained media" /></Card></div>
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby="operational-health-title" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -35,7 +46,7 @@ export default function AdminOperationalHealth({ data, isLoading, error }) {
           <h2 id="operational-health-title" className="text-xl font-bold">Operational health</h2>
           <p className="text-sm text-muted-foreground">Compact server metrics and deterministic release alerts from the last {data?.windowHours || 24} hours.</p>
         </div>
-        {isLoading ? <Badge variant="outline">Loading</Badge> : alerts.length ? <Badge variant="destructive">{alerts.length} open alert{alerts.length === 1 ? '' : 's'}</Badge> : <Badge variant="outline" className="border-emerald-500/40 text-emerald-500"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Healthy</Badge>}
+        {alerts.length ? <Badge variant="destructive">{alerts.length} open alert{alerts.length === 1 ? '' : 's'}</Badge> : <Badge variant="outline" className="border-emerald-500/40 text-emerald-500"><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Healthy</Badge>}
       </div>
 
       {error && <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">Operational health is unavailable: {error.message}</p>}

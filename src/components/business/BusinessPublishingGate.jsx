@@ -1,10 +1,11 @@
 import { cloneElement, createContext, isValidElement, useContext, useEffect, useMemo, useState } from 'react';
-import { Building2, CheckCircle2, Loader2, Megaphone } from 'lucide-react';
+import { Building2, CheckCircle2, Megaphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import BackButton from '@/components/layout/BackButton';
+import { FormSkeleton } from '@/components/loading/LoadingSkeletons';
 import {
   getMyPublishingAccess,
   requestAdditionalBusinessCategories,
@@ -54,7 +55,7 @@ export default function BusinessPublishingGate({ children }) {
 }
 
 function GateLoading() {
-  return <main className="relative mx-auto flex min-h-[70vh] max-w-xl items-center justify-center px-4"><BackButton className="absolute left-4 top-4" fallback="/" label="Back to Discover" /><Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Checking publishing access" /></main>;
+  return <main className="relative mx-auto min-h-[70vh] max-w-xl px-4 pb-8 pt-20"><BackButton className="absolute left-4 top-4" fallback="/" label="Back to Discover" /><FormSkeleton fields={4} label="Checking publishing access" /></main>;
 }
 
 function PublishingChoice({ access, onBusiness, onManaged }) {

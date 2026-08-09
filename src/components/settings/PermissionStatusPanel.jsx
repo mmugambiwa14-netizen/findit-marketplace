@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const PERMISSIONS = [
   { key: 'camera', browserName: 'camera', label: 'Camera', use: 'Record a Peek' },
@@ -59,7 +60,7 @@ export default function PermissionStatusPanel() {
           <RefreshCw className={checking ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
         </Button>
       </div>
-      <div className="divide-y divide-border rounded-xl border border-border" aria-live="polite">
+      {checking && Object.keys(statuses).length === 0 ? <ListRowsSkeleton rows={4} showThumbnail={false} label="Checking device permissions" /> : <div className="divide-y divide-border rounded-xl border border-border" aria-live="polite">
         {PERMISSIONS.map(({ key, label, use }) => (
           <div key={key} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
             <div><p className="font-semibold">{label}</p><p className="text-xs text-muted-foreground">{use}</p></div>
@@ -70,7 +71,7 @@ export default function PermissionStatusPanel() {
           <div><p className="font-semibold">Notifications</p><p className="text-xs text-muted-foreground">Alerts outside the app</p></div>
           <span className={`shrink-0 text-xs font-bold ${statusClass(statuses.notifications)}`}>{statusLabel(statuses.notifications)}</span>
         </div>
-      </div>
+      </div>}
       {Object.values(statuses).some((status) => status === 'denied') && (
         <p className="text-xs leading-5 text-destructive">A blocked permission cannot be re-enabled from a web page. Open the site permissions control in your browser, allow access, then return and refresh this panel.</p>
       )}

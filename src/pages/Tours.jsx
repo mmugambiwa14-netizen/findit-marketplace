@@ -16,6 +16,7 @@ import { featureFlags } from '@/lib/featureFlags';
 import { getFavouriteIds } from '@/services/favouritesService';
 import { getPublicTourFeedPage } from '@/services/listingToursService';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
+import { PeekFeedSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const AUTOPLAY_KEY = 'findit:peek:autoplay';
 const MUTE_KEY = 'findit:peek:mute-default';
@@ -200,7 +201,7 @@ export default function Tours() {
       </div>
 
       {feed.isLoading ? (
-        <div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-blue-400" /></div>
+        <PeekFeedSkeleton />
       ) : feed.isError ? (
         <div className="flex h-full items-center justify-center px-5">
           <section className="max-w-sm rounded-3xl border border-white/10 bg-black/55 p-6 text-center backdrop-blur-xl">

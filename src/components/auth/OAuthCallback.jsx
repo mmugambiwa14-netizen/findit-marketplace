@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import * as authService from '@/services/authService';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
@@ -43,11 +44,12 @@ export default function OAuthCallback() {
             </a>
           </>
         ) : (
-          <>
-            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" aria-hidden="true" />
+          <SkeletonRegion label={message}>
+            <Skeleton className="mx-auto h-12 w-12 rounded-full" />
             <h1 className="mt-4 text-xl font-semibold">{message}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{bridgeId ? 'This window will close automatically.' : 'Returning you to PeekaListing.'}</p>
-          </>
+            <Skeleton className="mx-auto mt-5 h-3 w-2/3" />
+          </SkeletonRegion>
         )}
       </section>
     </main>

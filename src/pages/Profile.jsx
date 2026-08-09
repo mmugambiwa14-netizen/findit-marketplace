@@ -6,6 +6,7 @@ import {
 import { useAuth } from '@/lib/AuthContext';
 import BackButton from '@/components/layout/BackButton';
 import ProfileHeader from '@/components/profile/ProfileHeader';
+import { ProfilePageSkeleton } from '@/components/loading/LoadingSkeletons';
 import { featureFlags } from '@/lib/featureFlags';
 import { toast } from 'sonner';
 
@@ -17,7 +18,7 @@ export default function Profile() {
     if (signedOut === false) toast.error('Could not sign out. Check your connection and try again.');
   };
 
-  if (isLoading) return <div className="relative flex min-h-screen items-center justify-center"><BackButton className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))]" fallback="/" label="Back to Discover" /><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" role="status" aria-label="Loading profile" /></div>;
+  if (isLoading) return <div className="relative min-h-screen"><BackButton className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))] z-20" fallback="/" label="Back to Discover" /><ProfilePageSkeleton className="pt-20" /></div>;
 
   const marketplaceLinks = [
     { icon: ListChecks, label: 'My listings', description: 'Manage posts, availability and enquiries', to: '/my-listings' },

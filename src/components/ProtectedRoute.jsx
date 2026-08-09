@@ -4,13 +4,9 @@ import { useAuth } from '@/lib/AuthContext';
 import * as authService from '@/services/authService';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import BackButton from '@/components/layout/BackButton';
+import { AppShellSkeleton } from '@/components/loading/LoadingSkeletons';
 
-const DefaultFallback = () => (
-  <div className="fixed inset-0 flex items-center justify-center bg-background" role="status" aria-live="polite">
-    <div className="h-9 w-9 animate-spin rounded-full border-4 border-primary/20 border-t-primary" aria-hidden="true" />
-    <span className="sr-only">Checking access</span>
-  </div>
-);
+const DefaultFallback = () => <AppShellSkeleton />;
 
 /**
  * @param {{

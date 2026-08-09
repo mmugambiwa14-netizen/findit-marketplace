@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { LocationPermissionDialog } from '@/components/location/LocationPermissionDialog';
 import { PlaceSearchCombobox } from '@/components/location/PlaceSearchCombobox';
 import { buildLocationSelection } from '@/services/locationSelectionContracts';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const LOCATION_CACHE_MS = 1000 * 60 * 60;
 
@@ -22,14 +23,18 @@ export function LocationSelector({ value, onChange, level = 'country', parentId 
     gcTime: LOCATION_CACHE_MS * 24,
   });
 
+  if (isLoading) {
+    return <SkeletonRegion label={`Loading ${level} locations`} className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full" /></SkeletonRegion>;
+  }
+
   return (
     <div className="space-y-2">
       <Label htmlFor={triggerId} className="text-sm font-medium">
         {level.charAt(0).toUpperCase() + level.slice(1)}
       </Label>
-      <Select value={value || ''} onValueChange={onChange} disabled={disabled || isLoading || isError}>
+      <Select value={value || ''} onValueChange={onChange} disabled={disabled || isError}>
         <SelectTrigger id={triggerId} className="rounded-lg" aria-invalid={isError || undefined}>
-          <SelectValue placeholder={isLoading ? `Loading ${level}...` : `Select ${level}...`} />
+          <SelectValue placeholder={`Select ${level}...`} />
         </SelectTrigger>
         <SelectContent>
           {locations.map((location) => (
@@ -169,11 +174,11 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="space-y-2">
+        {countriesQuery.isLoading ? <SkeletonRegion label="Loading countries" className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></SkeletonRegion> : <div className="space-y-2">
           <Label htmlFor={countryId}>Country</Label>
           <Select value={country} onValueChange={handleCountrySelect} disabled={countriesQuery.isLoading || countriesQuery.isError || locating}>
             <SelectTrigger id={countryId} className="rounded-lg">
-              <SelectValue placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country...'} />
+              <SelectValue placeholder="Select country..." />
             </SelectTrigger>
             <SelectContent>
               {countries.map((candidate) => (
@@ -181,13 +186,13 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div>}
 
-        <div className="space-y-2 md:col-span-2">
+        {statesQuery.isLoading ? <SkeletonRegion label="Loading regions" className="space-y-2 md:col-span-2"><Skeleton className="h-4 w-40" /><Skeleton className="h-10 w-full" /></SkeletonRegion> : <div className="space-y-2 md:col-span-2">
           <Label htmlFor={stateId}>Province, state or region</Label>
           <Select value={state} onValueChange={handleStateSelect} disabled={!country || statesQuery.isLoading || statesQuery.isError || locating}>
             <SelectTrigger id={stateId} className="rounded-lg">
-              <SelectValue placeholder={!country ? 'Select a country first' : statesQuery.isLoading ? 'Loading regions...' : 'Select a province, state or region...'} />
+              <SelectValue placeholder={!country ? 'Select a country first' : 'Select a province, state or region...'} />
             </SelectTrigger>
             <SelectContent>
               {states.map((candidate) => (
@@ -195,7 +200,7 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div>}
 
         <PlaceSearchCombobox
           parentId={state}

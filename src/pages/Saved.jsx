@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/AuthContext";
 import { getFavouriteListingsPage } from "@/services/favouritesService";
 import { getFavouriteServicesPage } from "@/services/serviceFavouritesService";
+import { CardGridSkeleton } from '@/components/loading/LoadingSkeletons';
 
 export default function Saved() {
   const { user } = useAuth();
@@ -64,10 +65,7 @@ export default function Saved() {
       </div>
 
       {isLoading || servicesQuery.isLoading ? (
-        <div className="flex justify-center py-16" role="status">
-          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <span className="sr-only">Loading favourites</span>
-        </div>
+        <CardGridSkeleton count={6} className="px-4 py-4" label="Loading favourites" />
       ) : totalSaved === 0 && (isError || servicesQuery.isError) ? (
         <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
           <Bookmark className="mb-3 h-12 w-12 stroke-1 text-muted-foreground" />

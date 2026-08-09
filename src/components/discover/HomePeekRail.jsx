@@ -7,6 +7,7 @@ import { featureFlags } from '@/lib/featureFlags';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { getPublicTourFeedPage, publicTourDetailPath } from '@/services/listingToursService';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 function formatDuration(seconds) {
   const value = Math.max(0, Math.floor(Number(seconds) || 0));
@@ -25,18 +26,18 @@ function peekPrice(item, format) {
 
 function PeekSkeleton() {
   return (
-    <div className="space-y-3" role="status" aria-label="Loading Peeks">
+    <SkeletonRegion className="space-y-3" label="Loading Peeks">
       {[1, 2].map((item) => (
         <div key={item} className="clay-card grid min-h-[112px] grid-cols-[108px_minmax(0,1fr)] overflow-hidden rounded-2xl sm:grid-cols-[140px_minmax(0,1fr)]">
-          <div className="animate-pulse bg-surface-raised" />
+          <Skeleton className="rounded-none" />
           <div className="space-y-2 p-3.5">
-            <div className="h-4 w-2/5 animate-pulse rounded bg-surface-raised" />
-            <div className="h-4 w-4/5 animate-pulse rounded bg-surface-raised" />
-            <div className="h-3 w-3/5 animate-pulse rounded bg-surface-raised" />
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-3 w-3/5" />
           </div>
         </div>
       ))}
-    </div>
+    </SkeletonRegion>
   );
 }
 

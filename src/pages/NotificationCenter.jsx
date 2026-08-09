@@ -20,6 +20,7 @@ import { goBackOrHome } from '@/lib/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
+import { NotificationListSkeleton } from '@/components/loading/LoadingSkeletons';
 import {
   getNotificationsPage,
   getUnreadNotificationCount,
@@ -191,7 +192,10 @@ export default function NotificationCenter() {
       </header>
 
       {notificationsQuery.isLoading ? (
-        <div className="flex items-center justify-center py-16" role="status" aria-label="Loading notifications"><div className="h-7 w-7 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
+        <div role="status" aria-live="polite" aria-busy="true">
+          <span className="sr-only">Loading notifications</span>
+          <NotificationListSkeleton announce={false} />
+        </div>
       ) : notificationsQuery.isError && items.length === 0 ? (
         <div className="mx-4 mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center" role="alert"><p className="font-medium">We could not load notifications</p><p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p><Button className="mt-4" variant="outline" onClick={() => notificationsQuery.refetch()}>Try again</Button></div>
       ) : items.length === 0 ? (

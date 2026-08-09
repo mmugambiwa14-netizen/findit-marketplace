@@ -9,6 +9,7 @@ import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } f
 import { searchPublicListingsPage } from '@/services/publicListingsService';
 import { getPublicServicesPage } from '@/services/servicesService';
 import { LAUNCH_COUNTRY_CODE, ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
+import { MapCanvasSkeleton, MapPanelSkeleton } from '@/components/loading/LoadingSkeletons';
 import './discover-map-popup.css';
 
 const CATEGORY_KEYS = ['property', 'car', 'machinery', 'service'];
@@ -139,6 +140,7 @@ export default function DiscoverMapView({ location }) {
   const mapNode = useRef(null);
   const [category, setCategory] = useState('all');
   const [failure, setFailure] = useState('');
+  const [mapReady, setMapReady] = useState(false);
   const { items, loading } = useItems(location);
   const mapped = useMemo(() => items.map((item) => ({ item, point: coordinates(item) })).filter((entry) => entry.point), [items]);
   const visible = useMemo(() => category === 'all' ? mapped : mapped.filter(({ item }) => item._kind === category), [category, mapped]);
@@ -211,6 +213,7 @@ export default function DiscoverMapView({ location }) {
     };
 
     setFailure('');
+    setMapReady(false);
     (async () => {
       try {
         const maplibregl = await loadMapLibre();
@@ -264,11 +267,20 @@ export default function DiscoverMapView({ location }) {
           if (!bounds.isEmpty()) {
             map.fitBounds(bounds, { animate: false, padding: { top: 190, right: 38, bottom: 65, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
           }
+          setMapReady(true);
         });
         map.on('click', closePreview);
-        map.on('error', () => !cancelled && setFailure('Map tiles are temporarily unavailable.'));
+        map.on('error', () => {
+          if (!cancelled) {
+            setMapReady(true);
+            setFailure('Map tiles are temporarily unavailable.');
+          }
+        });
       } catch {
-        if (!cancelled) setFailure('The map could not load. Switch back to list view to continue.');
+        if (!cancelled) {
+          setMapReady(true);
+          setFailure('The map could not load. Switch back to list view to continue.');
+        }
       }
     })();
 
@@ -282,11 +294,12 @@ export default function DiscoverMapView({ location }) {
     };
   }, [navigate, visible]);
 
-  if (loading) return <div className="locked-map-panel flex min-h-[540px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
+  if (loading) return <MapPanelSkeleton />;
   return (
     <section className="space-y-3" aria-label="Discover marketplace map">
       <div className="locked-map-panel relative min-h-[540px]">
         <div ref={mapNode} className="findit-discover-map" />
+        {!mapReady && <MapCanvasSkeleton label="Loading Discover map" />}
         {failure && <div className="absolute inset-x-3 top-3 z-20 rounded-xl border border-border bg-background/94 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">{failure}</div>}
         {!loading && !mapped.length && <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-xl border border-border bg-background/88 px-3 py-2 text-center text-xs text-muted-foreground shadow-lg backdrop-blur-xl">No listings with public coordinates yet. The map is centered on Zimbabwe.</div>}
       </div>

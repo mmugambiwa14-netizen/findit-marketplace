@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import BackButton from "@/components/layout/BackButton";
 import ManageServiceCard from "@/components/services/ManageServiceCard";
 import { getOwnerServicesPage } from "@/services/servicesService";
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 export default function MyServices() {
   const { user } = useAuth();
@@ -43,7 +44,7 @@ export default function MyServices() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-16" role="status"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /><span className="sr-only">Loading your services</span></div>
+          <ListRowsSkeleton rows={6} label="Loading your services" />
         ) : error ? (
           <div className="rounded-xl border border-border bg-card px-4 py-10 text-center">
             <p className="font-medium">We could not load your services</p>

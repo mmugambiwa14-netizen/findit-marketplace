@@ -20,6 +20,7 @@ import {
   getOwnerListingsPage,
 } from "@/services/ownerListingsService";
 import { changeOwnerListingState } from '@/services/listingCreationService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const placeholderProperty = getListingPlaceholder("property");
 const placeholderCar = getListingPlaceholder("car");
@@ -135,9 +136,7 @@ export default function MyListings() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-        </div>
+        <ListRowsSkeleton rows={7} className="px-4 py-4" label="Loading your listings" />
       ) : listingsError ? (
         <div className="mx-4 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center">
           <p className="font-medium">We could not load your listings</p>

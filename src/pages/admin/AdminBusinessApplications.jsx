@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Building2, Loader2, RefreshCw } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import {
   reviewBusinessApplication,
   reviewBusinessCategory,
 } from '@/services/adminBusinessPublishingService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const STATUS_OPTIONS = ['', 'submitted', 'reviewing', 'needs_information', 'approved', 'rejected'];
 
@@ -76,7 +77,7 @@ export default function AdminBusinessApplications() {
         </select>
       </label>
 
-      {loading ? <div className="flex min-h-48 items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div> : null}
+      {loading ? <ListRowsSkeleton rows={5} label="Loading business applications" /> : null}
       {!loading && rows.length === 0 ? <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">No applications match this filter.</div> : null}
 
       <div className="space-y-4">

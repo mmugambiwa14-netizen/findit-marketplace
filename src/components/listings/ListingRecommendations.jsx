@@ -19,6 +19,7 @@ import { getPublicListingsByIds } from '@/services/publicListingsService';
 import { getRecommendationPersonalizationPreference } from '@/services/recommendationPersonalizationService';
 import { getPublicServicesByIds } from '@/services/servicesService';
 import { useAuth } from '@/lib/AuthContext';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const MAX_SECTIONS = 4;
 const MAX_ITEMS_PER_SECTION = 6;
@@ -270,18 +271,18 @@ function RecommendationSection({ section }) {
 
 function RecommendationLoading() {
   return (
-    <div className="no-scrollbar -mx-4 flex gap-3 overflow-hidden px-4 pb-2 sm:mx-0 sm:px-0" role="status" aria-label="Loading suggestions">
+    <SkeletonRegion className="no-scrollbar -mx-4 flex gap-3 overflow-hidden px-4 pb-2 sm:mx-0 sm:px-0" label="Loading suggestions">
       {[1, 2, 3].map((item) => (
         <div key={item} className="w-[12.75rem] shrink-0 overflow-hidden rounded-2xl border border-border bg-card sm:w-[14.5rem]">
-          <div className="aspect-[4/3] animate-pulse bg-surface-raised" />
+          <Skeleton className="aspect-[4/3] rounded-none" />
           <div className="space-y-2 p-3">
-            <div className="h-4 w-4/5 animate-pulse rounded bg-surface-raised" />
-            <div className="h-3 w-3/5 animate-pulse rounded bg-surface-raised" />
-            <div className="h-7 w-full animate-pulse rounded bg-surface-raised" />
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-3 w-3/5" />
+            <Skeleton className="h-7 w-full" />
           </div>
         </div>
       ))}
-    </div>
+    </SkeletonRegion>
   );
 }
 

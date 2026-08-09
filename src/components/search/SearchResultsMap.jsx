@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
 import { ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
 import '@/components/discover/discover-map-popup.css';
+import { MapCanvasSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const CITY_COORDS = {
   harare: { latitude: -17.8216, longitude: 31.0492 },
@@ -167,6 +168,7 @@ export default function SearchResultsMap({
   const mapNode = useRef(null);
   const [mapFailure, setMapFailure] = useState('');
   const [retryKey, setRetryKey] = useState(0);
+  const [mapReady, setMapReady] = useState(false);
   const markers = useMemo(() => listings
     .map((listing) => ({ listing: { ...listing, _kind: listingKind(listing, type) }, point: getPoint(listing) }))
     .filter((item) => item.point), [listings, type]);
@@ -183,6 +185,7 @@ export default function SearchResultsMap({
     const markerHandles = [];
     const markerIconRoots = [];
     setMapFailure('');
+    setMapReady(false);
 
     const closePreview = () => {
       activeMarkerElement?.setAttribute('data-selected', 'false');
@@ -242,7 +245,10 @@ export default function SearchResultsMap({
         registerOptionalStyleImageFallbacks(map);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         map.on('error', () => {
-          if (!cancelled) setMapFailure('Map data is temporarily unavailable. Listings remain available below.');
+          if (!cancelled) {
+            setMapReady(true);
+            setMapFailure('Map data is temporarily unavailable. Listings remain available below.');
+          }
         });
 
         const bounds = new maplibregl.LngLatBounds();
@@ -275,6 +281,7 @@ export default function SearchResultsMap({
               padding: compact ? { top: 72, right: 32, bottom: 48, left: 32 } : { top: 150, right: 38, bottom: 65, left: 38 },
             });
           }
+          setMapReady(true);
         });
         map.on('click', closePreview);
 
@@ -284,7 +291,10 @@ export default function SearchResultsMap({
         }
         resizeTimer = window.setTimeout(() => map?.resize(), 100);
       } catch {
-        if (!cancelled) setMapFailure('The map could not load. Listings remain fully available in list view.');
+        if (!cancelled) {
+          setMapReady(true);
+          setMapFailure('The map could not load. Listings remain fully available in list view.');
+        }
       }
     };
 
@@ -318,6 +328,7 @@ export default function SearchResultsMap({
         aria-label={ariaLabel}
         className={cn('findit-discover-map', compact && 'findit-listing-location-map')}
       />
+      {!mapReady && <MapCanvasSkeleton label={ariaLabel} />}
       {showSummary && <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-xl border border-border bg-background/88 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">
         <p className="flex items-center gap-1.5 font-semibold"><LocateFixed className="h-3.5 w-3.5 text-primary" />{markers.length} mapped</p>
         <p className="mt-0.5 text-muted-foreground">Drag or pinch to explore</p>

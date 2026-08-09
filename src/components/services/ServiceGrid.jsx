@@ -4,6 +4,7 @@ import ServiceCard from "./ServiceCard";
 import { Briefcase } from "lucide-react";
 import { useAuth } from '@/lib/AuthContext';
 import { getServiceFavouriteIds } from '@/services/serviceFavouritesService';
+import { CardGridSkeleton } from '@/components/loading/LoadingSkeletons';
 
 export default function ServiceGrid({ services, isLoading }) {
   const { user } = useAuth();
@@ -16,20 +17,7 @@ export default function ServiceGrid({ services, isLoading }) {
   });
   const savedIds = useMemo(() => new Set(savedQuery.data || []), [savedQuery.data]);
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="overflow-hidden rounded-2xl border border-border bg-card animate-pulse">
-            <div className="aspect-[4/3] bg-surface-raised" />
-            <div className="p-3.5 space-y-2">
-              <div className="h-3 bg-muted rounded w-1/3" />
-              <div className="h-4 bg-muted rounded w-2/3" />
-              <div className="h-3 bg-muted rounded w-1/2" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <CardGridSkeleton label="Loading services" />;
   }
 
   if (!services || services.length === 0) {

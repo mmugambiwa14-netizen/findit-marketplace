@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Mail, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getEmailNotificationPreferences, updateEmailNotificationPreferences } from '@/repositories/emailNotificationRepository';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const OPTIONS = [
   ['messages', 'Messages', 'New conversations and enquiries'],
@@ -37,7 +38,7 @@ export default function EmailNotificationSettings() {
         </div>
       </div>
 
-      {query.isLoading ? <p className="text-sm text-muted-foreground" role="status">Loading email preferences…</p> : query.error ? <p className="text-sm text-destructive" role="alert">Email preferences are temporarily unavailable.</p> : (
+      {query.isLoading ? <ListRowsSkeleton rows={4} showThumbnail={false} label="Loading email preferences" /> : query.error ? <p className="text-sm text-destructive" role="alert">Email preferences are temporarily unavailable.</p> : (
         <>
           <ToggleRow label="Email notifications" description="Allow essential account email" checked={preferences?.enabled === true} onChange={() => toggle('enabled')} disabled={mutation.isPending} />
           <div className="space-y-1 rounded-xl border border-border/70 p-2">

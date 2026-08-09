@@ -27,6 +27,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AdminLayout from '@/components/layout/AdminLayout';
 import AppLayout from '@/components/layout/AppLayout';
+import { AppShellSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const Login = lazy(() => import('@/pages/Login'));
 const OAuthCallback = lazy(() => import('@/components/auth/OAuthCallback'));
@@ -70,11 +71,7 @@ const Tours = lazy(() => import('@/pages/Tours'));
 const ToursPlaceholder = lazy(() => import('@/pages/ToursPlaceholder'));
 const PageNotFound = lazy(() => import('@/lib/PageNotFound'));
 
-const LoadingScreen = () => (
-  <div className="fixed inset-0 flex items-center justify-center bg-background" role="status" aria-label="Loading PeekaListing">
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-  </div>
-);
+const LoadingScreen = () => <AppShellSkeleton />;
 
 const AuthUnavailable = ({ message, onRetry, onSignOut }) => (
   <main className="fixed inset-0 flex flex-col items-center justify-center bg-background px-4">

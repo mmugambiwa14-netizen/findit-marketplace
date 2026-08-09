@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DiscoverCategoryCard({
   label,
@@ -9,6 +10,7 @@ export default function DiscoverCategoryCard({
   imageAlt,
   to,
   countLabel,
+  countLoading = false,
 }) {
   return (
     <Link
@@ -40,7 +42,7 @@ export default function DiscoverCategoryCard({
           </span>
           <h2 className="min-w-0 truncate text-base font-black tracking-[-0.03em] text-foreground sm:text-xl">{label}</h2>
         </div>
-        {countLabel && (
+        {countLoading ? <Skeleton className="h-5 w-24 rounded-full" /> : countLabel && (
           <p className="w-fit max-w-full whitespace-nowrap rounded-full border border-primary/15 bg-primary/[0.07] px-2 py-0.5 text-[9px] font-bold text-primary sm:text-[10px]">
             {countLabel}
           </p>

@@ -10,6 +10,7 @@ import { isSellerProfileId } from "@/services/sellerProfileContracts";
 import { getPublicSellerListingsPage, getPublicSellerProfile } from "@/services/sellerProfilesService";
 import { revealContactDetails } from "@/repositories/contactRevealRepository";
 import { goBackOrHome } from "@/lib/navigation";
+import { CardGridSkeleton, ProfilePageSkeleton } from '@/components/loading/LoadingSkeletons';
 
 function SellerProfileState({ children }) {
   return (
@@ -78,7 +79,7 @@ export default function SellerProfile() {
   }
 
   if (profileQuery.isLoading) {
-    return <SellerProfileState><div className="flex justify-center" role="status"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /><span className="sr-only">Loading seller profile</span></div></SellerProfileState>;
+    return <div className="min-h-[70vh] px-4 py-5"><div className="mx-auto max-w-3xl"><BackButton className="-ml-2" fallback="/search" label="Back to marketplace" /><ProfilePageSkeleton className="px-0" label="Loading seller profile" /></div></div>;
   }
 
   if (profileQuery.error) {
@@ -184,7 +185,7 @@ export default function SellerProfile() {
           <p className="mt-1 text-sm text-muted-foreground">Browse the seller's active marketplace inventory.</p>
         </div>
         {listingsQuery.isLoading ? (
-          <div className="flex justify-center py-12" role="status"><Loader2 className="h-7 w-7 animate-spin text-primary" /><span className="sr-only">Loading seller listings</span></div>
+          <CardGridSkeleton count={6} label="Loading seller listings" />
         ) : listingsQuery.error ? (
           <div className="rounded-xl border border-border bg-card p-6 text-center"><p>Seller listings could not be loaded.</p><Button type="button" variant="outline" className="mt-4" onClick={() => listingsQuery.refetch()}>Try again</Button></div>
         ) : (

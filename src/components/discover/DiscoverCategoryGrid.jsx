@@ -43,6 +43,7 @@ export default function DiscoverCategoryGrid({ location }) {
           key={key}
           {...card}
           countLabel={countLabel(countsQuery.data?.[key])}
+          countLoading={countsQuery.isLoading}
           to={withLocation(target, location)}
         />
       ))}
