@@ -103,6 +103,7 @@ const SheetContent = React.forwardRef(
         lastY: event.clientY,
         lastTime: event.timeStamp,
         velocity: 0,
+        currentY,
       };
       setDragY(currentY);
       setDragging(true);
@@ -122,6 +123,7 @@ const SheetContent = React.forwardRef(
       state.velocity = state.velocity * 0.35 + instantaneousVelocity * 0.65;
       state.lastY = event.clientY;
       state.lastTime = event.timeStamp;
+      state.currentY = nextY;
       setDragY(nextY);
     };
 
@@ -134,9 +136,9 @@ const SheetContent = React.forwardRef(
       dragState.current = null;
       setDragging(false);
 
-      const currentY = Math.max(0, Number(dragY) || readTranslateY(content));
+      const currentY = Number(state.currentY) || 0;
       const dismiss = shouldDismissDrag({
-        distance: currentY,
+        distance: Math.max(0, currentY),
         velocity: state.velocity,
         size: content.offsetHeight,
       });
@@ -149,7 +151,7 @@ const SheetContent = React.forwardRef(
 
       cancelAnimation();
       if (dismiss) {
-        const remaining = Math.max(0, content.offsetHeight - currentY);
+        const remaining = Math.max(0, content.offsetHeight - Math.max(0, currentY));
         const velocity = Math.max(450, state.velocity);
         const duration = Math.max(120, Math.min(240, (remaining / velocity) * 1000));
         const animation = settleElement(content, [
@@ -182,11 +184,12 @@ const SheetContent = React.forwardRef(
     };
 
     const cancelDrag = (event) => {
-      if (dragState.current?.pointerId !== event.pointerId) return;
+      const state = dragState.current;
+      if (!state || state.pointerId !== event.pointerId) return;
       dragState.current = null;
       setDragging(false);
       const content = contentRef.current;
-      const currentY = Math.max(0, Number(dragY) || readTranslateY(content));
+      const currentY = Number(state.currentY) || 0;
       setDragY(null);
       if (!content || prefersReducedMotion()) return;
       cancelAnimation();
