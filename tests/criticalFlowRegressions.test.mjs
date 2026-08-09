@@ -12,11 +12,33 @@ test('Request a Peek composer parent shape is translated into the RPC contract',
   assert.match(contract, /serviceId:/);
 });
 
-test('business workflow form actions are real submit controls', async () => {
+test('Request a Peek controls cannot silently no-op before the mutation', async () => {
+  const section = await read('src/components/peekThreads/PeekThreadsSection.jsx');
+  assert.match(section, /function guard === 'function'/);
+  assert.match(section, /Sign in to request a Peek\./);
+  assert.match(section, /Describe what you want to see in at least 8 characters\./);
+  assert.match(section, /onClick=\{submitRequest\}/);
+  assert.doesNotMatch(section, /disabled=\{body\.trim\(\)\.length < 8/);
+  assert.doesNotMatch(section, /guard\?\.\('request a Peek'/);
+});
+
+test('business workflow form actions always reach React submit handling or visible validation', async () => {
   const gate = await read('src/components/business/BusinessPublishingGate.jsx');
+  assert.match(gate, /function reportInvalidForm/);
+  assert.match(gate, /formElement\?\.reportValidity\?\.\(\)/);
+  assert.match(gate, /<form noValidate[\s\S]*onSubmit=\{submit\}/);
+  assert.match(gate, /Choose at least one business category\./);
   assert.match(gate, /<Button type="submit" className="w-full" disabled=\{submitting\}>/);
-  assert.match(gate, /<Button type="submit" className="w-full" disabled=\{submitting \|\| form\.requestedCategories\.length === 0\}>/);
   assert.match(gate, /<Button type="submit" className="w-full" disabled=\{busy\}>/);
+  assert.doesNotMatch(gate, /disabled=\{submitting \|\| form\.requestedCategories\.length === 0\}/);
+});
+
+test('staging PWA forces a fresh worker check and activates waiting builds', async () => {
+  const worker = await read('src/lib/serviceWorker.js');
+  assert.match(worker, /updateViaCache: 'none'/);
+  assert.match(worker, /await registration\.update\(\)/);
+  assert.match(worker, /activateWaitingStagingWorker/);
+  assert.match(worker, /waiting\.postMessage\(\{ type: 'SKIP_WAITING' \}\)/);
 });
 
 test('a Tour report remains intake-only until an admin actions it', async () => {
