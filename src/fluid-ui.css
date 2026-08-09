@@ -1,0 +1,292 @@
+:root {
+  --motion-instant: 90ms;
+  --motion-fast: 160ms;
+  --motion-standard: 240ms;
+  --motion-sheet: 280ms;
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+  --fluid-material-bg: hsl(var(--card) / 0.84);
+  --fluid-material-border: hsl(var(--border) / 0.72);
+  --fluid-material-shadow: 0 10px 32px hsl(var(--clay-shadow-dark) / 0.12);
+  --fluid-group-shadow: 0 1px 2px hsl(var(--clay-shadow-dark) / 0.06), 0 8px 24px hsl(var(--clay-shadow-dark) / 0.07);
+}
+
+/* Immediate feedback is a shared behavior, not a page-specific effect. */
+.fluid-pressable {
+  -webkit-tap-highlight-color: transparent;
+  transform-origin: center;
+  transition-property: transform, background-color, border-color, color, opacity, box-shadow;
+  transition-duration: var(--motion-instant), var(--motion-fast), var(--motion-fast), var(--motion-fast), var(--motion-fast), var(--motion-fast);
+  transition-timing-function: var(--motion-ease-standard);
+  touch-action: manipulation;
+  will-change: transform;
+}
+
+.fluid-pressable[data-pressed='true'] {
+  transform: scale(0.98);
+  transition-duration: 55ms;
+}
+
+.fluid-pressable[data-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
+/* Content groups are intentionally flatter than floating application chrome. */
+.surface-panel,
+.clay-card {
+  background-image: none;
+  box-shadow: var(--fluid-group-shadow);
+}
+
+.surface-raised,
+.clay-control,
+.clay-icon {
+  background-image: none;
+  box-shadow: 0 1px 2px hsl(var(--clay-shadow-dark) / 0.07), 0 6px 18px hsl(var(--clay-shadow-dark) / 0.07);
+}
+
+.clay-soft {
+  background: hsl(var(--accent) / 0.68);
+  box-shadow: 0 1px 2px hsl(var(--clay-shadow-dark) / 0.06);
+}
+
+.clay-button {
+  background-image: none;
+  box-shadow: 0 6px 18px hsl(var(--primary) / 0.2);
+}
+
+.clay-media {
+  box-shadow: 0 8px 26px hsl(var(--clay-shadow-dark) / 0.11);
+}
+
+.clay-nav,
+.glass-bar,
+.fluid-material {
+  background: var(--fluid-material-bg);
+  border-color: var(--fluid-material-border);
+  box-shadow: var(--fluid-material-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
+}
+
+/* Designer-facing typography primitives for page migrations. */
+.fluid-display {
+  font-size: clamp(2rem, 6vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.fluid-page-title {
+  font-size: clamp(1.625rem, 5vw, 1.875rem);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.025em;
+}
+
+.fluid-section-title {
+  font-size: clamp(1.25rem, 4vw, 1.375rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.018em;
+}
+
+.fluid-body {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+/* Moving selection state: one physical indicator instead of independent flashes. */
+.fluid-segmented-control {
+  position: relative;
+  overflow: hidden;
+  min-height: 2.75rem;
+  padding: 0.25rem;
+  border: 1px solid hsl(var(--border) / 0.78);
+  border-radius: var(--findit-control-radius);
+  background: hsl(var(--surface-secondary) / 0.74);
+  isolation: isolate;
+}
+
+.fluid-segmented-control--compact {
+  min-height: 2.5rem;
+}
+
+.fluid-segmented-indicator {
+  position: absolute;
+  inset-block: 0.25rem;
+  left: 0;
+  z-index: 0;
+  border: 1px solid hsl(var(--border) / 0.72);
+  border-radius: calc(var(--findit-control-radius) - 0.2rem);
+  background: hsl(var(--card) / 0.96);
+  box-shadow: 0 1px 2px hsl(var(--clay-shadow-dark) / 0.08), 0 4px 14px hsl(var(--clay-shadow-dark) / 0.06);
+  transition: transform var(--motion-standard) var(--motion-ease-emphasized), width var(--motion-standard) var(--motion-ease-emphasized);
+  will-change: transform, width;
+}
+
+.fluid-segmented-button {
+  min-height: 2.25rem;
+  min-width: 0;
+  padding-inline: 0.65rem;
+  border-radius: calc(var(--findit-control-radius) - 0.2rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.fluid-segmented-button--active {
+  color: hsl(var(--foreground));
+}
+
+.fluid-tabs {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0.125rem;
+  overflow-x: auto;
+  padding: 0.25rem;
+  border: 1px solid hsl(var(--border) / 0.76);
+  border-radius: var(--findit-panel-radius);
+  background: hsl(var(--card) / 0.82);
+  isolation: isolate;
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+.fluid-tabs-indicator {
+  position: absolute;
+  inset-block: 0.25rem;
+  left: 0;
+  z-index: 0;
+  border-radius: calc(var(--findit-control-radius) - 0.15rem);
+  background: hsl(var(--primary) / 0.11);
+  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.1);
+  transition: transform var(--motion-standard) var(--motion-ease-emphasized), width var(--motion-standard) var(--motion-ease-emphasized), opacity var(--motion-fast) ease-out;
+  will-change: transform, width;
+}
+
+.fluid-tab {
+  position: relative;
+  z-index: 1;
+  min-height: 2.75rem;
+  flex: 1 0 auto;
+  padding-inline: 0.85rem;
+  border-radius: var(--findit-control-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8125rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.fluid-tab--active {
+  color: hsl(var(--primary));
+}
+
+/* The shared Radix sheet now gains a real touch affordance and drag boundary. */
+.fluid-sheet {
+  overscroll-behavior: contain;
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+.fluid-sheet[data-fluid-sheet-side='bottom'] {
+  background: hsl(var(--card) / 0.96);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+  box-shadow: 0 -16px 48px hsl(var(--clay-shadow-dark) / 0.18);
+}
+
+.fluid-sheet--dragging {
+  animation: none !important;
+  transition: none !important;
+  user-select: none;
+}
+
+.fluid-sheet-handle-region {
+  height: 1.35rem;
+  margin: -0.35rem 2.5rem 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.fluid-sheet-handle-region:active {
+  cursor: grabbing;
+}
+
+.fluid-sheet-handle {
+  width: 2.25rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: hsl(var(--muted-foreground) / 0.34);
+  transition: width var(--motion-fast) var(--motion-ease-standard), background-color var(--motion-fast) ease-out;
+}
+
+.fluid-sheet-handle-region:active .fluid-sheet-handle {
+  width: 2.65rem;
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.fluid-sheet-overlay {
+  transition: opacity var(--motion-fast) ease-out, backdrop-filter var(--motion-fast) ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fluid-pressable,
+  .fluid-segmented-indicator,
+  .fluid-tabs-indicator,
+  .fluid-sheet-handle {
+    transition-duration: 0.01ms !important;
+  }
+
+  .fluid-pressable[data-pressed='true'] {
+    transform: none;
+    opacity: 0.82;
+  }
+
+  .fluid-sheet {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .clay-nav,
+  .glass-bar,
+  .fluid-material,
+  .fluid-sheet[data-fluid-sheet-side='bottom'],
+  .fluid-tabs {
+    background: hsl(var(--card));
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .clay-nav,
+  .glass-bar,
+  .fluid-material,
+  .fluid-sheet,
+  .fluid-tabs,
+  .fluid-segmented-control {
+    border-color: hsl(var(--foreground) / 0.5);
+  }
+
+  .fluid-segmented-indicator,
+  .fluid-tabs-indicator {
+    box-shadow: inset 0 0 0 1px hsl(var(--foreground) / 0.45);
+  }
+}
