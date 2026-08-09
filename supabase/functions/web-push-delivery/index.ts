@@ -29,22 +29,20 @@ Deno.serve(async (request) => {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const supabaseUrl = env('SUPABASE_URL');
-    const serviceRole = env('SUPABASE_SERVICE_ROLE_KEY');
-    const vapidPublic = env('FINDIT_WEB_PUSH_VAPID_PUBLIC_KEY');
-    const vapidPrivate = env('FINDIT_WEB_PUSH_VAPID_PRIVATE_KEY');
-    const vapidSubject = env('FINDIT_WEB_PUSH_VAPID_SUBJECT');
-    webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
-
-    const client = createClient(supabaseUrl, serviceRole, {
+    const client = createClient(env('SUPABASE_URL'), env('SUPABASE_SERVICE_ROLE_KEY'), {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+    webpush.setVapidDetails(
+      env('FINDIT_WEB_PUSH_VAPID_SUBJECT'),
+      env('FINDIT_WEB_PUSH_VAPID_PUBLIC_KEY'),
+      env('FINDIT_WEB_PUSH_VAPID_PRIVATE_KEY'),
+    );
 
     const body = await request.json().catch(() => ({}));
     const requestedLimit = Number(body?.limit ?? 25);
     const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(100, requestedLimit)) : 25;
 
-    const { data: deliveries, error: claimError } = await client.schema('private').rpc('claim_web_push_deliveries', { p_limit: limit });
+    const { data: deliveries, error: claimError } = await client.rpc('claim_web_push_deliveries', { p_limit: limit });
     if (claimError) throw claimError;
 
     let delivered = 0;
@@ -73,7 +71,7 @@ Deno.serve(async (request) => {
             keys: { p256dh: subscription.p256dh, auth: subscription.auth },
           }, payload, { TTL: 60 * 60 * 24, urgency: 'normal' });
           successfulDevices += 1;
-          await client.schema('private').rpc('record_web_push_subscription_result', {
+          await client.rpc('record_web_push_subscription_result', {
             p_subscription_id: subscription.id,
             p_success: true,
             p_permanent_failure: false,
@@ -83,7 +81,7 @@ Deno.serve(async (request) => {
           const permanent = status === 404 || status === 410;
           if (permanent) invalidated += 1;
           errors.push(`${status || 'error'}:${String((error as Error)?.message ?? error).slice(0, 180)}`);
-          await client.schema('private').rpc('record_web_push_subscription_result', {
+          await client.rpc('record_web_push_subscription_result', {
             p_subscription_id: subscription.id,
             p_success: false,
             p_permanent_failure: permanent,
@@ -91,10 +89,8 @@ Deno.serve(async (request) => {
         }
       }
 
-      // No active subscriptions is a terminal successful fan-out: the canonical
-      // notification remains in-app and there is nothing useful to retry.
       const complete = subscriptions.length === 0 || successfulDevices > 0;
-      const { error: completeError } = await client.schema('private').rpc('complete_web_push_delivery', {
+      const { error: completeError } = await client.rpc('complete_web_push_delivery', {
         p_delivery_id: delivery.delivery_id,
         p_lease_token: delivery.lease_token,
         p_delivered: complete,
