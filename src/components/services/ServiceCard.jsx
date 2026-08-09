@@ -119,7 +119,6 @@ export default function ServiceCard({ service, onOpen = null, layout = 'browse',
         tourLabel="Peek"
         sellerName={service.provider_name}
         sellerLabel="Provider"
-        views={service.views}
         actions={hasDirectContact ? <ContactButtons listing={service} type="service" placement="browse" /> : null}
         layout={layout}
         className={className}

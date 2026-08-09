@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-08-08T22:47:21.475Z",
-  "sourceFiles": 328,
+  "generatedAt": "2026-08-09T00:39:05.147Z",
+  "sourceFiles": 332,
   "pageModules": 40,
-  "directControlDeclarations": 759,
-  "pageExpandedControlInstances": 1168,
+  "directControlDeclarations": 762,
+  "pageExpandedControlInstances": 1174,
   "byElement": {
     "AlertDialog": 13,
     "Button": 266,
     "Checkbox": 1,
     "Dialog": 22,
     "DropdownMenuTrigger": 2,
-    "Input": 98,
-    "Link": 98,
+    "Input": 100,
+    "Link": 99,
     "PopoverTrigger": 1,
     "Select": 30,
     "SelectTrigger": 30,
@@ -28,19 +28,19 @@
       "page": "BusinessProfiles.jsx",
       "directControls": 5,
       "expandedControls": 20,
-      "localModulesInClosure": 45
+      "localModulesInClosure": 46
     },
     {
       "page": "BuyerPeekRequests.jsx",
       "directControls": 3,
       "expandedControls": 35,
-      "localModulesInClosure": 38
+      "localModulesInClosure": 39
     },
     {
       "page": "CarDetail.jsx",
       "directControls": 0,
       "expandedControls": 80,
-      "localModulesInClosure": 114
+      "localModulesInClosure": 113
     },
     {
       "page": "ContactSupport.jsx",
@@ -52,30 +52,30 @@
       "page": "CreateListing.jsx",
       "directControls": 2,
       "expandedControls": 81,
-      "localModulesInClosure": 64
+      "localModulesInClosure": 65
     },
     {
       "page": "CreateService.jsx",
       "directControls": 21,
       "expandedControls": 27,
-      "localModulesInClosure": 47
+      "localModulesInClosure": 48
     },
     {
       "page": "CuratedCreateService.jsx",
       "directControls": 2,
       "expandedControls": 58,
-      "localModulesInClosure": 50
+      "localModulesInClosure": 51
     },
     {
       "page": "FAQs.jsx",
       "directControls": 3,
       "expandedControls": 3,
-      "localModulesInClosure": 3
+      "localModulesInClosure": 4
     },
     {
       "page": "ForgotPassword.jsx",
       "directControls": 4,
-      "expandedControls": 9,
+      "expandedControls": 10,
       "localModulesInClosure": 13
     },
     {
@@ -99,104 +99,104 @@
     {
       "page": "Login.jsx",
       "directControls": 8,
-      "expandedControls": 13,
+      "expandedControls": 14,
       "localModulesInClosure": 17
     },
     {
       "page": "MachineryDetail.jsx",
       "directControls": 0,
       "expandedControls": 80,
-      "localModulesInClosure": 114
+      "localModulesInClosure": 113
     },
     {
       "page": "MyListings.jsx",
       "directControls": 14,
       "expandedControls": 52,
-      "localModulesInClosure": 66
+      "localModulesInClosure": 67
     },
     {
       "page": "MyServices.jsx",
       "directControls": 4,
       "expandedControls": 35,
-      "localModulesInClosure": 53
+      "localModulesInClosure": 54
     },
     {
       "page": "NotificationCenter.jsx",
       "directControls": 6,
       "expandedControls": 6,
-      "localModulesInClosure": 15
+      "localModulesInClosure": 16
     },
     {
       "page": "Profile.jsx",
       "directControls": 3,
       "expandedControls": 4,
-      "localModulesInClosure": 28
+      "localModulesInClosure": 29
     },
     {
       "page": "PropertyDetail.jsx",
       "directControls": 0,
       "expandedControls": 80,
-      "localModulesInClosure": 114
+      "localModulesInClosure": 113
     },
     {
       "page": "PublicBusinessProfile.jsx",
       "directControls": 15,
       "expandedControls": 40,
-      "localModulesInClosure": 77
+      "localModulesInClosure": 78
     },
     {
       "page": "Register.jsx",
-      "directControls": 10,
-      "expandedControls": 19,
+      "directControls": 12,
+      "expandedControls": 22,
       "localModulesInClosure": 22
     },
     {
       "page": "ResetPassword.jsx",
       "directControls": 7,
-      "expandedControls": 12,
+      "expandedControls": 13,
       "localModulesInClosure": 14
     },
     {
       "page": "Saved.jsx",
       "directControls": 6,
       "expandedControls": 30,
-      "localModulesInClosure": 73
+      "localModulesInClosure": 74
     },
     {
       "page": "Search.jsx",
       "directControls": 2,
       "expandedControls": 65,
-      "localModulesInClosure": 84
+      "localModulesInClosure": 86
     },
     {
       "page": "SellerProfile.jsx",
       "directControls": 8,
       "expandedControls": 32,
-      "localModulesInClosure": 59
+      "localModulesInClosure": 61
     },
     {
       "page": "ServiceDetail.jsx",
       "directControls": 2,
       "expandedControls": 60,
-      "localModulesInClosure": 86
+      "localModulesInClosure": 87
     },
     {
       "page": "Services.jsx",
       "directControls": 11,
       "expandedControls": 40,
-      "localModulesInClosure": 67
+      "localModulesInClosure": 70
     },
     {
       "page": "Settings.jsx",
       "directControls": 7,
       "expandedControls": 26,
-      "localModulesInClosure": 33
+      "localModulesInClosure": 36
     },
     {
       "page": "Tours.jsx",
       "directControls": 6,
       "expandedControls": 31,
-      "localModulesInClosure": 59
+      "localModulesInClosure": 58
     },
     {
       "page": "ToursPlaceholder.jsx",
@@ -346,7 +346,7 @@
     {
       "file": "src\\components\\AuthLayout.jsx",
       "page": "",
-      "line": 19,
+      "line": 20,
       "element": "Link",
       "name": "PeekaListing home",
       "type": "",
@@ -357,7 +357,18 @@
     {
       "file": "src\\components\\AuthLayout.jsx",
       "page": "",
-      "line": 38,
+      "line": 23,
+      "element": "Link",
+      "name": "Back to marketplace",
+      "type": "",
+      "handler": "",
+      "destination": "/",
+      "disabled": ""
+    },
+    {
+      "file": "src\\components\\AuthLayout.jsx",
+      "page": "",
+      "line": 43,
       "element": "Link",
       "name": "Privacy",
       "type": "",
@@ -368,7 +379,7 @@
     {
       "file": "src\\components\\AuthLayout.jsx",
       "page": "",
-      "line": 39,
+      "line": 44,
       "element": "Link",
       "name": "Data protection",
       "type": "",
@@ -379,7 +390,7 @@
     {
       "file": "src\\components\\AuthLayout.jsx",
       "page": "",
-      "line": 40,
+      "line": 45,
       "element": "Link",
       "name": "Terms",
       "type": "",
@@ -390,7 +401,7 @@
     {
       "file": "src\\components\\AuthLayout.jsx",
       "page": "",
-      "line": 41,
+      "line": 46,
       "element": "Link",
       "name": "Cookies",
       "type": "",
@@ -2260,7 +2271,7 @@
     {
       "file": "src\\components\\discover\\DiscoverMapView.jsx",
       "page": "",
-      "line": 289,
+      "line": 293,
       "element": "button",
       "name": "{visual.label}",
       "type": "button",
@@ -2271,7 +2282,7 @@
     {
       "file": "src\\components\\discover\\DiscoverSearch.jsx",
       "page": "",
-      "line": 25,
+      "line": 26,
       "element": "form",
       "name": "Search",
       "type": "",
@@ -2282,7 +2293,7 @@
     {
       "file": "src\\components\\discover\\DiscoverSearch.jsx",
       "page": "",
-      "line": 27,
+      "line": 28,
       "element": "Input",
       "name": "Search FindIt",
       "type": "search",
@@ -2293,7 +2304,7 @@
     {
       "file": "src\\components\\discover\\DiscoverSearch.jsx",
       "page": "",
-      "line": 36,
+      "line": 37,
       "element": "button",
       "name": "Search",
       "type": "submit",
@@ -2480,7 +2491,7 @@
     {
       "file": "src\\components\\listings\\ContactButtons.jsx",
       "page": "",
-      "line": 82,
+      "line": 86,
       "element": "Button",
       "name": "Existing chats remain available, but new enquiries are closed.",
       "type": "button",
@@ -2491,7 +2502,7 @@
     {
       "file": "src\\components\\listings\\ContactButtons.jsx",
       "page": "",
-      "line": 189,
+      "line": 196,
       "element": "Button",
       "name": "Contact unavailable",
       "type": "button",
@@ -2502,7 +2513,7 @@
     {
       "file": "src\\components\\listings\\ContactButtons.jsx",
       "page": "",
-      "line": 215,
+      "line": 222,
       "element": "Sheet",
       "name": "Contact {recipientLabel} Contact the {recipientLabel} Choose how to ask about {listing.title} . Phone numbers and email addresses stay hidden in PeekaListing. They become visible only in the external app you choose to open.",
       "type": "",
@@ -2513,7 +2524,7 @@
     {
       "file": "src\\components\\listings\\ContactButtons.jsx",
       "page": "",
-      "line": 217,
+      "line": 224,
       "element": "Button",
       "name": "`Contact ${recipientLabel} about ${listing.title}`",
       "type": "button",
@@ -2524,7 +2535,7 @@
     {
       "file": "src\\components\\listings\\ContactButtons.jsx",
       "page": "",
-      "line": 240,
+      "line": 247,
       "element": "button",
       "name": "{label} {description}",
       "type": "button",
@@ -2535,7 +2546,7 @@
     {
       "file": "src\\components\\listings\\ContactButtons.jsx",
       "page": "",
-      "line": 257,
+      "line": 264,
       "element": "AlertDialog",
       "name": "{actionCopy.title} {actionCopy.description} Cancel 'Opening…' actionCopy.confirm",
       "type": "",
@@ -2711,7 +2722,7 @@
     {
       "file": "src\\components\\listings\\ListingDetailTabs.jsx",
       "page": "",
-      "line": 72,
+      "line": 69,
       "element": "button",
       "name": "{tab.label}",
       "type": "button",
@@ -2722,7 +2733,7 @@
     {
       "file": "src\\components\\listings\\ListingDetailTabs.jsx",
       "page": "",
-      "line": 134,
+      "line": 139,
       "element": "button",
       "name": "'Read less' 'Read more'",
       "type": "button",
@@ -2733,7 +2744,7 @@
     {
       "file": "src\\components\\listings\\ListingDetailTabs.jsx",
       "page": "",
-      "line": 163,
+      "line": 176,
       "element": "a",
       "name": "Open map",
       "type": "",
@@ -2744,7 +2755,7 @@
     {
       "file": "src\\components\\listings\\ListingDetailTabs.jsx",
       "page": "",
-      "line": 223,
+      "line": 236,
       "element": "Link",
       "name": "{profile}",
       "type": "",
@@ -2755,7 +2766,7 @@
     {
       "file": "src\\components\\listings\\ListingDetailTabs.jsx",
       "page": "",
-      "line": 227,
+      "line": 240,
       "element": "Link",
       "name": "{profileLabel}",
       "type": "",
@@ -3239,7 +3250,7 @@
     {
       "file": "src\\components\\marketplace\\MarketplaceCard.jsx",
       "page": "",
-      "line": 49,
+      "line": 47,
       "element": "Link",
       "name": "`${title}, ${priceLabel}`",
       "type": "",
@@ -3250,7 +3261,7 @@
     {
       "file": "src\\components\\marketplace\\MarketplaceCard.jsx",
       "page": "",
-      "line": 84,
+      "line": 82,
       "element": "button",
       "name": "save.active ? 'Remove from saved' : 'Save item'",
       "type": "button",
@@ -3261,7 +3272,7 @@
     {
       "file": "src\\components\\marketplace\\MarketplaceCard.jsx",
       "page": "",
-      "line": 99,
+      "line": 97,
       "element": "Link",
       "name": "`${tourLabel} for ${title}${tourDuration ? `, ${tourDuration}` : ''}`",
       "type": "",
@@ -3272,7 +3283,7 @@
     {
       "file": "src\\components\\marketplace\\MarketplaceCard.jsx",
       "page": "",
-      "line": 115,
+      "line": 113,
       "element": "Link",
       "name": "{title} {codeNode}",
       "type": "",
@@ -3283,7 +3294,7 @@
     {
       "file": "src\\components\\marketplace\\MarketplaceCard.jsx",
       "page": "",
-      "line": 182,
+      "line": 180,
       "element": "Link",
       "name": "{locationLabel}",
       "type": "",
@@ -3294,7 +3305,7 @@
     {
       "file": "src\\components\\marketplace\\MarketplaceCard.jsx",
       "page": "",
-      "line": 189,
+      "line": 187,
       "element": "Link",
       "name": "{locationLabel}",
       "type": "",
@@ -4174,7 +4185,7 @@
     {
       "file": "src\\components\\search\\SearchResultsMap.jsx",
       "page": "",
-      "line": 195,
+      "line": 199,
       "element": "button",
       "name": "Retry",
       "type": "button",
@@ -4185,7 +4196,7 @@
     {
       "file": "src\\components\\search\\SearchResultsMap.jsx",
       "page": "",
-      "line": 204,
+      "line": 208,
       "element": "Link",
       "name": "{listing.title}",
       "type": "",
@@ -4251,7 +4262,7 @@
     {
       "file": "src\\components\\search\\SortSheet.jsx",
       "page": "",
-      "line": 19,
+      "line": 18,
       "element": "Sheet",
       "name": "Sort results `Price sorting compares listings in ${currency} only.` 'Choose a listing currency in Filters before sorting by price.'",
       "type": "",
@@ -4262,7 +4273,7 @@
     {
       "file": "src\\components\\search\\SortSheet.jsx",
       "page": "",
-      "line": 34,
+      "line": 33,
       "element": "button",
       "name": "{option.label} <Check className=\"h-4 w-4\" /> disabled ? <LockKeyhole className=\"h-4 w-4\" aria-hidden=\"true\" /> : null",
       "type": "button",
@@ -4790,7 +4801,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 297,
+      "line": 251,
       "element": "button",
       "name": "Play Peek",
       "type": "button",
@@ -4801,7 +4812,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 302,
+      "line": 256,
       "element": "button",
       "name": "Pause Peek",
       "type": "button",
@@ -4812,7 +4823,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 308,
+      "line": 262,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -4823,7 +4834,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 326,
+      "line": 280,
       "element": "button",
       "name": "saved ? 'Remove from saved' : 'Save listing'",
       "type": "button",
@@ -4834,7 +4845,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 331,
+      "line": 285,
       "element": "button",
       "name": "Share listing",
       "type": "button",
@@ -4845,7 +4856,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 335,
+      "line": 289,
       "element": "button",
       "name": "Report listing",
       "type": "button",
@@ -4856,7 +4867,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 339,
+      "line": 293,
       "element": "button",
       "name": "muted ? 'Turn sound on' : 'Mute'",
       "type": "button",
@@ -4867,7 +4878,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 366,
+      "line": 320,
       "element": "Link",
       "name": "View listing",
       "type": "",
@@ -4878,7 +4889,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 368,
+      "line": 322,
       "element": "Link",
       "name": "Request a Peek",
       "type": "",
@@ -4889,7 +4900,7 @@
     {
       "file": "src\\components\\tours\\ImmersivePeekSlide.jsx",
       "page": "",
-      "line": 370,
+      "line": 324,
       "element": "Link",
       "name": "More details",
       "type": "",
@@ -5417,18 +5428,18 @@
     {
       "file": "src\\pages\\BuyerPeekRequests.jsx",
       "page": "BuyerPeekRequests.jsx",
-      "line": 26,
+      "line": 27,
       "element": "button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\BuyerPeekRequests.jsx",
       "page": "BuyerPeekRequests.jsx",
-      "line": 36,
+      "line": 37,
       "element": "button",
       "name": "My requests",
       "type": "button",
@@ -5439,7 +5450,7 @@
     {
       "file": "src\\pages\\BuyerPeekRequests.jsx",
       "page": "BuyerPeekRequests.jsx",
-      "line": 48,
+      "line": 49,
       "element": "button",
       "name": "Requests to answer",
       "type": "button",
@@ -5549,18 +5560,18 @@
     {
       "file": "src\\pages\\CreateListing.jsx",
       "page": "CreateListing.jsx",
-      "line": 261,
+      "line": 262,
       "element": "button",
       "name": "Exit",
       "type": "button",
-      "handler": "() => isDirty ? setConfirmation('exit-draft') : navigate(-1)",
+      "handler": "() => isDirty ? setConfirmation('exit-draft') : goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\CreateListing.jsx",
       "page": "CreateListing.jsx",
-      "line": 288,
+      "line": 289,
       "element": "AlertDialog",
       "name": "'Discard the unfinished Peek?' 'Leave this draft?' 'The unfinished Peek upload will be removed. The published listing and its photos will remain.' 'Your listing draft is saved automatically on this device and can be continued later.' Stay here 'Discard Peek' 'Leave draft'",
       "type": "",
@@ -5571,7 +5582,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 374,
+      "line": 375,
       "element": "Button",
       "name": "<><Loader2 className=\"animate-spin\" />Resuming Peek upload...</> <><RotateCcw />Resume Peek upload</>",
       "type": "button",
@@ -5582,7 +5593,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 377,
+      "line": 378,
       "element": "Button",
       "name": "<><Loader2 className=\"animate-spin\" />Discarding unfinished Peek...</> 'Continue without Peek'",
       "type": "button",
@@ -5593,18 +5604,18 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 389,
+      "line": 390,
       "element": "button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => { saveNow(); navigate(-1); }",
+      "handler": "() => { saveNow(); goBackOrHome(navigate, '/'); }",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 409,
+      "line": 410,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -5615,7 +5626,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 412,
+      "line": 413,
       "element": "Select",
       "name": "",
       "type": "",
@@ -5626,7 +5637,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 415,
+      "line": 416,
       "element": "SelectTrigger",
       "name": "",
       "type": "",
@@ -5637,7 +5648,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 434,
+      "line": 435,
       "element": "button",
       "name": "{subcategory.label}",
       "type": "button",
@@ -5648,7 +5659,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 449,
+      "line": 450,
       "element": "Input",
       "name": "e.g. Pre-purchase vehicle inspection",
       "type": "",
@@ -5659,7 +5670,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 453,
+      "line": 454,
       "element": "Textarea",
       "name": "Describe what you offer, experience and turnaround time",
       "type": "",
@@ -5670,7 +5681,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 461,
+      "line": 462,
       "element": "button",
       "name": "<><Loader2 className=\"h-7 w-7 animate-spin text-primary\" /><span className=\"mt-2 text-sm\">Validating and uploading…</span></> <><Camera className=\"h-8 w-8 text-muted-foreground\" /><span className=\"mt-2 text-sm font-semibold\">Add service images</span></>",
       "type": "button",
@@ -5681,7 +5692,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 465,
+      "line": 466,
       "element": "Button",
       "name": "`Remove service image ${index + 1}`",
       "type": "button",
@@ -5692,7 +5703,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 477,
+      "line": 478,
       "element": "Select",
       "name": "",
       "type": "",
@@ -5703,7 +5714,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 478,
+      "line": 479,
       "element": "SelectTrigger",
       "name": "",
       "type": "",
@@ -5714,7 +5725,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 484,
+      "line": 485,
       "element": "Input",
       "name": "0",
       "type": "number",
@@ -5725,7 +5736,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 499,
+      "line": 500,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -5736,7 +5747,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 509,
+      "line": 510,
       "element": "Switch",
       "name": "Can travel to other areas",
       "type": "",
@@ -5747,7 +5758,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 515,
+      "line": 516,
       "element": "Input",
       "name": "+263...",
       "type": "tel",
@@ -5758,7 +5769,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 519,
+      "line": 520,
       "element": "Switch",
       "name": "WhatsApp same as phone",
       "type": "",
@@ -5769,7 +5780,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 523,
+      "line": 524,
       "element": "Input",
       "name": "+263...",
       "type": "tel",
@@ -5780,7 +5791,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 527,
+      "line": 528,
       "element": "Input",
       "name": "",
       "type": "email",
@@ -5791,7 +5802,7 @@
     {
       "file": "src\\pages\\CreateService.jsx",
       "page": "CreateService.jsx",
-      "line": 530,
+      "line": 531,
       "element": "Button",
       "name": "(tourDraft ? \"Publishing and uploading...\" : \"Publishing...\") \"Publish Service\"",
       "type": "",
@@ -5824,7 +5835,7 @@
     {
       "file": "src\\pages\\FAQs.jsx",
       "page": "FAQs.jsx",
-      "line": 70,
+      "line": 71,
       "element": "button",
       "name": "{question}",
       "type": "button",
@@ -5835,18 +5846,18 @@
     {
       "file": "src\\pages\\FAQs.jsx",
       "page": "FAQs.jsx",
-      "line": 101,
+      "line": 102,
       "element": "Button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\FAQs.jsx",
       "page": "FAQs.jsx",
-      "line": 120,
+      "line": 121,
       "element": "Button",
       "name": "Contact Support",
       "type": "button",
@@ -5901,7 +5912,7 @@
     {
       "file": "src\\pages\\Home.jsx",
       "page": "Home.jsx",
-      "line": 57,
+      "line": 61,
       "element": "Link",
       "name": "Open notifications",
       "type": "",
@@ -5912,7 +5923,7 @@
     {
       "file": "src\\pages\\Home.jsx",
       "page": "Home.jsx",
-      "line": 82,
+      "line": 86,
       "element": "button",
       "name": "Show category list",
       "type": "button",
@@ -5923,7 +5934,7 @@
     {
       "file": "src\\pages\\Home.jsx",
       "page": "Home.jsx",
-      "line": 83,
+      "line": 87,
       "element": "button",
       "name": "Show marketplace map",
       "type": "button",
@@ -6176,18 +6187,18 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 126,
+      "line": 127,
       "element": "button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 130,
+      "line": 131,
       "element": "Button",
       "name": "New",
       "type": "",
@@ -6198,7 +6209,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 131,
+      "line": 132,
       "element": "Link",
       "name": "New",
       "type": "",
@@ -6209,7 +6220,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 144,
+      "line": 145,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -6220,7 +6231,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 152,
+      "line": 153,
       "element": "Button",
       "name": "Create Listing",
       "type": "",
@@ -6231,7 +6242,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 153,
+      "line": 154,
       "element": "Link",
       "name": "Create Listing",
       "type": "",
@@ -6242,7 +6253,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 231,
+      "line": 232,
       "element": "Button",
       "name": "<><Loader2 className=\"h-4 w-4 animate-spin\" aria-hidden=\"true\" /> Loading</> 'Load more listings'",
       "type": "button",
@@ -6253,7 +6264,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 248,
+      "line": 249,
       "element": "AlertDialog",
       "name": "Delete this listing? `\"${deleteCandidate.title}\" will be permanently deleted. This cannot be undone.` 'This listing will be permanently deleted.' Cancel <><Loader2 className=\"h-4 w-4 animate-spin\" aria-hidden=\"true\" />Deleting</> 'Delete listing'",
       "type": "",
@@ -6264,7 +6275,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 296,
+      "line": 297,
       "element": "Link",
       "name": "",
       "type": "",
@@ -6275,7 +6286,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 306,
+      "line": 307,
       "element": "Link",
       "name": "{listing.title}",
       "type": "",
@@ -6286,7 +6297,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 310,
+      "line": 311,
       "element": "DropdownMenuTrigger",
       "name": "`Listing actions for ${listing.title}`",
       "type": "",
@@ -6297,7 +6308,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 350,
+      "line": 348,
       "element": "button",
       "name": "Renew Listing",
       "type": "button",
@@ -6308,7 +6319,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 360,
+      "line": 358,
       "element": "button",
       "name": "Edit",
       "type": "button",
@@ -6319,7 +6330,7 @@
     {
       "file": "src\\pages\\MyListings.jsx",
       "page": "MyListings.jsx",
-      "line": 368,
+      "line": 366,
       "element": "button",
       "name": "Publish",
       "type": "button",
@@ -6374,18 +6385,18 @@
     {
       "file": "src\\pages\\NotificationCenter.jsx",
       "page": "NotificationCenter.jsx",
-      "line": 179,
+      "line": 180,
       "element": "button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\NotificationCenter.jsx",
       "page": "NotificationCenter.jsx",
-      "line": 185,
+      "line": 186,
       "element": "Button",
       "name": "Mark all read",
       "type": "",
@@ -6396,7 +6407,7 @@
     {
       "file": "src\\pages\\NotificationCenter.jsx",
       "page": "NotificationCenter.jsx",
-      "line": 195,
+      "line": 196,
       "element": "Button",
       "name": "Try again",
       "type": "",
@@ -6407,7 +6418,7 @@
     {
       "file": "src\\pages\\NotificationCenter.jsx",
       "page": "NotificationCenter.jsx",
-      "line": 205,
+      "line": 206,
       "element": "button",
       "name": "{style.label} {item.title} {item.message}",
       "type": "button",
@@ -6418,7 +6429,7 @@
     {
       "file": "src\\pages\\NotificationCenter.jsx",
       "page": "NotificationCenter.jsx",
-      "line": 213,
+      "line": 214,
       "element": "Button",
       "name": "<><Loader2 className=\"h-4 w-4 animate-spin\" /> Loading</> 'Load more notifications'",
       "type": "",
@@ -6429,7 +6440,7 @@
     {
       "file": "src\\pages\\NotificationCenter.jsx",
       "page": "NotificationCenter.jsx",
-      "line": 216,
+      "line": 217,
       "element": "Button",
       "name": "Retry loading more",
       "type": "",
@@ -6638,7 +6649,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 99,
+      "line": 114,
       "element": "Link",
       "name": "Back to log in",
       "type": "",
@@ -6649,7 +6660,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 115,
+      "line": 130,
       "element": "button",
       "name": "\"Sending...\" \"Resend\"",
       "type": "button",
@@ -6660,7 +6671,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 131,
+      "line": 146,
       "element": "Link",
       "name": "Log in",
       "type": "",
@@ -6671,7 +6682,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 138,
+      "line": 153,
       "element": "Button",
       "name": "\"Connecting to Google...\" \"Continue with Google\"",
       "type": "",
@@ -6682,7 +6693,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 150,
+      "line": 165,
       "element": "Button",
       "name": "\"Connecting to Apple...\" \"Continue with Apple\"",
       "type": "",
@@ -6693,9 +6704,9 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 178,
+      "line": 193,
       "element": "form",
-      "name": "Email Phone number Password Use at least 10 characters with lowercase, uppercase and a number. Confirm Password ( <> <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" /> Creating account... </> ) ( \"Create account\" )",
+      "name": "First name Surname Email Phone number Password Use at least 10 characters with lowercase, uppercase and a number. Confirm Password ( <> <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" /> Creating account... </> ) ( \"Create account\" )",
       "type": "",
       "handler": "handleSubmit",
       "destination": "",
@@ -6704,7 +6715,29 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 183,
+      "line": 197,
+      "element": "Input",
+      "name": "First name",
+      "type": "text",
+      "handler": "(e) => setFirstName(e.target.value)",
+      "destination": "",
+      "disabled": ""
+    },
+    {
+      "file": "src\\pages\\Register.jsx",
+      "page": "Register.jsx",
+      "line": 201,
+      "element": "Input",
+      "name": "Surname",
+      "type": "text",
+      "handler": "(e) => setLastName(e.target.value)",
+      "destination": "",
+      "disabled": ""
+    },
+    {
+      "file": "src\\pages\\Register.jsx",
+      "page": "Register.jsx",
+      "line": 208,
       "element": "Input",
       "name": "you@example.com",
       "type": "email",
@@ -6715,7 +6748,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 204,
+      "line": 229,
       "element": "Input",
       "name": "••••••••",
       "type": "password",
@@ -6726,7 +6759,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 223,
+      "line": 248,
       "element": "Input",
       "name": "••••••••",
       "type": "password",
@@ -6737,7 +6770,7 @@
     {
       "file": "src\\pages\\Register.jsx",
       "page": "Register.jsx",
-      "line": 236,
+      "line": 261,
       "element": "Button",
       "name": "( <> <Loader2 className=\"w-4 h-4 mr-2 animate-spin\" /> Creating account... </> ) ( \"Create account\" )",
       "type": "submit",
@@ -6913,18 +6946,18 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 62,
+      "line": 63,
       "element": "Button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 76,
+      "line": 77,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -6935,29 +6968,29 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 87,
+      "line": 88,
       "element": "Button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 105,
+      "line": 106,
       "element": "button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 126,
+      "line": 127,
       "element": "Button",
       "name": "WhatsApp",
       "type": "",
@@ -6968,7 +7001,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 132,
+      "line": 133,
       "element": "Button",
       "name": "Call",
       "type": "",
@@ -6979,7 +7012,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 143,
+      "line": 144,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -6990,7 +7023,7 @@
     {
       "file": "src\\pages\\SellerProfile.jsx",
       "page": "SellerProfile.jsx",
-      "line": 149,
+      "line": 150,
       "element": "Button",
       "name": "<><Loader2 className=\"h-4 w-4 animate-spin\" /> Loading</> 'Load more listings'",
       "type": "button",
@@ -7001,7 +7034,7 @@
     {
       "file": "src\\pages\\ServiceDetail.jsx",
       "page": "ServiceDetail.jsx",
-      "line": 49,
+      "line": 56,
       "element": "Link",
       "name": "Back to Services",
       "type": "",
@@ -7012,7 +7045,7 @@
     {
       "file": "src\\pages\\ServiceDetail.jsx",
       "page": "ServiceDetail.jsx",
-      "line": 132,
+      "line": 155,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -7144,18 +7177,18 @@
     {
       "file": "src\\pages\\Settings.jsx",
       "page": "Settings.jsx",
-      "line": 67,
+      "line": 69,
       "element": "button",
       "name": "Go back",
       "type": "button",
-      "handler": "() => navigate(-1)",
+      "handler": "() => goBackOrHome(navigate, '/')",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\Settings.jsx",
       "page": "Settings.jsx",
-      "line": 77,
+      "line": 80,
       "element": "Input",
       "name": "",
       "type": "",
@@ -7166,7 +7199,7 @@
     {
       "file": "src\\pages\\Settings.jsx",
       "page": "Settings.jsx",
-      "line": 80,
+      "line": 83,
       "element": "Button",
       "name": "\"Saving...\" <><Check className=\"mr-1 h-3 w-3\" />Save profile</>",
       "type": "",
@@ -7177,7 +7210,7 @@
     {
       "file": "src\\pages\\Settings.jsx",
       "page": "Settings.jsx",
-      "line": 84,
+      "line": 87,
       "element": "button",
       "name": "\"Cancel password change\" \"Change password\"",
       "type": "button",
@@ -7188,7 +7221,7 @@
     {
       "file": "src\\pages\\Settings.jsx",
       "page": "Settings.jsx",
-      "line": 92,
+      "line": 95,
       "element": "Input",
       "name": "",
       "type": "showPasswords[field] ? \"text\" : \"password\"",
@@ -7199,7 +7232,7 @@
     {
       "file": "src\\pages\\Settings.jsx",
       "page": "Settings.jsx",
-      "line": 93,
+      "line": 96,
       "element": "button",
       "name": "`${showPasswords[field] ? \"Hide\" : \"Show\"} ${label.toLowerCase()}`",
       "type": "button",
@@ -7210,7 +7243,7 @@
     {
       "file": "src\\pages\\Settings.jsx",
       "page": "Settings.jsx",
-      "line": 97,
+      "line": 100,
       "element": "Button",
       "name": "\"Updating...\" \"Update password\"",
       "type": "",

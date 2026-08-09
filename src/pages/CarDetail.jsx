@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Calendar, CheckCircle, Fuel, Gauge, Palette, Settings, XCircle } from "lucide-react";
@@ -27,12 +27,12 @@ import {
 } from "@/components/listings/ListingDetailTabs";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
-import { useMarketplaceView } from "@/hooks/useMarketplaceView";
-import { useTimeAgo } from "@/hooks/useTimeAgo";
 import { useAuth } from "@/lib/AuthContext";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getListingPlaceholder } from "@/lib/listingPlaceholders";
 import { shareListing } from "@/lib/share";
+import { goBackOrHome } from "@/lib/navigation";
+import { applyListingDocumentMetadata } from "@/lib/documentMetadata";
 import { getPublicListing } from "@/services/publicListingsService";
 import { ContactBar, DetailError, DetailLoading, DetailMissing, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 
@@ -48,9 +48,12 @@ export default function CarDetail() {
   const [selectedVariant, setSelectedVariant] = useState(0);
 
   const { data: car, isLoading, error, refetch } = useQuery({ queryKey: ["car", id], queryFn: () => getPublicListing("car", id), enabled: Boolean(id), staleTime: 300000 });
-  useMarketplaceView('listing', id, 'car', Boolean(car));
-  const listedAgo = useTimeAgo(car?.created_date);
   const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
+
+  useEffect(() => {
+    if (!car) return;
+    applyListingDocumentMetadata({ title: car.title, description: car.description, imageUrl: car.photos?.[0], path: `/car/${car.id}` });
+  }, [car]);
 
   if (isLoading) return <DetailLoading />;
   if (error) return <DetailError label="Vehicle" onRetry={refetch} />;
@@ -63,7 +66,7 @@ export default function CarDetail() {
   return (
     <div className="findit-screen pb-24">
       <PeekRequestIntentHandler />
-      <ListingDetailActions onBack={() => navigate(-1)} />
+      <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={car.photos} title={car.title} fallbackImage={placeholderCar} tour={car.tour || null} tourActionLabel="Take a Peek" tourOwnerId={car.seller_id} parentType="listing" parentId={car.id} className="md:mt-4 md:rounded-3xl md:border" />
@@ -87,8 +90,6 @@ export default function CarDetail() {
               title={car.title}
               location={location}
               metadata={[
-                `Listed ${listedAgo}`,
-                `${Number(car.views || 0).toLocaleString()} views`,
                 <ListingCode key="car-code" type="car" id={car.id} />,
               ]}
             />
@@ -107,8 +108,10 @@ export default function CarDetail() {
               <PriceBreakdown listing={car} />
               {car.accepts_offers && <MakeOfferButton listing={car} />}
               <SafetyPanel>Request a test drive, verify ownership documents and consider an independent mechanical inspection. Never send money before seeing the vehicle.</SafetyPanel>
-            </div>
-          </ListingTabSection>
+               <ListingRecommendations subjectListingId={car.id} />
+               <ReportListingDialog listing={car} listingType="car" />
+             </div>
+           </ListingTabSection>
 
           <ListingTabSection id="description" title="Description">
             <ListingDescription value={car.description} />
@@ -122,8 +125,6 @@ export default function CarDetail() {
             <ListingSeller name={car.seller_name} sellerId={car.seller_id} joinedAt={car.seller_joined_at} activeListingCount={car.seller_active_listing_count} actions={<ContactButtons listing={car} type="car" placement="browse" />} />
           </ListingTabSection>
 
-          <ListingRecommendations subjectListingId={car.id} />
-          <ReportListingDialog listing={car} listingType="car" />
         </ListingDetailTabs>
       </main>
       <ContactBar><ContactButtons listing={car} type="car" /></ContactBar>

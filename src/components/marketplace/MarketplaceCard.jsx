@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Building2, Eye, Heart, ImageOff, MapPin, Play } from 'lucide-react';
+import { Building2, Heart, ImageOff, MapPin, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +28,6 @@ export default function MarketplaceCard({
   tourLabel = 'Peek',
   sellerName = null,
   sellerLabel = 'Seller',
-  views = null,
   actions = null,
   layout = 'grid',
   className = null,
@@ -39,7 +38,6 @@ export default function MarketplaceCard({
   const tourTarget = `${to}${to.includes('?') ? '&' : '?'}media=tour`;
   const browseLayout = layout === 'browse';
   const recommendationLayout = layout === 'recommendation';
-  const viewCount = Number.isFinite(Number(views)) ? Math.max(0, Number(views)) : null;
 
   const media = (
     <div className={cn(
@@ -192,18 +190,12 @@ export default function MarketplaceCard({
         </Link>
       )}
 
-      {browseLayout && (sellerName || viewCount !== null || actions) && (
+      {browseLayout && (sellerName || actions) && (
         <div className="border-t border-border">
-          {(sellerName || viewCount !== null) && (
-            <div className="grid grid-cols-2 divide-x divide-border bg-surface-secondary/35">
-              <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5">
-                <span className="clay-icon h-9 w-9 shrink-0 text-muted-foreground"><Building2 className="h-4 w-4" /></span>
-                <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{sellerLabel}</p><p className="truncate text-xs font-semibold text-foreground">{sellerName || `Private ${sellerLabel.toLowerCase()}`}</p></div>
-              </div>
-              <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5">
-                <span className="clay-icon h-9 w-9 shrink-0 text-muted-foreground"><Eye className="h-4 w-4" /></span>
-                <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Views</p><p className="text-xs font-semibold text-foreground">{(viewCount ?? 0).toLocaleString()}</p></div>
-              </div>
+          {sellerName && (
+            <div className="flex min-w-0 items-center gap-2.5 bg-surface-secondary/35 px-3 py-2.5">
+              <span className="clay-icon h-9 w-9 shrink-0 text-muted-foreground"><Building2 className="h-4 w-4" /></span>
+              <div className="min-w-0"><p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{sellerLabel}</p><p className="truncate text-xs font-semibold text-foreground">{sellerName}</p></div>
             </div>
           )}
           {actions && <div className="p-2.5">{actions}</div>}

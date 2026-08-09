@@ -63,10 +63,7 @@ export function ListingDetailTabs({ children }) {
 
   return (
     <>
-      <nav
-        className="sticky top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-30 bg-background/88 px-3 py-2 backdrop-blur-xl md:top-[3.75rem] md:px-5"
-        aria-label="Listing details"
-      >
+      <nav className="px-3 py-2 md:px-5" aria-label="Listing details">
         <div id={`${tabRootId}-list`} role="tablist" aria-label="Listing detail sections" className="no-scrollbar mx-auto flex max-w-4xl overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-1 shadow-floating">
           {availableTabs.map((tab, index) => (
             <button
@@ -128,12 +125,21 @@ export function ListingDescription({ value }) {
 
   return (
     <div className="rounded-3xl border border-border/80 bg-card/90 p-5 shadow-sm sm:p-6">
+      <div className="flex items-start justify-between gap-4 border-b border-border/70 pb-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">About this listing</p>
+          <p className="mt-1 text-xs text-muted-foreground">The seller’s own description and important context.</p>
+        </div>
+        <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">Description</span>
+      </div>
+      <div className="pt-4">
       {description ? (
         <>
           <p className="whitespace-pre-wrap text-[15px] leading-7 text-foreground/90">{shown}</p>
           {isLong && <button type="button" onClick={() => setExpanded((value) => !value)} className="mt-4 min-h-10 rounded-xl px-1 text-sm font-bold text-primary">{expanded ? 'Read less' : 'Read more'}</button>}
         </>
       ) : <p className="text-sm text-muted-foreground">The seller did not add a description.</p>}
+      </div>
     </div>
   );
 }
@@ -149,6 +155,13 @@ export function ListingLocation({ label, latitude, longitude, approximate = fals
 
   return (
     <div className="overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
+      <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4 sm:p-5">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Where it is</p>
+          <p className="mt-1 text-sm font-bold">{label || 'Location not supplied'}</p>
+        </div>
+        <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[10px] font-bold text-primary">Zimbabwe</span>
+      </div>
       {embedUrl ? (
         <iframe title={`Map showing ${label || 'listing location'}`} src={embedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-64 w-full border-0 sm:h-72" />
       ) : (
@@ -228,6 +241,10 @@ export function ListingSeller({
             {profileLabel}
           </Link>
         )}
+      </div>
+      <div className="mt-5 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs leading-5 text-muted-foreground">
+        <UserRound className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" aria-hidden="true" />
+        <p>Keep conversations in PeekaListing until you have verified the item, provider and payment details.</p>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import { ArrowLeft, Camera, CheckCircle2, Film, Loader2, RefreshCw, RotateCcw, T
 import { toast } from "sonner";
 import { PRICING_TYPES } from "@/lib/serviceConstants";
 import { getSupportedListingCurrencies, LAUNCH_COUNTRY_CODE } from "@/lib/marketConfig";
+import { goBackOrHome } from "@/lib/navigation";
 import { customerErrorMessage } from "@/lib/customerErrors";
 import { usePersistentFormDraft } from "@/hooks/usePersistentFormDraft";
 import { createService } from "@/services/servicesService";
@@ -388,7 +389,7 @@ export default function CreateService() {
         <div className="flex items-center gap-3 mb-5">
           <button
             type="button"
-            onClick={() => { saveNow(); navigate(-1); }}
+            onClick={() => { saveNow(); goBackOrHome(navigate, '/'); }}
             aria-label="Go back"
             className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center"
           >

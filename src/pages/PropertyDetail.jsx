@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bath, Bed, Car, Maximize, Trees, Waves } from "lucide-react";
@@ -27,13 +27,13 @@ import {
 import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
-import { useMarketplaceView } from "@/hooks/useMarketplaceView";
-import { useTimeAgo } from "@/hooks/useTimeAgo";
 import { useAuth } from "@/lib/AuthContext";
 import { getCategoryLabel } from "@/lib/constants";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getListingPlaceholder } from "@/lib/listingPlaceholders";
 import { shareListing } from "@/lib/share";
+import { goBackOrHome } from "@/lib/navigation";
+import { applyListingDocumentMetadata } from "@/lib/documentMetadata";
 import { getPublicListing } from "@/services/publicListingsService";
 import { ContactBar, DetailError, DetailLoading, DetailMissing, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 
@@ -54,9 +54,12 @@ export default function PropertyDetail() {
     enabled: Boolean(id),
     staleTime: 1000 * 60 * 5,
   });
-  useMarketplaceView('listing', id, 'property', Boolean(property));
-  const listedAgo = useTimeAgo(property?.created_date);
   const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
+
+  useEffect(() => {
+    if (!property) return;
+    applyListingDocumentMetadata({ title: property.title, description: property.description, imageUrl: property.photos?.[0], path: `/property/${property.id}` });
+  }, [property]);
 
   if (isLoading) return <DetailLoading />;
   if (error) return <DetailError label="Property" onRetry={refetch} />;
@@ -70,7 +73,7 @@ export default function PropertyDetail() {
   return (
     <div className="findit-screen pb-24">
       <PeekRequestIntentHandler />
-      <ListingDetailActions onBack={() => navigate(-1)} />
+      <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={property.photos} title={property.title} fallbackImage={placeholderProperty} tour={property.tour || null} tourActionLabel="Take a Peek" tourOwnerId={property.seller_id} parentType="listing" parentId={property.id} className="md:mt-4 md:rounded-3xl md:border" />
@@ -94,8 +97,6 @@ export default function PropertyDetail() {
               title={property.title}
               location={location}
               metadata={[
-                `Listed ${listedAgo}`,
-                `${Number(property.views || 0).toLocaleString()} views`,
                 <ListingCode key="property-code" type="property" id={property.id} />,
               ]}
             />
@@ -113,8 +114,10 @@ export default function PropertyDetail() {
               <PriceBreakdown listing={property} />
               {property.accepts_offers && <MakeOfferButton listing={property} />}
               <SafetyPanel>Always view the property in person before making a payment. Never send money to someone you have not met. PeekaListing does not handle buyer–seller payments.{isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}</SafetyPanel>
-            </div>
-          </ListingTabSection>
+               <ListingRecommendations subjectListingId={property.id} />
+               <ReportListingDialog listing={property} listingType="property" />
+             </div>
+           </ListingTabSection>
 
           <ListingTabSection id="description" title="Description">
             <ListingDescription value={property.description} />
@@ -128,8 +131,6 @@ export default function PropertyDetail() {
             <ListingSeller name={property.seller_name} sellerId={property.seller_id} joinedAt={property.seller_joined_at} activeListingCount={property.seller_active_listing_count} actions={<ContactButtons listing={property} type="property" placement="browse" />} />
           </ListingTabSection>
 
-          <ListingRecommendations subjectListingId={property.id} />
-          <ReportListingDialog listing={property} listingType="property" />
         </ListingDetailTabs>
       </main>
       <ContactBar><ContactButtons listing={property} type="property" /></ContactBar>

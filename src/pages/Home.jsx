@@ -10,15 +10,19 @@ import DiscoverMapView from '@/components/discover/DiscoverMapView';
 import DiscoverSearch from '@/components/discover/DiscoverSearch';
 import HomePeekRail from '@/components/discover/HomePeekRail';
 import BrandLogo from '@/components/BrandLogo';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 
 const LOCATION_STORAGE_KEY = 'findit.discover-location';
 
 function publicLocation(value) {
   if (!value || typeof value !== 'object' || typeof value.city !== 'string' || !value.city) return null;
+  const countryCode = String(value.countryCode || '').trim().toUpperCase();
+  const countryName = String(value.countryName || '').trim().toLowerCase();
+  if ((countryCode && countryCode !== LAUNCH_COUNTRY_CODE) || (!countryCode && countryName && countryName !== 'zimbabwe')) return null;
   return {
     country: typeof value.country === 'string' ? value.country : '',
     countryName: typeof value.countryName === 'string' ? value.countryName : '',
-    countryCode: typeof value.countryCode === 'string' ? value.countryCode : '',
+    countryCode: LAUNCH_COUNTRY_CODE,
     state: typeof value.state === 'string' ? value.state : '',
     stateName: typeof value.stateName === 'string' ? value.stateName : '',
     city: value.city,

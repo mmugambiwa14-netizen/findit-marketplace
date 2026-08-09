@@ -8,13 +8,13 @@ import { cn } from '@/lib/utils';
 import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
 import { searchPublicListingsPage } from '@/services/publicListingsService';
 import { getPublicServicesPage } from '@/services/servicesService';
+import { LAUNCH_COUNTRY_CODE, ZIMBABWE_MAP_BOUNDS, ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
 import './discover-map-popup.css';
 
 const CATEGORY_KEYS = ['property', 'car', 'machinery', 'service'];
 const CITY_COORDS = {
   harare: [-17.8216, 31.0492], bulawayo: [-20.1325, 28.6265], mutare: [-18.9707, 32.6709],
   gweru: [-19.4515, 29.8169], masvingo: [-20.0744, 30.8326], chitungwiza: [-18.0127, 31.0756],
-  lagos: [6.5244, 3.3792], ikeja: [6.6018, 3.3515], lekki: [6.4698, 3.5852],
 };
 
 function number(value) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : null; }
@@ -121,10 +121,10 @@ function tuneDarkBasemap(map) {
 
 function useItems(location) {
   const locationId = location?.city || '';
-  const property = useQuery({ queryKey: ['discover-map', 'property', locationId], queryFn: () => searchPublicListingsPage({ kind: 'property', locationId }), staleTime: 60000 });
-  const cars = useQuery({ queryKey: ['discover-map', 'car', locationId], queryFn: () => searchPublicListingsPage({ kind: 'car', locationId }), staleTime: 60000 });
-  const machinery = useQuery({ queryKey: ['discover-map', 'machinery', locationId], queryFn: () => searchPublicListingsPage({ kind: 'machinery', locationId }), staleTime: 60000 });
-  const services = useQuery({ queryKey: ['discover-map', 'service', locationId], queryFn: () => getPublicServicesPage({ locationId, limit: 24 }), staleTime: 60000 });
+  const property = useQuery({ queryKey: ['discover-map', 'property', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => searchPublicListingsPage({ kind: 'property', countryCode: LAUNCH_COUNTRY_CODE, locationId }), staleTime: 60000 });
+  const cars = useQuery({ queryKey: ['discover-map', 'car', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => searchPublicListingsPage({ kind: 'car', countryCode: LAUNCH_COUNTRY_CODE, locationId }), staleTime: 60000 });
+  const machinery = useQuery({ queryKey: ['discover-map', 'machinery', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => searchPublicListingsPage({ kind: 'machinery', countryCode: LAUNCH_COUNTRY_CODE, locationId }), staleTime: 60000 });
+  const services = useQuery({ queryKey: ['discover-map', 'service', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => getPublicServicesPage({ locationId, limit: 24 }), staleTime: 60000 });
   const items = useMemo(() => [
     ...((property.data?.items || []).map((item) => ({ ...item, _kind: 'property' }))),
     ...((cars.data?.items || []).map((item) => ({ ...item, _kind: 'car' }))),
@@ -144,7 +144,7 @@ export default function DiscoverMapView({ location }) {
   const visible = useMemo(() => category === 'all' ? mapped : mapped.filter(({ item }) => item._kind === category), [category, mapped]);
 
   useEffect(() => {
-    if (!mapNode.current || !visible.length) return undefined;
+    if (!mapNode.current) return undefined;
     let cancelled = false;
     let map;
     let activePopup;
@@ -217,8 +217,11 @@ export default function DiscoverMapView({ location }) {
         map = new maplibregl.Map({
           container: mapNode.current,
           style: mapTilerStyleUrl(),
-          center: [visible[0].point.longitude, visible[0].point.latitude],
-          zoom: 10,
+          center: ZIMBABWE_MAP_CENTER,
+          zoom: 5.5,
+          maxBounds: ZIMBABWE_MAP_BOUNDS,
+          minZoom: 5.5,
+          renderWorldCopies: false,
           dragRotate: false,
           pitchWithRotate: false,
           cooperativeGestures: false,
@@ -230,7 +233,7 @@ export default function DiscoverMapView({ location }) {
 
         visible.forEach(({ item, point }) => {
           const { element, iconRoot } = createCategoryMarker(item);
-          const marker = new maplibregl.Marker({ element, anchor: 'bottom' })
+          const marker = new maplibregl.Marker({ element, anchor: 'bottom', subpixelPositioning: false })
             .setLngLat([point.longitude, point.latitude])
             .addTo(map);
 
@@ -252,7 +255,9 @@ export default function DiscoverMapView({ location }) {
         map.once('load', () => {
           if (cancelled) return;
           tuneDarkBasemap(map);
-          map.fitBounds(bounds, { animate: false, padding: { top: 190, right: 38, bottom: 65, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
+          if (!bounds.isEmpty()) {
+            map.fitBounds(bounds, { animate: false, padding: { top: 190, right: 38, bottom: 65, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
+          }
         });
         map.on('click', closePreview);
         map.on('error', () => !cancelled && setFailure('Map tiles are temporarily unavailable.'));
@@ -271,13 +276,12 @@ export default function DiscoverMapView({ location }) {
   }, [navigate, visible]);
 
   if (loading) return <div className="locked-map-panel flex min-h-[540px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
-  if (!mapped.length) return <div className="locked-map-panel flex min-h-[540px] flex-col items-center justify-center px-6 text-center"><MapPin className="h-9 w-9 text-primary" /><h2 className="mt-4 text-lg font-bold">No mapped results</h2><p className="mt-2 text-sm text-muted-foreground">Listings without public coordinates remain available in list view.</p></div>;
-
   return (
     <section className="space-y-3" aria-label="Discover marketplace map">
       <div className="locked-map-panel relative min-h-[540px]">
         <div ref={mapNode} className="h-[calc(100svh-270px)] min-h-[540px] max-h-[720px] w-full" />
         {failure && <div className="absolute inset-x-3 top-3 z-20 rounded-xl border border-border bg-background/94 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">{failure}</div>}
+        {!loading && !mapped.length && <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-xl border border-border bg-background/88 px-3 py-2 text-center text-xs text-muted-foreground shadow-lg backdrop-blur-xl">No listings with public coordinates yet. The map is centered on Zimbabwe.</div>}
       </div>
 
       <div className="discover-map-rail surface-panel grid grid-cols-4 gap-1.5 p-2.5" role="group" aria-label="Filter map categories">

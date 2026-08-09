@@ -1,16 +1,42 @@
 import { toast } from "sonner";
 import { getListingCode } from "@/lib/constants";
 
+const DETAIL_SEGMENTS = {
+  property: 'property',
+  car: 'car',
+  machinery: 'machinery',
+  service: 'service',
+};
+
+function firstShareImage(listing) {
+  const candidate = Array.isArray(listing?.photos) ? listing.photos[0] : null;
+  return typeof candidate === 'string' && /^https?:\/\//i.test(candidate) ? candidate : null;
+}
+
+export function createListingSharePayload(type, listing) {
+  const code = getListingCode(type, listing.id);
+  const segment = DETAIL_SEGMENTS[type] || type;
+  const shareUrl = new URL(`/${segment}/${encodeURIComponent(listing.id)}`, window.location.origin);
+  shareUrl.searchParams.set('ref', code);
+  const imageUrl = firstShareImage(listing);
+  shareUrl.searchParams.set('title', String(listing.title || 'PeekaListing listing').trim().slice(0, 140));
+  if (imageUrl) shareUrl.searchParams.set('preview', imageUrl);
+  const description = String(listing.description || '').trim().replace(/\s+/g, ' ').slice(0, 220);
+  if (description) shareUrl.searchParams.set('summary', description);
+  const title = `${listing.title} (Ref: ${code})`;
+  const text = [
+    `${listing.title}\nListing No: ${code}`,
+    shareUrl.toString(),
+    imageUrl ? `Preview image: ${imageUrl}` : null,
+  ].filter(Boolean).join('\n');
+  return { code, title, text, shareUrl: shareUrl.toString(), imageUrl };
+}
+
 // Shares a listing, including its reference code in both the URL (?ref=) and
 // share text. Abort is a normal user cancellation; all other failures are
 // reported instead of claiming the link was copied.
 export async function shareListing(type, listing) {
-  const code = getListingCode(type, listing.id);
-  const url = new URL(window.location.href);
-  url.searchParams.set("ref", code);
-  const shareUrl = url.toString();
-  const title = `${listing.title} (Ref: ${code})`;
-  const text = `${listing.title}\nListing No: ${code}\n${shareUrl}`;
+  const { code, title, text, shareUrl } = createListingSharePayload(type, listing);
 
   try {
     if (navigator.share) {

@@ -23,6 +23,8 @@ import { PASSWORD_MIN_LENGTH, passwordPolicyError } from "@/lib/passwordPolicy";
 export default function Register() {
   const [searchParams] = useSearchParams();
   const returnTo = sanitizeReturnTo(searchParams.get("returnTo"), "/");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -36,6 +38,12 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    const normalizedFirstName = firstName.trim();
+    const normalizedLastName = lastName.trim();
+    if (!normalizedFirstName || !normalizedLastName) {
+      setError("Enter your first name and surname to create your account");
+      return;
+    }
     const policyError = passwordPolicyError(password);
     if (policyError) {
       setError(policyError);
@@ -52,7 +60,14 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const signUpResult = await authService.signUp({ email, password, phone: normalizedPhone, redirectPath: returnTo });
+      const signUpResult = await authService.signUp({
+        email,
+        password,
+        phone: normalizedPhone,
+        firstName: normalizedFirstName,
+        lastName: normalizedLastName,
+        redirectPath: returnTo,
+      });
       if (signUpResult.session) {
         window.location.assign(authService.appUrl(returnTo));
         return;
@@ -176,6 +191,16 @@ export default function Register() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="first-name">First name</Label>
+            <Input id="first-name" name="firstName" type="text" autoComplete="given-name" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="h-12" maxLength={80} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="last-name">Surname</Label>
+            <Input id="last-name" name="lastName" type="text" autoComplete="family-name" placeholder="Surname" value={lastName} onChange={(e) => setLastName(e.target.value)} className="h-12" maxLength={80} required />
+          </div>
+        </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <div className="relative">

@@ -1,5 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { goBackOrHome } from "@/lib/navigation";
 
 // Reusable back button. Goes to the previous page in history,
 // or falls back to `fallback` (default "/") when there is none.
@@ -7,8 +8,7 @@ export default function BackButton({ fallback = "/", className = "" }) {
   const navigate = useNavigate();
 
   const handleBack = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate(fallback);
+    goBackOrHome(navigate, fallback);
   };
 
   return (

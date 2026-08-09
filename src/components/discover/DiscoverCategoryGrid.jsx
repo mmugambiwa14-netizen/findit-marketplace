@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import DiscoverCategoryCard from './DiscoverCategoryCard';
 import { CATEGORY_VISUALS } from './CategoryIcons';
 import { getDiscoverCategoryCounts } from '@/services/discoverService';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 
 const CATEGORIES = [
   { key: 'property', target: '/search?type=property' },
@@ -16,7 +17,7 @@ function withLocation(target, location) {
   const params = new URLSearchParams(query);
   params.set('location', location.city);
   if (location.cityName) params.set('locationName', location.cityName);
-  if (location.country) params.set('country', location.country);
+  params.set('country', LAUNCH_COUNTRY_CODE);
   if (location.state) params.set('province', location.state);
   return `${pathname}?${params.toString()}`;
 }
@@ -36,7 +37,7 @@ export default function DiscoverCategoryGrid({ location }) {
   });
 
   return (
-    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 sm:gap-4">
+    <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
       {CATEGORIES.map(({ key, target, ...card }) => (
         <DiscoverCategoryCard
           key={key}

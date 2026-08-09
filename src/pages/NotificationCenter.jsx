@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { goBackOrHome } from '@/lib/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
@@ -176,7 +177,7 @@ export default function NotificationCenter() {
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted" aria-label="Go back">
+            <button type="button" onClick={() => goBackOrHome(navigate, '/')} className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted" aria-label="Go back">
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div><h1 className="font-bold text-lg">Notifications</h1><p className="text-xs text-muted-foreground">Important account and marketplace updates only</p></div>

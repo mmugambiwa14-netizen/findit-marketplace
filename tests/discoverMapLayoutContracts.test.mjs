@@ -20,7 +20,7 @@ test('map category filters live below the map instead of covering it', () => {
 test('map markers render the icon assigned to each marketplace category', () => {
   assert.match(source, /const visual = CATEGORY_VISUALS\[item\._kind\]/);
   assert.match(source, /iconRoot\.render\(<Icon className="h-6 w-6" \/>\)/);
-  assert.match(source, /new maplibregl\.Marker\(\{ element, anchor: 'bottom' \}\)/);
+  assert.match(source, /new maplibregl\.Marker\(\{ element, anchor: 'bottom', subpixelPositioning: false \}\)/);
   assert.doesNotMatch(source, /new maplibregl\.Marker\(\{ color:/);
   assert.match(styles, /\.findit-map-marker-pin/);
   assert.match(styles, /background: var\(--marker-color\)/);

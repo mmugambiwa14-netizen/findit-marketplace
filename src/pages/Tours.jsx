@@ -21,7 +21,7 @@ const MUTE_KEY = 'findit:peek:mute-default';
 const VALID_CATEGORIES = new Set(['all', 'property', 'car', 'machinery', 'service']);
 const MAX_RESTORE_PAGES = 10;
 const CATEGORY_OPTIONS = [
-  ['all', 'For you'],
+  ['all', 'All'],
   ['property', 'Property'],
   ['car', 'Cars'],
   ['machinery', 'Machinery'],

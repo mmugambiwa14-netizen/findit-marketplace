@@ -26,6 +26,7 @@ const COUNTRY_CODE = "ZW";
 const MODE = process.argv[2] ?? "default";
 const EMIT_CATALOGUE_SQL = MODE === "emit-catalogue-sql";
 const EMIT_TOURS_SQL = MODE === "emit-tours-sql";
+const DIRECT_SEED = MODE === "seed";
 const EMIT_SQL_MODE = EMIT_CATALOGUE_SQL || EMIT_TOURS_SQL;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -620,7 +621,7 @@ function buildListings(locations) {
       updated_at: date,
     });
     propertyDetails.push({ listing_id: id, property_type: propertyDetailTypeFor(category), bedrooms: profile[1], bathrooms: profile[2], size_sqm: profile[3] });
-    catalogueParents.push({ parentType: "listing", kind: "property", id, index, title });
+    catalogueParents.push({ parentType: "listing", kind: "property", id, index, title, photos: rows.at(-1).photos });
   }
 
   for (let index = 0; index < 15; index += 1) {
@@ -688,7 +689,7 @@ function buildListings(locations) {
     });
     const carDetail = carDetailValueFor(profile, index);
     carDetails.push({ listing_id: id, brand: profile[0], model: profile[1], year: carDetail.year, mileage: profile[3], fuel_type: carDetail.fuel, transmission: carDetail.transmission, condition: profile[6] });
-    catalogueParents.push({ parentType: "listing", kind: "car", id, index: index + 15, title });
+    catalogueParents.push({ parentType: "listing", kind: "car", id, index: index + 15, title, photos: rows.at(-1).photos });
   }
 
   for (let index = 0; index < 15; index += 1) {
@@ -753,7 +754,7 @@ function buildListings(locations) {
       updated_at: date,
     });
     machineryDetails.push({ listing_id: id, machinery_type: machineryDetailTypeFor(category), brand: profile[0], model: profile[1], condition: profile[2], year: profile[3], usage_hours: profile[4] });
-    catalogueParents.push({ parentType: "listing", kind: "machinery", id, index: index + 30, title });
+    catalogueParents.push({ parentType: "listing", kind: "machinery", id, index: index + 30, title, photos: rows.at(-1).photos });
   }
 
   return { rows, propertyDetails, carDetails, machineryDetails, catalogueParents };
@@ -820,7 +821,7 @@ function buildServices(locations, taxonomyRows) {
       created_at: date,
       updated_at: date,
     });
-    catalogueParents.push({ parentType: "service", kind: "service", id, index: index + 45, title });
+    catalogueParents.push({ parentType: "service", kind: "service", id, index: index + 45, title, photos: services.at(-1).photos });
   }
   return { services, catalogueParents };
 }
@@ -848,18 +849,18 @@ function buildPeeks(parents) {
   }));
 }
 
-function generateMedia(tempDir, parent) {
+async function generateMedia(tempDir, parent) {
   const slug = `${parent.kind}-${String(parent.index + 1).padStart(2, "0")}`;
+  const sourceImagePath = path.join(tempDir, `${slug}-source.jpg`);
   const videoPath = path.join(tempDir, `${slug}.mp4`);
   const thumbnailPath = path.join(tempDir, `${slug}.webp`);
-  const colours = [
-    "0x264653", "0x2a9d8f", "0xe9c46a", "0xf4a261", "0xe76f51",
-    "0x3a506b", "0x5bc0be", "0x6fffe9", "0x1c2541", "0x3b1f2b",
-    "0x7f5539", "0xb08968", "0x386641", "0x6a994e", "0xa7c957",
-  ];
-  const colour = colours[parent.index % colours.length];
-  const label = `${parent.kind.toUpperCase()} ${String(parent.index + 1).padStart(2, "0")}`;
-  const filter = `drawtext=text='${label}':fontcolor=white:fontsize=42:x=(w-text_w)/2:y=(h-text_h)/2`;
+  const sourceImageUrl = parent.photos?.[0];
+  if (!sourceImageUrl) throw new Error(`no real source photo available for ${slug}`);
+  const response = await fetch(sourceImageUrl, { headers: { "user-agent": "Peekalisting staging seed" } });
+  if (!response.ok) throw new Error(`source photo download failed for ${slug}: ${response.status}`);
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.startsWith("image/")) throw new Error(`source photo for ${slug} was not an image: ${contentType}`);
+  fs.writeFileSync(sourceImagePath, Buffer.from(await response.arrayBuffer()));
   const result = spawnSync(
     FFMPEG_PATH,
     [
@@ -867,12 +868,14 @@ function generateMedia(tempDir, parent) {
       "-loglevel",
       "error",
       "-y",
-      "-f",
-      "lavfi",
+      "-loop",
+      "1",
       "-i",
-      `color=c=${colour}:s=640x360:r=15:d=3`,
+      sourceImagePath,
       "-vf",
-      filter,
+      "scale=800:450:force_original_aspect_ratio=increase,crop=800:450,zoompan=z='min(zoom+0.0015,1.06)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=45:s=640x360:fps=15",
+      "-t",
+      "3",
       "-c:v",
       "libx264",
       "-pix_fmt",
@@ -922,7 +925,7 @@ async function seedTours(parents, tempDir, { persist = true } = {}) {
   for (const parent of parents) {
     const tourId = uuidFor(`tour:${parent.parentType}:${parent.id}`);
     const assetId = uuidFor(`tour-asset:${parent.parentType}:${parent.id}`);
-    const { videoPath, thumbnailPath } = generateMedia(tempDir, parent);
+    const { videoPath, thumbnailPath } = await generateMedia(tempDir, parent);
     const video = await uploadObject(
       "tour-sources",
       `${ADMIN_ID}/${tourId}/source/${assetId}.mp4`,
@@ -1093,7 +1096,16 @@ async function main() {
     }
   }
 
-  throw new Error("Use emit-catalogue-sql and emit-tours-sql, then execute each SQL payload as the staging database owner.");
+  if (!DIRECT_SEED) {
+    throw new Error("Use seed, emit-catalogue-sql or emit-tours-sql.");
+  }
+
+  await upsertInChunks("listings", listingData.rows, { onConflict: "id" });
+  await upsertInChunks("property_details", listingData.propertyDetails, { onConflict: "listing_id" });
+  await upsertInChunks("car_details", listingData.carDetails, { onConflict: "listing_id" });
+  await upsertInChunks("machinery_details", listingData.machineryDetails, { onConflict: "listing_id" });
+  await upsertInChunks("services", serviceData.services, { onConflict: "id" });
+  await upsertInChunks("peek_requests", buildPeeks(parents), { onConflict: "id" });
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "peekalisting-catalogue-"));
   try {

@@ -24,7 +24,7 @@ import { getCategoryTaxonomy } from '@/services/taxonomyService';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 const VALID_TYPES = new Set(['property', 'car', 'machinery']);
-const VALID_SORTS = new Set(['newest', 'price_asc', 'price_desc', 'most_viewed']);
+const VALID_SORTS = new Set(['newest', 'price_asc', 'price_desc']);
 const PRICE_SORTS = new Set(['price_asc', 'price_desc']);
 const VALID_VIEWS = new Set(['list', 'map']);
 const VALID_PRICE_CURRENCIES = new Set(getSupportedListingCurrencies(LAUNCH_COUNTRY_CODE).map((currency) => currency.code));

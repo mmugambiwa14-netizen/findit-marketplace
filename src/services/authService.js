@@ -77,8 +77,19 @@ export async function changePassword(currentPassword, newPassword) {
 export async function signInWithOAuth(provider, redirectPath = '/') {
   if (!['google', 'apple'].includes(provider)) throw new Error('Unsupported sign-in provider.');
   if (!isOAuthProviderEnabled(provider)) throw new Error(`${provider === 'google' ? 'Google' : 'Apple'} sign-in is not available.`);
-  const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: appUrl(redirectPath) } });
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: appUrl(redirectPath),
+      // Return the provider URL so the current PWA window performs the OAuth
+      // navigation. This avoids a temporary popup session that never returns
+      // the authenticated state to the installed app.
+      skipBrowserRedirect: true,
+    },
+  });
   if (error) throw error;
+  if (!data?.url) throw new Error('The sign-in provider did not return a redirect URL.');
+  window.location.assign(data.url);
 }
 
 export async function signOut(redirectUrl) {
@@ -116,11 +127,22 @@ export function onAuthStateChange(callback) {
   return () => subscription.unsubscribe();
 }
 
-export async function signUp({ email, password, phone, redirectPath = '/' }) {
+export async function signUp({ email, password, phone, firstName = '', lastName = '', redirectPath = '/' }) {
+  const normalizedFirstName = String(firstName || '').trim();
+  const normalizedLastName = String(lastName || '').trim();
+  const fullName = [normalizedFirstName, normalizedLastName].filter(Boolean).join(' ');
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { phone }, emailRedirectTo: appUrl(redirectPath) },
+    options: {
+      data: {
+        phone,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
+        full_name: fullName,
+      },
+      emailRedirectTo: appUrl(redirectPath),
+    },
   });
   if (error) throw error;
   return data;

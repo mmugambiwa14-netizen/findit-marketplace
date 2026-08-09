@@ -80,8 +80,8 @@ test('asset listings prioritize Peek Requests before secondary pricing controls'
   assert.match(serviceDetail, /<PeekThreadsSection/);
 });
 
-test('listing section navigation is a sticky elevated segmented surface', () => {
-  assert.match(detailTabs, /sticky top-\[calc\(env\(safe-area-inset-top,0px\)\+3\.75rem\)\]/);
+test('listing section navigation stays in normal document flow as an elevated segmented surface', () => {
+  assert.doesNotMatch(detailTabs, /\bsticky\b/);
   assert.match(detailTabs, /rounded-2xl border border-border\/80 bg-card\/90 p-1 shadow-floating/);
   assert.match(detailTabs, /bg-primary\/12 text-primary shadow-sm/);
   for (const label of ['Details', 'Description', 'Location', 'Seller']) {

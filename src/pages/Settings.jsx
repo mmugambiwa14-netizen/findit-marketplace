@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BellRing, Check, Eye, EyeOff, Lock, ShieldCheck, Trash2, User } from "lucide-react";
+import { ArrowLeft, BellRing, Check, Eye, EyeOff, Lock, Mail, ShieldCheck, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
 import * as authService from "@/services/authService";
@@ -16,6 +16,8 @@ import PushNotificationSettings from "@/components/settings/PushNotificationSett
 import DeleteAccountSection from "@/components/settings/DeleteAccountSection";
 import MfaSettings from "@/components/settings/MfaSettings";
 import PermissionStatusPanel from "@/components/settings/PermissionStatusPanel";
+import EmailNotificationSettings from "@/components/settings/EmailNotificationSettings";
+import { goBackOrHome } from "@/lib/navigation";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -64,12 +66,13 @@ export default function Settings() {
   return (
     <div className="min-h-[100dvh]">
       <div className="locked-page-header flex items-center gap-3 px-4 py-3">
-        <button type="button" onClick={() => navigate(-1)} className="clay-icon h-10 w-10" aria-label="Go back"><ArrowLeft className="h-5 w-5" /></button>
+        <button type="button" onClick={() => goBackOrHome(navigate, '/')} className="clay-icon h-10 w-10" aria-label="Go back"><ArrowLeft className="h-5 w-5" /></button>
         <h1 className="text-lg font-bold">Settings</h1>
       </div>
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-4">
         <Section icon={BellRing} title="Push notifications"><PushNotificationSettings /></Section>
+        <Section icon={Mail} title="Email notifications"><EmailNotificationSettings /></Section>
         <Section icon={ShieldCheck} title="Permissions & privacy"><PermissionStatusPanel /></Section>
 
         <Section icon={User} title="Account profile">

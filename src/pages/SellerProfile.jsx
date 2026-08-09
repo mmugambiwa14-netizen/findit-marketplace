@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { isSellerProfileId } from "@/services/sellerProfileContracts";
 import { getPublicSellerListingsPage, getPublicSellerProfile } from "@/services/sellerProfilesService";
 import { revealContactDetails } from "@/repositories/contactRevealRepository";
+import { goBackOrHome } from "@/lib/navigation";
 
 export default function SellerProfile() {
   const { sellerId = "" } = useParams();
@@ -59,7 +60,7 @@ export default function SellerProfile() {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="text-xl font-semibold">Seller not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">This seller link is unavailable or no longer supported.</p>
-        <Button type="button" variant="outline" className="mt-5" onClick={() => navigate(-1)}>Go back</Button>
+        <Button type="button" variant="outline" className="mt-5" onClick={() => goBackOrHome(navigate, '/')}>Go back</Button>
       </div>
     );
   }
@@ -84,7 +85,7 @@ export default function SellerProfile() {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="text-xl font-semibold">Seller not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">This profile is unavailable or has no active public listings.</p>
-        <Button type="button" variant="outline" className="mt-5" onClick={() => navigate(-1)}>Go back</Button>
+        <Button type="button" variant="outline" className="mt-5" onClick={() => goBackOrHome(navigate, '/')}>Go back</Button>
       </div>
     );
   }
@@ -102,7 +103,7 @@ export default function SellerProfile() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
-        <button type="button" onClick={() => navigate(-1)} className="flex h-11 w-11 items-center justify-center rounded-xl" aria-label="Go back"><ArrowLeft className="w-5 h-5" /></button>
+        <button type="button" onClick={() => goBackOrHome(navigate, '/')} className="flex h-11 w-11 items-center justify-center rounded-xl" aria-label="Go back"><ArrowLeft className="w-5 h-5" /></button>
         <h1 className="font-bold text-lg">Seller profile</h1>
       </header>
 

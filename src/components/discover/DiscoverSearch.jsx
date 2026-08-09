@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 
 export default function DiscoverSearch({ location }) {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function DiscoverSearch({ location }) {
     if (location?.city) {
       params.set('location', location.city);
       if (location.cityName) params.set('locationName', location.cityName);
-      if (location.country) params.set('country', location.country);
+      params.set('country', LAUNCH_COUNTRY_CODE);
       if (location.state) params.set('province', location.state);
     }
     navigate(`/search${params.size ? `?${params.toString()}` : ''}`);

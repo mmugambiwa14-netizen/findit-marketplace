@@ -210,3 +210,24 @@ jobs:
             --header "Content-Type: application/json" \
             --data '{"jobLimit":10,"recipientLimit":200}' \
             "${SUPABASE_URL}/functions/v1/essential-notification-fanout"
+
+  transactional-email-dispatch:
+    if: vars.FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: staging-tours
+    steps:
+      - name: Drain queued essential email deliveries
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          EMAIL_DISPATCH_TOKEN: ${{ secrets.FINDIT_EMAIL_DISPATCH_TOKEN }}
+        run: |
+          test -n "${EMAIL_DISPATCH_TOKEN}" || { echo "FINDIT_EMAIL_DISPATCH_TOKEN is not configured"; exit 1; }
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${EMAIL_DISPATCH_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data '{"limit":25}' \
+            "${SUPABASE_URL}/functions/v1/transactional-email-dispatch"
