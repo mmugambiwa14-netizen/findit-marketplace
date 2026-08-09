@@ -11,8 +11,10 @@ const files = {
   foreground: 'src/components/notifications/ForegroundNotificationListener.jsx',
   settings: 'src/components/settings/PushNotificationSettings.jsx',
   worker: 'public/sw.js',
+  preflight: 'supabase/migrations/20260809193500_web_push_preflight.sql',
   migration: 'supabase/migrations/20260809194000_web_push_delivery.sql',
   wrappers: 'supabase/migrations/20260809194500_web_push_delivery_rpc_wrappers.sql',
+  hardening: 'supabase/migrations/20260809195000_web_push_hardening.sql',
   delivery: 'supabase/functions/web-push-delivery/index.ts',
 };
 
@@ -47,15 +49,19 @@ test('foreground experience has deduplication, badge and user-controlled sound',
   assert.match(settings, /onCheckedChange={toggleSound}/);
 });
 
-test('push subscription storage is owner isolated and durable delivery is leased', async () => {
-  const migration = await read(files.migration);
+test('push schema converges partial installs before durable delivery', async () => {
+  const [preflight, migration, hardening] = await Promise.all([
+    read(files.preflight), read(files.migration), read(files.hardening),
+  ]);
+  assert.match(preflight, /create table if not exists public\.web_push_subscriptions/i);
+  assert.match(preflight, /drop policy if exists web_push_subscriptions_own_select/i);
   assert.match(migration, /enable row level security/i);
   assert.match(migration, /user_id = auth\.uid\(\)/);
   assert.match(migration, /private\.web_push_delivery_outbox/);
   assert.match(migration, /for update skip locked/i);
   assert.match(migration, /lease_expires_at/);
   assert.match(migration, /attempt_count >= 5/);
-  assert.match(migration, /404|410|permanent/i);
+  assert.match(hardening, /alter publication supabase_realtime add table public\.notifications/i);
 });
 
 test('worker RPCs are service-role only', async () => {
