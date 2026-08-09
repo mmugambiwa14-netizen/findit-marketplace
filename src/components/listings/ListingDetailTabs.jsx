@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink, MapPin, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AnimatedTabs } from '@/components/ui/animated-tabs';
+import { prefersReducedMotion } from '@/lib/motionTokens';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -9,6 +11,7 @@ const TABS = [
   { id: 'location', label: 'Location' },
   { id: 'seller', label: 'Seller' },
 ];
+const TAB_ITEMS = TABS.map(({ id, label }) => ({ value: id, label }));
 
 export function ListingDetailTabs({ children }) {
   const [active, setActive] = useState(TABS[0].id);
@@ -34,31 +37,27 @@ export function ListingDetailTabs({ children }) {
 
   const goTo = (id) => {
     setActive(id);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById(id)?.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'start',
+    });
   };
 
   return (
     <>
       <nav
-        className="sticky top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-30 bg-background/88 px-3 py-2 backdrop-blur-xl md:top-[3.75rem] md:px-5"
+        className="fluid-material sticky top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-30 border-y border-border/45 px-3 py-2 md:top-[3.75rem] md:px-5"
         aria-label="Listing sections"
       >
-        <div className="no-scrollbar mx-auto flex max-w-4xl overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-1 shadow-floating">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => goTo(tab.id)}
-              aria-current={active === tab.id ? 'page' : undefined}
-              className={cn(
-                'min-h-11 flex-1 whitespace-nowrap rounded-xl px-3 text-xs font-bold text-muted-foreground transition-colors sm:text-sm',
-                active === tab.id && 'bg-primary/12 text-primary shadow-sm',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <AnimatedTabs
+          value={active}
+          onValueChange={goTo}
+          tabs={TAB_ITEMS}
+          ariaLabel="Listing sections"
+          semantics="navigation"
+          className="mx-auto max-w-4xl"
+          tabClassName="min-w-[7rem] sm:min-w-0 sm:flex-1"
+        />
       </nav>
       <div className="mx-auto max-w-4xl space-y-10 px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7">{children}</div>
     </>
@@ -70,7 +69,7 @@ export function ListingTabSection({ id, title, children, className = '' }) {
     <section id={id} aria-labelledby={`${id}-heading`} className={cn('scroll-mt-32', className)}>
       <div className="mb-4 flex items-center gap-3">
         <span className="h-5 w-1 rounded-full bg-primary" aria-hidden="true" />
-        <h2 id={`${id}-heading`} className="text-lg font-black tracking-tight sm:text-xl">{title}</h2>
+        <h2 id={`${id}-heading`} className="fluid-section-title">{title}</h2>
       </div>
       {children}
     </section>
