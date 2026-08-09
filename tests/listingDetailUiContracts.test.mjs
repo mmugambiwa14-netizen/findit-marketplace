@@ -9,6 +9,7 @@ const [
   detailActions,
   detailTabs,
   detailLayout,
+  lightbox,
   featureItem,
   contactButtons,
   listingSummary,
@@ -21,6 +22,7 @@ const [
   read('src/components/listings/ListingDetailActions.jsx'),
   read('src/components/listings/ListingDetailTabs.jsx'),
   read('src/components/listings/ListingDetailLayout.jsx'),
+  read('src/components/ui/image-lightbox.jsx'),
   read('src/components/listings/ListingFeatureItem.jsx'),
   read('src/components/listings/ContactButtons.jsx'),
   read('src/components/listings/ListingSummary.jsx'),
@@ -53,6 +55,16 @@ test('listing summaries share one elevated hierarchy across every public detail 
     assert.match(source, /tour\?\.status === "ready"/);
     assert.match(source, />Video proof available<\/Badge>/);
   }
+});
+
+test('mobile listing media controls clear the status bar and support photo swipes', () => {
+  assert.match(detailActions, /pt-\[max\(3\.75rem,calc\(env\(safe-area-inset-top\)\+1rem\)\)\]/);
+  assert.match(lightbox, /\[&>button\]:top-\[max\(3\.75rem,calc\(env\(safe-area-inset-top\)\+1rem\)\)\]/);
+  assert.match(lightbox, /onTouchStart=\{handleTouchStart\}/);
+  assert.match(lightbox, /onTouchEnd=\{handleTouchEnd\}/);
+  assert.match(lightbox, /Math\.abs\(deltaX\) < Math\.abs\(deltaY\) \* 1\.2/);
+  assert.match(lightbox, /if \(!start \|\| zoomed \|\| total < 2\) return/);
+  assert.match(lightbox, /Swipe left or right to view another photo/);
 });
 
 test('section tabs follow media and the listing summary belongs only to Details', () => {

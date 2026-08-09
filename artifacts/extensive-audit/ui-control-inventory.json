@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-09T03:05:27.318Z",
+  "generatedAt": "2026-08-09T04:46:26.117Z",
   "sourceFiles": 333,
   "pageModules": 40,
   "directControlDeclarations": 760,
@@ -5285,7 +5285,7 @@
     {
       "file": "src\\components\\ui\\image-lightbox.jsx",
       "page": "",
-      "line": 41,
+      "line": 63,
       "element": "Dialog",
       "name": "",
       "type": "",
@@ -5296,7 +5296,7 @@
     {
       "file": "src\\components\\ui\\image-lightbox.jsx",
       "page": "",
-      "line": 87,
+      "line": 124,
       "element": "button",
       "name": "label",
       "type": "button",
