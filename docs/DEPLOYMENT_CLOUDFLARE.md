@@ -1,8 +1,9 @@
 # Cloudflare Pages deployment
 
 Cloudflare Pages is the authoritative web host. Supabase remains the backend.
-The Pages project is `peekalisting`; the staging branch alias is
-`https://staging.peekalisting.pages.dev`.
+Staging is isolated in the `peekalisting-staging` Pages project and is served
+from `https://staging.peekalisting.com`. The production project remains
+`peekalisting`; the apex domain is not attached during staging acceptance.
 
 ## GitHub environments
 
@@ -30,9 +31,10 @@ Run **Deploy staging to Cloudflare Pages** and enter `DEPLOY`. The workflow:
 1. Uses Node 24 and the locked dependencies.
 2. Validates environment values and builds `dist`.
 3. Verifies headers, SPA redirects, PWA artifacts, and bundle secret rules.
-4. Creates or confirms the `peekalisting` Pages project.
-5. Uploads the `staging` branch without changing DNS.
-6. Verifies hosted routes, PWA assets, security headers, and Supabase Auth connectivity.
+4. Creates or confirms the isolated `peekalisting-staging` Pages project.
+5. Uploads its `staging` production branch with staging-only bindings.
+6. Creates or confirms only the `staging.peekalisting.com` custom domain.
+7. Verifies hosted routes, PWA assets, security headers, and Supabase Auth connectivity.
 
 Do not run the production workflow or point `peekalisting.com` at Cloudflare
 until these checks pass and the owner records staging acceptance.

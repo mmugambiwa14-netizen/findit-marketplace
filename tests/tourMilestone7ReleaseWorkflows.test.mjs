@@ -90,7 +90,7 @@ test('Cloudflare staging deploy is manual, isolated, and activates the accepted 
   assert.match(previewWorkflow, /VITE_FEATURE_PREVIEW_FIXTURES: "false"/);
   assert.match(previewWorkflow, /VITE_PREVIEW_AUTH_BYPASS: "false"/);
   assert.match(previewWorkflow, /npx wrangler pages deploy dist/);
-  assert.match(previewWorkflow, /--project-name=peekalisting/);
+  assert.match(previewWorkflow, /--project-name="\$\{CLOUDFLARE_PAGES_PROJECT\}"/);
   assert.match(previewWorkflow, /--branch=staging/);
   assert.match(previewWorkflow, /npm run verify:deployment-security/);
   assert.match(previewWorkflow, /npm run verify:cloudflare-staging/);

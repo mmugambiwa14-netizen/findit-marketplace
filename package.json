@@ -19,7 +19,7 @@
     "verify:deployment-security": "node ./scripts/verify-deployment-security.mjs",
     "verify:cloudflare-staging": "node ./scripts/verify-cloudflare-staging.mjs",
     "verify:workflow-pinning": "node ./scripts/verify-workflow-pinning.mjs",
-    "deploy:pages:staging": "npm run build && npx wrangler pages deploy dist --project-name=peekalisting --branch=staging",
+    "deploy:pages:staging": "npm run build && npx wrangler pages deploy dist --project-name=peekalisting-staging --branch=staging",
     "verify:maplibre-assets": "node ./scripts/vendor-maplibre-assets.mjs --check",
     "audit:production": "node ./scripts/audit-production.mjs",
     "test:contracts": "node --test ./tests/*.test.mjs",

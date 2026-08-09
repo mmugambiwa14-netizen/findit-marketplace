@@ -40,10 +40,15 @@ test('Cloudflare staging restores deep links without a GitHub Pages or Vercel ru
   assert.match(previewWorkflow, /VITE_MODE: staging/);
   assert.match(previewWorkflow, /VITE_DEPLOY_ENV: staging/);
   assert.match(previewWorkflow, /VITE_BASE_PATH: \//);
-  assert.match(previewWorkflow, /VITE_PUBLIC_APP_ORIGIN: https:\/\/staging\.peekalisting\.pages\.dev/);
+  assert.match(previewWorkflow, /CLOUDFLARE_PAGES_PROJECT: peekalisting-staging/);
+  assert.match(previewWorkflow, /CLOUDFLARE_STAGING_DOMAIN: staging\.peekalisting\.com/);
+  assert.match(previewWorkflow, /VITE_PUBLIC_APP_ORIGIN: https:\/\/staging\.peekalisting\.com/);
   assert.match(previewWorkflow, /npx wrangler pages deploy dist/);
-  assert.match(previewWorkflow, /--project-name=peekalisting/);
+  assert.match(previewWorkflow, /--project-name="\$\{CLOUDFLARE_PAGES_PROJECT\}"/);
   assert.match(previewWorkflow, /--branch=staging/);
+  assert.match(previewWorkflow, /pages\/projects\/\$\{CLOUDFLARE_PAGES_PROJECT\}\/domains/);
+  assert.match(previewWorkflow, /domain_status.*active/);
+  assert.doesNotMatch(previewWorkflow, /VITE_PUBLIC_APP_ORIGIN: https:\/\/peekalisting\.com/);
   assert.doesNotMatch(previewWorkflow, /actions\/deploy-pages|actions\/upload-pages-artifact|github-pages/);
   assert.match(redirects, /^\/\*\s+\/index\.html\s+200$/m);
   assert.match(indexSource, /src\/documentBootstrap\.js/);

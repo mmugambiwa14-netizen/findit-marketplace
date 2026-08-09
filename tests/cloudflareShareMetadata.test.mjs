@@ -62,13 +62,13 @@ test('Cloudflare replaces generic metadata with one authoritative public listing
     return Response.json(publicRecord(['https://images.example.com/house.jpg?width=1200&height=630']));
   };
   try {
-    const context = pageContext(`https://staging.peekalisting.pages.dev/property/${propertyId}?ref=PR-NZGS&title=Injected&preview=https%3A%2F%2Fevil.example%2Ffake.jpg`);
+    const context = pageContext(`https://staging.peekalisting.com/property/${propertyId}?ref=PR-NZGS&title=Injected&preview=https%3A%2F%2Fevil.example%2Ffake.jpg`);
     const response = await onRequest(context);
     const html = await response.text();
     assert.equal((html.match(/property="og:title"/g) || []).length, 1);
     assert.match(html, /property="og:title" content="Family house for Sale in Harare"/);
     assert.match(html, /property="og:image" content="https:\/\/images\.example\.com\/house\.jpg\?width=1200&amp;height=630"/);
-    assert.match(html, new RegExp(`property="og:url" content="https://staging\\.peekalisting\\.pages\\.dev/property/${propertyId}"`));
+    assert.match(html, new RegExp(`property="og:url" content="https://staging\\.peekalisting\\.com/property/${propertyId}"`));
     assert.doesNotMatch(html, /PeekaListing Marketplace|Injected|evil\.example/);
     assert.equal(response.headers.get('cache-control'), 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
   } finally {
@@ -90,11 +90,11 @@ test('private listing covers use a stable Cloudflare route and anonymous Supabas
     throw new Error(`Unexpected request: ${url}`);
   };
   try {
-    const page = await onRequest(pageContext(`https://staging.peekalisting.pages.dev/property/${propertyId}?ref=PR-NZGS`));
+    const page = await onRequest(pageContext(`https://staging.peekalisting.com/property/${propertyId}?ref=PR-NZGS`));
     const html = await page.text();
-    assert.match(html, new RegExp(`property="og:image" content="https://staging\\.peekalisting\\.pages\\.dev/share-image/property/${propertyId}"`));
+    assert.match(html, new RegExp(`property="og:image" content="https://staging\\.peekalisting\\.com/share-image/property/${propertyId}"`));
 
-    const imageContext = pageContext(`https://staging.peekalisting.pages.dev/share-image/property/${propertyId}`, [storagePath]);
+    const imageContext = pageContext(`https://staging.peekalisting.com/share-image/property/${propertyId}`, [storagePath]);
     const image = await onRequest(imageContext);
     assert.equal(image.status, 302);
     assert.equal(image.headers.get('location'), 'https://example.supabase.co/storage/v1/object/sign/listing-images/example.webp?token=public-image-token');

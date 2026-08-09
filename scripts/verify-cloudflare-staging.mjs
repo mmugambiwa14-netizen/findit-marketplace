@@ -2,7 +2,7 @@ import process from 'node:process';
 
 const origin = process.env.FINDIT_STAGING_ORIGIN || process.argv[2];
 if (!origin) {
-  console.error('Usage: npm run verify:cloudflare-staging -- https://staging.example.pages.dev');
+  console.error('Usage: npm run verify:cloudflare-staging -- https://staging.example.com');
   process.exit(2);
 }
 

@@ -19,12 +19,14 @@ jobs:
   deploy:
     if: inputs.confirmation == 'DEPLOY'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     environment:
       name: cloudflare-staging
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_PAGES_PROJECT: peekalisting-staging
+      CLOUDFLARE_STAGING_DOMAIN: staging.peekalisting.com
       NODE_ENV: production
       VITE_MODE: staging
       # This is an isolated staging deployment, not a disposable preview.
@@ -34,8 +36,8 @@ jobs:
       VITE_BASE_PATH: /
       # Keep OAuth callbacks on the canonical Cloudflare staging origin even
       # when a tester opens a deployment-specific Pages URL.
-      VITE_PUBLIC_APP_ORIGIN: https://staging.peekalisting.pages.dev
-      FINDIT_STAGING_ORIGIN: https://staging.peekalisting.pages.dev
+      VITE_PUBLIC_APP_ORIGIN: https://staging.peekalisting.com
+      FINDIT_STAGING_ORIGIN: https://staging.peekalisting.com
       FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
       # Prefer environment-scoped browser configuration. The fallback keeps
       # this staging-only workflow compatible with the existing public staging
@@ -118,46 +120,100 @@ jobs:
           projects="$(curl --fail-with-body --silent --show-error \
             --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects")"
-          if jq -e --arg name "peekalisting" '.result[] | select(.name == $name)' <<<"${projects}" >/dev/null; then
-            echo 'Cloudflare Pages project peekalisting already exists.'
+          if jq -e --arg name "${CLOUDFLARE_PAGES_PROJECT}" '.result[] | select(.name == $name)' <<<"${projects}" >/dev/null; then
+            production_branch="$(jq -r --arg name "${CLOUDFLARE_PAGES_PROJECT}" '.result[] | select(.name == $name) | .production_branch' <<<"${projects}")"
+            if [[ "${production_branch}" != "staging" ]]; then
+              curl --fail-with-body --silent --show-error \
+                --request PATCH \
+                --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+                --header 'Content-Type: application/json' \
+                --data '{"production_branch":"staging"}' \
+                "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}" \
+                | jq -e '.success == true' >/dev/null
+              echo "Set ${CLOUDFLARE_PAGES_PROJECT} production branch to staging."
+            else
+              echo "Cloudflare Pages project ${CLOUDFLARE_PAGES_PROJECT} already exists."
+            fi
           else
             curl --fail-with-body --silent --show-error \
               --request POST \
               --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
               --header 'Content-Type: application/json' \
-              --data '{"name":"peekalisting","production_branch":"main"}' \
+              --data "$(jq -n --arg name "${CLOUDFLARE_PAGES_PROJECT}" '{name:$name,production_branch:"staging"}')" \
               "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
               | jq -e '.success == true' >/dev/null
-            echo 'Created Cloudflare Pages project peekalisting.'
+            echo "Created isolated Cloudflare Pages project ${CLOUDFLARE_PAGES_PROJECT}."
           fi
 
-      - name: Configure preview metadata bindings
+      - name: Configure isolated staging metadata bindings
         shell: bash
         run: |
           set -euo pipefail
           payload="$(jq -n \
             --arg url "${VITE_SUPABASE_URL}" \
             --arg key "${VITE_SUPABASE_ANON_KEY}" \
-            '{deployment_configs:{preview:{env_vars:{SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}}}}')"
+            '{deployment_configs:{preview:{env_vars:{SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}},production:{env_vars:{SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}}}}')"
           curl --fail-with-body --silent --show-error \
             --request PATCH \
             --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             --header 'Content-Type: application/json' \
             --data "${payload}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/peekalisting" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}" \
             | jq -e '.success == true' >/dev/null
-          echo 'Configured isolated Cloudflare preview metadata bindings.'
+          echo 'Configured browser-safe Supabase bindings for the isolated staging project.'
 
       - name: Prepare staging Functions runtime
         run: node ./scripts/prepare-pages-functions-runtime.mjs
 
-      - name: Deploy preview branch without changing DNS
+      - name: Deploy the isolated staging project
         run: >-
           npx wrangler pages deploy dist
-          --project-name=peekalisting
+          --project-name="${CLOUDFLARE_PAGES_PROJECT}"
           --branch=staging
           --commit-hash="$GITHUB_SHA"
           --commit-message="Cloudflare staging $GITHUB_SHA"
+
+      - name: Provision the canonical staging hostname
+        shell: bash
+        run: |
+          set -euo pipefail
+          domains="$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}/domains")"
+          if jq -e --arg name "${CLOUDFLARE_STAGING_DOMAIN}" '.result[] | select(.name == $name)' <<<"${domains}" >/dev/null; then
+            echo "Pages custom domain ${CLOUDFLARE_STAGING_DOMAIN} already exists."
+          else
+            curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              --header 'Content-Type: application/json' \
+              --data "$(jq -n --arg name "${CLOUDFLARE_STAGING_DOMAIN}" '{name:$name}')" \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}/domains" \
+              | jq -e '.success == true' >/dev/null
+            echo "Requested Pages custom domain ${CLOUDFLARE_STAGING_DOMAIN}."
+          fi
+
+          domain_status=""
+          for attempt in $(seq 1 90); do
+            domain="$(curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}/domains/${CLOUDFLARE_STAGING_DOMAIN}")"
+            domain_status="$(jq -r '.result.status' <<<"${domain}")"
+            if [[ "${domain_status}" == "active" ]]; then
+              echo "Pages custom domain ${CLOUDFLARE_STAGING_DOMAIN} is active."
+              break
+            fi
+            if [[ "${domain_status}" =~ ^(blocked|deactivated|error)$ ]]; then
+              jq -r '.result | {status, validation_data, verification_data}' <<<"${domain}"
+              exit 1
+            fi
+            echo "Waiting for ${CLOUDFLARE_STAGING_DOMAIN} (${domain_status}, attempt ${attempt}/90)."
+            sleep 5
+          done
+          if [[ "${domain_status}" != "active" ]]; then
+            echo "Timed out waiting for ${CLOUDFLARE_STAGING_DOMAIN} to activate."
+            exit 1
+          fi
 
       - name: Verify hosted staging
         run: npm run verify:cloudflare-staging

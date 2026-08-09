@@ -37,8 +37,10 @@ Everything below was read from the live connectors, not assumed.
 | SMN Platform | `kdjylecotbspovxauvzd` | eu-west-1 | inactive | unrelated — do not touch |
 | kudakwashe-mac's Project | `xvvrsqorjurygitnnjar` | ap-southeast-1 | inactive | unrelated — do not touch |
 
-**A staging project already exists.** Do **not** create `peekalisting-staging`; that would be the redundant
-second project the brief forbids.
+**A Supabase staging project already exists.** Do **not** create a second Supabase
+project named `peekalisting-staging`; that would be the redundant backend the
+brief forbids. The isolated Cloudflare Pages project with that name is a web
+deployment boundary and continues to use the existing `FindIt Staging` backend.
 
 ---
 

@@ -4,6 +4,7 @@ import { MAX_BYTES, prepareTrustedImage, sha256Hex } from "../_shared/trusted-im
 const DEFAULT_ALLOWED_ORIGINS = [
   "http://127.0.0.1:5173",
   "http://localhost:5173",
+  "https://staging.peekalisting.com",
   "https://staging.peekalisting.pages.dev",
 ];
 
@@ -17,7 +18,7 @@ function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.has(origin)) return true;
   try {
     const hostname = new URL(origin).hostname.toLowerCase();
-    return hostname === "staging.peekalisting.pages.dev";
+    return hostname === "staging.peekalisting.com" || hostname === "staging.peekalisting.pages.dev";
   } catch {
     return false;
   }

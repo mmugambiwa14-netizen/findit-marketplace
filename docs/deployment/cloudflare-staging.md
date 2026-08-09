@@ -1,21 +1,25 @@
 # Cloudflare staging
 
-Cloudflare Pages is the authoritative staging host. The Pages project is
-`peekalisting`, and the canonical staging origin is:
+Cloudflare Pages is the authoritative staging host. The isolated Pages project
+is `peekalisting-staging`, and the canonical staging origin is:
 
-`https://staging.peekalisting.pages.dev/`
+`https://staging.peekalisting.com/`
 
 The staging deployment runs from `cloudflare-staging-ready` through
 `.github/workflows/peekalisting-preview.yml`, uses Node 24, builds with
-`npm run build`, and publishes `dist` to the Cloudflare Pages `staging` branch.
+`npm run build`, and publishes `dist` to the dedicated Pages project's
+`staging` production branch.
 The deployment must preserve `public/_headers` and `public/_redirects`.
 
 Staging uses Supabase project `bwgklpxoetrrkutottdb`. Its Auth URL
 configuration must use the Cloudflare staging origin as the Site URL and allow
 the following application redirects:
 
-- `https://staging.peekalisting.pages.dev/`
-- `https://staging.peekalisting.pages.dev/**`
+- `https://staging.peekalisting.com/`
+- `https://staging.peekalisting.com/**`
+
+The previous Pages branch alias may remain as a temporary fallback redirect
+allowlist entry, but it is not the canonical OAuth or PWA origin.
 
 Localhost development redirects may remain allowlisted. Retired Vercel and
 GitHub Pages origins must not be used as the staging Site URL or remain in the
