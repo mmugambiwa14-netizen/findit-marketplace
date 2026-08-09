@@ -237,10 +237,14 @@ select extensions.is(
   jsonb_build_object(
     'id', '90000000-0000-4000-8000-000000000001'::uuid,
     'full_name', 'Public Seller',
+    'display_name', null,
     'bio', 'seller-profile-boundary-test',
-    'avatar_url', 'https://example.test/avatar.png'
+    'public_address', null,
+    'website_url', null,
+    'avatar_url', 'https://example.test/avatar.png',
+    'avatar_storage_path', null
   ),
-  'anonymous callers receive only the four public fields for an active seller with a public listing'
+  'anonymous callers receive only the intentional public seller fields for an active seller with a public listing'
 );
 
 select extensions.is(
