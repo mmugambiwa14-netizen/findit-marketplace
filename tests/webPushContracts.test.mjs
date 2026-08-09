@@ -11,10 +11,7 @@ const files = {
   foreground: 'src/components/notifications/ForegroundNotificationListener.jsx',
   settings: 'src/components/settings/PushNotificationSettings.jsx',
   worker: 'public/sw.js',
-  preflight: 'supabase/migrations/20260809193500_web_push_preflight.sql',
   migration: 'supabase/migrations/20260809194000_web_push_delivery.sql',
-  wrappers: 'supabase/migrations/20260809194500_web_push_delivery_rpc_wrappers.sql',
-  hardening: 'supabase/migrations/20260809195000_web_push_hardening.sql',
   delivery: 'supabase/functions/web-push-delivery/index.ts',
 };
 
@@ -36,12 +33,13 @@ test('service worker implements user-visible push and safe click routing', async
   assert.match(worker, /silent:\s*false/);
 });
 
-test('foreground experience has deduplication, badge and user-controlled sound', async () => {
+test('foreground experience consumes canonical app alerts with deduplication, badge and sound', async () => {
   const [sound, foreground, settings] = await Promise.all([
     read(files.sound), read(files.foreground), read(files.settings),
   ]);
   assert.match(sound, /notificationSoundEnabled/);
   assert.match(sound, /MIN_GAP_MS/);
+  assert.match(foreground, /table:\s*'app_alerts'/);
   assert.match(foreground, /seenRef/);
   assert.match(foreground, /setAppBadge/);
   assert.match(foreground, /postgres_changes/);
@@ -49,33 +47,35 @@ test('foreground experience has deduplication, badge and user-controlled sound',
   assert.match(settings, /onCheckedChange={toggleSound}/);
 });
 
-test('push schema converges partial installs before durable delivery', async () => {
-  const [preflight, migration, hardening] = await Promise.all([
-    read(files.preflight), read(files.migration), read(files.hardening),
-  ]);
-  assert.match(preflight, /create table if not exists public\.web_push_subscriptions/i);
-  assert.match(preflight, /drop policy if exists web_push_subscriptions_own_select/i);
-  assert.match(migration, /enable row level security/i);
-  assert.match(migration, /user_id = auth\.uid\(\)/);
-  assert.match(migration, /private\.web_push_delivery_outbox/);
+test('push migration upgrades existing subscriptions and delivery jobs in place', async () => {
+  const migration = await read(files.migration);
+  assert.match(migration, /alter table public\.web_push_subscriptions/i);
+  assert.match(migration, /alter table public\.web_push_delivery_jobs/i);
+  assert.match(migration, /public\.app_alerts/);
   assert.match(migration, /for update skip locked/i);
   assert.match(migration, /lease_expires_at/);
-  assert.match(migration, /attempt_count >= 5/);
-  assert.match(hardening, /alter publication supabase_realtime add table public\.notifications/i);
+  assert.match(migration, /attempts >= 5/);
+  assert.match(migration, /status='pending'/);
+  assert.match(migration, /then 'partial'/);
+  assert.match(migration, /alter publication supabase_realtime add table public\.app_alerts/i);
+  assert.doesNotMatch(migration, /web_push_delivery_outbox/);
+  assert.doesNotMatch(migration, /\bactive\b/);
 });
 
 test('worker RPCs are service-role only', async () => {
-  const wrappers = await read(files.wrappers);
-  assert.match(wrappers, /revoke all on function public\.claim_web_push_deliveries.*authenticated/s);
-  assert.match(wrappers, /grant execute on function public\.claim_web_push_deliveries\(integer\) to service_role/);
-  assert.match(wrappers, /grant execute on function public\.complete_web_push_delivery.*service_role/s);
+  const migration = await read(files.migration);
+  assert.match(migration, /revoke all on function public\.claim_web_push_deliveries.*authenticated/s);
+  assert.match(migration, /grant execute on function public\.claim_web_push_deliveries\(integer\) to service_role/);
+  assert.match(migration, /grant execute on function public\.complete_web_push_delivery.*service_role/s);
 });
 
-test('delivery worker requires dedicated secret and invalidates dead endpoints', async () => {
+test('delivery worker requires dedicated secret, invalidates dead endpoints and reports per-device results', async () => {
   const delivery = await read(files.delivery);
   assert.match(delivery, /FINDIT_WEB_PUSH_WORKER_SECRET/);
   assert.match(delivery, /FINDIT_WEB_PUSH_VAPID_PRIVATE_KEY/);
   assert.match(delivery, /status === 404 \|\| status === 410/);
   assert.match(delivery, /record_web_push_subscription_result/);
+  assert.match(delivery, /p_delivered_count/);
+  assert.match(delivery, /p_failed_count/);
   assert.match(delivery, /complete_web_push_delivery/);
 });
