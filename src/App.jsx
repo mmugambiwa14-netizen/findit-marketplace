@@ -144,9 +144,7 @@ const AuthenticatedApp = () => {
   if (isOAuthCallbackRoute) {
     return (
       <Suspense fallback={<LoadingScreen />}>
-        <Routes>
-          <Route path="/auth/callback" element={<OAuthCallback />} />
-        </Routes>
+        <OAuthCallback />
       </Suspense>
     );
   }

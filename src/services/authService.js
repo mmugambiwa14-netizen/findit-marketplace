@@ -285,7 +285,11 @@ export async function signInWithOAuth(provider, redirectPath = '/') {
   // Open the window before the Supabase request so popup blockers still allow
   // the provider flow when this function is called from a sign-in button.
   try {
-    popup = window.open('about:blank', 'peekalisting-oauth', 'popup=yes,width=520,height=720,resizable=yes,scrollbars=yes');
+    popup = window.open(
+      'about:blank',
+      'peekalisting-oauth',
+      'popup=yes,width=520,height=720,resizable=yes,scrollbars=yes,noopener,noreferrer',
+    );
   } catch {
     popup = null;
   }

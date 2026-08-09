@@ -45,6 +45,9 @@ with expected(table_name, policy_name) as (
     ('saved_listings', 'saved_listings_owner_delete'),
     ('saved_listings', 'saved_listings_owner_insert'),
     ('saved_listings', 'saved_listings_owner_read'),
+    ('saved_services', 'saved_services_owner_delete'),
+    ('saved_services', 'saved_services_owner_insert'),
+    ('saved_services', 'saved_services_owner_read'),
     ('service_media', 'service_media_read'),
     ('services', 'services_owner_delete'),
     ('services', 'services_owner_update'),
@@ -69,7 +72,7 @@ with expected(table_name, policy_name) as (
 select extensions.is(
   (select count(*)::bigint from missing_or_uninitialized),
   0::bigint,
-  'all 48 locked RLS policies use an auth.uid initialization plan'
+  'all 51 locked RLS policies use an auth.uid initialization plan'
 );
 
 select extensions.is(
@@ -82,8 +85,8 @@ select extensions.is(
         or coalesce(with_check, '') ~* '\(\s*SELECT\s+auth\.uid\(\)\s+AS\s+uid\s*\)'
       )
   ),
-  48::bigint,
-  'exactly 48 public policies contain initialized auth.uid calls'
+  51::bigint,
+  'exactly 51 public policies contain initialized auth.uid calls'
 );
 
 select extensions.is(

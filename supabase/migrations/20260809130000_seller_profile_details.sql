@@ -168,7 +168,7 @@ begin
 end;
 $function$;
 
-create or replace function public.authorize_marketplace_image_upload(
+create or replace function private.authorize_marketplace_image_upload(
   p_user_id uuid,
   p_purpose text,
   p_storage_path text,
@@ -220,7 +220,7 @@ begin
 end;
 $function$;
 
-create or replace function public.attach_marketplace_image(
+create or replace function private.attach_marketplace_image(
   p_intent_id uuid,
   p_storage_path text,
   p_target_kind text,
@@ -334,7 +334,7 @@ begin
 end;
 $function$;
 
-create or replace function public.detach_marketplace_image(
+create or replace function private.detach_marketplace_image(
   p_target_kind text,
   p_target_id uuid,
   p_storage_path text
@@ -385,6 +385,89 @@ begin
   return detached_path;
 end;
 $function$;
+
+-- Keep the browser-facing RPC identities as SECURITY INVOKER wrappers. The
+-- privileged implementations remain outside the exposed public schema, which
+-- preserves the authenticated RPC boundary established by migration 0101.
+create or replace function public.authorize_marketplace_image_upload(
+  p_user_id uuid,
+  p_purpose text,
+  p_storage_path text,
+  p_mime_type text,
+  p_byte_size integer,
+  p_width_px integer,
+  p_height_px integer,
+  p_sha256_hex text
+)
+returns uuid
+language sql
+volatile
+security invoker
+set search_path = ''
+as $wrapper$
+  select private.authorize_marketplace_image_upload(
+    $1, $2, $3, $4, $5, $6, $7, $8
+  );
+$wrapper$;
+
+create or replace function public.attach_marketplace_image(
+  p_intent_id uuid,
+  p_storage_path text,
+  p_target_kind text,
+  p_target_id uuid,
+  p_display_order integer default 0
+)
+returns jsonb
+language sql
+volatile
+security invoker
+set search_path = ''
+as $wrapper$
+  select private.attach_marketplace_image($1, $2, $3, $4, $5);
+$wrapper$;
+
+create or replace function public.detach_marketplace_image(
+  p_target_kind text,
+  p_target_id uuid,
+  p_storage_path text
+)
+returns text
+language sql
+volatile
+security invoker
+set search_path = ''
+as $wrapper$
+  select private.detach_marketplace_image($1, $2, $3);
+$wrapper$;
+
+comment on function public.authorize_marketplace_image_upload(
+  uuid, text, text, text, integer, integer, integer, text
+) is 'findit:20260809130000-service-role-boundary';
+comment on function public.attach_marketplace_image(
+  uuid, text, text, uuid, integer
+) is 'findit:0101-authenticated-boundary';
+comment on function public.detach_marketplace_image(
+  text, uuid, text
+) is 'findit:0101-authenticated-boundary';
+
+revoke all on function private.authorize_marketplace_image_upload(
+  uuid, text, text, text, integer, integer, integer, text
+) from public, anon, authenticated, service_role;
+grant execute on function private.authorize_marketplace_image_upload(
+  uuid, text, text, text, integer, integer, integer, text
+) to service_role;
+
+revoke all on function private.attach_marketplace_image(
+  uuid, text, text, uuid, integer
+) from public, anon, authenticated, service_role;
+grant execute on function private.attach_marketplace_image(
+  uuid, text, text, uuid, integer
+) to authenticated, service_role;
+
+revoke all on function private.detach_marketplace_image(text, uuid, text)
+  from public, anon, authenticated, service_role;
+grant execute on function private.detach_marketplace_image(text, uuid, text)
+  to authenticated, service_role;
 
 -- The public seller RPC returns only intentional profile fields. It never
 -- returns account email, phone, role, status, or any moderation state.
@@ -444,19 +527,19 @@ grant execute on function public.get_public_seller_profile(uuid)
   to anon, authenticated, service_role;
 
 revoke all on function public.authorize_marketplace_image_upload(uuid, text, text, text, integer, integer, integer, text)
-  from public, anon, authenticated;
+  from public, anon, authenticated, service_role;
 grant execute on function public.authorize_marketplace_image_upload(uuid, text, text, text, integer, integer, integer, text)
   to service_role;
 
 revoke all on function public.attach_marketplace_image(uuid, text, text, uuid, integer)
-  from public;
+  from public, anon, authenticated, service_role;
 grant execute on function public.attach_marketplace_image(uuid, text, text, uuid, integer)
-  to authenticated;
+  to authenticated, service_role;
 
 revoke all on function public.detach_marketplace_image(text, uuid, text)
-  from public;
+  from public, anon, authenticated, service_role;
 grant execute on function public.detach_marketplace_image(text, uuid, text)
-  to authenticated;
+  to authenticated, service_role;
 
 do $verify$
 begin
