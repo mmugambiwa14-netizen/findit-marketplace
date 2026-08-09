@@ -19,12 +19,12 @@
   transition-duration: var(--motion-instant), var(--motion-fast), var(--motion-fast), var(--motion-fast), var(--motion-fast), var(--motion-fast);
   transition-timing-function: var(--motion-ease-standard);
   touch-action: manipulation;
-  will-change: transform;
 }
 
 .fluid-pressable[data-pressed='true'] {
   transform: scale(0.98);
   transition-duration: 55ms;
+  will-change: transform;
 }
 
 .fluid-pressable[data-disabled='true'] {
@@ -116,7 +116,7 @@
 .fluid-segmented-indicator {
   position: absolute;
   inset-block: 0.25rem;
-  left: 0;
+  left: 0.25rem;
   z-index: 0;
   border: 1px solid hsl(var(--border) / 0.72);
   border-radius: calc(var(--findit-control-radius) - 0.2rem);
@@ -256,10 +256,6 @@
   .fluid-pressable[data-pressed='true'] {
     transform: none;
     opacity: 0.82;
-  }
-
-  .fluid-sheet {
-    transform: none !important;
   }
 }
 
