@@ -1,0 +1,44 @@
+name: Web Push delivery
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-push-delivery
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ vars.FINDIT_WEB_PUSH_WORKERS_ENABLED == 'true' }}
+    steps:
+      - name: Validate required configuration
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_WEB_PUSH_WORKER_SECRET }}
+        run: |
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_ANON_KEY"
+          test -n "$WORKER_SECRET"
+
+      - name: Deliver pending push notifications
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_WEB_PUSH_WORKER_SECRET }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 2 --retry-all-errors --max-time 45 \
+            -X POST "$SUPABASE_URL/functions/v1/web-push-delivery" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "x-findit-worker-secret: $WORKER_SECRET" \
+            -H "content-type: application/json" \
+            --data '{"limit":50}'
