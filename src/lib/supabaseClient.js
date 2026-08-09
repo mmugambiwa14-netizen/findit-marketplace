@@ -22,6 +22,68 @@ const STAGING_SUPABASE_PUBLISHABLE_KEY =
 const deploymentBranch = String(import.meta.env.VITE_VERCEL_GIT_COMMIT_REF ?? '').trim();
 const isStagingBranch = STAGING_BRANCHES.has(deploymentBranch);
 
+const SUBMISSION_RPC_NAMES = new Set([
+  'create_peek_request',
+  'support_peek_request',
+  'withdraw_peek_request_support',
+  'submit_business_application',
+  'respond_to_business_application',
+  'submit_managed_listing_request',
+]);
+
+function stagingLikeOrigin() {
+  if (typeof window === 'undefined') return false;
+  const hostname = String(window.location.hostname || '').trim().toLowerCase();
+  return hostname.includes('staging')
+    || hostname.startsWith('findit-marketplace-stagi')
+    || hostname.startsWith('peekalisting-stagi');
+}
+
+function rpcNameFromRequest(input) {
+  const rawUrl = typeof input === 'string' ? input : input?.url;
+  if (!rawUrl) return null;
+  try {
+    const url = new URL(rawUrl, typeof window !== 'undefined' ? window.location.origin : undefined);
+    const match = url.pathname.match(/\/rest\/v1\/rpc\/([^/]+)/);
+    if (!match) return null;
+    const name = decodeURIComponent(match[1]);
+    return SUBMISSION_RPC_NAMES.has(name) ? name : null;
+  } catch {
+    return null;
+  }
+}
+
+function emitSubmissionDiagnostic(message, phase, rpcName = null, status = null) {
+  if (!stagingLikeOrigin() || typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('peekalisting:submission-diagnostic', {
+    detail: { message, phase, rpcName, status, at: Date.now() },
+  }));
+}
+
+async function tracedFetch(input, init) {
+  const rpcName = rpcNameFromRequest(input);
+  if (!rpcName) return fetch(input, init);
+
+  emitSubmissionDiagnostic(`Sending ${rpcName}`, 'sending', rpcName);
+  try {
+    const response = await fetch(input, init);
+    emitSubmissionDiagnostic(
+      `${rpcName} returned HTTP ${response.status}`,
+      response.ok ? 'success' : 'error',
+      rpcName,
+      response.status,
+    );
+    return response;
+  } catch (error) {
+    emitSubmissionDiagnostic(
+      `${rpcName} failed before an HTTP response: ${error?.message || 'network error'}`,
+      'error',
+      rpcName,
+    );
+    throw error;
+  }
+}
+
 // Only the explicitly trusted staging branch lineage may use this
 // browser-public Supabase URL and publishable key as fallbacks. This keeps
 // stacked staging previews usable when Vercel Preview variables are absent,
@@ -63,5 +125,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+  },
+  global: {
+    fetch: tracedFetch,
   },
 });
