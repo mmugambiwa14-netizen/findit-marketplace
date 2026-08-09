@@ -13,9 +13,13 @@ const EVENTS = new Set([
   'saved_listing_unavailable',
   'peek_request_created',
   'peek_request_answered',
+  'business_application_updated',
+  'business_category_updated',
+  'managed_listing_updated',
+  'new_message',
 ]);
 const SAFE_LINK = new RegExp(
-  `^(?:/(?:my-listings|profile|settings|chats|saved|post|peek-requests)|/peek-requests\\?request=${UUID_PART}|/(?:chats|messages)/${UUID_PART}|/(?:property|car|machinery|service)/${UUID_PART}(?:\\?responsePeek=${UUID_PART})?(?:#peek-threads)?)$`,
+  `^(?:/(?:my-listings|profile|settings|chats|saved|post|peek-requests|business-profiles|notifications)|/peek-requests\\?request=${UUID_PART}|/(?:chats|messages)/${UUID_PART}|/(?:property|car|machinery|service|business|dealer)/${UUID_PART}(?:\\?responsePeek=${UUID_PART})?(?:#peek-threads)?)$`,
   'i',
 );
 
