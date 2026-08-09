@@ -115,8 +115,20 @@ test('Cloudflare keeps preview and production metadata bindings separate without
   assert.match(production, /deployment_configs:\{production:\{env_vars:/);
   assert.match(preview, /SUPABASE_PUBLISHABLE_KEY:\{type:"secret_text"/);
   assert.match(production, /SUPABASE_PUBLISHABLE_KEY:\{type:"secret_text"/);
+  assert.match(preview, /DEPLOYMENT_ENV:\{type:"plain_text",value:"staging"\}/);
+  assert.match(production, /DEPLOYMENT_ENV:\{type:"plain_text",value:"production"\}/);
   assert.match(preview, /prepare-pages-functions-runtime\.mjs/);
   assert.match(production, /prepare-pages-functions-runtime\.mjs/);
+  assert.ok(
+    preview.indexOf('Deploy the isolated staging project')
+      < preview.indexOf('Configure isolated staging metadata bindings'),
+    'staging metadata must be applied after Wrangler uploads file-managed variables',
+  );
+  assert.ok(
+    production.indexOf('Deploy production branch without changing DNS')
+      < production.indexOf('Configure production metadata bindings'),
+    'production metadata must be applied after Wrangler uploads file-managed variables',
+  );
   assert.doesNotMatch(generated, /https:\/\/|sb_publishable_|eyJ/);
   assert.doesNotMatch(middleware, /service[_-]?role|secret[_-]?key/i);
 });

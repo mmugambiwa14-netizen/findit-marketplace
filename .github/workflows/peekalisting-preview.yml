@@ -145,23 +145,6 @@ jobs:
             echo "Created isolated Cloudflare Pages project ${CLOUDFLARE_PAGES_PROJECT}."
           fi
 
-      - name: Configure isolated staging metadata bindings
-        shell: bash
-        run: |
-          set -euo pipefail
-          payload="$(jq -n \
-            --arg url "${VITE_SUPABASE_URL}" \
-            --arg key "${VITE_SUPABASE_ANON_KEY}" \
-            '{deployment_configs:{preview:{env_vars:{SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}},production:{env_vars:{SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}}}}')"
-          curl --fail-with-body --silent --show-error \
-            --request PATCH \
-            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            --header 'Content-Type: application/json' \
-            --data "${payload}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}" \
-            | jq -e '.success == true' >/dev/null
-          echo 'Configured browser-safe Supabase bindings for the isolated staging project.'
-
       - name: Prepare staging Functions runtime
         run: node ./scripts/prepare-pages-functions-runtime.mjs
 
@@ -172,6 +155,26 @@ jobs:
           --branch=staging
           --commit-hash="$GITHUB_SHA"
           --commit-message="Cloudflare staging $GITHUB_SHA"
+
+      # Wrangler applies file-managed vars while uploading. Configure logical
+      # staging and browser-safe Supabase runtime metadata after the upload so
+      # wrangler.jsonc cannot replace them with production defaults.
+      - name: Configure isolated staging metadata bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -n \
+            --arg url "${VITE_SUPABASE_URL}" \
+            --arg key "${VITE_SUPABASE_ANON_KEY}" \
+            '{deployment_configs:{preview:{env_vars:{DEPLOYMENT_ENV:{type:"plain_text",value:"staging-preview"},SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}},production:{env_vars:{DEPLOYMENT_ENV:{type:"plain_text",value:"staging"},SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}}}}')"
+          curl --fail-with-body --silent --show-error \
+            --request PATCH \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            --header 'Content-Type: application/json' \
+            --data "${payload}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}" \
+            | jq -e '.success == true' >/dev/null
+          echo 'Configured logical staging and browser-safe Supabase bindings.'
 
       - name: Provision the canonical staging hostname
         shell: bash

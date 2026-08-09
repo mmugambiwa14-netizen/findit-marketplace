@@ -53,6 +53,10 @@ if (env.VITE_SUPABASE_URL?.trim()) {
     const url = new URL(env.VITE_SUPABASE_URL);
     if (!['http:', 'https:'].includes(url.protocol)) problems.push('VITE_SUPABASE_URL must use HTTP or HTTPS');
     if (mode === 'production' && url.protocol !== 'https:') problems.push('VITE_SUPABASE_URL must use HTTPS in production');
+    const expectedProjectRef = env.FINDIT_EXPECTED_PROJECT_REF?.trim();
+    if (expectedProjectRef && url.hostname !== `${expectedProjectRef}.supabase.co`) {
+      problems.push('VITE_SUPABASE_URL does not match FINDIT_EXPECTED_PROJECT_REF');
+    }
   } catch {
     problems.push('VITE_SUPABASE_URL is not a valid absolute URL');
   }

@@ -12,13 +12,14 @@ The staging workflow uses the protected `cloudflare-staging` environment:
 - Variables: `CLOUDFLARE_ACCOUNT_ID`, `VITE_SUPABASE_URL`
 - Secrets: `CLOUDFLARE_API_TOKEN`, `VITE_SUPABASE_ANON_KEY`
 
-Until the owner adds the two `VITE_SUPABASE_*` entries to that environment,
-the staging workflow can fall back to the existing repository-level public
-staging names `FINDIT_SUPABASE_URL` and `FINDIT_SUPABASE_ANON_KEY`. Production
-does not use that fallback.
+The environment-specific `VITE_SUPABASE_*` entries are configured. The
+repository-level `FINDIT_SUPABASE_*` names remain a temporary compatibility
+fallback for staging only. Production never uses that fallback.
 
 Production uses a separate protected `cloudflare-production` environment with
-separate Supabase values and a required reviewer.
+separate Supabase values, a `main`-only deployment policy and a required owner
+review. The production environment exists, but promotion remains blocked until
+its backend, OAuth, map-provider and notification gates pass.
 
 Only `VITE_SUPABASE_URL` and the public Supabase anon/publishable key may be
 used in the browser build. Never put service-role keys, secret keys, provider
@@ -36,5 +37,7 @@ Run **Deploy staging to Cloudflare Pages** and enter `DEPLOY`. The workflow:
 6. Creates or confirms only the `staging.peekalisting.com` custom domain.
 7. Verifies hosted routes, PWA assets, security headers, and Supabase Auth connectivity.
 
-Do not run the production workflow or point `peekalisting.com` at Cloudflare
-until these checks pass and the owner records staging acceptance.
+Staging acceptance passed on 2026-08-09. Do not point `peekalisting.com` at
+Cloudflare until the separate production backend and hosted production
+acceptance checks also pass. Staging credentials must not be substituted into
+production merely to bypass this gate.

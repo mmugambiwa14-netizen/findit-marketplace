@@ -29,6 +29,7 @@ jobs:
       VITE_MODE: production
       VITE_DEPLOY_ENV: production
       VITE_BASE_PATH: /
+      VITE_PUBLIC_APP_ORIGIN: https://peekalisting.com
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_AUTH_GOOGLE_ENABLED: "true"
@@ -68,6 +69,10 @@ jobs:
       FINDIT_TOURS_RELEASE_ACCEPTED: "false"
       FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: ${{ vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED }}
       FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
+      FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
+      FINDIT_PRODUCTION_ORIGIN: https://peekalisting.com
+      FINDIT_EXPECT_GOOGLE_OAUTH: "true"
+      FINDIT_EXPECT_APPLE_OAUTH: "false"
 
     steps:
       - name: Check out production source
@@ -85,28 +90,17 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --include=dev --ignore-scripts
 
+      - name: Validate production environment
+        run: npm run validate:env
+
+      - name: Verify production OAuth provider
+        run: npm run verify:oauth-providers
+
       - name: Build and verify production artifact
         run: npm run build
 
       - name: Verify Cloudflare security contracts
         run: npm run verify:deployment-security
-
-      - name: Configure production metadata bindings
-        shell: bash
-        run: |
-          set -euo pipefail
-          payload="$(jq -n \
-            --arg url "${VITE_SUPABASE_URL}" \
-            --arg key "${VITE_SUPABASE_ANON_KEY}" \
-            '{deployment_configs:{production:{env_vars:{SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}}}}')"
-          curl --fail-with-body --silent --show-error \
-            --request PATCH \
-            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            --header 'Content-Type: application/json' \
-            --data "${payload}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/peekalisting" \
-            | jq -e '.success == true' >/dev/null
-          echo 'Configured Cloudflare production metadata bindings.'
 
       - name: Prepare production Functions runtime
         run: node ./scripts/prepare-pages-functions-runtime.mjs
@@ -118,3 +112,22 @@ jobs:
           --branch=main
           --commit-hash="$GITHUB_SHA"
           --commit-message="Cloudflare production $GITHUB_SHA"
+
+      # Keep this after the upload. Wrangler applies file-managed values while
+      # deploying and would otherwise erase the environment-specific URL.
+      - name: Configure production metadata bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -n \
+            --arg url "${VITE_SUPABASE_URL}" \
+            --arg key "${VITE_SUPABASE_ANON_KEY}" \
+            '{deployment_configs:{production:{env_vars:{DEPLOYMENT_ENV:{type:"plain_text",value:"production"},SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}}}}')"
+          curl --fail-with-body --silent --show-error \
+            --request PATCH \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            --header 'Content-Type: application/json' \
+            --data "${payload}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/peekalisting" \
+            | jq -e '.success == true' >/dev/null
+          echo 'Configured Cloudflare production metadata bindings.'
