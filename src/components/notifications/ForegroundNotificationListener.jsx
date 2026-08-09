@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
@@ -19,11 +18,14 @@ function updateAppBadge(count) {
   else navigator.clearAppBadge?.().catch(() => {});
 }
 
+function openInternalPath(path) {
+  const base = String(import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  window.location.assign(`${base}${path}` || '/');
+}
+
 export default function ForegroundNotificationListener() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const location = useLocation();
   const seenRef = useRef(new Set());
 
   useEffect(() => {
@@ -57,17 +59,18 @@ export default function ForegroundNotificationListener() {
         }
 
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
-        const unread = Number(queryClient.getQueryData(['notifications', 'unread-count', user.id])) || 0;
-        queryClient.setQueryData(['notifications', 'unread-count', user.id], unread + 1);
+        const unreadKey = ['notifications', 'unread-count', user.id];
+        const unread = Number(queryClient.getQueryData(unreadKey)) || 0;
+        queryClient.setQueryData(unreadKey, unread + 1);
         updateAppBadge(unread + 1);
 
         const link = safeInternalPath(item.link);
-        const currentlyViewingTarget = location.pathname === link;
+        const currentlyViewingTarget = window.location.pathname.endsWith(link);
         if (document.visibilityState === 'visible') {
           if (!currentlyViewingTarget) {
             toast(item.title || 'PeekaListing update', {
               description: item.message || 'You have a new notification.',
-              action: { label: 'Open', onClick: () => navigate(link) },
+              action: { label: 'Open', onClick: () => openInternalPath(link) },
             });
           }
           playNotificationSound();
@@ -76,7 +79,7 @@ export default function ForegroundNotificationListener() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [location.pathname, navigate, queryClient, user?.id]);
+  }, [queryClient, user?.id]);
 
   useEffect(() => {
     if (!user?.id) updateAppBadge(0);
