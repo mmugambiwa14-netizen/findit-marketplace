@@ -124,7 +124,7 @@ export default function MachineryDetail() {
           </ListingTabSection>
 
           <ListingTabSection id="location" title="Location">
-            <ListingLocation label={location} latitude={item.latitude} longitude={item.longitude} />
+            <ListingLocation label={location} latitude={item.latitude} longitude={item.longitude} listingType="machinery" />
           </ListingTabSection>
 
           <ListingTabSection id="seller" title="Seller">

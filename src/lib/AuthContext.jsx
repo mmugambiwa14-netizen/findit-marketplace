@@ -11,7 +11,7 @@
 // calls useAuth() (ProtectedRoute, App.jsx, useGuestGuard, etc.) needs zero
 // changes in this checkpoint.
 
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import * as authService from '@/services/authService';
 import { deriveAuthState, toAuthError } from '@/lib/authState';
 import { localPreviewAuthBypassEnabled } from '@/lib/localPreview';
@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }) => {
   const [authError, setAuthError] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [blockedAccount, setBlockedAccount] = useState(null); // { status, reason, banUntil } when suspended/banned
+  const authCheckSequence = useRef(0);
 
   // Base44 had a separate "app public settings" bootstrap (a multi-tenant
   // app-platform concept: is this app configured, is auth required for it,
@@ -38,9 +39,12 @@ export const AuthProvider = ({ children }) => {
   const [appPublicSettings] = useState(null);
 
   const checkUserAuth = useCallback(async () => {
+    const requestSequence = authCheckSequence.current + 1;
+    authCheckSequence.current = requestSequence;
     try {
       setIsLoadingAuth(true);
       const currentUser = await authService.getCurrentUser();
+      if (requestSequence !== authCheckSequence.current) return;
 
       const nextAuthState = deriveAuthState(currentUser);
       setUser(nextAuthState.user);
@@ -50,6 +54,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
+      if (requestSequence !== authCheckSequence.current) return;
       console.error('User auth check failed:', error);
       setUser(null);
       setIsAuthenticated(false);

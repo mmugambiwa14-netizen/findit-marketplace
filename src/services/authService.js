@@ -365,11 +365,64 @@ export async function hasRequiredRole(requiredRole) {
   return data === true;
 }
 
+async function readUserProfile(userId) {
+  return supabase.from('users').select(AUTH_PROFILE_SELECT).eq('id', userId).single();
+}
+
+function isRefreshableProfileError(error) {
+  const status = Number(error?.status);
+  const code = String(error?.code || '').toUpperCase();
+  return status === 401
+    || status === 403
+    || ['PGRST301', 'PGRST302', 'JWT_EXPIRED', 'TOKEN_EXPIRED'].includes(code)
+    || /jwt|token|expired|session/i.test(String(error?.message || ''));
+}
+
+function isTransientProfileError(error) {
+  const status = Number(error?.status);
+  const code = String(error?.code || '').toUpperCase();
+  return status === 0
+    || status >= 500
+    || ['PGRST000', 'PGRST001', 'PGRST003', '57014', '08000', '08001', '08003', '08006'].includes(code)
+    || /failed to fetch|network|timeout|temporarily unavailable/i.test(String(error?.message || ''));
+}
+
+function waitForAuthReadRetry() {
+  return new Promise((resolve) => window.setTimeout(resolve, 180));
+}
+
 export async function getCurrentUser() {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw withAuthFailure(sessionError, 'auth_unavailable');
+  const readSession = async () => {
+    try {
+      return await supabase.auth.getSession();
+    } catch (error) {
+      return { data: { session: null }, error };
+    }
+  };
+  let sessionResult = await readSession();
+  if (sessionResult.error && isTransientProfileError(sessionResult.error)) {
+    await waitForAuthReadRetry();
+    sessionResult = await readSession();
+  }
+  if (sessionResult.error) throw withAuthFailure(sessionResult.error, 'auth_unavailable');
+  const { session } = sessionResult.data;
   if (!session?.user) return null;
-  const { data: profile, error: profileError } = await supabase.from('users').select(AUTH_PROFILE_SELECT).eq('id', session.user.id).single();
+  let { data: profile, error: profileError } = await readUserProfile(session.user.id);
+
+  // A PWA can resume with an access token that has expired while its refresh
+  // request is still in flight. Refresh once, then repeat only this bounded
+  // profile read. This keeps the authenticated UI honest without signing a
+  // user out on a temporary connection or token race.
+  if (profileError && isRefreshableProfileError(profileError)) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (!refreshError && refreshed?.session?.user?.id === session.user.id) {
+      ({ data: profile, error: profileError } = await readUserProfile(session.user.id));
+    }
+  } else if (profileError && isTransientProfileError(profileError)) {
+    await waitForAuthReadRetry();
+    ({ data: profile, error: profileError } = await readUserProfile(session.user.id));
+  }
+
   if (profileError) throw withAuthFailure(profileError, profileError.code === 'PGRST116' ? 'profile_missing' : 'auth_unavailable');
   return profile;
 }

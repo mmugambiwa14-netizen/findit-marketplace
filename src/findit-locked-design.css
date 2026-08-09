@@ -122,6 +122,14 @@
   overscroll-behavior: contain;
 }
 
+/* Detail pages use the same renderer and interaction model as Discover, but
+ * keep the location panel compact enough that the tab remains readable. */
+.findit-listing-location-map {
+  height: clamp(340px, 52vw, 480px);
+  min-height: 340px;
+  max-height: 480px;
+}
+
 .findit-map-marker {
   display: flex;
   height: 52px;

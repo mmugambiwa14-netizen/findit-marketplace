@@ -118,7 +118,7 @@ export default function CarDetail() {
           </ListingTabSection>
 
           <ListingTabSection id="location" title="Location">
-            <ListingLocation label={location} latitude={car.latitude} longitude={car.longitude} />
+            <ListingLocation label={location} latitude={car.latitude} longitude={car.longitude} listingType="car" />
           </ListingTabSection>
 
           <ListingTabSection id="seller" title="Seller">

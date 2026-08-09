@@ -136,7 +136,7 @@ export default function ServiceDetail() {
           </ListingTabSection>
 
           <ListingTabSection id="location" title="Location">
-            <ListingLocation label={service.location_name} latitude={service.latitude} longitude={service.longitude} approximate={!Number.isFinite(Number(service.latitude)) || !Number.isFinite(Number(service.longitude))} />
+            <ListingLocation label={service.location_name} latitude={service.latitude} longitude={service.longitude} listingType="service" approximate={!Number.isFinite(Number(service.latitude)) || !Number.isFinite(Number(service.longitude))} />
           </ListingTabSection>
 
           <ListingTabSection id="seller" title="Provider">

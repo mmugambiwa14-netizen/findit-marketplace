@@ -1,7 +1,8 @@
 import { Children, isValidElement, useId, useMemo, useState } from 'react';
-import { ExternalLink, MapPin, UserRound } from 'lucide-react';
+import { ExternalLink, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import SearchResultsMap from '@/components/search/SearchResultsMap';
 
 const TABS = [
   { id: 'listing-info', label: 'Details' },
@@ -144,14 +145,22 @@ export function ListingDescription({ value }) {
   );
 }
 
-export function ListingLocation({ label, latitude, longitude, approximate = false }) {
+export function ListingLocation({ label, latitude, longitude, approximate = false, listingType = 'property' }) {
   const hasCoordinates = Number.isFinite(Number(latitude)) && Number.isFinite(Number(longitude));
   const query = useMemo(() => {
     if (hasCoordinates) return `${Number(latitude)},${Number(longitude)}`;
     return String(label || '').trim();
   }, [hasCoordinates, label, latitude, longitude]);
   const mapsUrl = query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : null;
-  const embedUrl = query ? `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed` : null;
+  const mapListing = useMemo(() => ({
+    id: 'listing-location-preview',
+    title: label || 'Listing location',
+    city: label || '',
+    location_name: label || '',
+    latitude: hasCoordinates ? Number(latitude) : null,
+    longitude: hasCoordinates ? Number(longitude) : null,
+    _type: listingType,
+  }), [hasCoordinates, label, latitude, listingType, longitude]);
 
   return (
     <div className="overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
@@ -162,18 +171,23 @@ export function ListingLocation({ label, latitude, longitude, approximate = fals
         </div>
         <span className="rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-[10px] font-bold text-primary">Zimbabwe</span>
       </div>
-      {embedUrl ? (
-        <iframe title={`Map showing ${label || 'listing location'}`} src={embedUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="h-64 w-full border-0 sm:h-72" />
-      ) : (
-        <div className="flex h-52 items-center justify-center bg-muted/30 text-muted-foreground"><MapPin className="mr-2 h-5 w-5" />Location unavailable</div>
-      )}
+      <SearchResultsMap
+        listings={[mapListing]}
+        type={listingType}
+        compact
+        showResultsList={false}
+        showSummary={false}
+        showPopups={false}
+        allowEmptyMap
+        ariaLabel={`Map showing ${label || 'listing location'}`}
+      />
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Public location</p>
           <p className="mt-1 truncate font-bold">{label || 'Location not supplied'}</p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">{approximate || !hasCoordinates ? 'The map shows an approximate public area, not a seller’s private live location.' : 'The map shows the public listing area, not a seller’s private live location.'}</p>
         </div>
-        {mapsUrl && <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold transition hover:border-primary/40 hover:bg-primary/8"><ExternalLink className="h-4 w-4" />Open map</a>}
+        {mapsUrl && <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold transition hover:border-primary/40 hover:bg-primary/8"><ExternalLink className="h-4 w-4" />Open in Google Maps</a>}
       </div>
     </div>
   );

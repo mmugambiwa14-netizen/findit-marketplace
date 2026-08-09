@@ -124,7 +124,7 @@ export default function PropertyDetail() {
           </ListingTabSection>
 
           <ListingTabSection id="location" title="Location">
-            <ListingLocation label={location} latitude={property.latitude} longitude={property.longitude} />
+            <ListingLocation label={location} latitude={property.latitude} longitude={property.longitude} listingType="property" />
           </ListingTabSection>
 
           <ListingTabSection id="seller" title="Seller">
