@@ -121,6 +121,10 @@
   will-change: transform;
 }
 
+.maplibregl-marker {
+  will-change: transform;
+}
+
 .findit-map-marker-pin {
   position: relative;
   display: flex;
