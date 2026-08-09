@@ -4,6 +4,8 @@ import '@/index.css'
 import '@/findit-locked-design.css'
 import '@/pwa-viewport.css'
 
+document.documentElement.dataset.peekalistingBuild = 'staging-buttons-v3'
+
 const rootElement = document.getElementById('root')
 
 if (!rootElement) {
