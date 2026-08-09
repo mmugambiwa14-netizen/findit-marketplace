@@ -4,12 +4,14 @@ import '@/index.css'
 import '@/findit-locked-design.css'
 import '@/pwa-viewport.css'
 
-const STAGING_BUILD = 'staging-submit-trace-v4'
+const STAGING_BUILD = 'staging-submit-trace-v5'
 document.documentElement.dataset.peekalistingBuild = STAGING_BUILD
 
 function stagingLikeOrigin() {
+  const explicitPreview = String(import.meta.env.VITE_PREVIEW_DEPLOYMENT || '').trim().toLowerCase() === 'true'
   const hostname = String(window.location.hostname || '').trim().toLowerCase()
-  return hostname.includes('staging')
+  return explicitPreview
+    || hostname.includes('staging')
     || hostname.startsWith('findit-marketplace-stagi')
     || hostname.startsWith('peekalisting-stagi')
 }
@@ -54,6 +56,10 @@ function installStagingSubmissionTrace() {
     traceElement.dataset.phase = phase
     traceElement.textContent = `${STAGING_BUILD}: ${message}`
   }
+
+  const installVisibleMarker = () => show('canonical preview build loaded', 'ready')
+  if (document.body) installVisibleMarker()
+  else window.addEventListener('DOMContentLoaded', installVisibleMarker, { once: true })
 
   document.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target.closest('button') : null
