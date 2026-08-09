@@ -25,7 +25,7 @@ Deno.serve(async (request) => {
 
   try {
     const workerSecret = env('FINDIT_WEB_PUSH_WORKER_SECRET');
-    if (request.headers.get('authorization') !== `Bearer ${workerSecret}`) {
+    if (request.headers.get('x-findit-worker-secret') !== workerSecret) {
       return new Response('Unauthorized', { status: 401 });
     }
 
