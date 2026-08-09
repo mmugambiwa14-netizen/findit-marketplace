@@ -46,10 +46,11 @@ export default function ForegroundNotificationListener() {
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
-        table: 'notifications',
+        table: 'app_alerts',
         filter: `user_id=eq.${user.id}`,
       }, (payload) => {
         const item = payload.new || {};
+        if (!item.event_type) return;
         const id = String(item.id || '');
         if (!id || seenRef.current.has(id)) return;
         seenRef.current.add(id);
