@@ -926,8 +926,6 @@ async function generateMedia(tempDir, parent) {
       "-loglevel",
       "error",
       "-y",
-      "-loop",
-      "1",
       "-i",
       sourceImagePath,
       "-vf",
