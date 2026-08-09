@@ -46,7 +46,7 @@ export function ListingDetailTabs({ children }) {
   return (
     <>
       <nav
-        className="fluid-material sticky top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-30 border-y border-border/45 px-3 py-2 md:top-[3.75rem] md:px-5"
+        className="sticky top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-30 border-y border-border/45 bg-background/95 px-3 py-2 md:top-[3.75rem] md:px-5"
         aria-label="Listing sections"
       >
         <AnimatedTabs
