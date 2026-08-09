@@ -35,7 +35,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 if (!EMIT_SQL_MODE && !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("FINDIT_SUPABASE_SECRET_KEY is required for direct privileged writes");
 }
-if (EMIT_TOURS_SQL && (!FFMPEG_PATH || !fs.existsSync(FFMPEG_PATH))) {
+if ((DIRECT_SEED || EMIT_TOURS_SQL) && (!FFMPEG_PATH || !fs.existsSync(FFMPEG_PATH))) {
   throw new Error("FFMPEG_PATH must point to the ffmpeg executable used for staging media");
 }
 

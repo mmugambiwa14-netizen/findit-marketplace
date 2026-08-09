@@ -25,6 +25,7 @@ jobs:
       FINDIT_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
       FINDIT_SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
       FINDIT_SUPABASE_SECRET_KEY: ${{ secrets.FINDIT_SUPABASE_SECRET_KEY }}
+      FFMPEG_PATH: /usr/bin/ffmpeg
 
     steps:
       - name: Check out repository
