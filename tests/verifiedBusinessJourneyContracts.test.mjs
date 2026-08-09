@@ -14,12 +14,16 @@ test('verified business journey uses the existing curated application source of 
   assert.match(operations, /admin_review_business_category/);
 });
 
-test('business publishing forms use explicit submit controls', async () => {
+test('business publishing forms use explicit click-driven submission controls', async () => {
   const source = await read('src/components/business/BusinessPublishingGate.jsx');
-  assert.match(source, /<form[^>]+onSubmit=\{submitResponse\}[\s\S]*?<Button type="submit"[^>]*>\{submitting \? 'Sending…' : 'Send information'\}/);
-  assert.match(source, /<form[^>]+onSubmit=\{submit\}[\s\S]*?<Button type="submit"[^>]*>\{submitting \? 'Submitting…' : 'Submit application'\}/);
-  assert.match(source, /Submit advertising request/);
-  assert.equal((source.match(/<Button type="submit"/g) || []).length, 3);
+  assert.match(source, /function reportInvalidForm/);
+  assert.match(source, /const sendResponse = async \(formElement\)/);
+  assert.match(source, /const submitApplication = async \(formElement\)/);
+  assert.match(source, /const submitManaged = async \(formElement\)/);
+  assert.match(source, /onClick=\{\(event\) => void sendResponse\(event\.currentTarget\.form\)\}/);
+  assert.match(source, /onClick=\{\(event\) => void submitApplication\(event\.currentTarget\.form\)\}/);
+  assert.match(source, /onClick=\{\(event\) => void submitManaged\(event\.currentTarget\.form\)\}/);
+  assert.ok((source.match(/<form noValidate/g) || []).length >= 3);
 });
 
 test('category approval synchronizes the public business verification state', async () => {
