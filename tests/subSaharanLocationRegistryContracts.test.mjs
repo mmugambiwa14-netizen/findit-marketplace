@@ -95,13 +95,17 @@ test('canonical hierarchy and consented resolver are current, bounded, and least
   assert.match(boundaryIndexMigration, /using gist\(boundary_geometry\)/i);
 });
 
-test('manual browsing is country-independent and populated places are searched by ADM1 parent', () => {
+test('the registry stays country-complete while public browsing is launch-market constrained', () => {
   assert.match(repository, /type === 'country' \? null : LAUNCH_COUNTRY_CODE/);
   assert.match(repository, /search_marketplace_places/);
+  assert.match(service, /countryCode = LAUNCH_COUNTRY_CODE/);
+  assert.match(service, /effectiveCountryCode/);
   assert.match(service, /searchMarketplacePlaces\(parentId, searchTerm/);
+  assert.match(selector, /LAUNCH_COUNTRY_CODE/);
+  assert.match(selector, /filter\([\s\S]*country_code[\s\S]*LAUNCH_COUNTRY_CODE/);
   assert.match(selector, /getActiveLocations\('province', country, selectedCountryCode\)/);
   assert.match(selector, /PlaceSearchCombobox/);
-  assert.match(selector, /Country selection always stays unlocked/);
+  assert.doesNotMatch(selector, /Country selection always stays unlocked/);
   assert.doesNotMatch(selector, /onSelectLocation\(null\)/);
   assert.match(placeSearch, /role="combobox"/);
   assert.match(placeSearch, /role="listbox"/);
@@ -111,7 +115,7 @@ test('manual browsing is country-independent and populated places are searched b
 test('browser geolocation follows explicit app consent and staging policy', () => {
   assert.match(permissionDialog, /Use your location once\?/);
   assert.match(permissionDialog, /coordinates[\s\S]*not added to your profile or saved in this browser/i);
-  assert.match(permissionDialog, /browse Botswana while you are in Zambia/i);
+  assert.match(permissionDialog, /Zimbabwe marketplace locations/i);
   assert.match(permissionDialog, /Allow once/);
   assert.match(selector, /setPermissionOpen\(true\)/);
   assert.match(selector, /resolveCurrentMarketplaceLocation\(\{ consentGranted: true \}\)/);

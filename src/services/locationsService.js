@@ -21,13 +21,17 @@ function withCoordinates(row) {
 export async function getActiveLocations(
   type,
   parentId = null,
-  countryCode = type === 'country' ? null : LAUNCH_COUNTRY_CODE,
+  countryCode = LAUNCH_COUNTRY_CODE,
 ) {
   if (!SUPPORTED_TYPES.has(type)) {
     throw new TypeError(`Unsupported location type: ${type}`);
   }
 
-  const rows = await findActiveLocations({ type, parentId, countryCode });
+  const requestedCountryCode = String(countryCode || LAUNCH_COUNTRY_CODE).trim().toUpperCase();
+  const effectiveCountryCode = requestedCountryCode === LAUNCH_COUNTRY_CODE
+    ? requestedCountryCode
+    : LAUNCH_COUNTRY_CODE;
+  const rows = await findActiveLocations({ type, parentId, countryCode: effectiveCountryCode });
   return rows.map(withCoordinates);
 }
 

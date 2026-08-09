@@ -4,6 +4,7 @@ import { Loader2, LocateFixed, MapPinned } from 'lucide-react';
 import { getActiveLocations } from '@/services/locationsService';
 import { currentLocationErrorMessage, resolveCurrentMarketplaceLocation } from '@/services/currentLocationService';
 import { featureFlags } from '@/lib/featureFlags';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { LocationPermissionDialog } from '@/components/location/LocationPermissionDialog';
@@ -67,24 +68,40 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
   const [currentLocationError, setCurrentLocationError] = useState('');
 
   useEffect(() => {
-    setCountry(value?.country || '');
-    setState(value?.state || '');
-    setCity(value?.city || '');
-    setCityName(value?.cityName || '');
-  }, [value?.country, value?.state, value?.city, value?.cityName]);
+    const savedCountryCode = String(value?.countryCode || '').trim().toUpperCase();
+    const savedCountryName = String(value?.countryName || '').trim().toLowerCase();
+    const isLaunchCountry = savedCountryCode
+      ? savedCountryCode === LAUNCH_COUNTRY_CODE
+      : !savedCountryName || savedCountryName === 'zimbabwe';
+    setCountry(isLaunchCountry ? value?.country || '' : '');
+    setState(isLaunchCountry ? value?.state || '' : '');
+    setCity(isLaunchCountry ? value?.city || '' : '');
+    setCityName(isLaunchCountry ? value?.cityName || '' : '');
+  }, [value?.country, value?.countryCode, value?.countryName, value?.state, value?.city, value?.cityName]);
 
   const countriesQuery = useQuery({
-    queryKey: ['locations-countries', 'sub-saharan'],
+    queryKey: ['locations-countries', LAUNCH_COUNTRY_CODE],
     queryFn: () => getActiveLocations('country'),
     staleTime: LOCATION_CACHE_MS,
     gcTime: LOCATION_CACHE_MS * 24,
   });
-  const countries = countriesQuery.data || [];
+  const countries = (countriesQuery.data || []).filter(
+    (candidate) => String(candidate.country_code || '').toUpperCase() === LAUNCH_COUNTRY_CODE,
+  );
   const selectedCountry = useMemo(
     () => countries.find((candidate) => candidate.id === country) || null,
     [countries, country],
   );
-  const selectedCountryCode = selectedCountry?.country_code || value?.countryCode || null;
+  const selectedCountryId = selectedCountry?.id || '';
+  const selectedCountryCode = selectedCountry ? LAUNCH_COUNTRY_CODE : null;
+
+  useEffect(() => {
+    if (!countriesQuery.isSuccess || !country || selectedCountryId) return;
+    setCountry('');
+    setState('');
+    setCity('');
+    setCityName('');
+  }, [countriesQuery.isSuccess, country, selectedCountryId]);
 
   const statesQuery = useQuery({
     queryKey: ['locations-states', country, selectedCountryCode],
@@ -156,8 +173,8 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
           <div className="mb-3 flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPinned className="h-4 w-4" aria-hidden="true" /></span>
             <div>
-              <p className="text-sm font-semibold text-foreground">Start near you—or browse anywhere</p>
-              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Location only suggests a starting point. Country selection always stays unlocked.</p>
+              <p className="text-sm font-semibold text-foreground">Start near you—or browse Zimbabwe</p>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Location only suggests a starting point. PeekaListing currently serves Zimbabwe marketplace locations.</p>
             </div>
           </div>
           <button
