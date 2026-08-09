@@ -1,0 +1,51 @@
+name: Record canonical staging deployment status
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy canonical PeekaListing staging
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main for repository identity
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Record exact staging deployment result on status branch
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'peekalisting-staging-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git checkout --orphan deployment-status
+          git rm -rf . >/dev/null 2>&1 || true
+          mkdir -p .deployment
+          cat > .deployment/staging-status.json <<EOF
+          {
+            "workflow": "Deploy canonical PeekaListing staging",
+            "run_id": "${RUN_ID}",
+            "run_number": "${RUN_NUMBER}",
+            "conclusion": "${CONCLUSION}",
+            "head_sha": "${HEAD_SHA}",
+            "run_url": "${RUN_URL}",
+            "canonical_url": "https://staging.peekalisting.com"
+          }
+          EOF
+          git add .deployment/staging-status.json
+          git commit -m "staging status: ${CONCLUSION} ${HEAD_SHA}"
+          git push --force origin deployment-status
