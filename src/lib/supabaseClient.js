@@ -33,8 +33,10 @@ const SUBMISSION_RPC_NAMES = new Set([
 
 function stagingLikeOrigin() {
   if (typeof window === 'undefined') return false;
+  const explicitPreview = String(import.meta.env.VITE_PREVIEW_DEPLOYMENT || '').trim().toLowerCase() === 'true';
   const hostname = String(window.location.hostname || '').trim().toLowerCase();
-  return hostname.includes('staging')
+  return explicitPreview
+    || hostname.includes('staging')
     || hostname.startsWith('findit-marketplace-stagi')
     || hostname.startsWith('peekalisting-stagi');
 }
