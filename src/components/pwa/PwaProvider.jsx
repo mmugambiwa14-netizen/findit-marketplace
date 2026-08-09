@@ -10,17 +10,12 @@ import {
   serviceWorkerSupported,
 } from '@/lib/serviceWorker';
 import { readStoredString, writeStoredString } from '@/lib/browserStorage';
+import ForegroundNotificationListener from '@/components/notifications/ForegroundNotificationListener';
 
 /**
- * PWA runtime state: connectivity, update availability, and install eligibility
- * (PWA §6, §11, §17).
- *
- * Everything here degrades to inert. On a browser without service workers, or
- * with registration blocked, the context still renders its children and the
- * application behaves exactly as it did before -- no offline support, no
- * prompts, no errors.
+ * PWA runtime state: connectivity, update availability, install eligibility,
+ * and the foreground half of the canonical notification experience.
  */
-
 const PwaContext = createContext(null);
 
 const INSTALL_DISMISSED_KEY = '__findit_install_dismissed_at';
@@ -34,12 +29,8 @@ function installRecentlyDismissed() {
   return Date.now() - stored < INSTALL_DISMISS_DAYS * 24 * 60 * 60 * 1000;
 }
 
-/** True when the app is already running as an installed PWA. */
 function runningStandalone() {
   if (typeof window === 'undefined') return false;
-  // `navigator.standalone` is Safari-only and absent from the DOM lib, but it
-  // is the sole way to detect an installed PWA on iOS -- display-mode media
-  // queries do not report standalone there.
   const nav = /** @type {Navigator & { standalone?: boolean }} */ (window.navigator);
   return Boolean(
     window.matchMedia?.('(display-mode: standalone)')?.matches
@@ -61,9 +52,6 @@ export function PwaProvider({ children }) {
     registered.current = true;
 
     if (previewDeployment()) {
-      // Branch aliases are reused across deployments. Remove an older worker
-      // and its FindIt-owned shell caches, then reload once so the current
-      // deployment takes control immediately rather than after another visit.
       resetPreviewServiceWorkerState().then((changed) => {
         if (!changed || readStoredString('session', PREVIEW_RESET_KEY) === '1') return;
         writeStoredString('session', PREVIEW_RESET_KEY, '1');
@@ -72,14 +60,10 @@ export function PwaProvider({ children }) {
       return undefined;
     }
 
-    // Registering after load keeps the worker's own fetch off the critical path
-    // on exactly the slow connections offline support is meant to help.
     let cancelled = false;
     const start = () => {
       if (cancelled) return;
-      registerServiceWorker({
-        onUpdateReady: () => { if (!cancelled) setUpdateReady(true); },
-      });
+      registerServiceWorker({ onUpdateReady: () => { if (!cancelled) setUpdateReady(true); } });
     };
 
     if (document.readyState === 'complete') start();
@@ -91,8 +75,6 @@ export function PwaProvider({ children }) {
     };
   }, []);
 
-  // An installed app can go days without a navigation, which is how browsers
-  // normally notice a new worker. Poll gently to cover that in production only.
   useEffect(() => {
     if (!serviceWorkerSupported() || previewDeployment()) return undefined;
     const timer = window.setInterval(() => {
@@ -103,8 +85,6 @@ export function PwaProvider({ children }) {
 
   useEffect(() => {
     const handleInstallPrompt = (event) => {
-      // Chromium fires this when the app is installable. Holding the event lets
-      // the prompt appear at a moment the user chose rather than on page load.
       event.preventDefault();
       setInstallEvent(event);
     };
@@ -145,8 +125,6 @@ export function PwaProvider({ children }) {
   }, []);
 
   const refreshApp = useCallback(async () => {
-    // A manual refresh should also activate a version the browser has downloaded
-    // but not yet promoted. When there is no waiting worker, use a normal reload.
     if (serviceWorkerSupported() && !previewDeployment()) {
       const waiting = await checkForUpdate();
       if (waiting) {
@@ -164,21 +142,20 @@ export function PwaProvider({ children }) {
     applyUpdate: applyPendingUpdate,
     refreshApp,
     standalone,
-    // Never offered when already installed, when the browser has not said the
-    // app is installable, or within the dismissal window. §6: no spamming.
     canInstall: Boolean(installEvent) && !standalone && !installDismissed,
     promptInstall,
     dismissInstall,
   }), [connectivity, updateReady, refreshApp, standalone, installEvent, installDismissed,
     promptInstall, dismissInstall]);
 
-  return <PwaContext.Provider value={value}>{children}</PwaContext.Provider>;
+  return (
+    <PwaContext.Provider value={value}>
+      {children}
+      <ForegroundNotificationListener />
+    </PwaContext.Provider>
+  );
 }
 
-/**
- * Safe to call outside the provider: returns inert defaults rather than
- * throwing, so a component using it cannot break a tree that has no provider.
- */
 export function usePwa() {
   return useContext(PwaContext) ?? {
     online: true,
