@@ -51,7 +51,7 @@ test('listing summaries share one elevated hierarchy across every public detail 
   for (const source of [propertyDetail, carDetail, machineryDetail, serviceDetail]) {
     assert.match(source, /import ListingSummary from "@\/components\/listings\/ListingSummary"/);
     assert.match(source, /<ListingSummary\s+embedded/);
-    assert.match(source, /mt-5 grid grid-cols-1 gap-3 min-\[430px\]:grid-cols-2/);
+    assert.match(source, /mt-5 overflow-hidden rounded-3xl border border-border\/80 bg-card\/90 shadow-sm/);
     assert.match(source, /tour\?\.status === "ready"/);
     assert.match(source, />Video proof available<\/Badge>/);
   }
@@ -105,8 +105,9 @@ test('listing section navigation stays in normal document flow as an elevated se
 });
 
 test('listing information uses reusable raised cards', () => {
-  assert.match(featureItem, /rounded-2xl border border-border\/80 bg-card\/90/);
-  assert.match(featureItem, /locked-icon-tile h-10 w-10/);
+  assert.match(featureItem, /min-h-\[4\.25rem\].*border-b.*last:border-b-0/);
+  assert.match(featureItem, /max-w-\[58%\].*text-right/);
+  assert.match(featureItem, /odd:bg-muted\/20/);
   assert.match(detailTabs, /rounded-3xl border border-border\/80 bg-card\/90/);
 });
 

@@ -100,7 +100,7 @@ export default function PropertyDetail() {
                 <ListingCode key="property-code" type="property" id={property.id} />,
               ]}
             />
-            <div className="mt-5 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+            <div className="mt-5 overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
               {property.bedrooms > 0 && <ListingFeatureItem icon={Bed} label="Bedrooms" value={property.bedrooms} />}
               {property.bathrooms > 0 && <ListingFeatureItem icon={Bath} label="Bathrooms" value={property.bathrooms} />}
               {property.property_size > 0 && <ListingFeatureItem icon={Maximize} label="Size" value={`${property.property_size}m²`} />}

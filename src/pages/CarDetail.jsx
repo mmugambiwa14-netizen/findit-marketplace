@@ -93,7 +93,7 @@ export default function CarDetail() {
                 <ListingCode key="car-code" type="car" id={car.id} />,
               ]}
             />
-            <div className="mt-5 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+            <div className="mt-5 overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
               <ListingFeatureItem icon={Calendar} label="Year" value={car.year} />
               <ListingFeatureItem icon={Gauge} label="Mileage" value={`${(car.mileage || 0).toLocaleString()} km`} />
               <ListingFeatureItem icon={Fuel} label="Fuel" value={car.fuel_type} />

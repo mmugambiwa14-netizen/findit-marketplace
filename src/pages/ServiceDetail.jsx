@@ -115,7 +115,7 @@ export default function ServiceDetail() {
                 service.can_travel ? "Travels to customers" : null,
               ]}
             />
-            <div className="mt-5 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+            <div className="mt-5 overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
               <ListingFeatureItem icon={Briefcase} label="Category" value={categoryLabel} />
               <ListingFeatureItem icon={BadgeCheck} label="Specialisation" value={subcategoryLabels.join(", ")} />
               <ListingFeatureItem icon={BadgeCheck} label="Pricing" value={priceDisplay} />

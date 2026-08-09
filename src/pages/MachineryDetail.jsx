@@ -94,7 +94,7 @@ export default function MachineryDetail() {
                 <ListingCode key="machinery-code" type="machinery" id={item.id} />,
               ]}
             />
-            <div className="mt-5 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+            <div className="mt-5 overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
               {item.year && <ListingFeatureItem icon={Zap} label="Year" value={item.year} />}
               {item.equipment_hours > 0 && <ListingFeatureItem icon={Gauge} label="Hours" value={`${item.equipment_hours.toLocaleString()} h`} />}
               {item.mileage_km > 0 && <ListingFeatureItem icon={Gauge} label="Mileage" value={`${item.mileage_km.toLocaleString()} km`} />}
