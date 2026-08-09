@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AUTH_ERROR_TYPES, deriveAuthState, toAuthError } from '../src/lib/authState.js';
+import {
+  AUTH_ERROR_TYPES,
+  deriveAuthState,
+  isOptionalProfileSchemaError,
+  isTerminalSessionError,
+  toAuthError,
+} from '../src/lib/authState.js';
 
 test('guest state is explicit and has no blocked account', () => {
   assert.deepEqual(deriveAuthState(null), {
@@ -47,4 +53,30 @@ test('missing profile and provider failures have distinct safe error states', ()
     AUTH_ERROR_TYPES.PROFILE_MISSING,
   );
   assert.equal(toAuthError(new Error('network unavailable')).type, AUTH_ERROR_TYPES.AUTH_UNAVAILABLE);
+  assert.equal(
+    toAuthError({ finditAuthFailure: AUTH_ERROR_TYPES.PROFILE_UNAVAILABLE }).type,
+    AUTH_ERROR_TYPES.PROFILE_UNAVAILABLE,
+  );
+});
+
+test('rejected refresh tokens are terminal but temporary network failures are not', () => {
+  assert.equal(isTerminalSessionError({
+    status: 400,
+    code: 'refresh_token_not_found',
+    message: 'Invalid Refresh Token: Refresh Token Not Found',
+  }), true);
+  assert.equal(isTerminalSessionError({ status: 503, message: 'network unavailable' }), false);
+});
+
+test('only missing optional seller fields use the core profile projection', () => {
+  assert.equal(isOptionalProfileSchemaError({
+    status: 400,
+    code: '42703',
+    message: 'column users.display_name does not exist',
+  }), true);
+  assert.equal(isOptionalProfileSchemaError({
+    status: 400,
+    code: '42703',
+    message: 'column users.role does not exist',
+  }), false);
 });

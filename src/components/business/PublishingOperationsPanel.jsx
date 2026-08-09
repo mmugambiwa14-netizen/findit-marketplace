@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, CheckCircle2, Clock3, Loader2, ShieldAlert } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock3, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import {
   requestAdditionalBusinessCategories,
   respondToBusinessApplication,
 } from '@/services/businessPublishingService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const CATEGORY_OPTIONS = [
   ['property', 'Property'],
@@ -120,7 +121,8 @@ export default function PublishingOperationsPanel({ access, onRefresh }) {
               <p className="mt-1 text-sm text-muted-foreground">{access.reviewerMessage || 'Please provide the requested application information.'}</p>
             </div>
           </div>
-          <Textarea className="mt-3" rows={4} minLength={5} maxLength={3000} value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write your response" />
+          <label htmlFor="publishing-response" className="mt-3 block text-xs font-semibold">Response to PeekaListing</label>
+          <Textarea id="publishing-response" className="mt-1" rows={4} minLength={5} maxLength={3000} value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write your response" />
           <Button className="mt-3" onClick={submitInformation} disabled={busyAction === 'information' || response.trim().length < 5}>
             {busyAction === 'information' ? 'Sending…' : 'Send information'}
           </Button>
@@ -150,7 +152,7 @@ export default function PublishingOperationsPanel({ access, onRefresh }) {
           <Button size="sm" variant="ghost" onClick={loadManagedRequests} disabled={loadingRequests}>Refresh</Button>
         </div>
         {loadingRequests ? (
-          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading requests</div>
+          <ListRowsSkeleton rows={3} showThumbnail={false} className="mt-3" label="Loading managed advertising requests" />
         ) : managedRequests.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">No managed advertising requests yet.</p>
         ) : (

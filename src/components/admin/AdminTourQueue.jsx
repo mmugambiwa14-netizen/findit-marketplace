@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ExternalLink, Film, Loader2, Play, Search, ShieldAlert, UserX } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Film, Play, Search, ShieldAlert, UserX } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import CursorPager from '@/components/admin/CursorPager';
@@ -21,6 +21,8 @@ import {
 } from '@/services/listingToursService';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
 import { useCursorStack } from '@/hooks/useCursorStack';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const PAGE_SIZE = 20;
 const REPORT_REASON_LABELS = {
@@ -124,7 +126,7 @@ export default function AdminTourQueue() {
 
       {queue.error && <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{queue.error.message}</p>}
       {queue.isLoading ? (
-        <Card className="p-10 text-center text-muted-foreground"><Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin" />Loading Tour moderation queue…</Card>
+        <Card className="p-4"><ListRowsSkeleton rows={6} label="Loading Tour moderation queue" /></Card>
       ) : data.items.length === 0 ? (
         <Card className="p-10 text-center"><Film className="mx-auto mb-2 h-8 w-8 text-muted-foreground" /><p className="text-muted-foreground">No Tours match these filters.</p></Card>
       ) : (
@@ -137,7 +139,7 @@ export default function AdminTourQueue() {
         <DialogContent className="max-w-3xl">
           <DialogHeader><DialogTitle>Review Tour media</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">{reviewTour?.parent_title}</p>
-          {media.isLoading ? <div className="flex aspect-video items-center justify-center rounded-xl bg-muted" role="status"><Loader2 className="h-7 w-7 animate-spin text-primary" aria-hidden="true" /><span className="sr-only">Loading review media</span></div> : media.error ? <div className="space-y-3 rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert"><p>{media.error.message}</p><Button type="button" size="sm" variant="outline" onClick={() => media.refetch()}>Retry review media</Button></div> : media.data?.playbackUrl ? <video src={media.data.playbackUrl} poster={media.data.thumbnailUrl || undefined} controls playsInline preload="metadata" className="aspect-video w-full rounded-xl bg-black object-contain" /> : media.data?.thumbnailUrl ? <img src={media.data.thumbnailUrl} alt="Tour review thumbnail" loading="lazy" decoding="async" className="aspect-video w-full rounded-xl bg-muted object-contain" /> : <div className="flex aspect-video items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">No processed review media is available for this state.</div>}
+          {media.isLoading ? <SkeletonRegion label="Loading review media"><Skeleton className="aspect-video w-full" /></SkeletonRegion> : media.error ? <div className="space-y-3 rounded-xl bg-destructive/10 p-4 text-sm text-destructive" role="alert"><p>{media.error.message}</p><Button type="button" size="sm" variant="outline" onClick={() => media.refetch()}>Retry review media</Button></div> : media.data?.playbackUrl ? <video src={media.data.playbackUrl} poster={media.data.thumbnailUrl || undefined} controls playsInline preload="metadata" className="aspect-video w-full rounded-xl bg-black object-contain" /> : media.data?.thumbnailUrl ? <img src={media.data.thumbnailUrl} alt="Tour review thumbnail" loading="lazy" decoding="async" className="aspect-video w-full rounded-xl bg-muted object-contain" /> : <div className="flex aspect-video items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground">No processed review media is available for this state.</div>}
           <div className="flex flex-wrap justify-end gap-2">
             {reviewTour?.parent_path && <Button asChild variant="outline"><Link to={reviewTour.parent_path} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />View parent</Link></Button>}
             {reviewTour?.status === 'ready' && reviewTour?.moderation_status === 'pending' && <><Button onClick={() => openDecision('approve', reviewTour)}>Approve</Button><Button variant="destructive" onClick={() => openDecision('reject', reviewTour)}>Reject</Button></>}

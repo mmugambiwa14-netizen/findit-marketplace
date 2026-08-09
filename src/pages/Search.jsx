@@ -20,10 +20,11 @@ import {
 import { useCurrency } from '@/lib/CurrencyContext';
 import { getCurrencyConfig, getSupportedListingCurrencies, LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { getPublicSearchSuggestions, searchPublicListingsPage } from '@/services/publicListingsService';
+import { getCategoryTaxonomy } from '@/services/taxonomyService';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 
 const VALID_TYPES = new Set(['property', 'car', 'machinery']);
-const VALID_SORTS = new Set(['newest', 'price_asc', 'price_desc', 'most_viewed']);
+const VALID_SORTS = new Set(['newest', 'price_asc', 'price_desc']);
 const PRICE_SORTS = new Set(['price_asc', 'price_desc']);
 const VALID_VIEWS = new Set(['list', 'map']);
 const VALID_PRICE_CURRENCIES = new Set(getSupportedListingCurrencies(LAUNCH_COUNTRY_CODE).map((currency) => currency.code));
@@ -93,6 +94,20 @@ export default function Search() {
   const locationName = searchParams.get('locationName') || '';
   const locationCountry = searchParams.get('country') || '';
   const locationProvince = searchParams.get('province') || '';
+
+  const { data: categoryTaxonomy } = useQuery({
+    queryKey: ['public-category-taxonomy', 'filters', type, LAUNCH_COUNTRY_CODE],
+    queryFn: () => getCategoryTaxonomy(type, LAUNCH_COUNTRY_CODE),
+    enabled: VALID_TYPES.has(type),
+    staleTime: 5 * 60 * 1000,
+  });
+  const categoryOptions = useMemo(() => {
+    const canonical = (categoryTaxonomy || [])
+      .filter((node) => node.nodeType === 'category' && node.isPostable && !node.supersededBy)
+      .sort((left, right) => left.pathLabels.join(' / ').localeCompare(right.pathLabels.join(' / ')) || left.sortOrder - right.sortOrder)
+      .map((node) => ({ value: node.stableSlug, label: node.label }));
+    return canonical.length ? canonical : CATEGORIES_BY_TYPE[type];
+  }, [categoryTaxonomy, type]);
 
   const selectedLocation = useMemo(() => locationId ? {
     country: locationCountry,
@@ -179,8 +194,8 @@ export default function Search() {
   const categorySuggestions = useMemo(() => {
     if (suggestionQuery.length < 2) return [];
     const normalized = suggestionQuery.toLowerCase();
-    return CATEGORIES_BY_TYPE[type].filter((item) => item.label.toLowerCase().includes(normalized)).slice(0, 3);
-  }, [suggestionQuery, type]);
+    return categoryOptions.filter((item) => item.label.toLowerCase().includes(normalized)).slice(0, 3);
+  }, [categoryOptions, suggestionQuery]);
 
   const hasSuggestions = Boolean(categorySuggestions.length || suggestions?.listings?.length || suggestions?.locations?.length);
 
@@ -295,7 +310,7 @@ export default function Search() {
 
   const activeFilters = useMemo(() => {
     const filters = [];
-    if (category) filters.push({ key: 'category', label: optionLabel(CATEGORIES_BY_TYPE[type], category) });
+    if (category) filters.push({ key: 'category', label: optionLabel(categoryOptions, category) });
     if (locationId) filters.push({ key: 'location', label: selectedLocation?.cityName || 'Location' });
     if (bedrooms) filters.push({ key: 'bedrooms', label: `${bedrooms}+ bedrooms` });
     if (make) filters.push({ key: 'make', label: make });
@@ -309,7 +324,7 @@ export default function Search() {
       if (priceLabel) filters.push({ key: 'price', label: priceLabel });
     }
     return filters;
-  }, [category, type, locationId, selectedLocation?.cityName, bedrooms, make, condition, fuelType, transmission, currency, minPrice, maxPrice, formatNative]);
+  }, [category, categoryOptions, locationId, selectedLocation?.cityName, bedrooms, make, condition, fuelType, transmission, currency, minPrice, maxPrice, formatNative]);
 
   const removeFilter = (key) => {
     if (key === 'location') {
@@ -398,6 +413,7 @@ export default function Search() {
         open={filtersOpen}
         onOpenChange={setFiltersOpen}
         type={type}
+        categoryOptions={categoryOptions}
         filters={filterValues}
         selectedLocation={selectedLocation}
         onApply={applyFilterSheet}

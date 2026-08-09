@@ -8,9 +8,11 @@ import {
   getCurrentPushSubscription,
   webPushSupport,
 } from '@/services/webPushService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 export default function PushNotificationSettings() {
   const [state, setState] = useState(() => ({ ...webPushSupport(), subscribed: false }));
+  const [initializing, setInitializing] = useState(true);
   const [working, setWorking] = useState(false);
 
   useEffect(() => {
@@ -19,7 +21,8 @@ export default function PushNotificationSettings() {
       .then((subscription) => {
         if (active) setState({ ...webPushSupport(), subscribed: Boolean(subscription) });
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => { if (active) setInitializing(false); });
     return () => { active = false; };
   }, []);
 
@@ -42,6 +45,8 @@ export default function PushNotificationSettings() {
       setWorking(false);
     }
   };
+
+  if (initializing) return <ListRowsSkeleton rows={2} showThumbnail={false} label="Checking push notification status" />;
 
   if (!state.supported) {
     return <p className="text-sm text-muted-foreground">This browser does not support Web Push notifications.</p>;

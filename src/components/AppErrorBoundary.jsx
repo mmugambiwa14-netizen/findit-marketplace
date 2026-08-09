@@ -3,6 +3,7 @@ import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import * as authService from '@/services/authService';
 import BrandLogo from '@/components/BrandLogo';
+import { reportError } from '@/lib/monitoring';
 
 export default class AppErrorBoundary extends React.Component {
   constructor(props) {
@@ -16,6 +17,10 @@ export default class AppErrorBoundary extends React.Component {
 
   componentDidCatch(error, info) {
     console.error('Unhandled application render error:', error, info);
+    reportError(error, {
+      phase: 'react-render',
+      componentStack: info?.componentStack || '',
+    });
   }
 
   render() {

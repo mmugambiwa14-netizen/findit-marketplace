@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Loader2, AlertTriangle } from "lucide-react";
+import { FormSkeleton } from '@/components/loading/LoadingSkeletons';
 import AuthLayout from "@/components/AuthLayout";
 
 // Phase 2B. Replaces base44.auth.resetPassword({ resetToken, newPassword }).
@@ -103,8 +104,10 @@ export default function ResetPassword() {
 
   if (checking) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin" />
+      <div className="fixed inset-0 flex items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-card">
+          <FormSkeleton fields={2} label="Checking password reset link" />
+        </div>
       </div>
     );
   }

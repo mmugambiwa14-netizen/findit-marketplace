@@ -24,7 +24,7 @@ path,kind,component,source,line
 "/create","compatibility","LegacyPathRedirect","","179"
 "/messages","compatibility","LegacyPathRedirect","","180"
 "/messages/:conversationId","compatibility","LegacyConversationRedirect","","181"
-"/post","protected","CreateListing","src/pages/CreateListing","185"
+"/post","protected","BusinessPublishingGate","","185"
 "/create-service","protected","CuratedCreateService","src/pages/CuratedCreateService","186"
 "/my-services","protected","MyServices","src/pages/MyServices","187"
 "/saved","protected","Saved","src/pages/Saved","188"

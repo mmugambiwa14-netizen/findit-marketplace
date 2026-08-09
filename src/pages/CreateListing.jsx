@@ -14,6 +14,7 @@ import { usePersistentFormDraft } from '@/hooks/usePersistentFormDraft';
 import { useAuth } from '@/lib/AuthContext';
 import { customerErrorMessage } from '@/lib/customerErrors';
 import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
+import { goBackOrHome } from '@/lib/navigation';
 import { resolveListingImages, submitListing } from '@/services/listingCreationService';
 import { removeListingTour, uploadListingTour } from '@/services/listingToursService';
 import { getActiveLocations } from '@/services/locationsService';
@@ -258,7 +259,7 @@ export default function CreateListing() {
 
   return <div className="min-h-screen bg-background pb-16">
     <StepProgress currentStep={step} onSaveDraft={saveDraft} />
-    {step === 1 && <div className="mx-auto max-w-[680px] px-4 pt-4"><button type="button" onClick={() => isDirty ? setConfirmation('exit-draft') : navigate(-1)} className="flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Exit</button></div>}
+    {step === 1 && <div className="mx-auto max-w-[680px] px-4 pt-4"><button type="button" onClick={() => isDirty ? setConfirmation('exit-draft') : goBackOrHome(navigate, '/')} className="flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Exit</button></div>}
     <main className="mx-auto max-w-[680px] px-4 py-4">
       {step === 1 && <Step1Category formData={formData} update={update} onContinue={() => setStep(2)} />}
       {step === 2 && <ListingDetailsStep formData={formData} update={update} onBack={() => setStep(1)} onContinue={() => setStep(3)} />}
@@ -275,7 +276,7 @@ export default function CreateListing() {
         setConfirmation(null);
         if (mode === 'exit-draft') {
           saveNow();
-          navigate(-1);
+          goBackOrHome(navigate, '/');
         }
       }}
     />

@@ -1,31 +1,30 @@
 {
-  "generatedAt": "2026-08-07T03:58:40.433Z",
+  "generatedAt": "2026-08-09T00:39:09.943Z",
   "scope": {
-    "sourceModules": 312,
+    "sourceModules": 332,
     "routedPatterns": 48,
     "pageModules": 40,
-    "uniqueControlInstances": 728,
-    "pageExpandedControlInstances": 1098
+    "uniqueControlInstances": 766,
+    "pageExpandedControlInstances": 1151
   },
   "controlsByElement": {
     "a": 6,
     "AlertDialog": 13,
-    "button": 125,
-    "Button": 251,
+    "button": 130,
+    "Button": 266,
     "Checkbox": 1,
     "Dialog": 22,
     "DropdownMenuTrigger": 2,
     "form": 13,
-    "Input": 98,
-    "Link": 95,
+    "Input": 100,
+    "Link": 99,
     "PopoverTrigger": 1,
-    "Select": 28,
-    "SelectTrigger": 28,
+    "Select": 30,
+    "SelectTrigger": 30,
     "Sheet": 5,
-    "Slider": 1,
-    "Switch": 7,
-    "TabsTrigger": 3,
-    "Textarea": 29
+    "Switch": 10,
+    "TabsTrigger": 4,
+    "Textarea": 34
   },
   "routes": [
     {
@@ -206,8 +205,8 @@
     {
       "path": "/post",
       "kind": "protected",
-      "component": "CreateListing",
-      "source": "src/pages/CreateListing",
+      "component": "BusinessPublishingGate",
+      "source": "",
       "line": 185
     },
     {
@@ -365,23 +364,12 @@
       "line": 213
     }
   ],
-  "failures": [
-    {
-      "severity": "medium",
-      "code": "UNSAFE_BROWSER_STORAGE",
-      "file": "src/lib/traceContext.js",
-      "line": null,
-      "message": "Browser storage is accessed outside the guarded storage boundary.",
-      "evidence": ""
-    }
-  ],
+  "failures": [],
   "warnings": [],
   "summary": {
-    "failureCount": 1,
+    "failureCount": 0,
     "warningCount": 0,
-    "failureSeverity": {
-      "medium": 1
-    },
+    "failureSeverity": {},
     "warningSeverity": {}
   }
 }

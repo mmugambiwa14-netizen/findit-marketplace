@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTimeAgo } from '@/hooks/useTimeAgo';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { cn } from '@/lib/utils';
+import { ConversationThreadSkeleton } from '@/components/loading/LoadingSkeletons';
 import {
   getMessageConversationMetadata,
   getMessageThreadPage,
@@ -213,7 +214,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
 
   const loading = conversationQuery.isLoading || messagesQuery.isLoading;
   const failed = conversationQuery.isError || messagesQuery.isError;
-  if (loading) return <div className="fixed inset-0 flex items-center justify-center bg-background" aria-label="Loading conversation"><div className="h-7 w-7 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
+  if (loading) return <ConversationThreadSkeleton />;
   if (failed) return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">We could not load this conversation</h1><p className="mt-2 text-sm text-muted-foreground">It may be unavailable, or you may not be a participant.</p><Button type="button" variant="outline" className="mt-5" onClick={onBack}>Back to messages</Button></div>;
   if (!conversationQuery.data) return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">Conversation not found</h1><Button type="button" variant="outline" className="mt-5" onClick={onBack}>Back to messages</Button></div>;
 

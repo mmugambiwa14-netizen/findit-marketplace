@@ -146,7 +146,6 @@ export default function ListingCard({
         save={{ active: liked, onToggle: toggleLike }}
         tour={tourSummary(listing)}
         sellerName={listing.seller_name}
-        views={listing.views}
         actions={actions}
         layout={layout}
         className={className}

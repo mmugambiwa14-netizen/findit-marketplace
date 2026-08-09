@@ -7,6 +7,15 @@ function findPeekThreadsSection() {
   return document.querySelector('section[aria-labelledby^="peek-threads-"]');
 }
 
+function selectDetailsTab() {
+  const tab = document.querySelector('[data-listing-detail-tab="listing-info"]');
+  if (tab instanceof HTMLElement && tab.getAttribute('aria-selected') !== 'true') {
+    tab.click();
+    return true;
+  }
+  return false;
+}
+
 function findRequestButton(section) {
   return [...section.querySelectorAll('button')].find((button) => (
     button.textContent?.trim().toLowerCase().includes('request a peek')
@@ -36,7 +45,10 @@ export default function PeekRequestIntentHandler() {
     const activate = () => {
       if (completed) return true;
       const section = findPeekThreadsSection();
-      if (!section) return false;
+      if (!section) {
+        selectDetailsTab();
+        return false;
+      }
 
       completed = true;
       handledLocationRef.current = locationKey;

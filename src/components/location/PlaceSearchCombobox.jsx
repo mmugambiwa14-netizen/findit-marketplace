@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { searchMarketplacePlaces } from '@/services/locationsService';
 import { cn } from '@/lib/utils';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const SEARCH_DELAY_MS = 250;
 
@@ -86,7 +87,7 @@ export function PlaceSearchCombobox({
 
       {parentId ? (
         <div id={`${inputId}-results`} role="listbox" aria-busy={searching} className="max-h-56 overflow-y-auto overscroll-contain rounded-xl border border-border bg-card" aria-label="Place results">
-          {places.map((place) => {
+          {searching ? <div className="p-2"><ListRowsSkeleton rows={3} showThumbnail={false} label="Searching places" /></div> : places.map((place) => {
             const selected = place.id === value;
             return (
               <button

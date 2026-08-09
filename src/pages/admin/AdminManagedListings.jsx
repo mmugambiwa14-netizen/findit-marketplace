@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Megaphone, RefreshCw } from 'lucide-react';
+import { Megaphone, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +7,7 @@ import {
   listManagedListingRequests,
   updateManagedListingRequest,
 } from '@/services/adminBusinessPublishingService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const STATUSES = ['', 'submitted', 'reviewing', 'accepted', 'needs_information', 'declined', 'published', 'cancelled'];
 
@@ -60,7 +61,7 @@ export default function AdminManagedListings() {
         </select>
       </label>
 
-      {loading && <div className="flex min-h-48 items-center justify-center"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>}
+      {loading && <ListRowsSkeleton rows={5} label="Loading managed listing requests" />}
       {!loading && rows.length === 0 && <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">No managed listing requests match this filter.</div>}
 
       <div className="space-y-4">
@@ -79,7 +80,8 @@ export default function AdminManagedListings() {
             {row.price_expectation && <p className="mt-2 text-sm"><span className="font-bold">Price expectation:</span> {row.price_expectation}</p>}
             {row.reviewer_message && <div className="mt-3 rounded-xl border border-border bg-background/45 p-3 text-sm">{row.reviewer_message}</div>}
 
-            <Textarea className="mt-4" rows={2} placeholder="Required when requesting information or declining" value={messages[row.id] || ''} onChange={(event) => setMessages((current) => ({ ...current, [row.id]: event.target.value }))} />
+            <label htmlFor={`managed-message-${row.id}`} className="sr-only">Message for managed listing request</label>
+            <Textarea id={`managed-message-${row.id}`} className="mt-4" rows={2} placeholder="Required when requesting information or declining" value={messages[row.id] || ''} onChange={(event) => setMessages((current) => ({ ...current, [row.id]: event.target.value }))} />
             <div className="mt-3 flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => update(row, 'reviewing')} disabled={busyId === row.id}>Start review</Button>
               <Button onClick={() => update(row, 'accepted')} disabled={busyId === row.id}>Accept</Button>

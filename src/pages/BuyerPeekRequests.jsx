@@ -4,6 +4,7 @@ import MyPeekRequestsQueue from '@/components/peekThreads/MyPeekRequestsQueue';
 import ResponsePeekBindingQueue from '@/components/peekThreads/ResponsePeekBindingQueue';
 import SellerPeekRequestsQueueLive from '@/components/peekThreads/SellerPeekRequestsQueueLive';
 import { cn } from '@/lib/utils';
+import { goBackOrHome } from '@/lib/navigation';
 
 export default function BuyerPeekRequests() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function BuyerPeekRequests() {
     <div className="min-h-[100dvh] pb-24">
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
-          <button type="button" onClick={() => navigate(-1)} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-muted" aria-label="Go back"><ArrowLeft className="h-5 w-5" /></button>
+          <button type="button" onClick={() => goBackOrHome(navigate, '/')} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-muted" aria-label="Go back"><ArrowLeft className="h-5 w-5" /></button>
           <div className="min-w-0">
             <h1 className="text-lg font-black">Peek Requests</h1>
             <p className="truncate text-xs text-muted-foreground">Track visual evidence you want and respond to buyer demand.</p>

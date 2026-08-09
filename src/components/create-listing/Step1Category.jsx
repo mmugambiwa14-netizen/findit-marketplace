@@ -17,6 +17,7 @@ import PublishingOperationsPanel from '@/components/business/PublishingOperation
 import { getCategoryTaxonomy, groupPostableNodes, marketplaceRoots } from '@/services/taxonomyService';
 import { seedListingSchemaValues } from '@/services/listingSchemaBinding';
 import StepNav from './StepNav';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const FAMILY_PRESENTATION = Object.freeze({
   property: { icon: PropertyCategoryIcon, fallbackLabel: 'Property', desc: 'Homes, land and commercial property' },
@@ -124,11 +125,11 @@ function ApprovedCategorySelection({ formData, update, onContinue }) {
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Create a listing</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight">What are you posting?</h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">Loading the current marketplace categories…</p>
+          <Skeleton className="mt-2 h-4 w-64 max-w-full" />
         </div>
-        <div className="grid grid-cols-2 gap-3" aria-busy="true">
-          {[0, 1, 2, 3].map((item) => <div key={item} className="h-[154px] animate-pulse rounded-2xl border bg-muted/35" />)}
-        </div>
+        <SkeletonRegion label="Loading marketplace categories" className="grid grid-cols-2 gap-3">
+          {[0, 1, 2, 3].map((item) => <Skeleton key={item} className="h-[154px] rounded-2xl border border-border" />)}
+        </SkeletonRegion>
       </div>
     );
   }

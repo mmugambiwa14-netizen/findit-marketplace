@@ -17,14 +17,14 @@ export default function TourCatalogueHeader({ query, location, onQueryChange, on
           <label htmlFor="tour-catalogue-search" className="relative block">
             <span className="sr-only">Search Peeks</span>
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="tour-catalogue-search" type="search" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search Peeks" className="locked-control h-12 rounded-2xl pl-10 pr-10" maxLength={100} />
+            <Input id="tour-catalogue-search" type="search" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search Peeks" className="locked-control h-12 rounded-2xl pl-10 pr-10 text-base md:text-sm" maxLength={100} />
             <span className="sr-only">Search listings, sellers or locations</span>
             {query && <button type="button" aria-label="Clear Peek search" onClick={() => onQueryChange('')} className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>}
           </label>
           <label htmlFor="tour-catalogue-location" className="relative block">
             <span className="sr-only">Filter Peeks by location</span>
             <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
-            <Input id="tour-catalogue-location" value={location} onChange={(event) => onLocationChange(event.target.value)} placeholder="Anywhere" className="locked-control h-12 rounded-2xl pl-9 pr-2 text-xs" maxLength={120} />
+            <Input id="tour-catalogue-location" value={location} onChange={(event) => onLocationChange(event.target.value)} placeholder="Anywhere" className="locked-control h-12 rounded-2xl pl-9 pr-2 text-base md:text-sm" maxLength={120} />
           </label>
         </div>
       </div>

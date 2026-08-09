@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import TourUploader from '@/components/tours/TourUploader';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import {
   acceptPeekRequest,
@@ -305,11 +306,11 @@ export default function BuyerPeekRequestsQueue() {
           <h2 id="buyer-peek-requests-heading" className="mt-1 text-lg font-black">Buyer Peek Requests</h2>
           <p className="mt-1 text-sm text-muted-foreground">Prioritised by buyer interest and how long each request has waited.</p>
         </div>
-        {items.length > 0 && <Badge variant="secondary">{items.length} loaded</Badge>}
+        {items.length > 0 && <Badge variant="secondary">Showing {items.length}</Badge>}
       </div>
 
       {queue.isLoading ? (
-        <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading requests</div>
+        <ListRowsSkeleton rows={5} className="p-3" label="Loading buyer Peek Requests" />
       ) : queue.isError && items.length === 0 ? (
         <div className="p-6 text-center"><p className="text-sm text-destructive">Buyer Peek Requests could not be loaded.</p><Button className="mt-3" size="sm" variant="outline" onClick={() => queue.refetch()}>Try again</Button></div>
       ) : items.length === 0 ? (

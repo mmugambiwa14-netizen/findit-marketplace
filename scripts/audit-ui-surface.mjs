@@ -158,6 +158,20 @@ for (const file of files) {
     findings.push({ file: relative(root, file), line: location.line + 1, code, severity, message });
   }
 
+  function hasAncestorAccessibleLabel(node) {
+    let current = node.parent;
+    while (current) {
+      if (ts.isJsxElement(current) || ts.isJsxSelfClosingElement(current)) {
+        const opening = ts.isJsxElement(current) ? current.openingElement : current;
+        const ancestorName = elementName(ts, opening.tagName);
+        const ancestorAttrs = attributes(ts, opening, sourceFile);
+        if (ancestorName === 'label' || (ancestorName === 'Field' && ancestorAttrs.label)) return true;
+      }
+      current = current.parent;
+    }
+    return false;
+  }
+
   function visit(node) {
     if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
       const open = ts.isJsxElement(node) ? node.openingElement : node;
@@ -207,7 +221,7 @@ for (const file of files) {
           'src/components/ui/PhoneInput.jsx',
         ].includes(posixPath(relative(root, file)));
         const inputType = String(attrs.type || '');
-        if (!reusablePrimitive && !['hidden', 'file'].includes(inputType) && !attrs['aria-label'] && !attrs['aria-labelledby'] && !(attrs.id && labels.has(attrs.id))) {
+        if (!reusablePrimitive && !['hidden', 'file'].includes(inputType) && !attrs['aria-label'] && !attrs['aria-labelledby'] && !(attrs.id && labels.has(attrs.id)) && !hasAncestorAccessibleLabel(open)) {
           addFinding(open, 'FIELD_LABEL', 'medium', `${name} has no associated label or accessible name in its module.`);
         }
       }

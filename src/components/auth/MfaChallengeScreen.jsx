@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/AuthContext';
 import { userFacingError } from '@/lib/userFacingErrors';
 import * as authService from '@/services/authService';
+import { FormSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const CODE_LENGTH = 6;
 
@@ -65,7 +66,9 @@ export default function MfaChallengeScreen({ onVerified }) {
         </button>
       }
     >
-      {loadError ? (
+      {loadingFactor ? (
+        <FormSkeleton fields={1} label="Preparing two-step verification" />
+      ) : loadError ? (
         <div className="space-y-4 text-center">
           <p className="rounded-xl border border-destructive/25 bg-destructive/10 p-3 text-sm text-destructive" role="alert">{loadError}</p>
           <Button type="button" variant="outline" className="h-12 w-full" onClick={() => logout()}>Sign out</Button>

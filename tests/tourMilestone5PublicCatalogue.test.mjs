@@ -93,7 +93,7 @@ test('catalogue UI is immersive but remains marketplace-focused', () => {
   assert.match(page, /ImmersivePeekSlide/);
   assert.match(page, /snap-y snap-mandatory/);
   assert.match(page, /CATEGORY_OPTIONS/);
-  for (const label of ['For you', 'Property', 'Cars', 'Machinery', 'Services']) assert.match(page, new RegExp(label));
+  for (const label of ['All', 'Property', 'Cars', 'Machinery', 'Services']) assert.match(page, new RegExp(label));
   assert.doesNotMatch(page, /public likes|comments|followers|trending|reaction|creator feed/i);
 });
 

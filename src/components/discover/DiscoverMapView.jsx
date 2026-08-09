@@ -8,24 +8,25 @@ import { cn } from '@/lib/utils';
 import { loadMapLibre, mapTilerStyleUrl, registerOptionalStyleImageFallbacks } from '@/lib/mapProvider';
 import { searchPublicListingsPage } from '@/services/publicListingsService';
 import { getPublicServicesPage } from '@/services/servicesService';
+import { LAUNCH_COUNTRY_CODE, ZIMBABWE_MAP_CENTER } from '@/lib/marketConfig';
+import { MapCanvasSkeleton, MapPanelSkeleton } from '@/components/loading/LoadingSkeletons';
 import './discover-map-popup.css';
 
 const CATEGORY_KEYS = ['property', 'car', 'machinery', 'service'];
 const CITY_COORDS = {
   harare: [-17.8216, 31.0492], bulawayo: [-20.1325, 28.6265], mutare: [-18.9707, 32.6709],
   gweru: [-19.4515, 29.8169], masvingo: [-20.0744, 30.8326], chitungwiza: [-18.0127, 31.0756],
-  lagos: [6.5244, 3.3792], ikeja: [6.6018, 3.3515], lekki: [6.4698, 3.5852],
 };
 
 function number(value) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : null; }
 function coordinates(item) {
   const latitude = number(item.coordinates?.latitude ?? item.latitude);
   const longitude = number(item.coordinates?.longitude ?? item.longitude);
-  if (latitude !== null && longitude !== null) return { latitude, longitude };
+  if (latitude !== null && longitude !== null) return { latitude, longitude, approximate: false };
   const labels = [item.city, item.location_name, item.publicLocation, item.location_id].filter(Boolean).map((value) => String(value).toLowerCase());
   for (const label of labels) {
     const match = Object.entries(CITY_COORDS).find(([name]) => label.includes(name));
-    if (match) return { latitude: match[1][0], longitude: match[1][1] };
+    if (match) return { latitude: match[1][0], longitude: match[1][1], approximate: true };
   }
   return null;
 }
@@ -55,7 +56,7 @@ function createCategoryMarker(item) {
   element.dataset.category = item._kind;
   element.dataset.selected = 'false';
   element.style.setProperty('--marker-color', visual.color);
-  element.setAttribute('aria-label', `Preview ${visual.label.toLowerCase()} listing: ${item.title}`);
+  element.setAttribute('aria-label', `Preview ${visual.label.toLowerCase()}: ${item.title}`);
   element.title = `${visual.label}: ${item.title}`;
   pin.className = 'findit-map-marker-pin';
   iconSlot.className = 'findit-map-marker-icon';
@@ -67,7 +68,7 @@ function createCategoryMarker(item) {
   return { element, iconRoot };
 }
 
-function MapListingPreview({ item, onOpen, onClose }) {
+function MapListingPreview({ item, point, onOpen, onClose }) {
   const visual = CATEGORY_VISUALS[item._kind];
   return (
     <article className="findit-map-listing-preview" aria-label={`${item.title} preview`}>
@@ -90,8 +91,9 @@ function MapListingPreview({ item, onOpen, onClose }) {
           <p className="text-base font-extrabold text-primary">{price(item)}</p>
           <h2 className="mt-0.5 line-clamp-1 text-sm font-bold text-foreground">{item.title}</h2>
           <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3.5 w-3.5" />{place(item)}</p>
+          {point.approximate && <p className="mt-1 text-[11px] text-amber-700">Approximate city location</p>}
           <span className="mt-2.5 flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-primary text-xs font-bold text-primary-foreground">
-            View listing <ChevronRight className="h-4 w-4" />
+            {item._kind === 'service' ? 'View service' : 'View listing'} <ChevronRight className="h-4 w-4" />
           </span>
         </div>
       </button>
@@ -120,10 +122,10 @@ function tuneDarkBasemap(map) {
 
 function useItems(location) {
   const locationId = location?.city || '';
-  const property = useQuery({ queryKey: ['discover-map', 'property', locationId], queryFn: () => searchPublicListingsPage({ kind: 'property', locationId }), staleTime: 60000 });
-  const cars = useQuery({ queryKey: ['discover-map', 'car', locationId], queryFn: () => searchPublicListingsPage({ kind: 'car', locationId }), staleTime: 60000 });
-  const machinery = useQuery({ queryKey: ['discover-map', 'machinery', locationId], queryFn: () => searchPublicListingsPage({ kind: 'machinery', locationId }), staleTime: 60000 });
-  const services = useQuery({ queryKey: ['discover-map', 'service', locationId], queryFn: () => getPublicServicesPage({ locationId, limit: 24 }), staleTime: 60000 });
+  const property = useQuery({ queryKey: ['discover-map', 'property', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => searchPublicListingsPage({ kind: 'property', countryCode: LAUNCH_COUNTRY_CODE, locationId }), staleTime: 60000 });
+  const cars = useQuery({ queryKey: ['discover-map', 'car', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => searchPublicListingsPage({ kind: 'car', countryCode: LAUNCH_COUNTRY_CODE, locationId }), staleTime: 60000 });
+  const machinery = useQuery({ queryKey: ['discover-map', 'machinery', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => searchPublicListingsPage({ kind: 'machinery', countryCode: LAUNCH_COUNTRY_CODE, locationId }), staleTime: 60000 });
+  const services = useQuery({ queryKey: ['discover-map', 'service', LAUNCH_COUNTRY_CODE, locationId], queryFn: () => getPublicServicesPage({ locationId, limit: 24 }), staleTime: 60000 });
   const items = useMemo(() => [
     ...((property.data?.items || []).map((item) => ({ ...item, _kind: 'property' }))),
     ...((cars.data?.items || []).map((item) => ({ ...item, _kind: 'car' }))),
@@ -138,18 +140,20 @@ export default function DiscoverMapView({ location }) {
   const mapNode = useRef(null);
   const [category, setCategory] = useState('all');
   const [failure, setFailure] = useState('');
+  const [mapReady, setMapReady] = useState(false);
   const { items, loading } = useItems(location);
   const mapped = useMemo(() => items.map((item) => ({ item, point: coordinates(item) })).filter((entry) => entry.point), [items]);
   const visible = useMemo(() => category === 'all' ? mapped : mapped.filter(({ item }) => item._kind === category), [category, mapped]);
 
   useEffect(() => {
-    if (!mapNode.current || !visible.length) return undefined;
+    if (!mapNode.current) return undefined;
     let cancelled = false;
     let map;
     let activePopup;
     let activePopupRoot;
     let activeMarkerElement;
     let closeTimer;
+    let mapResizeObserver;
     const markers = [];
     const markerIconRoots = [];
     const hoverCapable = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
@@ -184,6 +188,7 @@ export default function DiscoverMapView({ location }) {
       activePopupRoot.render(
         <MapListingPreview
           item={item}
+          point={point}
           onOpen={() => navigate(path(item))}
           onClose={closePreview}
         />,
@@ -208,6 +213,7 @@ export default function DiscoverMapView({ location }) {
     };
 
     setFailure('');
+    setMapReady(false);
     (async () => {
       try {
         const maplibregl = await loadMapLibre();
@@ -215,20 +221,28 @@ export default function DiscoverMapView({ location }) {
         map = new maplibregl.Map({
           container: mapNode.current,
           style: mapTilerStyleUrl(),
-          center: [visible[0].point.longitude, visible[0].point.latitude],
-          zoom: 10,
+          center: ZIMBABWE_MAP_CENTER,
+          zoom: 5.5,
+          minZoom: 0,
+          renderWorldCopies: false,
           dragRotate: false,
           pitchWithRotate: false,
           cooperativeGestures: false,
           touchPitch: false,
         });
+        if (typeof ResizeObserver !== 'undefined' && mapNode.current) {
+          mapResizeObserver = new ResizeObserver(() => {
+            if (!cancelled) map?.resize();
+          });
+          mapResizeObserver.observe(mapNode.current);
+        }
         registerOptionalStyleImageFallbacks(map);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         const bounds = new maplibregl.LngLatBounds();
 
         visible.forEach(({ item, point }) => {
           const { element, iconRoot } = createCategoryMarker(item);
-          const marker = new maplibregl.Marker({ element, anchor: 'bottom' })
+          const marker = new maplibregl.Marker({ element, anchor: 'bottom', subpixelPositioning: true })
             .setLngLat([point.longitude, point.latitude])
             .addTo(map);
 
@@ -250,12 +264,23 @@ export default function DiscoverMapView({ location }) {
         map.once('load', () => {
           if (cancelled) return;
           tuneDarkBasemap(map);
-          map.fitBounds(bounds, { animate: false, padding: { top: 190, right: 38, bottom: 65, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
+          if (!bounds.isEmpty()) {
+            map.fitBounds(bounds, { animate: false, padding: { top: 190, right: 38, bottom: 65, left: 38 }, maxZoom: visible.length === 1 ? 14 : 11 });
+          }
+          setMapReady(true);
         });
         map.on('click', closePreview);
-        map.on('error', () => !cancelled && setFailure('Map tiles are temporarily unavailable.'));
+        map.on('error', () => {
+          if (!cancelled) {
+            setMapReady(true);
+            setFailure('Map tiles are temporarily unavailable.');
+          }
+        });
       } catch {
-        if (!cancelled) setFailure('The map could not load. Switch back to list view to continue.');
+        if (!cancelled) {
+          setMapReady(true);
+          setFailure('The map could not load. Switch back to list view to continue.');
+        }
       }
     })();
 
@@ -264,18 +289,19 @@ export default function DiscoverMapView({ location }) {
       closePreview();
       markerIconRoots.forEach((root) => root.unmount());
       markers.forEach((marker) => marker.remove());
+      mapResizeObserver?.disconnect();
       map?.remove();
     };
   }, [navigate, visible]);
 
-  if (loading) return <div className="locked-map-panel flex min-h-[540px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>;
-  if (!mapped.length) return <div className="locked-map-panel flex min-h-[540px] flex-col items-center justify-center px-6 text-center"><MapPin className="h-9 w-9 text-primary" /><h2 className="mt-4 text-lg font-bold">No mapped results</h2><p className="mt-2 text-sm text-muted-foreground">Listings without public coordinates remain available in list view.</p></div>;
-
+  if (loading) return <MapPanelSkeleton />;
   return (
     <section className="space-y-3" aria-label="Discover marketplace map">
       <div className="locked-map-panel relative min-h-[540px]">
-        <div ref={mapNode} className="h-[calc(100svh-270px)] min-h-[540px] max-h-[720px] w-full" />
+        <div ref={mapNode} className="findit-discover-map" />
+        {!mapReady && <MapCanvasSkeleton label="Loading Discover map" />}
         {failure && <div className="absolute inset-x-3 top-3 z-20 rounded-xl border border-border bg-background/94 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">{failure}</div>}
+        {!loading && !mapped.length && <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-xl border border-border bg-background/88 px-3 py-2 text-center text-xs text-muted-foreground shadow-lg backdrop-blur-xl">No listings with public coordinates yet. The map is centered on Zimbabwe.</div>}
       </div>
 
       <div className="discover-map-rail surface-panel grid grid-cols-4 gap-1.5 p-2.5" role="group" aria-label="Filter map categories">

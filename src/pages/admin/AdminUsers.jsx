@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { getAdminUsers, setAdminUserStatus } from '@/services/adminService';
 import { useCursorStack } from '@/hooks/useCursorStack';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const PAGE_SIZE = 25;
 
@@ -80,7 +81,7 @@ export default function AdminUsers() {
       </div>
       <Card><CardContent className="grid gap-3 pt-5 md:grid-cols-3"><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search users" value={query} onChange={(event) => { setQuery(event.target.value); pagination.reset(); }} placeholder="Name or email" /></div><Select value={role} onValueChange={(value) => { setRole(value); pagination.reset(); }}><SelectTrigger aria-label="Filter users by role"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All roles</SelectItem><SelectItem value="user">Users</SelectItem><SelectItem value="admin">Founder admin</SelectItem></SelectContent></Select><Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter users by status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="suspended">Suspended</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent></Select></CardContent></Card>
       {error && <div className="rounded-2xl border border-destructive/25 bg-destructive/8 p-4 text-sm"><p className="font-bold text-destructive">We could not load users.</p><p className="mt-1 text-muted-foreground">Try again. Reference: {error.correlationId || 'unavailable'}</p><Button size="sm" variant="outline" className="mt-3" onClick={() => refetch()}>Retry</Button></div>}
-      {isLoading ? <Card className="p-8 text-center text-muted-foreground">Loading users…</Card> : <UsersTable users={data.items} currentUserId={currentUser?.id} onStatusChange={openDecision} onBan={setBanUser} isUpdating={statusMutation.isPending} />}
+      {isLoading ? <Card className="p-4"><ListRowsSkeleton rows={7} label="Loading users" /></Card> : <UsersTable users={data.items} currentUserId={currentUser?.id} onStatusChange={openDecision} onBan={setBanUser} isUpdating={statusMutation.isPending} />}
       <CursorPager pageNumber={pagination.pageNumber} itemCount={data.items.length} itemLabel="users" canGoBack={pagination.canGoBack} canGoForward={Boolean(data.nextCursor)} onBack={pagination.back} onForward={() => pagination.forward(data.nextCursor)} />
     </div>
 

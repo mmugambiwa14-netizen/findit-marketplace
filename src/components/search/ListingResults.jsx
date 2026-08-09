@@ -3,6 +3,8 @@ import ListingGrid from '@/components/listings/ListingGrid';
 import SearchResultsMap from '@/components/search/SearchResultsMap';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { MapPanelSkeleton } from '@/components/loading/LoadingSkeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ListingResults({
   listings,
@@ -28,9 +30,7 @@ export default function ListingResults({
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 id="listing-results-title" className="findit-section-title">Results</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground" aria-live="polite">
-            {isLoading ? 'Loading listings...' : loaded === 0 ? 'No listings found' : `${loaded.toLocaleString()} listing${loaded === 1 ? '' : 's'} loaded`}
-          </p>
+          {isLoading ? <Skeleton className="mt-1 h-3 w-28" /> : <p className="mt-0.5 text-xs text-muted-foreground" aria-live="polite">{loaded === 0 ? 'No listings found' : `Showing ${loaded.toLocaleString()} listing${loaded === 1 ? '' : 's'}`}</p>}
         </div>
         <div className="flex items-center gap-2">
           {mapsEnabled && (
@@ -67,7 +67,9 @@ export default function ListingResults({
         </div>
       ) : (
         <>
-          {showMap && !isLoading ? <SearchResultsMap listings={listings} type={type} /> : <ListingGrid listings={listings} type={type} isLoading={isLoading} />}
+          {showMap
+            ? (isLoading ? <MapPanelSkeleton /> : <SearchResultsMap listings={listings} type={type} />)
+            : <ListingGrid listings={listings} type={type} isLoading={isLoading} />}
 
           {!isLoading && loaded === 0 && hasFilters && (
             <div className="pb-10 pt-4 text-center"><Button variant="outline" className="clay-control" onClick={onClearFilters}>Clear filters</Button></div>

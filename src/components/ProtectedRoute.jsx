@@ -3,13 +3,10 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import * as authService from '@/services/authService';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import BackButton from '@/components/layout/BackButton';
+import { AppShellSkeleton } from '@/components/loading/LoadingSkeletons';
 
-const DefaultFallback = () => (
-  <div className="fixed inset-0 flex items-center justify-center bg-background" role="status" aria-live="polite">
-    <div className="h-9 w-9 animate-spin rounded-full border-4 border-primary/20 border-t-primary" aria-hidden="true" />
-    <span className="sr-only">Checking access</span>
-  </div>
-);
+const DefaultFallback = () => <AppShellSkeleton />;
 
 /**
  * @param {{
@@ -88,6 +85,7 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
   if (requiredRole && roleError) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background px-4">
+        <BackButton className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))]" fallback="/" label="Back to Discover" />
         <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-center" role="alert" aria-labelledby="role-check-title">
           <h1 id="role-check-title" className="text-2xl font-bold">We could not verify your access</h1>
           <p className="mt-2 text-sm text-muted-foreground">The permission service is temporarily unavailable. No access decision has been made.</p>
@@ -106,6 +104,7 @@ export default function ProtectedRoute({ fallback = <DefaultFallback />, unauthe
   if (requiredRole && !roleVerified) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background px-4">
+        <BackButton className="absolute left-4 top-[max(1rem,env(safe-area-inset-top))]" fallback="/" label="Back to Discover" />
         <section className="text-center" aria-labelledby="access-denied-title">
           <h1 id="access-denied-title" className="mb-2 text-2xl font-bold">Access denied</h1>
           <p className="text-muted-foreground">You do not have permission to access this page.</p>

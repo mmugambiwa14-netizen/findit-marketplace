@@ -18,8 +18,8 @@ export default function ListingDetailActions({ onBack }) {
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 safe-area-top md:hidden">
-      <div className="mx-auto flex max-w-4xl items-center px-3 py-3">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-50 md:hidden">
+      <div className="mx-auto flex max-w-4xl items-center px-3 pb-3 pt-[max(3.75rem,calc(env(safe-area-inset-top)+1rem))]">
         <button
           type="button"
           aria-label="Go back"

@@ -43,24 +43,31 @@ export default function RealtimeConversationThread(props) {
       refreshMetadata();
     };
 
-    const channel = supabase
-      .channel(`conversation:${conversationId}:${currentUser.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'inquiries',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        refreshAll,
-      )
-      .subscribe((status) => {
-        if (cancelled) return;
-        const subscribed = status === 'SUBSCRIBED';
-        setRealtimeConnected(subscribed);
-        if (subscribed) refreshAll();
-      });
+    let channel = null;
+    try {
+      channel = supabase
+        .channel(`conversation:${conversationId}:${currentUser.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'inquiries',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          refreshAll,
+        )
+        .subscribe((status) => {
+          if (cancelled) return;
+          const subscribed = status === 'SUBSCRIBED';
+          setRealtimeConnected(subscribed);
+          if (subscribed) refreshAll();
+        });
+    } catch {
+      // The thread has a bounded polling fallback. A disabled or unavailable
+      // Realtime transport must never prevent the conversation from opening.
+      setRealtimeConnected(false);
+    }
 
     const metadataInterval = window.setInterval(() => {
       if (document.visibilityState === 'visible') refreshMetadata();
@@ -76,7 +83,7 @@ export default function RealtimeConversationThread(props) {
       window.clearInterval(metadataInterval);
       window.removeEventListener('online', refreshAll);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
-      supabase.removeChannel(channel);
+      if (channel) void supabase.removeChannel(channel).catch(() => {});
     };
   }, [conversationId, currentUser?.id, queryClient]);
 

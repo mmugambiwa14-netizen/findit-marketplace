@@ -19,6 +19,7 @@ import {
   getRecommendationPersonalizationPreference,
   setRecommendationPersonalizationPreference,
 } from '@/services/recommendationPersonalizationService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 export const recommendationPersonalizationQueryKey = (userId) => [
   'recommendation-personalization',
@@ -61,6 +62,8 @@ export default function PersonalizationSettings({ userId }) {
 
   const busy = preference.isLoading || updatePreference.isPending || clearActivity.isPending;
   const enabled = preference.data?.enabled === true;
+
+  if (preference.isLoading) return <ListRowsSkeleton rows={2} showThumbnail={false} label="Loading personalization settings" />;
 
   return (
     <div className="space-y-4">

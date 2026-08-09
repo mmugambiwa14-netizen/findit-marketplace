@@ -15,6 +15,7 @@ import {
 import TourFailureState from './TourFailureState';
 import TourProcessingState from './TourProcessingState';
 import TourUploader from './TourUploader';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const TRANSIENT_STATUSES = new Set(['upload_authorized', 'uploaded', 'processing']);
 const TERMINAL_HIDDEN = new Set(['superseded', 'cleaned']);
@@ -133,10 +134,7 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
       </div>
 
       {query.isLoading && (
-        <div className="flex min-h-20 items-center justify-center rounded-xl border border-border bg-muted/10" role="status">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">Loading Peek status...</span>
-        </div>
+        <SkeletonRegion label="Loading Peek status" className="rounded-xl border border-border p-3"><div className="flex items-center gap-3"><Skeleton className="h-14 w-20 shrink-0" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/5" /><Skeleton className="h-3 w-4/5" /><Skeleton className="h-3 w-1/2" /></div></div></SkeletonRegion>
       )}
 
       {query.isError && (

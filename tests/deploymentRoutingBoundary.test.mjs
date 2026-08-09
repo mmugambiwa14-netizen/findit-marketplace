@@ -16,10 +16,7 @@ const previewWorkflow = readFileSync(
   resolve(projectRoot, '.github/workflows/peekalisting-preview.yml'),
   'utf8',
 );
-const pagesFallback = readFileSync(
-  resolve(projectRoot, 'scripts/create-pages-spa-fallback.mjs'),
-  'utf8',
-);
+const redirects = readFileSync(resolve(projectRoot, 'public/_redirects'), 'utf8');
 
 test('browser routing consumes the Vite deployment base path', () => {
   assert.match(appSource, /import\.meta\.env\.BASE_URL/);
@@ -27,31 +24,33 @@ test('browser routing consumes the Vite deployment base path', () => {
 });
 
 test('all provider-driven auth callbacks use the deployment-aware URL helper', () => {
-  assert.match(authSource, /new URL\(import\.meta\.env\.BASE_URL, window\.location\.origin\)/);
-  assert.match(authSource, /redirectTo: appUrl\(redirectPath\)/);
+  assert.match(authSource, /VITE_PUBLIC_APP_ORIGIN/);
+  assert.match(authSource, /new URL\(import\.meta\.env\.BASE_URL, configuredAppOrigin\(\)\)/);
+  assert.match(authSource, /buildOAuthCallbackUrl\(bridgeId, redirectPath\)/);
   assert.match(authSource, /emailRedirectTo: appUrl\(redirectPath\)/);
   assert.match(registerSource, /redirectPath: returnTo/);
   assert.match(registerSource, /resendSignupConfirmation\(email, returnTo\)/);
   assert.match(authSource, /redirectTo: appUrl\('\/reset-password'\)/);
 });
 
-test('the single Pages preview restores deep links and proves its exact canonical source', () => {
-  assert.match(previewWorkflow, /branches:\s*\n\s*- main/);
-  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/main'/);
-  assert.match(previewWorkflow, /test "\$GITHUB_REF_NAME" = "main"/);
-  assert.match(previewWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
-  assert.match(previewWorkflow, /VITE_PREVIEW_DEPLOYMENT: "true"/);
-  assert.match(previewWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
-  assert.doesNotMatch(previewWorkflow, /cp dist\/index\.html dist\/404\.html/);
-  assert.match(previewWorkflow, /test "\$\(git rev-parse HEAD\)" = "\$GITHUB_SHA"/);
-  assert.match(previewWorkflow, /preview-build\.json/);
-  assert.match(previewWorkflow, /current-build\.txt/);
-  assert.match(previewWorkflow, /"branch":"\$GITHUB_REF_NAME"/);
-  assert.match(previewWorkflow, /"sha":"\$GITHUB_SHA"/);
-  assert.match(previewWorkflow, /grep -Fxq 'branch=main' dist\/current-build\.txt/);
-  assert.match(previewWorkflow, /grep -Fxq "sha=\$GITHUB_SHA" dist\/current-build\.txt/);
-  assert.match(pagesFallback, /window\.location\.replace\(destination\.toString\(\)\)/);
-  assert.match(pagesFallback, /currentPath\.startsWith\(basePath\)/);
+test('Cloudflare staging restores deep links without a GitHub Pages or Vercel runtime', () => {
+  assert.match(previewWorkflow, /workflow_dispatch/);
+  assert.match(previewWorkflow, /confirmation/);
+  assert.match(previewWorkflow, /name: cloudflare-staging/);
+  assert.match(previewWorkflow, /VITE_MODE: staging/);
+  assert.match(previewWorkflow, /VITE_DEPLOY_ENV: staging/);
+  assert.match(previewWorkflow, /VITE_BASE_PATH: \//);
+  assert.match(previewWorkflow, /CLOUDFLARE_PAGES_PROJECT: peekalisting-staging/);
+  assert.match(previewWorkflow, /CLOUDFLARE_STAGING_DOMAIN: staging\.peekalisting\.com/);
+  assert.match(previewWorkflow, /VITE_PUBLIC_APP_ORIGIN: https:\/\/staging\.peekalisting\.com/);
+  assert.match(previewWorkflow, /npx wrangler pages deploy dist/);
+  assert.match(previewWorkflow, /--project-name="\$\{CLOUDFLARE_PAGES_PROJECT\}"/);
+  assert.match(previewWorkflow, /--branch=staging/);
+  assert.match(previewWorkflow, /pages\/projects\/\$\{CLOUDFLARE_PAGES_PROJECT\}\/domains/);
+  assert.match(previewWorkflow, /domain_status.*active/);
+  assert.doesNotMatch(previewWorkflow, /VITE_PUBLIC_APP_ORIGIN: https:\/\/peekalisting\.com/);
+  assert.doesNotMatch(previewWorkflow, /actions\/deploy-pages|actions\/upload-pages-artifact|github-pages/);
+  assert.match(redirects, /^\/\*\s+\/index\.html\s+200$/m);
   assert.match(indexSource, /src\/documentBootstrap\.js/);
   assert.match(documentBootstrapSource, /currentUrl\.searchParams\.get\(ROUTE_KEY\)/);
   assert.match(documentBootstrapSource, /targetUrl\.origin === window\.location\.origin/);

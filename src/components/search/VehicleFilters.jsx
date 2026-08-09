@@ -3,10 +3,10 @@ import SearchFilterSelect from './SearchFilterSelect';
 
 const makes = CAR_MAKES.map((value) => ({ value, label: value }));
 
-export default function VehicleFilters({ category, make, condition, fuelType, transmission, onUpdate }) {
+export default function VehicleFilters({ category, categoryOptions = CAR_CATEGORIES, make, condition, fuelType, transmission, onUpdate }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <SearchFilterSelect label="Vehicle type" value={category} onChange={(value) => onUpdate('category', value)} options={CAR_CATEGORIES} />
+      <SearchFilterSelect label="Vehicle type" value={category} onChange={(value) => onUpdate('category', value)} options={categoryOptions} />
       <SearchFilterSelect label="Make" value={make} onChange={(value) => onUpdate('make', value)} options={makes} />
       <SearchFilterSelect label="Condition" value={condition} onChange={(value) => onUpdate('condition', value)} options={CONDITIONS} />
       <SearchFilterSelect label="Fuel type" value={fuelType} onChange={(value) => onUpdate('fuel', value)} options={FUEL_TYPES} />

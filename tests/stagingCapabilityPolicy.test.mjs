@@ -2,49 +2,40 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  TRUSTED_STAGING_BRANCHES,
-  isTrustedStagingBranch,
+  TRUSTED_NON_PRODUCTION_DEPLOYMENTS,
+  isTrustedStagingDeployment,
   isTrustedStagingHost,
   readBooleanFlag,
   resolveStagingCertifiedFlag,
   resolveStagingProviderFlag,
 } from '../src/lib/stagingCapabilityPolicy.js';
 
-test('all certified staging branches are recognized', () => {
-  for (const branch of TRUSTED_STAGING_BRANCHES) {
+test('Cloudflare preview and staging deployments are recognized', () => {
+  for (const deployment of TRUSTED_NON_PRODUCTION_DEPLOYMENTS) {
     assert.equal(
-      isTrustedStagingBranch({ VITE_VERCEL_GIT_COMMIT_REF: branch }),
+      isTrustedStagingDeployment({ VITE_DEPLOY_ENV: deployment }),
       true,
-      branch,
+      deployment,
     );
   }
 });
 
-test('server-side Vercel branch metadata is recognized', () => {
-  assert.equal(
-    isTrustedStagingBranch({ VERCEL_GIT_COMMIT_REF: 'feature/listing-intelligence-foundation' }),
-    true,
-  );
+test('production, unknown and missing deployment values fail closed', () => {
+  assert.equal(isTrustedStagingDeployment({}), false);
+  assert.equal(isTrustedStagingDeployment({ VITE_DEPLOY_ENV: 'production' }), false);
+  assert.equal(isTrustedStagingDeployment({ VITE_DEPLOY_ENV: 'untrusted-preview' }), false);
 });
 
-test('unknown and missing branches fail closed', () => {
-  assert.equal(isTrustedStagingBranch({}), false);
-  assert.equal(
-    isTrustedStagingBranch({ VITE_VERCEL_GIT_COMMIT_REF: 'feature/untrusted-preview' }),
-    false,
-  );
+test('the dedicated Cloudflare staging custom domain is recognized', () => {
+  assert.equal(isTrustedStagingHost('staging.peekalisting.com'), true);
+  assert.equal(isTrustedStagingHost('STAGING.PEEKALISTING.COM'), true);
 });
 
-test('stable and generated FindIt staging hosts are recognized', () => {
-  assert.equal(isTrustedStagingHost('findit-marketplace-staging.vercel.app'), true);
-  assert.equal(isTrustedStagingHost('findit-marketplace-staging-iwgkds7gn.vercel.app'), true);
-  assert.equal(isTrustedStagingHost('findit-marketplace-stagi-git-18ac2e-team.vercel.app'), true);
-});
-
-test('production-looking and unrelated hosts fail closed', () => {
-  assert.equal(isTrustedStagingHost('findit-marketplace.vercel.app'), false);
-  assert.equal(isTrustedStagingHost('findit-marketplace-staging.example.com'), false);
-  assert.equal(isTrustedStagingHost('example.vercel.app'), false);
+test('production and generated platform hosts are not trusted by hostname alone', () => {
+  assert.equal(isTrustedStagingHost('peekalisting.com'), false);
+  assert.equal(isTrustedStagingHost('www.peekalisting.com'), false);
+  assert.equal(isTrustedStagingHost('findit-marketplace.pages.dev'), false);
+  assert.equal(isTrustedStagingHost('abc123.findit-marketplace.pages.dev'), false);
   assert.equal(isTrustedStagingHost(''), false);
 });
 
@@ -56,19 +47,19 @@ test('ordinary boolean flags preserve explicit values and fallback', () => {
   assert.equal(readBooleanFlag({ VITE_FEATURE_TEST: 'false' }, 'VITE_FEATURE_TEST'), false);
 });
 
-test('certified capabilities inherit availability on trusted staging', () => {
+test('certified capabilities inherit availability on trusted Cloudflare preview', () => {
   const env = {
-    VITE_VERCEL_GIT_COMMIT_REF: 'feature/peek-threads-phase-3',
+    VITE_DEPLOY_ENV: 'preview',
     VITE_FEATURE_MESSAGING: 'false',
   };
   assert.equal(resolveStagingCertifiedFlag(env, 'VITE_FEATURE_MESSAGING'), true);
 });
 
-test('certified capabilities remain explicit outside trusted staging', () => {
+test('certified capabilities remain explicit in production', () => {
   assert.equal(
     resolveStagingCertifiedFlag(
       {
-        VITE_VERCEL_GIT_COMMIT_REF: 'feature/untrusted-preview',
+        VITE_DEPLOY_ENV: 'production',
         VITE_FEATURE_MESSAGING: 'false',
       },
       'VITE_FEATURE_MESSAGING',
@@ -78,7 +69,7 @@ test('certified capabilities remain explicit outside trusted staging', () => {
   assert.equal(
     resolveStagingCertifiedFlag(
       {
-        VITE_VERCEL_GIT_COMMIT_REF: 'feature/untrusted-preview',
+        VITE_DEPLOY_ENV: 'production',
         VITE_FEATURE_MESSAGING: 'true',
       },
       'VITE_FEATURE_MESSAGING',
@@ -87,10 +78,10 @@ test('certified capabilities remain explicit outside trusted staging', () => {
   );
 });
 
-test('provider capability is inherited on trusted staging when unset', () => {
+test('provider capability is inherited on trusted Cloudflare staging when unset', () => {
   assert.equal(
     resolveStagingProviderFlag(
-      { VITE_VERCEL_GIT_COMMIT_REF: 'feature/peek-threads-phase-3' },
+      { VITE_DEPLOY_ENV: 'staging' },
       'VITE_FEATURE_GOOGLE_OAUTH',
       'VITE_AUTH_GOOGLE_ENABLED',
     ),
@@ -102,7 +93,7 @@ test('explicit provider false is an emergency off switch on trusted staging', ()
   assert.equal(
     resolveStagingProviderFlag(
       {
-        VITE_VERCEL_GIT_COMMIT_REF: 'feature/peek-threads-phase-3',
+        VITE_DEPLOY_ENV: 'staging',
         VITE_FEATURE_GOOGLE_OAUTH: 'false',
         VITE_AUTH_GOOGLE_ENABLED: 'true',
       },

@@ -5,6 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import DealerListings from '@/components/dealers/DealerListings';
 import ServiceCard from '@/components/services/ServiceCard';
 import VerifiedBusinessBadge from '@/components/business/VerifiedBusinessBadge';
+import BackButton from '@/components/layout/BackButton';
 import { Button } from '@/components/ui/button';
 import { safeExternalUrl } from '@/lib/safeUrl';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import {
   getPublicBusinessProfile,
   getPublicBusinessServicesPage,
 } from '@/services/businessProfilesService';
+import { CardGridSkeleton, ProfilePageSkeleton } from '@/components/loading/LoadingSkeletons';
 
 function contactNumber(value) {
   return value?.replace(/[^0-9]/g, '') ?? '';
@@ -23,6 +25,17 @@ function flattenUnique(pages = []) {
   const byId = new Map();
   for (const page of pages) for (const item of page.items) byId.set(item.id, item);
   return [...byId.values()];
+}
+
+function PublicBusinessProfileState({ children }) {
+  return (
+    <div className="min-h-[70vh] bg-muted/20 px-4 py-5">
+      <div className="mx-auto max-w-5xl">
+        <BackButton className="-ml-2" fallback="/search" label="Back to marketplace" />
+        <div className="mx-auto max-w-lg py-12 text-center">{children}</div>
+      </div>
+    </div>
+  );
 }
 
 export default function PublicBusinessProfile() {
@@ -63,13 +76,13 @@ export default function PublicBusinessProfile() {
   const services = useMemo(() => flattenUnique(servicePages.data?.pages), [servicePages.data]);
 
   if (profileQuery.isLoading) {
-    return <div className="flex justify-center py-20" role="status"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /><span className="sr-only">Loading business profile</span></div>;
+    return <div className="min-h-[70vh] bg-muted/20 px-4 py-5"><div className="mx-auto max-w-5xl"><BackButton className="-ml-2" fallback="/search" label="Back to marketplace" /><ProfilePageSkeleton className="px-0" label="Loading business profile" /></div></div>;
   }
   if (profileQuery.error) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">We could not load this profile</h1><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="mt-5" onClick={() => profileQuery.refetch()}>Try again</Button></div>;
+    return <PublicBusinessProfileState><h1 className="text-xl font-semibold">We could not load this profile</h1><p className="mt-2 text-sm text-muted-foreground">Check your connection and try again.</p><Button type="button" variant="outline" className="mt-5" onClick={() => profileQuery.refetch()}>Try again</Button></PublicBusinessProfileState>;
   }
   if (!profile) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">Profile not found</h1><p className="mt-2 text-sm text-muted-foreground">This business is unavailable or no longer active.</p><Button asChild variant="outline" className="mt-5"><Link to="/search">Browse PeekaListing</Link></Button></div>;
+    return <PublicBusinessProfileState><h1 className="text-xl font-semibold">Profile not found</h1><p className="mt-2 text-sm text-muted-foreground">This business is unavailable or no longer active.</p><Button asChild variant="outline" className="mt-5"><Link to="/search">Browse PeekaListing</Link></Button></PublicBusinessProfileState>;
   }
 
   const whatsapp = contactNumber(profile.phone);
@@ -82,6 +95,7 @@ export default function PublicBusinessProfile() {
     <div className="min-h-screen bg-muted/20">
       <section className="border-b bg-card px-4 py-8">
         <div className="mx-auto max-w-5xl">
+          <BackButton className="-ml-2 mb-5" fallback="/search" label="Back to marketplace" />
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10">
               {profile.avatar_url ? <img src={profile.avatar_url} alt={`${profile.company_name} logo`} loading="eager" decoding="async" className="h-full w-full object-cover" /> : <Building2 className="h-11 w-11 text-primary" />}
@@ -114,7 +128,7 @@ export default function PublicBusinessProfile() {
       <main className="mx-auto max-w-5xl space-y-8 px-4 py-7">
         <section aria-labelledby="business-inventory-heading">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div><h2 id="business-inventory-heading" className="text-xl font-bold">{dealer ? 'Vehicle inventory' : 'Listings'}</h2><p className="mt-1 text-sm text-muted-foreground">{inventory.length} active {inventory.length === 1 ? 'listing' : 'listings'} loaded</p></div>
+            <div><h2 id="business-inventory-heading" className="text-xl font-bold">{dealer ? 'Vehicle inventory' : 'Listings'}</h2><p className="mt-1 text-sm text-muted-foreground">Showing {inventory.length} active {inventory.length === 1 ? 'listing' : 'listings'}</p></div>
             {dealer && (
               <form className="flex w-full gap-2 sm:max-w-sm" onSubmit={(event) => { event.preventDefault(); const next = search.trim(); setSearchParams(next ? { q: next } : {}); }}>
                 <label htmlFor="dealer-inventory-search" className="sr-only">Search dealer inventory</label>
@@ -124,7 +138,7 @@ export default function PublicBusinessProfile() {
             )}
           </div>
           <Card className="mt-4"><CardContent className="p-4">
-            {inventoryPages.isLoading ? <div className="flex justify-center py-12" role="status"><Loader2 className="h-7 w-7 animate-spin" /><span className="sr-only">Loading inventory</span></div> : inventoryPages.error ? <div className="py-10 text-center"><p>Inventory could not be loaded.</p><Button type="button" variant="outline" className="mt-4" onClick={() => inventoryPages.refetch()}>Try again</Button></div> : <DealerListings listings={inventory} />}
+            {inventoryPages.isLoading ? <CardGridSkeleton count={6} label="Loading business inventory" /> : inventoryPages.error ? <div className="py-10 text-center"><p>Inventory could not be loaded.</p><Button type="button" variant="outline" className="mt-4" onClick={() => inventoryPages.refetch()}>Try again</Button></div> : <DealerListings listings={inventory} />}
             {inventoryPages.hasNextPage && <div className="mt-5 flex justify-center"><Button type="button" variant="outline" className="min-w-48" disabled={inventoryPages.isFetchingNextPage} onClick={() => inventoryPages.fetchNextPage()}>{inventoryPages.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more listings'}</Button></div>}
           </CardContent></Card>
         </section>
@@ -132,7 +146,7 @@ export default function PublicBusinessProfile() {
         {!dealer && (servicePages.isLoading || servicePages.error || services.length > 0) && (
           <section aria-labelledby="business-services-heading">
             <h2 id="business-services-heading" className="text-xl font-bold">Services</h2>
-            {servicePages.isLoading ? <div className="flex justify-center py-12" role="status"><Loader2 className="h-7 w-7 animate-spin" /><span className="sr-only">Loading services</span></div> : servicePages.error ? <div className="mt-4 rounded-xl border bg-card p-6 text-center"><p>Services could not be loaded.</p><Button type="button" variant="outline" className="mt-4" onClick={() => servicePages.refetch()}>Try again</Button></div> : <div className="mt-4 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 md:grid-cols-3">{services.map((service) => <ServiceCard key={service.id} service={service} />)}</div>}
+            {servicePages.isLoading ? <CardGridSkeleton count={3} className="mt-4 md:grid-cols-3" label="Loading business services" /> : servicePages.error ? <div className="mt-4 rounded-xl border bg-card p-6 text-center"><p>Services could not be loaded.</p><Button type="button" variant="outline" className="mt-4" onClick={() => servicePages.refetch()}>Try again</Button></div> : <div className="mt-4 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:gap-4 md:grid-cols-3">{services.map((service) => <ServiceCard key={service.id} service={service} />)}</div>}
             {servicePages.hasNextPage && <div className="mt-5 flex justify-center"><Button type="button" variant="outline" className="min-w-48" disabled={servicePages.isFetchingNextPage} onClick={() => servicePages.fetchNextPage()}>{servicePages.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more services'}</Button></div>}
           </section>
         )}

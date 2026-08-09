@@ -115,6 +115,52 @@ select extensions.is(
 
 select extensions.is(
   (
+    select count(*)::bigint
+    from pg_class table_row
+    join pg_namespace table_schema on table_schema.oid = table_row.relnamespace
+    where table_schema.nspname = 'private'
+      and table_row.relname in (
+        'abuse_rate_limit_buckets',
+        'location_registry_country_syncs',
+        'location_registry_admin1_syncs'
+      )
+      and table_row.relrowsecurity
+  ),
+  3::bigint,
+  'private synchronization tables retain defense-in-depth RLS'
+);
+
+select extensions.is(
+  (
+    select count(*)::bigint
+    from pg_policy policy_row
+    join pg_class table_row on table_row.oid = policy_row.polrelid
+    join pg_namespace table_schema on table_schema.oid = table_row.relnamespace
+    where table_schema.nspname = 'public'
+      and table_row.relname = 'discover_category_count_snapshots'
+      and policy_row.polname = 'discover_category_count_snapshots_public_read'
+  ),
+  1::bigint,
+  'category-count projection exposes one intentional public read policy'
+);
+
+select extensions.is(
+  (
+    select count(*)::bigint
+    from pg_proc function_row
+    join pg_namespace function_schema on function_schema.oid = function_row.pronamespace
+    where function_schema.nspname = 'public'
+      and function_row.oid = 'public.discover_category_counts()'::regprocedure
+      and not function_row.prosecdef
+      and has_function_privilege('anon', function_row.oid, 'EXECUTE')
+      and has_function_privilege('authenticated', function_row.oid, 'EXECUTE')
+  ),
+  1::bigint,
+  'category-count RPC remains an invoker boundary over the aggregate projection'
+);
+
+select extensions.is(
+  (
     select configuration ->> 'renderer'
     from public.marketplace_operational_controls
     where control_key = 'maps' and enabled and state = 'enabled'

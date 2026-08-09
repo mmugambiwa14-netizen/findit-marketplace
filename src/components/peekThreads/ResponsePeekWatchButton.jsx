@@ -3,6 +3,7 @@ import { Eye, Loader2, RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { getResponsePeekPlayback } from '@/services/peekThreadsService';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 export default function ResponsePeekWatchButton({ tourId, title = 'Response Peek' }) {
   const videoRef = useRef(null);
@@ -56,7 +57,9 @@ export default function ResponsePeekWatchButton({ tourId, title = 'Response Peek
               </button>
             </div>
             <div className="aspect-video bg-black">
-              {playback?.playbackUrl && !failed ? (
+              {loading ? (
+                <SkeletonRegion label="Preparing secure playback" className="h-full p-5"><Skeleton className="h-full w-full bg-white/15" /></SkeletonRegion>
+              ) : playback?.playbackUrl && !failed ? (
                 <video
                   ref={videoRef}
                   src={playback.playbackUrl}
@@ -70,9 +73,9 @@ export default function ResponsePeekWatchButton({ tourId, title = 'Response Peek
                 />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-white">
-                  {loading ? <Loader2 className="h-7 w-7 animate-spin" /> : <RotateCcw className="h-7 w-7" />}
-                  <p className="text-sm font-semibold">{loading ? 'Preparing secure playback' : 'Response Peek playback failed'}</p>
-                  {!loading && <Button type="button" variant="secondary" onClick={load}>Try again</Button>}
+                  <RotateCcw className="h-7 w-7" />
+                  <p className="text-sm font-semibold">Response Peek playback failed</p>
+                  <Button type="button" variant="secondary" onClick={load}>Try again</Button>
                 </div>
               )}
             </div>

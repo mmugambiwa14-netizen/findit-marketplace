@@ -33,9 +33,8 @@ function copyFirstPartyPublicAssets() {
 
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => ({
-  // GitHub Pages serves the staging build beneath the repository name. Keep
-  // local and custom-domain builds rooted at "/" unless a deploy explicitly
-  // supplies VITE_BASE_PATH.
+  // Cloudflare Pages and the custom domain are rooted at "/" unless a deploy
+  // explicitly supplies VITE_BASE_PATH.
   base: process.env.VITE_BASE_PATH || '/',
   // Preview-only media stays outside production. The build plugin below copies
   // only first-party runtime assets from public/ into the hosted artifact.
@@ -62,12 +61,6 @@ export default defineConfig(({ command, mode }) => ({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // Realtime is disabled (supabase/config.toml [realtime]) and unused
-      // (no `.channel()` call anywhere in src/), but createClient() always
-      // instantiates a RealtimeClient. Alias it to a stub that keeps the
-      // methods SupabaseClient actually calls and throws if `.channel()` is
-      // ever invoked for real. See src/lib/noRealtimeClient.js.
-      '@supabase/realtime-js': fileURLToPath(new URL('./src/lib/noRealtimeClient.js', import.meta.url)),
     },
   },
   // Note: splitting node_modules into a separate vendor chunk was measured and

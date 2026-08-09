@@ -1,5 +1,7 @@
 import { BarChart3, MousePointerClick, View } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TableRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const number = (value) => Number(value ?? 0).toLocaleString();
 const percent = (value) => `${(Number(value ?? 0) * 100).toFixed(1)}%`;
@@ -28,9 +30,9 @@ export default function AdminRecommendationAnalytics({ data, isLoading, error })
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard icon={View} title="Impressions" value={isLoading ? '...' : number(summary.impressions)} />
-        <MetricCard icon={MousePointerClick} title="Recommendation opens" value={isLoading ? '...' : number(summary.clicks)} />
-        <MetricCard icon={BarChart3} title="Open rate" value={isLoading ? '...' : percent(summary.clickThroughRate)} />
+        <MetricCard icon={View} title="Impressions" value={number(summary.impressions)} isLoading={isLoading} />
+        <MetricCard icon={MousePointerClick} title="Recommendation opens" value={number(summary.clicks)} isLoading={isLoading} />
+        <MetricCard icon={BarChart3} title="Open rate" value={percent(summary.clickThroughRate)} isLoading={isLoading} />
       </div>
 
       <div className="overflow-x-auto border-y border-border">
@@ -44,7 +46,7 @@ export default function AdminRecommendationAnalytics({ data, isLoading, error })
             </tr>
           </thead>
           <tbody>
-            {!isLoading && services.length === 0 ? (
+            {isLoading ? <TableRowsSkeleton columns={4} rows={4} label="Loading recommendation analytics" /> : services.length === 0 ? (
               <tr>
                 <td colSpan={4} className="py-6 text-center text-muted-foreground">No recommendation delivery has been aggregated yet.</td>
               </tr>
@@ -63,14 +65,14 @@ export default function AdminRecommendationAnalytics({ data, isLoading, error })
   );
 }
 
-function MetricCard({ icon: Icon, title, value }) {
+function MetricCard({ icon: Icon, title, value, isLoading }) {
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
       </CardHeader>
-      <CardContent><p className="text-2xl font-bold tabular-nums">{value}</p></CardContent>
+      <CardContent>{isLoading ? <Skeleton className="h-8 w-24" /> : <p className="text-2xl font-bold tabular-nums">{value}</p>}</CardContent>
     </Card>
   );
 }

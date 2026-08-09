@@ -13,7 +13,7 @@ contracts. A flag never makes missing architecture safe.
 | `VITE_FEATURE_MESSAGING` | `true` | Conversation RPCs, participant checks and RLS |
 | `VITE_FEATURE_ESSENTIAL_NOTIFICATIONS` | `true` | Notification queries, fanout jobs and worker |
 | `VITE_FEATURE_GOOGLE_OAUTH` | `true` only after provider acceptance | Supabase Google provider and exact callbacks |
-| `VITE_FEATURE_MAPS` | `true` | MapLibre GL JS 5.12.0 and protected MapTiler key |
+| `VITE_FEATURE_MAPS` | `true` | Vendored MapLibre GL JS 5.12.0; staging may use the OpenFreeMap fallback, production requires a protected MapTiler key |
 | `VITE_FEATURE_MANUAL_LOCATION` | `true` | Active country/province/city hierarchy |
 | `VITE_FEATURE_CURRENT_LOCATION` | `true` after registry certification | Explicit user consent, Supabase/PostGIS registry lookup and manual fallback |
 | `VITE_FEATURE_REPORTING` | `true` | Marketplace report RPC and moderation |
@@ -85,8 +85,10 @@ constitute an active feature.
 
 ## Maps activation
 
-Maps use MapLibre GL JS `5.12.0` and MapTiler Cloud styles and tiles. Device
-location does not use MapTiler geocoding. Before enabling a map deployment:
+Maps use MapLibre GL JS `5.12.0` and prefer MapTiler Cloud styles and tiles.
+Staging can use the no-key OpenFreeMap fallback; production requires a
+restricted MapTiler browser key. Device location does not use MapTiler
+geocoding. Before enabling a production map deployment:
 
 1. Create a separate MapTiler browser key for that environment.
 2. Restrict it to the exact approved origins.

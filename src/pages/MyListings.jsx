@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Eye, Trash2, MoreVertical, RefreshCw, Pencil, Send, Pause, Play, Ban, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, MoreVertical, RefreshCw, Pencil, Send, Pause, Play, Ban, Loader2 } from "lucide-react";
 import EditListingDialog from "@/components/listings/EditListingDialog";
 import { useTimeAgo } from "@/hooks/useTimeAgo";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { formatPrice } from "@/lib/constants";
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
+import { goBackOrHome } from "@/lib/navigation";
 import { getListingPlaceholder } from "@/lib/listingPlaceholders";
 import { invalidateCanonicalParentQueries } from "@/lib/canonicalQueryInvalidation";
 import {
@@ -19,6 +20,7 @@ import {
   getOwnerListingsPage,
 } from "@/services/ownerListingsService";
 import { changeOwnerListingState } from '@/services/listingCreationService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const placeholderProperty = getListingPlaceholder("property");
 const placeholderCar = getListingPlaceholder("car");
@@ -123,8 +125,8 @@ export default function MyListings() {
     <div className="min-h-[100dvh]">
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="p-1" aria-label="Go back"><ArrowLeft className="w-5 h-5" /></button>
-          <div><h1 className="font-bold text-lg">My Listings</h1>{!isLoading && allListings.length > 0 && <p className="text-xs text-muted-foreground">{allListings.length} loaded</p>}</div>
+          <button type="button" onClick={() => goBackOrHome(navigate, '/')} className="p-1" aria-label="Go back"><ArrowLeft className="w-5 h-5" /></button>
+          <div><h1 className="font-bold text-lg">My Listings</h1>{!isLoading && allListings.length > 0 && <p className="text-xs text-muted-foreground">Showing {allListings.length}</p>}</div>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild size="sm" className="rounded-xl">
@@ -134,9 +136,7 @@ export default function MyListings() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-        </div>
+        <ListRowsSkeleton rows={7} className="px-4 py-4" label="Loading your listings" />
       ) : listingsError ? (
         <div className="mx-4 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center">
           <p className="font-medium">We could not load your listings</p>
@@ -338,9 +338,6 @@ function ListingRow({ listing, onDelete, onRenew, onEdit, onPublish, onPause, on
               {SOURCE_LABELS[listing.created_via]}
             </Badge>
           )}
-          <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-            <Eye className="w-3 h-3" /> {listing.views || 0} views
-          </span>
           <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
           {!isDraft && expiryLabel && (
             <span className="text-[10px] text-muted-foreground">Expires {expiryLabel}</span>

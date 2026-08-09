@@ -34,8 +34,8 @@ test('post-audit policies preserve authorization while initializing auth.uid onc
   assert.equal((rollback.match(/=\s*auth\.uid\(\)/gi) || []).length, 5);
 });
 
-test('locked RLS initialization suite now covers all 48 policies', () => {
-  assert.match(databaseTest, /all 48 locked RLS policies use an auth\.uid initialization plan/i);
-  assert.match(databaseTest, /exactly 48 public policies contain initialized auth\.uid calls/i);
+test('locked RLS initialization suite now covers all 51 policies', () => {
+  assert.match(databaseTest, /all 51 locked RLS policies use an auth\.uid initialization plan/i);
+  assert.match(databaseTest, /exactly 51 public policies contain initialized auth\.uid calls/i);
   for (const policy of policies) assert.match(databaseTest, new RegExp(policy, 'i'));
 });

@@ -6,7 +6,6 @@ export const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest first' },
   { value: 'price_asc', label: 'Price: low to high', requiresCurrency: true },
   { value: 'price_desc', label: 'Price: high to low', requiresCurrency: true },
-  { value: 'most_viewed', label: 'Most viewed' },
 ];
 
 export function getSortLabel(value, currency = '') {

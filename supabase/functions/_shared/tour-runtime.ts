@@ -3,8 +3,8 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.1
 const DEFAULT_ORIGINS = [
   "http://127.0.0.1:5173",
   "http://localhost:5173",
-  "https://findit-marketplace-staging.vercel.app",
-  "https://mmugambiwa14-netizen.github.io",
+  "https://staging.peekalisting.com",
+  "https://staging.peekalisting.pages.dev",
 ] as const;
 
 export const TOUR_LIMITS = Object.freeze({

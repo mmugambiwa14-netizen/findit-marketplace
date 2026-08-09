@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { getAdminReports, reviewAdminReport } from '@/services/adminService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const PAGE_SIZE = 20;
 const reasonLabels = {
@@ -160,7 +161,7 @@ export default function AdminReports() {
           <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{reportsQuery.error.message}</p>
         )}
         {reportsQuery.isLoading ? (
-          <Card className="p-8 text-center text-muted-foreground">Loading reports…</Card>
+          <Card className="p-4"><ListRowsSkeleton rows={6} label="Loading reports" /></Card>
         ) : data.items.length === 0 ? (
           <Card className="p-10 text-center">
             <AlertTriangle className="mx-auto mb-2 h-7 w-7 text-muted-foreground" />

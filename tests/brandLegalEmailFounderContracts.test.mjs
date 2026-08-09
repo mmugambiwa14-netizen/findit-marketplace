@@ -34,9 +34,9 @@ const [
   read('index.html'),
 ]);
 
-test('the home experience is international and search-led', () => {
-  assert.doesNotMatch(home, /Zimbabwe-focused/i);
-  assert.doesNotMatch(pageMetadata, /Zimbabwe/i);
+test('the home experience is Zimbabwe-only and search-led', () => {
+  assert.doesNotMatch(home, /international|country picker|other countries/i);
+  assert.match(pageMetadata, /Zimbabwe/i);
   assert.match(home, /DiscoverSearch/);
   assert.match(home, /DiscoverCategoryGrid/);
   assert.doesNotMatch(home, /getLatestPublicListings|featured|auction/i);
@@ -85,14 +85,14 @@ test('all five legal documents are routed and discoverable across app shells', (
   assert.match(legalContent, /working policy draft/i);
 });
 
-test('every configured Supabase email uses the classic FindIt template family', async () => {
+test('every configured Supabase email uses the PeekaListing template family', async () => {
   const templateDirectory = new URL('../supabase/templates/', import.meta.url);
   const filenames = (await readdir(templateDirectory)).filter((name) => name.endsWith('.html')).sort();
   assert.equal(filenames.length, 13);
 
   for (const filename of filenames) {
     const html = await readFile(new URL(filename, templateDirectory), 'utf8');
-    assert.match(html, /FIND<span style="color:#177f76">it<\/span>/);
+    assert.match(html, /Peeka<span style="color:#177f76">Listing<\/span>/);
     assert.match(html, /font-family:Georgia,serif/);
     assert.match(html, /{{ \.SiteURL }}\/(legal\/privacy|help)/);
     assert.doesNotMatch(html, /<script|tracking|pixel/i);

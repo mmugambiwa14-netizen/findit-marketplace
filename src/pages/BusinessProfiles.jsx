@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/AuthContext';
 import { getOwnerBusinessProfile, saveOwnerBusinessProfile } from '@/services/businessProfilesService';
+import { FormSkeleton } from '@/components/loading/LoadingSkeletons';
 
 export default function BusinessProfiles() {
   const navigate = useNavigate();
@@ -67,9 +68,7 @@ export default function BusinessProfiles() {
 
       <main className="mx-auto max-w-3xl px-4 py-6">
         {profileQuery.isLoading ? (
-          <div className="flex justify-center py-16" aria-label="Loading business profile">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-          </div>
+          <Card><CardContent className="p-5 sm:p-6"><FormSkeleton fields={6} label="Loading business profile" /></CardContent></Card>
         ) : profileQuery.error ? (
           <Card><CardContent className="p-6 text-center">
             <h2 className="font-semibold">We could not load your business profile</h2>

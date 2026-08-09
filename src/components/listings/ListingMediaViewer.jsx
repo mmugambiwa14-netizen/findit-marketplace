@@ -4,7 +4,6 @@ import {
   ChevronRight,
   ImageOff,
   Images,
-  LoaderCircle,
   Maximize,
   Pause,
   PictureInPicture2,
@@ -20,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import ImageLightbox from "@/components/ui/image-lightbox";
 import { cn } from "@/lib/utils";
 import { getPublicTourPlayback } from "@/services/listingToursService";
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const MEDIA_CONTROLS_EVENT = "findit:media-controls-visibility";
 
@@ -529,25 +529,32 @@ function TourPanel({ title, playback, posterUrl, state, error, controlsVisible, 
   }
 
   const loading = state === "loading";
+  if (loading) {
+    return (
+      <SkeletonRegion label="Loading Peek" className="relative h-full overflow-hidden bg-black">
+        {posterUrl && <img src={posterUrl} alt="" loading="eager" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-30" />}
+        <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
+        <div className="absolute inset-x-6 bottom-6 space-y-3 rounded-2xl border border-white/10 bg-black/45 p-5 backdrop-blur-md">
+          <Skeleton className="h-5 w-28 bg-white/20" />
+          <Skeleton className="h-4 w-4/5 bg-white/20" />
+          <Skeleton className="h-3 w-3/5 bg-white/20" />
+        </div>
+      </SkeletonRegion>
+    );
+  }
   return (
     <div className="relative flex h-full items-center justify-center bg-black">
       {posterUrl && <img src={posterUrl} alt="" loading="eager" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-45" />}
       <div className="relative z-10 mx-6 max-w-sm rounded-2xl border border-white/10 bg-black/65 p-5 text-center text-white backdrop-blur-md">
-        {loading ? (
-          <LoaderCircle className="mx-auto h-8 w-8 animate-spin" aria-hidden="true" />
-        ) : (
-          <VideoOff className="mx-auto h-8 w-8" aria-hidden="true" />
-        )}
-        <p className="mt-3 font-semibold">{loading ? "Loading Peek" : "Peek playback unavailable"}</p>
+        <VideoOff className="mx-auto h-8 w-8" aria-hidden="true" />
+        <p className="mt-3 font-semibold">Peek playback unavailable</p>
         <p className="mt-1 text-sm text-white/70">
-          {loading ? "A secure playback link is being prepared." : error || "The secure playback link could not be prepared."}
+          {error || "The secure playback link could not be prepared."}
         </p>
-        {!loading && (
-          <Button type="button" size="sm" variant="secondary" className="mt-4" onClick={onRetry}>
-            <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
-            Retry playback
-          </Button>
-        )}
+        <Button type="button" size="sm" variant="secondary" className="mt-4" onClick={onRetry}>
+          <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+          Retry playback
+        </Button>
       </div>
     </div>
   );

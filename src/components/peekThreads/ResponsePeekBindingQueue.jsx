@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import { bindResponsePeek, getResponsePeekRequestCandidates, getUnboundResponsePeeks } from '@/services/peekThreadsService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const READY_RESPONSE_REFRESH_MS = 30_000;
 
@@ -49,7 +50,7 @@ export default function ResponsePeekBindingQueue() {
     onError: (error) => toast.error(error.message || 'Unable to publish the Response Peek'),
   });
 
-  if (ready.isLoading) return null;
+  if (ready.isLoading) return <ListRowsSkeleton rows={1} label="Checking Response Peeks" />;
   if (ready.isError || !ready.data?.length) return null;
 
   const toggle = (id) => setSelected((current) => current.includes(id)
@@ -84,7 +85,7 @@ export default function ResponsePeekBindingQueue() {
             <AlertDialogDescription>Select up to 25 requests for {active?.parentTitle}. Buyers receive one notification even when several requests are answered.</AlertDialogDescription>
           </AlertDialogHeader>
           {candidates.isLoading ? (
-            <div className="flex justify-center p-6"><Loader2 className="h-5 w-5 animate-spin" /></div>
+            <ListRowsSkeleton rows={4} className="p-2" label="Loading matching Peek Requests" />
           ) : candidates.isError ? (
             <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">Matching requests could not be loaded.</p>
           ) : (
@@ -93,7 +94,7 @@ export default function ResponsePeekBindingQueue() {
                 const checked = selected.includes(item.requestId);
                 return (
                   <label key={item.requestId} className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${checked ? 'border-primary bg-primary/5' : 'border-border'}`}>
-                    <input type="checkbox" checked={checked} onChange={() => toggle(item.requestId)} className="mt-1 h-4 w-4" />
+                    <input type="checkbox" aria-label={`Select Peek request: ${item.body}`} checked={checked} onChange={() => toggle(item.requestId)} className="mt-1 h-4 w-4" />
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{peekRequestCategoryLabel(item.category)}</Badge><span className="text-xs font-semibold text-primary">{item.supporterCount} interested</span></span>
                       <span className="mt-2 block text-sm font-semibold">{item.body}</span>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 
 export default function DiscoverSearch({ location }) {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export default function DiscoverSearch({ location }) {
     if (location?.city) {
       params.set('location', location.city);
       if (location.cityName) params.set('locationName', location.cityName);
-      if (location.country) params.set('country', location.country);
+      params.set('country', LAUNCH_COUNTRY_CODE);
       if (location.state) params.set('province', location.state);
     }
     navigate(`/search${params.size ? `?${params.toString()}` : ''}`);
@@ -31,7 +32,7 @@ export default function DiscoverSearch({ location }) {
         placeholder="Search properties, cars, services..."
         aria-label="Search FindIt"
         maxLength={100}
-        className="locked-control h-14 rounded-[1.15rem] border-border/85 bg-card/80 pl-11 pr-4 text-sm placeholder:text-muted-foreground/80 sm:pr-28"
+        className="locked-control h-14 rounded-[1.15rem] border-border/85 bg-card/80 pl-11 pr-4 text-base placeholder:text-muted-foreground/80 md:text-sm sm:pr-28"
       />
       <button type="submit" className="clay-button absolute right-2 top-2 hidden h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold sm:flex">
         Search

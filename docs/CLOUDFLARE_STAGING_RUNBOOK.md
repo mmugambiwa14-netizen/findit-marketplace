@@ -1,107 +1,65 @@
-# PeekaListing Cloudflare Staging Runbook
+# PeekaListing Cloudflare Pages staging runbook
 
 ## Purpose
 
-This runbook provisions the external infrastructure required by the critical/high architecture foundation without changing live application traffic.
+This runbook deploys and certifies the PeekaListing web/PWA staging build on
+Cloudflare Pages without changing public production traffic. Supabase remains
+the backend for Database, Auth, Storage, Realtime and Edge Functions.
 
-## Required GitHub environment
+Cloudflare R2, Stream, Images, D1, Queues, Durable Objects, KV and Hyperdrive
+are not prerequisites for the Pages migration. Do not grant their permissions
+to the Pages CI token.
 
-Create the protected GitHub environment:
+## Deployment authority
 
-`cloudflare-staging`
+- GitHub environment: `cloudflare-staging`
+- Pages project: `peekalisting-staging`
+- Pages production branch: `staging`
+- Canonical origin: `https://staging.peekalisting.com`
+- Runtime: Node 24
+- Deployment workflow: `.github/workflows/peekalisting-preview.yml`
 
-Add required reviewers before deployment and configure these secrets:
+The isolated staging project intentionally uses its Cloudflare **Production**
+environment for the stable `staging` branch and its **Preview** environment for
+other preview uploads. This does not make it the public production project.
 
-- `CLOUDFLARE_ACCOUNT_ID`
-- `CLOUDFLARE_API_TOKEN`
+## Required GitHub configuration
 
-The API token must be restricted to the PeekaListing account and only the permissions required for Workers, Queues, R2 and KV provisioning.
+The protected `cloudflare-staging` environment contains:
 
-## Provisioning
+- variable `CLOUDFLARE_ACCOUNT_ID`;
+- secret `CLOUDFLARE_API_TOKEN` with only Account / Cloudflare Pages / Write;
+- variable `FINDIT_EXPECTED_PROJECT_REF`;
+- variable `VITE_SUPABASE_URL`;
+- secret `VITE_SUPABASE_ANON_KEY` or browser-safe publishable key;
+- restricted MapTiler browser configuration when map verification is enabled.
 
-Run the GitHub Actions workflow:
+Never store a Cloudflare token, Supabase service-role key, Supabase secret key,
+provider secret or worker signing secret under a `VITE_*` name.
 
-`Provision Cloudflare Staging`
+## Deploy and certify
 
-Choose `staging` and enter `PROVISION`.
+Run the manual Cloudflare staging workflow with the expected confirmation. It
+must:
 
-The workflow creates or confirms:
+1. use Node 24;
+2. validate the exact staging Supabase project ref;
+3. build the PWA and scan the emitted bundle for secrets;
+4. preserve `public/_headers` and `public/_redirects`;
+5. upload only to `peekalisting-staging`;
+6. patch the Cloudflare Preview and Production environment bindings after the
+   Wrangler upload;
+7. confirm that `staging.peekalisting.com` is active;
+8. run hosted SPA, PWA, security-header, OAuth, listing, Peek, map, share-card
+   and Supabase-connectivity checks.
 
-- `peekalisting-staging-peek-source`
-- `peekalisting-staging-peek-derivatives`
-- `peekalisting-staging-listing-media`
-- `peekalisting-staging-lightweight-jobs`
-- `peekalisting-staging-lightweight-jobs-dlq`
-- a staging platform-config KV namespace
+Wrangler applies file-managed variables while uploading. The post-upload
+environment patch is therefore required; moving it before deployment can erase
+`SUPABASE_URL` and apply the wrong logical environment label.
 
-The provisioning workflow does not route traffic and does not deploy secrets.
+## Traffic boundary
 
-## Worker deployment preparation
-
-1. Copy `infrastructure/cloudflare/wrangler.toml.example` to a deployment-only Wrangler configuration.
-2. Insert the real KV namespace identifier.
-3. Confirm queue and R2 bucket names.
-4. Set the staging media hostname.
-5. Configure the worker route.
-6. Set secrets through Wrangler or the Cloudflare dashboard:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `MEDIA_SIGNING_SECRET`
-7. Deploy the worker. The first deployment applies the Durable Object migration.
-8. Confirm `/health` reports the staging environment and a trace ID.
-
-## Turnstile
-
-Create a distinct staging widget. Do not reuse the production widget.
-
-Configure only controlled staging hostnames. Set these Supabase Edge Function secrets:
-
-- `TURNSTILE_SECRET_KEY`
-- `TURNSTILE_ALLOWED_ORIGINS`
-- `TURNSTILE_ALLOWED_HOSTNAMES`
-
-Deploy `verify-turnstile`, then verify:
-
-- approved origin succeeds with a valid token,
-- unknown origin is rejected,
-- wrong action is rejected,
-- wrong hostname is rejected,
-- expired and reused tokens are rejected,
-- missing configuration fails closed.
-
-## Media worker
-
-Build from `workers/media/Dockerfile` and deploy one staging replica initially.
-
-Required secrets:
-
-- `FINDIT_SUPABASE_URL`
-- `FINDIT_SUPABASE_SECRET_KEY`
-- `FINDIT_EXPECTED_PROJECT_REF`
-
-Required configuration:
-
-- `FINDIT_TOUR_PROCESSOR_BATCH_SIZE=5`
-- `PEEKALISTING_WORKER_POLL_SECONDS=5`
-
-The legacy variable prefix remains temporarily because the existing runner consumes those names. Rename only through a backwards-compatible migration.
-
-## Certification before traffic cutover
-
-The following must pass:
-
-- queue retry and dead-letter behavior,
-- duplicate-job idempotency,
-- invalid payload rejection,
-- media cleanup path validation,
-- worker restart and lease recovery,
-- FFmpeg processing of a real staging Peek,
-- R2 source and derivative access controls,
-- signed derivative playback,
-- trace continuity across request, queue, worker and database,
-- Turnstile origin, action and hostname enforcement,
-- rollback to the existing Supabase Storage path.
-
-## Activation boundary
-
-Do not route new uploads or notifications through Cloudflare until certification is recorded in `docs/PRODUCT_PROGRESS.md` and `docs/MIGRATION_LEDGER.md` where applicable.
+Do not attach `peekalisting.com` or `www.peekalisting.com` to the staging
+project. Do not change apex DNS while certifying staging. Public host cutover is
+allowed only after the separate production project and production Supabase
+backend pass their complete acceptance gates.

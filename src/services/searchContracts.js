@@ -1,5 +1,5 @@
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const COUNTRY_CODE = /^[A-Z]{2}$/;
+import { LAUNCH_COUNTRY_CODE } from '../lib/marketConfig.js';
 const SEARCH_KINDS = new Set(['property', 'car', 'machinery']);
 const SEARCH_SORTS = new Set(['newest', 'price_asc', 'price_desc', 'most_viewed']);
 const SEARCH_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
@@ -22,8 +22,10 @@ function optionalNonNegativeNumber(value) {
 
 function baseRequest(input = {}) {
   const kind = SEARCH_KINDS.has(input.kind) ? input.kind : 'property';
-  const requestedCountry = text(input.countryCode, 2).toUpperCase();
-  const countryCode = COUNTRY_CODE.test(requestedCountry) ? requestedCountry : 'ZW';
+  // The public launch surface is Zimbabwe-only. Country records remain in the
+  // database for future markets, but URL/query tampering cannot switch this
+  // public search to another country.
+  const countryCode = LAUNCH_COUNTRY_CODE;
   const requestedCurrency = text(input.currency, 3).toUpperCase();
   const currency = SEARCH_CURRENCIES.has(requestedCurrency) ? requestedCurrency : '';
   const minPrice = currency ? optionalNonNegativeNumber(input.minPrice) : null;

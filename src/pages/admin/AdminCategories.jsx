@@ -16,6 +16,7 @@ import {
   getAdminTaxonomy,
   updateAdminTaxonomyNode,
 } from '@/services/taxonomyAdminService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const emptyCreate = {
   parentId: '',
@@ -203,7 +204,7 @@ export default function AdminCategories() {
         {error && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error.message}</p>}
 
         {isLoading ? (
-          <Card className="p-8 text-center text-muted-foreground">Loading taxonomy…</Card>
+          <Card className="p-4"><ListRowsSkeleton rows={8} showThumbnail={false} label="Loading taxonomy" /></Card>
         ) : (
           <div className="space-y-5">
             {roots.map((root) => {

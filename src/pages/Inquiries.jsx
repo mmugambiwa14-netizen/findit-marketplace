@@ -11,6 +11,7 @@ import { useCurrency } from '@/lib/CurrencyContext';
 import { formatInboxTimestamp } from '@/lib/messageTimestamps';
 import { getMessageInboxPage } from '@/services/messagingService';
 import { cn } from '@/lib/utils';
+import { ConversationListSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const PAGE_SIZE = 30;
 const INBOX_REFRESH_MS = 10_000;
@@ -83,7 +84,7 @@ export default function Inquiries() {
         {inboxQuery.isError && <section className="clay-card mt-5 rounded-2xl p-6 text-center"><h2 className="font-bold">We could not load your chats</h2><p className="mt-2 text-sm text-muted-foreground">Your search is preserved. Check your connection and try again.</p><Button type="button" variant="outline" className="clay-control mt-4" onClick={() => inboxQuery.refetch()}>Try again</Button></section>}
 
         {inboxQuery.isLoading ? (
-          <div className="flex justify-center py-20" aria-label="Loading chats"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary/20 border-t-primary" /></div>
+          <ConversationListSkeleton />
         ) : !inboxQuery.isError && conversations.length === 0 ? (
           <section className="py-20 text-center text-muted-foreground">
             <span className="locked-icon-tile mx-auto h-16 w-16"><MessageCircle className="h-7 w-7" /></span>

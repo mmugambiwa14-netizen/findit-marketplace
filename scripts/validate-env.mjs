@@ -35,6 +35,12 @@ function loadProjectEnv() {
 const env = { ...loadProjectEnv(), ...process.env };
 const problems = [];
 const requiredBrowserVariables = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
+const unsafeViteName = /(SERVICE_ROLE|SECRET|PASSWORD|PRIVATE_KEY|API_TOKEN|ACCESS_TOKEN)/i;
+for (const name of Object.keys(env)) {
+  if (name.startsWith('VITE_') && unsafeViteName.test(name)) {
+    problems.push(`${name} must not be VITE-prefixed because Vite exposes it to browser code`);
+  }
+}
 
 for (const name of requiredBrowserVariables) {
   const value = env[name]?.trim();
@@ -47,6 +53,10 @@ if (env.VITE_SUPABASE_URL?.trim()) {
     const url = new URL(env.VITE_SUPABASE_URL);
     if (!['http:', 'https:'].includes(url.protocol)) problems.push('VITE_SUPABASE_URL must use HTTP or HTTPS');
     if (mode === 'production' && url.protocol !== 'https:') problems.push('VITE_SUPABASE_URL must use HTTPS in production');
+    const expectedProjectRef = env.FINDIT_EXPECTED_PROJECT_REF?.trim();
+    if (expectedProjectRef && url.hostname !== `${expectedProjectRef}.supabase.co`) {
+      problems.push('VITE_SUPABASE_URL does not match FINDIT_EXPECTED_PROJECT_REF');
+    }
   } catch {
     problems.push('VITE_SUPABASE_URL is not a valid absolute URL');
   }
@@ -170,7 +180,10 @@ const mapsEnabled = env.VITE_FEATURE_MAPS === 'true';
 const currentLocationEnabled = env.VITE_FEATURE_CURRENT_LOCATION === 'true';
 if (mapsEnabled) {
   const key = env.VITE_MAPTILER_PUBLIC_KEY?.trim();
-  if (!key) problems.push('VITE_MAPTILER_PUBLIC_KEY is required when maps are enabled');
+  // Staging/development can exercise the complete map UI through the
+  // same-origin vendored MapLibre runtime and OpenFreeMap's no-key fallback.
+  // Production must still use a restricted MapTiler browser key.
+  if (!key && mode === 'production') problems.push('VITE_MAPTILER_PUBLIC_KEY is required when maps are enabled in production');
   else if (/your-|example|placeholder|replace-/i.test(key)) problems.push('VITE_MAPTILER_PUBLIC_KEY still contains a placeholder');
   const styleId = env.VITE_MAPTILER_STYLE_ID?.trim() || 'streets-v4';
   if (!/^[a-z0-9][a-z0-9_-]{1,95}$/i.test(styleId)) problems.push('VITE_MAPTILER_STYLE_ID is invalid');

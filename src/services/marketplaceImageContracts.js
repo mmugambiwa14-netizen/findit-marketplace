@@ -1,7 +1,11 @@
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const PURPOSES = new Set(['service_photo', 'business_logo']);
-const TARGET_BY_PURPOSE = Object.freeze({ service_photo: 'service', business_logo: 'business' });
+const PURPOSES = new Set(['service_photo', 'business_logo', 'seller_logo']);
+const TARGET_BY_PURPOSE = Object.freeze({
+  service_photo: 'service',
+  business_logo: 'business',
+  seller_logo: 'seller',
+});
 const MAX_BYTES = 5 * 1024 * 1024;
 
 function uuid(value, label) {
@@ -25,7 +29,9 @@ export function normalizeMarketplaceImageFile(file) {
 
 export function isTrustedMarketplaceImagePath(value, purpose) {
   if (typeof value !== 'string') return false;
-  const normalizedPurpose = purpose == null ? '(?:service_photo|business_logo)' : normalizeMarketplaceImagePurpose(purpose);
+  const normalizedPurpose = purpose == null
+    ? '(?:service_photo|business_logo|seller_logo)'
+    : normalizeMarketplaceImagePurpose(purpose);
   return new RegExp(`^[0-9a-f-]{36}/${normalizedPurpose}/staging/[0-9a-f-]{36}\\.(?:jpg|png|webp)$`, 'i').test(value);
 }
 
@@ -48,7 +54,13 @@ export function normalizeMarketplaceImageAttachment(input) {
 }
 
 export function normalizeMarketplaceImageDetachment(targetKind, targetId, path) {
-  const purpose = targetKind === 'service' ? 'service_photo' : targetKind === 'business' ? 'business_logo' : null;
+  const purpose = targetKind === 'service'
+    ? 'service_photo'
+    : targetKind === 'business'
+      ? 'business_logo'
+      : targetKind === 'seller'
+        ? 'seller_logo'
+        : null;
   if (!purpose) throw new TypeError('Image target is invalid');
   if (!isTrustedMarketplaceImagePath(path, purpose)) throw new TypeError('Image path is invalid');
   return { targetKind, targetId: uuid(targetId, 'Image target'), path };

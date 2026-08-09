@@ -34,6 +34,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { featureFlags } from '@/lib/featureFlags';
 import { userFacingError } from '@/lib/userFacingErrors';
 import { cn } from '@/lib/utils';
+import { createListingSharePayload } from '@/lib/share';
 
 const actionClass = 'flex min-h-14 w-full items-center gap-3 rounded-2xl border border-border bg-surface-secondary/45 px-4 text-left transition hover:border-primary/35 hover:bg-primary/8';
 
@@ -54,7 +55,14 @@ export default function ContactButtons({ listing, type = 'property', placement =
   const enquiryText = type === 'service'
     ? `Hi, I'm interested in your service: ${listing.title}`
     : `Hi, I'm interested in your listing: ${listing.title} (${typeLabel})${priceText}`;
+  const sharePayload = createListingSharePayload(type, listing);
+  const whatsappText = [
+    enquiryText,
+    `Listing No: ${sharePayload.code}`,
+    sharePayload.shareUrl,
+  ].join('\n');
   const encodedMessage = encodeURIComponent(enquiryText);
+  const encodedWhatsappMessage = encodeURIComponent(whatsappText);
   const emailSubject = encodeURIComponent(`Enquiry about ${type === 'service' ? 'your service' : 'your listing'}: ${listing.title}`);
 
   // Owners may receive raw values in their own management projection. Public
@@ -141,7 +149,9 @@ export default function ContactButtons({ listing, type = 'property', placement =
       } else if (externalAction === 'whatsapp') {
         const whatsapp = String(revealed?.contact_whatsapp || '').replace(/[^0-9]/g, '');
         if (!whatsapp) throw new Error('WhatsApp contact is unavailable.');
-        window.open(`https://wa.me/${whatsapp}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
+        // WhatsApp reads the listing-specific Open Graph card rendered by the
+        // Cloudflare share URL; the raw image URL must not be pasted into chat.
+        window.open(`https://wa.me/${whatsapp}?text=${encodedWhatsappMessage}`, '_blank', 'noopener,noreferrer');
       }
       setExternalAction(null);
     } catch (failure) {
@@ -260,6 +270,12 @@ export default function ContactButtons({ listing, type = 'property', placement =
             <AlertDialogTitle>{actionCopy.title}</AlertDialogTitle>
             <AlertDialogDescription>{actionCopy.description}</AlertDialogDescription>
           </AlertDialogHeader>
+          {externalAction === 'whatsapp' && sharePayload.imageUrl && (
+            <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-2">
+              <img src={sharePayload.imageUrl} alt="Listing preview" loading="lazy" decoding="async" className="h-16 w-20 rounded-lg object-cover" />
+              <p className="line-clamp-2 text-xs font-semibold text-foreground">WhatsApp will create a preview card for this listing link.</p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={openingExternal}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={revealForAction} disabled={openingExternal}>

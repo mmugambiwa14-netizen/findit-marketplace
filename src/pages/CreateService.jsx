@@ -12,6 +12,7 @@ import { ArrowLeft, Camera, CheckCircle2, Film, Loader2, RefreshCw, RotateCcw, T
 import { toast } from "sonner";
 import { PRICING_TYPES } from "@/lib/serviceConstants";
 import { getSupportedListingCurrencies, LAUNCH_COUNTRY_CODE } from "@/lib/marketConfig";
+import { goBackOrHome } from "@/lib/navigation";
 import { customerErrorMessage } from "@/lib/customerErrors";
 import { usePersistentFormDraft } from "@/hooks/usePersistentFormDraft";
 import { createService } from "@/services/servicesService";
@@ -21,6 +22,7 @@ import { removeStagedMarketplaceImage, uploadMarketplaceImage } from "@/services
 import TourUploader from "@/components/tours/TourUploader";
 import TourUploadProgress from "@/components/tours/TourUploadProgress";
 import { removeListingTour, uploadListingTour } from "@/services/listingToursService";
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 function freshServiceForm(user) {
   return {
@@ -388,7 +390,7 @@ export default function CreateService() {
         <div className="flex items-center gap-3 mb-5">
           <button
             type="button"
-            onClick={() => { saveNow(); navigate(-1); }}
+            onClick={() => { saveNow(); goBackOrHome(navigate, '/'); }}
             aria-label="Go back"
             className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center"
           >
@@ -403,16 +405,18 @@ export default function CreateService() {
         <div className="space-y-4">
           <div>
             <Label htmlFor="service-category">Service category *</Label>
-            {taxonomyQuery.isError ? (
+            {taxonomyQuery.isLoading ? (
+              <SkeletonRegion label="Loading service categories" className="mt-1.5 space-y-2"><Skeleton className="h-11 w-full" /><Skeleton className="h-3 w-2/5" /></SkeletonRegion>
+            ) : taxonomyQuery.isError ? (
               <div className="mt-1.5 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
                 <p className="text-sm text-destructive">Service categories are temporarily unavailable. No stale fallback list is used.</p>
                 <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => taxonomyQuery.refetch()}><RefreshCw className="mr-2 h-4 w-4" />Try again</Button>
               </div>
             ) : (
-              <Select value={form.category} disabled={taxonomyQuery.isLoading} onValueChange={(value) => {
+              <Select value={form.category} onValueChange={(value) => {
                 setForm((current) => ({ ...current, category: value, subcategory: "", subcategories: [] }));
               }}>
-                <SelectTrigger id="service-category" className="mt-1.5 h-11 rounded-xl"><SelectValue placeholder={taxonomyQuery.isLoading ? "Loading categories…" : "Select category"} /></SelectTrigger>
+                <SelectTrigger id="service-category" className="mt-1.5 h-11 rounded-xl"><SelectValue placeholder="Select category" /></SelectTrigger>
                 <SelectContent>
                   {serviceDomains.map((category) => <SelectItem key={category.id} value={category.stableSlug}>{category.label}</SelectItem>)}
                 </SelectContent>
@@ -493,14 +497,16 @@ export default function CreateService() {
 
           <div>
             <Label htmlFor="service-location">City / Area</Label>
-            {locationsQuery.isError ? (
+            {locationsQuery.isLoading ? (
+              <SkeletonRegion label="Loading service locations" className="mt-1.5 space-y-2"><Skeleton className="h-11 w-full" /><Skeleton className="h-3 w-1/2" /></SkeletonRegion>
+            ) : locationsQuery.isError ? (
               <div className="mt-1.5 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
                 <p className="text-sm text-destructive">Locations are temporarily unavailable.</p>
                 <Button type="button" size="sm" variant="outline" className="mt-2" onClick={() => locationsQuery.refetch()}><RefreshCw className="mr-2 h-4 w-4" />Try again</Button>
               </div>
             ) : (
-              <select id="service-location" value={form.location_name} disabled={locationsQuery.isLoading} onChange={(event) => update("location_name", event.target.value)} className="mt-1.5 w-full h-11 rounded-xl border border-input bg-background px-3 text-sm">
-                <option value="">{locationsQuery.isLoading ? "Loading cities…" : "Select city"}</option>
+              <select id="service-location" value={form.location_name} onChange={(event) => update("location_name", event.target.value)} className="mt-1.5 w-full h-11 rounded-xl border border-input bg-background px-3 text-sm">
+                <option value="">Select city</option>
                 {cities.map((city) => <option key={city.id} value={city.name}>{city.name}</option>)}
               </select>
             )}

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { applyDescendingCreatedAtCursor } from '@/services/keysetPagination';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 
 const SUPPORTED_KINDS = new Set(['property', 'car', 'machinery']);
 
@@ -72,6 +73,7 @@ export async function findLatestAvailableListings(kind, limit) {
     .from('listings')
     .select(PUBLIC_LISTING_SELECT)
     .eq('kind', kind)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .in('status', ['available', 'under_offer'])
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
@@ -107,6 +109,7 @@ export async function findPublicListingsByIds(listingIds, signal) {
     .from('listings')
     .select(PUBLIC_LISTING_SELECT)
     .in('id', listingIds)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .in('status', ['available', 'under_offer']);
   if (signal) query = query.abortSignal(signal);
   const { data, error } = await query;
@@ -206,6 +209,7 @@ export async function findPublicListingTitleSuggestions(kind, searchTerm, limit 
     .from('listings')
     .select('id, title')
     .eq('kind', kind)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .in('status', ['available', 'under_offer'])
     .ilike('title', `%${escapeLikePattern(searchTerm)}%`)
     .order('created_at', { ascending: false })
@@ -261,6 +265,7 @@ export async function findPublicListingById(kind, id) {
     `)
     .eq('kind', kind)
     .eq('id', id)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .maybeSingle();
 
   if (error) {
@@ -276,6 +281,7 @@ export async function findPublicSellerListings(request) {
     .from('listings')
     .select(PUBLIC_LISTING_SELECT)
     .eq('seller_id', request.sellerId)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .in('status', ['available', 'under_offer']);
 
   query = applyDescendingCreatedAtCursor(query, request.cursor);

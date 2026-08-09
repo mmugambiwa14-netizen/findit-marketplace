@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { userFacingError } from '@/lib/userFacingErrors';
 import * as authService from '@/services/authService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const CODE_LENGTH = 6;
 
@@ -88,7 +89,7 @@ export default function MfaSettings() {
     }
   };
 
-  if (status === 'loading') return <p className="text-sm text-muted-foreground">Loading two-step verification...</p>;
+  if (status === 'loading') return <ListRowsSkeleton rows={2} showThumbnail={false} label="Loading two-step verification" />;
 
   const isOn = factors.length > 0;
   return (

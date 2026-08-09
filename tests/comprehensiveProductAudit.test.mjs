@@ -96,7 +96,7 @@ test('registration and OAuth preserve protected return destinations through conf
   assert.match(register, /resendSignupConfirmation\(email, returnTo\)/);
   assert.match(register, /signInWithOAuth\(provider, returnTo\)/);
   assert.match(authService, /emailRedirectTo:\s*appUrl\(redirectPath\)/);
-  assert.match(authService, /redirectTo:\s*appUrl\(redirectPath\)/);
+  assert.match(authService, /buildOAuthCallbackUrl\(bridgeId, redirectPath\)/);
 });
 
 test('registration and password reset reject weak passwords and expose errors accessibly', () => {

@@ -10,7 +10,6 @@ import {
   useParams,
 } from 'react-router-dom';
 import { Toaster as SonnerToaster } from 'sonner';
-import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import * as authService from '@/services/authService';
 import { CurrencyProvider } from '@/lib/CurrencyContext';
@@ -28,8 +27,10 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AdminLayout from '@/components/layout/AdminLayout';
 import AppLayout from '@/components/layout/AppLayout';
+import { AppShellSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const Login = lazy(() => import('@/pages/Login'));
+const OAuthCallback = lazy(() => import('@/components/auth/OAuthCallback'));
 const Register = lazy(() => import('@/pages/Register'));
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'));
@@ -70,11 +71,7 @@ const Tours = lazy(() => import('@/pages/Tours'));
 const ToursPlaceholder = lazy(() => import('@/pages/ToursPlaceholder'));
 const PageNotFound = lazy(() => import('@/lib/PageNotFound'));
 
-const LoadingScreen = () => (
-  <div className="fixed inset-0 flex items-center justify-center bg-background" role="status" aria-label="Loading PeekaListing">
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-  </div>
-);
+const LoadingScreen = () => <AppShellSkeleton />;
 
 const AuthUnavailable = ({ message, onRetry, onSignOut }) => (
   <main className="fixed inset-0 flex flex-col items-center justify-center bg-background px-4">
@@ -136,6 +133,18 @@ const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, blockedAccount, isAuthenticated, authChecked, checkUserAuth, logout } = useAuth();
   const location = useLocation();
   const mfaGate = useMfaGate({ isAuthenticated, authChecked });
+
+  // OAuth callbacks must render before the normal auth/MFA gate. The callback
+  // may be the first page loaded in a browser window opened by an installed
+  // PWA, and it is responsible for handing the session back to that PWA.
+  const isOAuthCallbackRoute = location.pathname.replace(/\/+$/, '').endsWith('/auth/callback');
+  if (isOAuthCallbackRoute) {
+    return (
+      <Suspense fallback={<LoadingScreen />}>
+        <OAuthCallback />
+      </Suspense>
+    );
+  }
 
   if (isLoadingPublicSettings || isLoadingAuth) return <LoadingScreen />;
   if (blockedAccount) return <AccountBlocked status={blockedAccount.status} reason={blockedAccount.reason} banUntil={blockedAccount.banUntil} />;
@@ -229,7 +238,6 @@ function App() {
             <GlobalRefreshButton />
             <InstallPrompt />
           </PwaProvider>
-          <Toaster />
           <DarkSonner />
         </QueryClientProvider>
       </CurrencyProvider>

@@ -101,6 +101,12 @@ test('the active route graph contains no commerce or premium screen', () => {
 test('the production release gate requires real MVP flags and rejects incomplete contracts', () => {
   assert.equal(validateRelease().status, 0);
 
+  const wrongSupabaseProject = validateRelease({
+    FINDIT_EXPECTED_PROJECT_REF: 'expected-production-ref',
+  });
+  assert.notEqual(wrongSupabaseProject.status, 0);
+  assert.match(wrongSupabaseProject.stderr, /does not match FINDIT_EXPECTED_PROJECT_REF/);
+
   const commerceEnabled = validateRelease({ VITE_FEATURE_PAYMENTS: 'true' });
   assert.notEqual(commerceEnabled.status, 0);
   assert.match(commerceEnabled.stderr, /VITE_FEATURE_PAYMENTS must be false/);

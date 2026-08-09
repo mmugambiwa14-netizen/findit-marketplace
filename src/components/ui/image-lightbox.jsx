@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -15,6 +15,8 @@ export default function ImageLightbox({
   const total = images.length;
   const safeIndex = total ? Math.min(Math.max(index, 0), total - 1) : 0;
   const [zoomed, setZoomed] = useState(false);
+  const touchStartRef = useRef(null);
+  const swipedRef = useRef(false);
 
   useEffect(() => {
     setZoomed(false);
@@ -35,24 +37,58 @@ export default function ImageLightbox({
     }
   };
 
+  const handleTouchStart = (event) => {
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    swipedRef.current = false;
+  };
+
+  const handleTouchEnd = (event) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || zoomed || total < 2) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+    swipedRef.current = true;
+    step(deltaX < 0 ? 1 : -1);
+  };
+
   if (!total) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onKeyDown={onKeyDown}
-        className="left-0 top-0 h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-0 bg-black/95 p-0 [&>button]:right-[max(1rem,env(safe-area-inset-right))] [&>button]:top-[max(1rem,env(safe-area-inset-top))] [&>button]:z-30 [&>button]:bg-black/45 [&>button]:text-white [&>button]:backdrop-blur-md"
+        className="left-0 top-0 h-[100dvh] max-h-none w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none border-0 bg-black/95 p-0 [&>button]:right-[max(1rem,env(safe-area-inset-right))] [&>button]:top-[max(3.75rem,calc(env(safe-area-inset-top)+1rem))] [&>button]:z-30 [&>button]:bg-black/45 [&>button]:text-white [&>button]:backdrop-blur-md"
       >
         <DialogTitle className="sr-only">{`${title}, photo ${safeIndex + 1} of ${total}`}</DialogTitle>
 
-        <div className={cn(
-          "h-full w-full pb-[max(4.5rem,calc(env(safe-area-inset-bottom)+3.5rem))] pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))]",
-          zoomed ? "overflow-auto" : "flex items-center justify-center overflow-hidden",
-        )}>
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={() => {
+            touchStartRef.current = null;
+            swipedRef.current = false;
+          }}
+          className={cn(
+            "h-full w-full touch-pan-y pb-[max(4.5rem,calc(env(safe-area-inset-bottom)+3.5rem))] pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))]",
+            zoomed ? "overflow-auto" : "flex items-center justify-center overflow-hidden",
+          )}
+        >
           <img
             src={images[safeIndex]}
             alt={`${title}, photo ${safeIndex + 1} of ${total}`}
-            onClick={() => setZoomed((value) => !value)}
+            onClick={() => {
+              if (swipedRef.current) {
+                swipedRef.current = false;
+                return;
+              }
+              setZoomed((value) => !value);
+            }}
             loading="eager"
             decoding="async"
             className={cn(
@@ -62,6 +98,7 @@ export default function ImageLightbox({
                 : "max-h-full max-w-full cursor-zoom-in object-contain",
             )}
           />
+          {total > 1 && <span className="sr-only">Swipe left or right to view another photo.</span>}
         </div>
 
         {total > 1 && (

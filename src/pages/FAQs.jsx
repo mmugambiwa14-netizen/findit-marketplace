@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ArrowLeft, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { goBackOrHome } from "@/lib/navigation";
 
 const FAQS = [
   {
@@ -22,7 +23,7 @@ const FAQS = [
   },
   {
     question: "How do I save listings for later?",
-    answer: "Select the heart on a listing card or detail page. Your saved items appear in Favourites. Sign in so they remain available across visits."
+    answer: "Select the heart on a listing or service card or detail page. Your saved items appear in Saved. Sign in so they remain available across visits."
   },
   {
     question: "Does PeekaListing process payments?",
@@ -98,7 +99,7 @@ export default function FAQs() {
     <div className="min-h-screen bg-background">
       <div className="sticky top-0 z-10 bg-card border-b border-border px-4 py-4">
         <div className="flex items-center gap-3">
-          <Button type="button" variant="ghost" size="icon" aria-label="Go back" onClick={() => navigate(-1)}>
+          <Button type="button" variant="ghost" size="icon" aria-label="Go back" onClick={() => goBackOrHome(navigate, '/') }>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-xl font-bold">Help &amp; Safety</h1>

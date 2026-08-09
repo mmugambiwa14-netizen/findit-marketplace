@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Calendar, CheckCircle, Fuel, Gauge, Palette, Settings, XCircle } from "lucide-react";
@@ -13,6 +13,7 @@ import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
+import PeekRequestIntentHandler from "@/components/peekThreads/PeekRequestIntentHandler";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -26,12 +27,12 @@ import {
 } from "@/components/listings/ListingDetailTabs";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
-import { useMarketplaceView } from "@/hooks/useMarketplaceView";
-import { useTimeAgo } from "@/hooks/useTimeAgo";
 import { useAuth } from "@/lib/AuthContext";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getListingPlaceholder } from "@/lib/listingPlaceholders";
 import { shareListing } from "@/lib/share";
+import { goBackOrHome } from "@/lib/navigation";
+import { applyListingDocumentMetadata } from "@/lib/documentMetadata";
 import { getPublicListing } from "@/services/publicListingsService";
 import { ContactBar, DetailError, DetailLoading, DetailMissing, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 
@@ -47,9 +48,12 @@ export default function CarDetail() {
   const [selectedVariant, setSelectedVariant] = useState(0);
 
   const { data: car, isLoading, error, refetch } = useQuery({ queryKey: ["car", id], queryFn: () => getPublicListing("car", id), enabled: Boolean(id), staleTime: 300000 });
-  useMarketplaceView('listing', id, 'car', Boolean(car));
-  const listedAgo = useTimeAgo(car?.created_date);
   const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
+
+  useEffect(() => {
+    if (!car) return;
+    applyListingDocumentMetadata({ title: car.title, description: car.description, imageUrl: car.photos?.[0], path: `/car/${car.id}` });
+  }, [car]);
 
   if (isLoading) return <DetailLoading />;
   if (error) return <DetailError label="Vehicle" onRetry={refetch} />;
@@ -61,36 +65,35 @@ export default function CarDetail() {
 
   return (
     <div className="findit-screen pb-24">
-      <ListingDetailActions onBack={() => navigate(-1)} />
+      <PeekRequestIntentHandler />
+      <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={car.photos} title={car.title} fallbackImage={placeholderCar} tour={car.tour || null} tourActionLabel="Take a Peek" tourOwnerId={car.seller_id} parentType="listing" parentId={car.id} className="md:mt-4 md:rounded-3xl md:border" />
           <ListingMediaActions onShare={() => shareListing("car", car)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
         </div>
 
-        <ListingSummary
-          badges={(
-            <>
-              {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
-              {car.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
-              {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
-              {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
-            </>
-          )}
-          price={format(activePrice)}
-          pricePrefix={variants.length > 1 ? "From" : null}
-          title={car.title}
-          location={location}
-          metadata={[
-            `Listed ${listedAgo}`,
-            `${Number(car.views || 0).toLocaleString()} views`,
-            <ListingCode key="car-code" type="car" id={car.id} />,
-          ]}
-        />
-
         <ListingDetailTabs>
-          <ListingTabSection id="listing-info" title="Listing info">
-            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+          <ListingTabSection id="listing-info" title="Details">
+            <ListingSummary
+              embedded
+              badges={(
+                <>
+                  {car.condition && <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary capitalize">{car.condition}</Badge>}
+                  {car.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
+                  {car.negotiable && <Badge variant="outline">Negotiable</Badge>}
+                  {car.status !== "available" && <Badge variant="destructive" className="capitalize">{String(car.status).replaceAll("_", " ")}</Badge>}
+                </>
+              )}
+              price={format(activePrice)}
+              pricePrefix={variants.length > 1 ? "From" : null}
+              title={car.title}
+              location={location}
+              metadata={[
+                <ListingCode key="car-code" type="car" id={car.id} />,
+              ]}
+            />
+            <div className="mt-5 overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
               <ListingFeatureItem icon={Calendar} label="Year" value={car.year} />
               <ListingFeatureItem icon={Gauge} label="Mileage" value={`${(car.mileage || 0).toLocaleString()} km`} />
               <ListingFeatureItem icon={Fuel} label="Fuel" value={car.fuel_type} />
@@ -105,23 +108,23 @@ export default function CarDetail() {
               <PriceBreakdown listing={car} />
               {car.accepts_offers && <MakeOfferButton listing={car} />}
               <SafetyPanel>Request a test drive, verify ownership documents and consider an independent mechanical inspection. Never send money before seeing the vehicle.</SafetyPanel>
-            </div>
-          </ListingTabSection>
+               <ListingRecommendations subjectListingId={car.id} />
+               <ReportListingDialog listing={car} listingType="car" />
+             </div>
+           </ListingTabSection>
 
           <ListingTabSection id="description" title="Description">
             <ListingDescription value={car.description} />
           </ListingTabSection>
 
           <ListingTabSection id="location" title="Location">
-            <ListingLocation label={location} latitude={car.latitude} longitude={car.longitude} />
+            <ListingLocation label={location} latitude={car.latitude} longitude={car.longitude} listingType="car" />
           </ListingTabSection>
 
           <ListingTabSection id="seller" title="Seller">
             <ListingSeller name={car.seller_name} sellerId={car.seller_id} joinedAt={car.seller_joined_at} activeListingCount={car.seller_active_listing_count} actions={<ContactButtons listing={car} type="car" placement="browse" />} />
           </ListingTabSection>
 
-          <ListingRecommendations subjectListingId={car.id} />
-          <ReportListingDialog listing={car} listingType="car" />
         </ListingDetailTabs>
       </main>
       <ContactBar><ContactButtons listing={car} type="car" /></ContactBar>

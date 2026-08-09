@@ -158,17 +158,17 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "https://findit-marketplace-staging.vercel.app/"
+site_url = "https://staging.peekalisting.com/"
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
 additional_redirect_urls = [
   "http://localhost:5173",
   "http://localhost:5173/**",
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5173/**",
-  "https://findit-marketplace-staging.vercel.app/",
-  "https://findit-marketplace-staging.vercel.app/**",
-  "https://mmugambiwa14-netizen.github.io/findit-marketplace/",
-  "https://mmugambiwa14-netizen.github.io/findit-marketplace/**",
+  "https://staging.peekalisting.com/",
+  "https://staging.peekalisting.com/**",
+  "https://staging.peekalisting.pages.dev/",
+  "https://staging.peekalisting.pages.dev/**",
 ]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
@@ -246,62 +246,62 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 [auth.email.template.confirmation]
-subject = "Confirm your FindIt email"
+subject = "Confirm your PeekaListing email"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
-subject = "Reset your FindIt password"
+subject = "Reset your PeekaListing password"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.invite]
-subject = "You are invited to FindIt"
+subject = "You are invited to PeekaListing"
 content_path = "./supabase/templates/invite.html"
 
 [auth.email.template.magic_link]
-subject = "Your secure FindIt sign-in link"
+subject = "Your secure PeekaListing sign-in link"
 content_path = "./supabase/templates/magic_link.html"
 
 [auth.email.template.email_change]
-subject = "Confirm your new FindIt email"
+subject = "Confirm your new PeekaListing email"
 content_path = "./supabase/templates/email_change.html"
 
 [auth.email.template.reauthentication]
-subject = "{{ .Token }} is your FindIt verification code"
+subject = "{{ .Token }} is your PeekaListing verification code"
 content_path = "./supabase/templates/reauthentication.html"
 
 [auth.email.notification.password_changed]
 enabled = true
-subject = "Your FindIt password was changed"
+subject = "Your PeekaListing password was changed"
 content_path = "./templates/password_changed_notification.html"
 
 [auth.email.notification.email_changed]
 enabled = true
-subject = "Your FindIt email was changed"
+subject = "Your PeekaListing email was changed"
 content_path = "./templates/email_changed_notification.html"
 
 [auth.email.notification.phone_changed]
 enabled = true
-subject = "Your FindIt phone number was changed"
+subject = "Your PeekaListing phone number was changed"
 content_path = "./templates/phone_changed_notification.html"
 
 [auth.email.notification.identity_linked]
 enabled = true
-subject = "A sign-in method was added to your FindIt account"
+subject = "A sign-in method was added to your PeekaListing account"
 content_path = "./templates/identity_linked_notification.html"
 
 [auth.email.notification.identity_unlinked]
 enabled = true
-subject = "A sign-in method was removed from your FindIt account"
+subject = "A sign-in method was removed from your PeekaListing account"
 content_path = "./templates/identity_unlinked_notification.html"
 
 [auth.email.notification.mfa_factor_enrolled]
 enabled = true
-subject = "A verification method was added to your FindIt account"
+subject = "A verification method was added to your PeekaListing account"
 content_path = "./templates/mfa_factor_enrolled_notification.html"
 
 [auth.email.notification.mfa_factor_unenrolled]
 enabled = true
-subject = "A verification method was removed from your FindIt account"
+subject = "A verification method was removed from your PeekaListing account"
 content_path = "./templates/mfa_factor_unenrolled_notification.html"
 
 [auth.sms]

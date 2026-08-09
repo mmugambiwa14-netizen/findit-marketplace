@@ -9,6 +9,7 @@ import {
   getAdminOperationalHealth,
   getAdminRecommendationAnalytics,
 } from '@/services/adminService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const overviewCards = [
   { key: 'active_listings', label: 'Active listings', icon: Store, path: '/admin/listings' },
@@ -55,7 +56,7 @@ export default function AdminDashboard() {
                   <Icon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">{isLoading ? '—' : Number(data[key] ?? 0).toLocaleString()}</p>
+                  {isLoading ? <Skeleton className="h-9 w-20" /> : <p className="text-3xl font-bold">{Number(data[key] ?? 0).toLocaleString()}</p>}
                 </CardContent>
               </Card>
             </Link>
@@ -78,8 +79,8 @@ export default function AdminDashboard() {
           <Card>
             <CardHeader><CardTitle className="text-base">Today</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
-              <div><p className="text-2xl font-bold">{data.new_users_today ?? 0}</p><p className="text-sm text-muted-foreground">New users</p></div>
-              <div><p className="text-2xl font-bold">{data.new_marketplace_today ?? 0}</p><p className="text-sm text-muted-foreground">New adverts</p></div>
+              <div>{isLoading ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{data.new_users_today ?? 0}</p>}<p className="mt-1 text-sm text-muted-foreground">New users</p></div>
+              <div>{isLoading ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{data.new_marketplace_today ?? 0}</p>}<p className="mt-1 text-sm text-muted-foreground">New adverts</p></div>
             </CardContent>
           </Card>
           <Link to="/admin/categories">

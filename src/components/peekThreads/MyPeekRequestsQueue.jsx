@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import ResponsePeekWatchButton from '@/components/peekThreads/ResponsePeekWatchButton';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import { getMyPeekRequestActivityPage, withdrawPeekRequestSupport } from '@/services/peekThreadsService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const ACTIVITY_PAGE_SIZE = 20;
 const ACTIVITY_REFRESH_MS = 30_000;
@@ -125,11 +126,11 @@ export default function MyPeekRequestsQueue() {
           <h2 id="my-peek-requests-heading" className="mt-1 text-lg font-black">My requests</h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">Track visual evidence you requested or supported across the marketplace.</p>
         </div>
-        {items.length > 0 && <Badge variant="secondary">{items.length} loaded</Badge>}
+        {items.length > 0 && <Badge variant="secondary">Showing {items.length}</Badge>}
       </div>
 
       {activity.isLoading ? (
-        <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading your Peek Requests</div>
+        <ListRowsSkeleton rows={5} className="p-3" label="Loading your Peek Requests" />
       ) : activity.isError && items.length === 0 ? (
         <div className="p-7 text-center"><p className="text-sm text-destructive">Your Peek Requests could not be loaded.</p><Button type="button" className="mt-3" size="sm" variant="outline" onClick={() => activity.refetch()}>Try again</Button></div>
       ) : items.length === 0 ? (

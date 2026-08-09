@@ -46,6 +46,7 @@ export default function FilterSheet({
   open,
   onOpenChange,
   type,
+  categoryOptions,
   filters,
   selectedLocation,
   onApply,
@@ -112,9 +113,9 @@ export default function FilterSheet({
         <div className="space-y-6 py-5">
           {open && <HierarchicalLocationSelector value={draftLocation} onSelectLocation={setDraftLocation} />}
 
-          {type === 'property' && <PropertyFilters category={draftFilters.category} bedrooms={draftFilters.bedrooms} onUpdate={updateDraft} />}
-          {type === 'car' && <VehicleFilters category={draftFilters.category} make={draftFilters.make} condition={draftFilters.condition} fuelType={draftFilters.fuelType} transmission={draftFilters.transmission} onUpdate={updateDraft} />}
-          {type === 'machinery' && <EquipmentFilters category={draftFilters.category} make={draftFilters.make} condition={draftFilters.condition} onUpdate={updateDraft} />}
+          {type === 'property' && <PropertyFilters category={draftFilters.category} categoryOptions={categoryOptions} bedrooms={draftFilters.bedrooms} onUpdate={updateDraft} />}
+          {type === 'car' && <VehicleFilters category={draftFilters.category} categoryOptions={categoryOptions} make={draftFilters.make} condition={draftFilters.condition} fuelType={draftFilters.fuelType} transmission={draftFilters.transmission} onUpdate={updateDraft} />}
+          {type === 'machinery' && <EquipmentFilters category={draftFilters.category} categoryOptions={categoryOptions} make={draftFilters.make} condition={draftFilters.condition} onUpdate={updateDraft} />}
 
           <div className="rounded-2xl border border-border bg-surface-secondary p-4">
             <SearchFilterSelect

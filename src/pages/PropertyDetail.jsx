@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bath, Bed, Car, Maximize, Trees, Waves } from "lucide-react";
@@ -12,6 +12,7 @@ import ListingMediaViewer from "@/components/listings/ListingMediaViewer";
 import ListingRecommendations from "@/components/listings/ListingRecommendations";
 import ListingSummary from "@/components/listings/ListingSummary";
 import PeekThreadsSection from "@/components/peekThreads/PeekThreadsSection";
+import PeekRequestIntentHandler from "@/components/peekThreads/PeekRequestIntentHandler";
 import MakeOfferButton from "@/components/listings/MakeOfferButton";
 import PriceBreakdown from "@/components/listings/PriceBreakdown";
 import ReportListingDialog from "@/components/listings/ReportListingDialog";
@@ -26,13 +27,13 @@ import {
 import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
-import { useMarketplaceView } from "@/hooks/useMarketplaceView";
-import { useTimeAgo } from "@/hooks/useTimeAgo";
 import { useAuth } from "@/lib/AuthContext";
 import { getCategoryLabel } from "@/lib/constants";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getListingPlaceholder } from "@/lib/listingPlaceholders";
 import { shareListing } from "@/lib/share";
+import { goBackOrHome } from "@/lib/navigation";
+import { applyListingDocumentMetadata } from "@/lib/documentMetadata";
 import { getPublicListing } from "@/services/publicListingsService";
 import { ContactBar, DetailError, DetailLoading, DetailMissing, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 
@@ -53,9 +54,12 @@ export default function PropertyDetail() {
     enabled: Boolean(id),
     staleTime: 1000 * 60 * 5,
   });
-  useMarketplaceView('listing', id, 'property', Boolean(property));
-  const listedAgo = useTimeAgo(property?.created_date);
   const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
+
+  useEffect(() => {
+    if (!property) return;
+    applyListingDocumentMetadata({ title: property.title, description: property.description, imageUrl: property.photos?.[0], path: `/property/${property.id}` });
+  }, [property]);
 
   if (isLoading) return <DetailLoading />;
   if (error) return <DetailError label="Property" onRetry={refetch} />;
@@ -68,36 +72,35 @@ export default function PropertyDetail() {
 
   return (
     <div className="findit-screen pb-24">
-      <ListingDetailActions onBack={() => navigate(-1)} />
+      <PeekRequestIntentHandler />
+      <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')} />
       <main className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={property.photos} title={property.title} fallbackImage={placeholderProperty} tour={property.tour || null} tourActionLabel="Take a Peek" tourOwnerId={property.seller_id} parentType="listing" parentId={property.id} className="md:mt-4 md:rounded-3xl md:border" />
           <ListingMediaActions onShare={() => shareListing("property", property)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
         </div>
 
-        <ListingSummary
-          badges={(
-            <>
-              <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getCategoryLabel(property.category)}</Badge>
-              {property.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Public Peek</Badge>}
-              {property.status !== "available" && <Badge variant="destructive">{statusLabel(property.status)}</Badge>}
-              {property.negotiable && <Badge variant="outline">Negotiable</Badge>}
-            </>
-          )}
-          price={format(activePrice)}
-          pricePrefix={variants.length > 1 ? "From" : null}
-          title={property.title}
-          location={location}
-          metadata={[
-            `Listed ${listedAgo}`,
-            `${Number(property.views || 0).toLocaleString()} views`,
-            <ListingCode key="property-code" type="property" id={property.id} />,
-          ]}
-        />
-
         <ListingDetailTabs>
-          <ListingTabSection id="listing-info" title="Listing info">
-            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+          <ListingTabSection id="listing-info" title="Details">
+            <ListingSummary
+              embedded
+              badges={(
+                <>
+                  <Badge variant="secondary" className="rounded-full bg-primary/12 text-primary">{getCategoryLabel(property.category)}</Badge>
+                  {property.tour?.status === "ready" && <Badge className="bg-success/15 text-success">Video proof available</Badge>}
+                  {property.status !== "available" && <Badge variant="destructive">{statusLabel(property.status)}</Badge>}
+                  {property.negotiable && <Badge variant="outline">Negotiable</Badge>}
+                </>
+              )}
+              price={format(activePrice)}
+              pricePrefix={variants.length > 1 ? "From" : null}
+              title={property.title}
+              location={location}
+              metadata={[
+                <ListingCode key="property-code" type="property" id={property.id} />,
+              ]}
+            />
+            <div className="mt-5 overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-sm">
               {property.bedrooms > 0 && <ListingFeatureItem icon={Bed} label="Bedrooms" value={property.bedrooms} />}
               {property.bathrooms > 0 && <ListingFeatureItem icon={Bath} label="Bathrooms" value={property.bathrooms} />}
               {property.property_size > 0 && <ListingFeatureItem icon={Maximize} label="Size" value={`${property.property_size}m²`} />}
@@ -111,23 +114,23 @@ export default function PropertyDetail() {
               <PriceBreakdown listing={property} />
               {property.accepts_offers && <MakeOfferButton listing={property} />}
               <SafetyPanel>Always view the property in person before making a payment. Never send money to someone you have not met. PeekaListing does not handle buyer–seller payments.{isSaleCategory && <span className="mt-2 block">Verify title-deed ownership through the appropriate registry before signing an agreement.</span>}</SafetyPanel>
-            </div>
-          </ListingTabSection>
+               <ListingRecommendations subjectListingId={property.id} />
+               <ReportListingDialog listing={property} listingType="property" />
+             </div>
+           </ListingTabSection>
 
           <ListingTabSection id="description" title="Description">
             <ListingDescription value={property.description} />
           </ListingTabSection>
 
           <ListingTabSection id="location" title="Location">
-            <ListingLocation label={location} latitude={property.latitude} longitude={property.longitude} />
+            <ListingLocation label={location} latitude={property.latitude} longitude={property.longitude} listingType="property" />
           </ListingTabSection>
 
           <ListingTabSection id="seller" title="Seller">
             <ListingSeller name={property.seller_name} sellerId={property.seller_id} joinedAt={property.seller_joined_at} activeListingCount={property.seller_active_listing_count} actions={<ContactButtons listing={property} type="property" placement="browse" />} />
           </ListingTabSection>
 
-          <ListingRecommendations subjectListingId={property.id} />
-          <ReportListingDialog listing={property} listingType="property" />
         </ListingDetailTabs>
       </main>
       <ContactBar><ContactButtons listing={property} type="property" /></ContactBar>

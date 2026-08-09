@@ -44,7 +44,7 @@ $env:FINDIT_SUPABASE_ANON_KEY = $publicKey
 $env:FINDIT_SUPABASE_SECRET_KEY = $serviceRoleKey
 $env:FINDIT_ALLOW_HOSTED_SMOKE = 'staging'
 $env:FINDIT_EXPECTED_PROJECT_REF = $ProjectRef
-$env:FINDIT_SMOKE_ORIGIN = 'https://mmugambiwa14-netizen.github.io'
+$env:FINDIT_SMOKE_ORIGIN = 'https://staging.peekalisting.com'
 
 try {
   foreach ($suite in $Suites) {

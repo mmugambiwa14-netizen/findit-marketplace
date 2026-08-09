@@ -9,6 +9,7 @@ import {
 import {
   isTrustedMarketplaceImagePath,
   normalizeMarketplaceImageAttachment,
+  normalizeMarketplaceImageDetachment,
   normalizeMarketplaceImageFile,
   normalizeServiceMediaReplacement,
 } from '../src/services/marketplaceImageContracts.js';
@@ -103,6 +104,22 @@ test('trusted marketplace image paths are owner scoped and purpose specific', ()
   assert.equal(isTrustedMarketplaceImagePath(servicePath, 'service_photo'), true);
   assert.equal(isTrustedMarketplaceImagePath(servicePath, 'business_logo'), false);
   assert.equal(isTrustedMarketplaceImagePath('https://example.test/photo.webp', 'service_photo'), false);
+  const sellerPath = `${provider.id}/seller_logo/staging/10000000-0000-4000-8000-000000000001.webp`;
+  assert.equal(isTrustedMarketplaceImagePath(sellerPath, 'seller_logo'), true);
+  assert.equal(isTrustedMarketplaceImagePath(sellerPath, 'business_logo'), false);
+});
+
+test('seller logo detachment remains owner-scoped and purpose-specific', () => {
+  const path = `${provider.id}/seller_logo/staging/10000000-0000-4000-8000-000000000001.png`;
+  assert.deepEqual(normalizeMarketplaceImageDetachment('seller', provider.id, path), {
+    targetKind: 'seller',
+    targetId: provider.id,
+    path,
+  });
+  assert.throws(
+    () => normalizeMarketplaceImageDetachment('seller', provider.id, `${provider.id}/business_logo/staging/10000000-0000-4000-8000-000000000001.png`),
+    /invalid/,
+  );
 });
 
 test('marketplace image attachments bind purpose, target, and bounded order', () => {

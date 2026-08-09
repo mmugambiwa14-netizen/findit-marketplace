@@ -148,8 +148,11 @@ async function mapService(row) {
   if (!row) return null;
   const photoPaths = Array.isArray(row.photos) ? row.photos : [];
   const trustedPhotoPaths = photoPaths.filter((value) => isTrustedMarketplaceImagePath(value, 'service_photo'));
+  const location = Array.isArray(row.location) ? row.location[0] : row.location;
   return {
     ...row,
+    latitude: row.latitude ?? location?.latitude ?? null,
+    longitude: row.longitude ?? location?.longitude ?? null,
     price: row.price == null ? null : Number(row.price),
     photo_paths: trustedPhotoPaths,
     has_legacy_media: photoPaths.some((value) => !isTrustedMarketplaceImagePath(value, 'service_photo')),

@@ -4,11 +4,13 @@ import { Loader2, LocateFixed, MapPinned } from 'lucide-react';
 import { getActiveLocations } from '@/services/locationsService';
 import { currentLocationErrorMessage, resolveCurrentMarketplaceLocation } from '@/services/currentLocationService';
 import { featureFlags } from '@/lib/featureFlags';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { LocationPermissionDialog } from '@/components/location/LocationPermissionDialog';
 import { PlaceSearchCombobox } from '@/components/location/PlaceSearchCombobox';
 import { buildLocationSelection } from '@/services/locationSelectionContracts';
+import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
 
 const LOCATION_CACHE_MS = 1000 * 60 * 60;
 
@@ -22,14 +24,18 @@ export function LocationSelector({ value, onChange, level = 'country', parentId 
     gcTime: LOCATION_CACHE_MS * 24,
   });
 
+  if (isLoading) {
+    return <SkeletonRegion label={`Loading ${level} locations`} className="space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-10 w-full" /></SkeletonRegion>;
+  }
+
   return (
     <div className="space-y-2">
       <Label htmlFor={triggerId} className="text-sm font-medium">
         {level.charAt(0).toUpperCase() + level.slice(1)}
       </Label>
-      <Select value={value || ''} onValueChange={onChange} disabled={disabled || isLoading || isError}>
+      <Select value={value || ''} onValueChange={onChange} disabled={disabled || isError}>
         <SelectTrigger id={triggerId} className="rounded-lg" aria-invalid={isError || undefined}>
-          <SelectValue placeholder={isLoading ? `Loading ${level}...` : `Select ${level}...`} />
+          <SelectValue placeholder={`Select ${level}...`} />
         </SelectTrigger>
         <SelectContent>
           {locations.map((location) => (
@@ -62,24 +68,40 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
   const [currentLocationError, setCurrentLocationError] = useState('');
 
   useEffect(() => {
-    setCountry(value?.country || '');
-    setState(value?.state || '');
-    setCity(value?.city || '');
-    setCityName(value?.cityName || '');
-  }, [value?.country, value?.state, value?.city, value?.cityName]);
+    const savedCountryCode = String(value?.countryCode || '').trim().toUpperCase();
+    const savedCountryName = String(value?.countryName || '').trim().toLowerCase();
+    const isLaunchCountry = savedCountryCode
+      ? savedCountryCode === LAUNCH_COUNTRY_CODE
+      : !savedCountryName || savedCountryName === 'zimbabwe';
+    setCountry(isLaunchCountry ? value?.country || '' : '');
+    setState(isLaunchCountry ? value?.state || '' : '');
+    setCity(isLaunchCountry ? value?.city || '' : '');
+    setCityName(isLaunchCountry ? value?.cityName || '' : '');
+  }, [value?.country, value?.countryCode, value?.countryName, value?.state, value?.city, value?.cityName]);
 
   const countriesQuery = useQuery({
-    queryKey: ['locations-countries', 'sub-saharan'],
+    queryKey: ['locations-countries', LAUNCH_COUNTRY_CODE],
     queryFn: () => getActiveLocations('country'),
     staleTime: LOCATION_CACHE_MS,
     gcTime: LOCATION_CACHE_MS * 24,
   });
-  const countries = countriesQuery.data || [];
+  const countries = (countriesQuery.data || []).filter(
+    (candidate) => String(candidate.country_code || '').toUpperCase() === LAUNCH_COUNTRY_CODE,
+  );
   const selectedCountry = useMemo(
     () => countries.find((candidate) => candidate.id === country) || null,
     [countries, country],
   );
-  const selectedCountryCode = selectedCountry?.country_code || value?.countryCode || null;
+  const selectedCountryId = selectedCountry?.id || '';
+  const selectedCountryCode = selectedCountry ? LAUNCH_COUNTRY_CODE : null;
+
+  useEffect(() => {
+    if (!countriesQuery.isSuccess || !country || selectedCountryId) return;
+    setCountry('');
+    setState('');
+    setCity('');
+    setCityName('');
+  }, [countriesQuery.isSuccess, country, selectedCountryId]);
 
   const statesQuery = useQuery({
     queryKey: ['locations-states', country, selectedCountryCode],
@@ -151,8 +173,8 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
           <div className="mb-3 flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPinned className="h-4 w-4" aria-hidden="true" /></span>
             <div>
-              <p className="text-sm font-semibold text-foreground">Start near you—or browse anywhere</p>
-              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Location only suggests a starting point. Country selection always stays unlocked.</p>
+              <p className="text-sm font-semibold text-foreground">Start near you—or browse Zimbabwe</p>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Location only suggests a starting point. PeekaListing currently serves Zimbabwe marketplace locations.</p>
             </div>
           </div>
           <button
@@ -169,11 +191,11 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
       ) : null}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="space-y-2">
+        {countriesQuery.isLoading ? <SkeletonRegion label="Loading countries" className="space-y-2"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-full" /></SkeletonRegion> : <div className="space-y-2">
           <Label htmlFor={countryId}>Country</Label>
           <Select value={country} onValueChange={handleCountrySelect} disabled={countriesQuery.isLoading || countriesQuery.isError || locating}>
             <SelectTrigger id={countryId} className="rounded-lg">
-              <SelectValue placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country...'} />
+              <SelectValue placeholder="Select country..." />
             </SelectTrigger>
             <SelectContent>
               {countries.map((candidate) => (
@@ -181,13 +203,13 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div>}
 
-        <div className="space-y-2 md:col-span-2">
+        {statesQuery.isLoading ? <SkeletonRegion label="Loading regions" className="space-y-2 md:col-span-2"><Skeleton className="h-4 w-40" /><Skeleton className="h-10 w-full" /></SkeletonRegion> : <div className="space-y-2 md:col-span-2">
           <Label htmlFor={stateId}>Province, state or region</Label>
           <Select value={state} onValueChange={handleStateSelect} disabled={!country || statesQuery.isLoading || statesQuery.isError || locating}>
             <SelectTrigger id={stateId} className="rounded-lg">
-              <SelectValue placeholder={!country ? 'Select a country first' : statesQuery.isLoading ? 'Loading regions...' : 'Select a province, state or region...'} />
+              <SelectValue placeholder={!country ? 'Select a country first' : 'Select a province, state or region...'} />
             </SelectTrigger>
             <SelectContent>
               {states.map((candidate) => (
@@ -195,7 +217,7 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div>}
 
         <PlaceSearchCombobox
           parentId={state}

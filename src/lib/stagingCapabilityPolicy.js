@@ -1,31 +1,25 @@
-export const TRUSTED_STAGING_BRANCHES = Object.freeze([
-  'feature/listing-intelligence-foundation',
-  'claude/findit-hardening-listing-012cf0',
-  'feature/peek-threads-phase-3',
-  'feature/contextual-permissions',
-  'continuation/release-certification-ci',
+export const TRUSTED_NON_PRODUCTION_DEPLOYMENTS = Object.freeze([
+  'preview',
+  'staging',
 ]);
 
-const trustedStagingBranches = new Set(TRUSTED_STAGING_BRANCHES);
-const STAGING_HOST_PREFIX = 'findit-marketplace-stagi';
+const trustedNonProductionDeployments = new Set(TRUSTED_NON_PRODUCTION_DEPLOYMENTS);
+const TRUSTED_STAGING_HOSTS = new Set([
+  'staging.peekalisting.com',
+]);
 
-export function isTrustedStagingBranch(env = {}) {
-  const branch = String(
-    env.VITE_VERCEL_GIT_COMMIT_REF
-      ?? env.VERCEL_GIT_COMMIT_REF
-      ?? '',
-  ).trim();
-  return trustedStagingBranches.has(branch);
+export function isTrustedStagingDeployment(env = {}) {
+  const deployment = String(env.VITE_DEPLOY_ENV ?? '').trim().toLowerCase();
+  return trustedNonProductionDeployments.has(deployment);
 }
 
 export function isTrustedStagingHost(hostname = globalThis.location?.hostname ?? '') {
   const normalized = String(hostname || '').trim().toLowerCase();
-  return normalized.startsWith(STAGING_HOST_PREFIX)
-    && normalized.endsWith('.vercel.app');
+  return TRUSTED_STAGING_HOSTS.has(normalized);
 }
 
 export function isTrustedStagingEnvironment(env = {}) {
-  return isTrustedStagingBranch(env) || isTrustedStagingHost();
+  return isTrustedStagingDeployment(env) || isTrustedStagingHost();
 }
 
 export function readBooleanFlag(env = {}, envVar, fallback = false) {

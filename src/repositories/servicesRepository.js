@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 import { applyDescendingCreatedAtCursor } from '@/services/keysetPagination';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 
 // Provider contact values are deliberately absent -- `anon` holds no column
 // grant on them. Cards render availability from the has_contact_* flags and
@@ -24,7 +25,13 @@ export const PUBLIC_SERVICE_SELECT = `
   photos,
   location_id,
   location_name,
+  country_code,
+  location:locations!services_location_id_fkey(latitude, longitude),
   can_travel,
+  delivery_mode,
+  service_radius_km,
+  remote_available,
+  fixed_premises,
   status,
   views,
   created_at,
@@ -81,6 +88,7 @@ export async function findPublicServices(request) {
   let query = supabase
     .from('services')
     .select(PUBLIC_SERVICE_SELECT)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .eq('status', 'active')
     .neq('category', 'legal');
 
@@ -111,6 +119,7 @@ export async function findPublicServiceById(id) {
     .from('services')
     .select(PUBLIC_SERVICE_SELECT)
     .eq('id', id)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .eq('status', 'active')
     .neq('category', 'legal')
     .maybeSingle();
@@ -129,6 +138,7 @@ export async function findPublicServicesByIds(ids, { signal } = {}) {
     .from('services')
     .select(PUBLIC_SERVICE_SELECT)
     .in('id', ids)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
     .eq('status', 'active')
     .neq('category', 'legal')
     .limit(24)

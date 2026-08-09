@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { getAdminSupportRequests, resolveAdminSupportRequest } from '@/services/adminService';
 import { useCursorStack } from '@/hooks/useCursorStack';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const PAGE_SIZE = 20;
 const categoryLabels = {
@@ -65,7 +66,7 @@ export default function SupportRequestInbox({ onShowReports }) {
 
         {supportQuery.error && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{supportQuery.error.message}</p>}
         {supportQuery.isLoading ? (
-          <Card className="p-8 text-center text-muted-foreground">Loading support requests…</Card>
+          <Card className="p-4"><ListRowsSkeleton rows={6} label="Loading support requests" /></Card>
         ) : data.items.length === 0 ? (
           <Card className="p-10 text-center"><Inbox className="mx-auto mb-2 h-7 w-7 text-muted-foreground" /><p className="text-muted-foreground">No support requests match these filters.</p></Card>
         ) : (
