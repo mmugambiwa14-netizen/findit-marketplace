@@ -19,16 +19,13 @@ export function createListingSharePayload(type, listing) {
   const shareUrl = new URL(`/${segment}/${encodeURIComponent(listing.id)}`, window.location.origin);
   shareUrl.searchParams.set('ref', code);
   const imageUrl = firstShareImage(listing);
-  shareUrl.searchParams.set('title', String(listing.title || 'PeekaListing listing').trim().slice(0, 140));
-  if (imageUrl) shareUrl.searchParams.set('preview', imageUrl);
-  const description = String(listing.description || '').trim().replace(/\s+/g, ' ').slice(0, 220);
-  if (description) shareUrl.searchParams.set('summary', description);
-  const title = `${listing.title} (Ref: ${code})`;
-  const text = [
-    `${listing.title}\nListing No: ${code}`,
-    shareUrl.toString(),
-    imageUrl ? `Preview image: ${imageUrl}` : null,
-  ].filter(Boolean).join('\n');
+  const listingTitle = String(listing.title || 'PeekaListing listing').trim();
+  const title = `${listingTitle} (Ref: ${code})`;
+  // The URL is intentionally short. Cloudflare resolves the public listing by
+  // ID and renders its Open Graph metadata for chat crawlers. Putting title,
+  // description or image URLs in the query string leaks implementation detail
+  // into the WhatsApp message and allows metadata spoofing.
+  const text = `${listingTitle}\nListing No: ${code}`;
   return { code, title, text, shareUrl: shareUrl.toString(), imageUrl };
 }
 

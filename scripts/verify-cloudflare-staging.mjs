@@ -20,6 +20,12 @@ if (base.protocol !== 'https:') {
 }
 
 const failures = [];
+const escapeHtml = (value) => String(value ?? '')
+  .replaceAll('&', '&amp;')
+  .replaceAll('<', '&lt;')
+  .replaceAll('>', '&gt;')
+  .replaceAll('"', '&quot;')
+  .replaceAll("'", '&#39;');
 const request = async (path, options = {}) => {
   const url = new URL(path, base);
   const response = await fetch(url, { redirect: 'follow', ...options });
@@ -149,8 +155,42 @@ if (supabaseUrl || supabaseAnonKey) {
       });
       if (listingSearchResponse.status !== 200) {
         failures.push(`Supabase listing search: expected HTTP 200, got ${listingSearchResponse.status}`);
-      } else if ((await listingSearchResponse.json()).length < 1) {
-        failures.push('Supabase listing search: staging returned no public listings');
+      } else {
+        const listingRows = await listingSearchResponse.json();
+        if (listingRows.length < 1) {
+          failures.push('Supabase listing search: staging returned no public listings');
+        } else {
+          const sample = listingRows[0];
+          const sharePath = `/property/${sample.id}?ref=SHARE-CHECK&title=Injected&preview=https%3A%2F%2Fevil.example%2Ffake.jpg`;
+          const shareResponse = await request(sharePath, { headers: { 'User-Agent': 'WhatsApp/2.23' } });
+          if (shareResponse.response.status !== 200) {
+            failures.push(`WhatsApp listing metadata: expected HTTP 200, got ${shareResponse.response.status}`);
+          } else {
+            const ogTitleCount = (shareResponse.body.match(/property="og:title"/g) || []).length;
+            if (ogTitleCount !== 1) failures.push(`WhatsApp listing metadata: expected one og:title, got ${ogTitleCount}`);
+            if (!shareResponse.body.includes(`property="og:title" content="${escapeHtml(sample.title)}"`)) {
+              failures.push('WhatsApp listing metadata: public listing title is missing');
+            }
+            if (shareResponse.body.includes('PeekaListing Marketplace') || shareResponse.body.includes('Injected') || shareResponse.body.includes('evil.example')) {
+              failures.push('WhatsApp listing metadata: generic or query-controlled metadata leaked into the card');
+            }
+            const canonical = `${base.origin}/property/${sample.id}`;
+            if (!shareResponse.body.includes(`property="og:url" content="${canonical}"`)) {
+              failures.push('WhatsApp listing metadata: clean canonical listing URL is missing');
+            }
+            const imageMatch = shareResponse.body.match(/property="og:image" content="([^"]+)"/);
+            const imageUrl = imageMatch?.[1]?.replaceAll('&amp;', '&');
+            if (!imageUrl || imageUrl.includes('/brand/peekalisting-icon-512.png')) {
+              failures.push('WhatsApp listing metadata: listing-specific image is missing');
+            } else {
+              const imageResponse = await fetch(imageUrl, { redirect: 'follow', headers: { 'User-Agent': 'WhatsApp/2.23' } });
+              if (!imageResponse.ok || !imageResponse.headers.get('content-type')?.toLowerCase().startsWith('image/')) {
+                failures.push(`WhatsApp listing image: expected a reachable image, got HTTP ${imageResponse.status}`);
+              }
+              await imageResponse.body?.cancel();
+            }
+          }
+        }
       }
 
       const categoryCountsResponse = await fetch(new URL('/rest/v1/rpc/discover_category_counts', supabaseUrl), {
@@ -206,4 +246,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Cloudflare staging verification passed for ${base.host}: SPA, PWA, security headers, Google OAuth, listings, category counts, Peeks, and Supabase connectivity verified.`);
+console.log(`Cloudflare staging verification passed for ${base.host}: SPA, PWA, security headers, Google OAuth, listings, WhatsApp previews, category counts, Peeks, and Supabase connectivity verified.`);

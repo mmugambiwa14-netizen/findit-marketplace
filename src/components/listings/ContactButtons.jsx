@@ -56,7 +56,11 @@ export default function ContactButtons({ listing, type = 'property', placement =
     ? `Hi, I'm interested in your service: ${listing.title}`
     : `Hi, I'm interested in your listing: ${listing.title} (${typeLabel})${priceText}`;
   const sharePayload = createListingSharePayload(type, listing);
-  const whatsappText = [enquiryText, sharePayload.shareUrl, sharePayload.imageUrl].filter(Boolean).join('\n');
+  const whatsappText = [
+    enquiryText,
+    `Listing No: ${sharePayload.code}`,
+    sharePayload.shareUrl,
+  ].join('\n');
   const encodedMessage = encodeURIComponent(enquiryText);
   const encodedWhatsappMessage = encodeURIComponent(whatsappText);
   const emailSubject = encodeURIComponent(`Enquiry about ${type === 'service' ? 'your service' : 'your listing'}: ${listing.title}`);
@@ -145,9 +149,8 @@ export default function ContactButtons({ listing, type = 'property', placement =
       } else if (externalAction === 'whatsapp') {
         const whatsapp = String(revealed?.contact_whatsapp || '').replace(/[^0-9]/g, '');
         if (!whatsapp) throw new Error('WhatsApp contact is unavailable.');
-        // Include both the public listing URL and its first public image URL.
-        // WhatsApp can render the image as a chat thumbnail before a recipient
-        // opens the listing; no private contact or server key is included.
+        // WhatsApp reads the listing-specific Open Graph card rendered by the
+        // Cloudflare share URL; the raw image URL must not be pasted into chat.
         window.open(`https://wa.me/${whatsapp}?text=${encodedWhatsappMessage}`, '_blank', 'noopener,noreferrer');
       }
       setExternalAction(null);
@@ -270,7 +273,7 @@ export default function ContactButtons({ listing, type = 'property', placement =
           {externalAction === 'whatsapp' && sharePayload.imageUrl && (
             <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-2">
               <img src={sharePayload.imageUrl} alt="Listing preview" loading="lazy" decoding="async" className="h-16 w-20 rounded-lg object-cover" />
-              <p className="line-clamp-2 text-xs font-semibold text-foreground">The WhatsApp message includes this listing preview.</p>
+              <p className="line-clamp-2 text-xs font-semibold text-foreground">WhatsApp will create a preview card for this listing link.</p>
             </div>
           )}
           <AlertDialogFooter>

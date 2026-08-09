@@ -131,6 +131,23 @@ jobs:
             echo 'Created Cloudflare Pages project peekalisting.'
           fi
 
+      - name: Configure preview metadata bindings
+        shell: bash
+        run: |
+          set -euo pipefail
+          payload="$(jq -n \
+            --arg url "${VITE_SUPABASE_URL}" \
+            --arg key "${VITE_SUPABASE_ANON_KEY}" \
+            '{deployment_configs:{preview:{env_vars:{SUPABASE_URL:{type:"plain_text",value:$url},SUPABASE_PUBLISHABLE_KEY:{type:"secret_text",value:$key}}}}}')"
+          curl --fail-with-body --silent --show-error \
+            --request PATCH \
+            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            --header 'Content-Type: application/json' \
+            --data "${payload}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/peekalisting" \
+            | jq -e '.success == true' >/dev/null
+          echo 'Configured isolated Cloudflare preview metadata bindings.'
+
       - name: Deploy preview branch without changing DNS
         run: >-
           npx wrangler pages deploy dist
