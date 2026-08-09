@@ -17,7 +17,7 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     environment:
       name: cloudflare-staging
       url: https://staging.peekalisting.com
@@ -26,7 +26,6 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_PAGES_PROJECT: peekalisting-staging
       CLOUDFLARE_STAGING_DOMAIN: staging.peekalisting.com
-      CLOUDFLARE_ZONE_NAME: peekalisting.com
       NODE_ENV: production
       VITE_MODE: staging
       VITE_DEPLOY_ENV: staging
@@ -135,89 +134,5 @@ jobs:
           test -f dist/manifest.webmanifest
           test -f dist/sw.js
 
-      - name: Ensure isolated Cloudflare Pages project exists
-        shell: bash
-        run: |
-          set -euo pipefail
-          api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects"
-          projects="$(curl --fail-with-body --silent --show-error --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" "$api")"
-          if jq -e --arg name "$CLOUDFLARE_PAGES_PROJECT" '.result[] | select(.name == $name)' <<<"$projects" >/dev/null; then
-            curl --fail-with-body --silent --show-error \
-              --request PATCH \
-              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              --header 'Content-Type: application/json' \
-              --data '{"production_branch":"main"}' \
-              "$api/${CLOUDFLARE_PAGES_PROJECT}" | jq -e '.success == true' >/dev/null
-          else
-            curl --fail-with-body --silent --show-error \
-              --request POST \
-              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              --header 'Content-Type: application/json' \
-              --data "$(jq -n --arg name "$CLOUDFLARE_PAGES_PROJECT" '{name:$name,production_branch:"main"}')" \
-              "$api" | jq -e '.success == true' >/dev/null
-          fi
-
-      - name: Deploy exact main build to Cloudflare Pages
-        run: >-
-          npx --yes wrangler@4 pages deploy dist
-          --project-name="$CLOUDFLARE_PAGES_PROJECT"
-          --branch=main
-          --commit-hash="$GITHUB_SHA"
-          --commit-message="PeekaListing canonical staging $GITHUB_SHA"
-
-      - name: Point staging.peekalisting.com at canonical Pages project
-        shell: bash
-        run: |
-          set -euo pipefail
-          account_api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}"
-          auth=(-H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H 'Content-Type: application/json')
-
-          zone_json="$(curl --fail-with-body --silent --show-error "${auth[@]}" \
-            "https://api.cloudflare.com/client/v4/zones?name=${CLOUDFLARE_ZONE_NAME}&account.id=${CLOUDFLARE_ACCOUNT_ID}")"
-          zone_id="$(jq -r '.result[0].id // empty' <<<"$zone_json")"
-          test -n "$zone_id" || { echo '::error::Cloudflare zone peekalisting.com was not found'; exit 1; }
-
-          pages_target="${CLOUDFLARE_PAGES_PROJECT}.pages.dev"
-          records="$(curl --fail-with-body --silent --show-error "${auth[@]}" \
-            "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records?name=${CLOUDFLARE_STAGING_DOMAIN}")"
-          record_id="$(jq -r '.result[0].id // empty' <<<"$records")"
-          payload="$(jq -n --arg name "$CLOUDFLARE_STAGING_DOMAIN" --arg content "$pages_target" \
-            '{type:"CNAME",name:$name,content:$content,proxied:true,ttl:1}')"
-          if [[ -n "$record_id" ]]; then
-            curl --fail-with-body --silent --show-error --request PUT "${auth[@]}" --data "$payload" \
-              "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records/${record_id}" \
-              | jq -e '.success == true' >/dev/null
-          else
-            curl --fail-with-body --silent --show-error --request POST "${auth[@]}" --data "$payload" \
-              "https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records" \
-              | jq -e '.success == true' >/dev/null
-          fi
-
-          domains_api="${account_api}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}/domains"
-          domains="$(curl --fail-with-body --silent --show-error "${auth[@]}" "$domains_api")"
-          if ! jq -e --arg name "$CLOUDFLARE_STAGING_DOMAIN" '.result[] | select(.name == $name)' <<<"$domains" >/dev/null; then
-            curl --fail-with-body --silent --show-error --request POST "${auth[@]}" \
-              --data "$(jq -n --arg name "$CLOUDFLARE_STAGING_DOMAIN" '{name:$name}')" \
-              "$domains_api" | jq -e '.success == true' >/dev/null
-          fi
-
-      - name: Verify canonical domain serves this exact commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          expected="sha=$GITHUB_SHA"
-          for attempt in $(seq 1 90); do
-            body="$(curl --silent --show-error --fail \
-              --header 'Cache-Control: no-cache' \
-              "https://${CLOUDFLARE_STAGING_DOMAIN}/current-build.txt?commit=${GITHUB_SHA}&attempt=${attempt}" || true)"
-            if grep -Fxq "$expected" <<<"$body"; then
-              echo "Canonical staging domain is serving $GITHUB_SHA"
-              curl --fail --silent --show-error --header 'Cache-Control: no-cache' \
-                "https://${CLOUDFLARE_STAGING_DOMAIN}/" >/dev/null
-              exit 0
-            fi
-            echo "Waiting for canonical domain cutover (${attempt}/90)"
-            sleep 5
-          done
-          echo "::error::staging.peekalisting.com did not serve the exact deployed commit"
-          exit 1
+      - name: Deploy and verify staging.peekalisting.com
+        run: bash ./scripts/deploy-canonical-cloudflare-staging.sh
