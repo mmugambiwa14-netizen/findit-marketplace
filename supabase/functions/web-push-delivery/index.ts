@@ -46,17 +46,19 @@ Deno.serve(async (request) => {
     if (claimError) throw claimError;
 
     let delivered = 0;
+    let partial = 0;
     let failed = 0;
     let invalidated = 0;
 
     for (const delivery of deliveries ?? []) {
       const subscriptions = Array.isArray(delivery.subscriptions) ? delivery.subscriptions : [];
       let successfulDevices = 0;
+      let failedDevices = 0;
       const errors: string[] = [];
 
       const payload = JSON.stringify({
         notificationId: delivery.notification_id,
-        type: safeText(delivery.event_type, 'account_update', 80),
+        type: safeText(delivery.event_type, 'account_status', 80),
         title: safeText(delivery.title, 'PeekaListing update', 120),
         body: safeText(delivery.body, 'You have a new PeekaListing notification.', 220),
         link: safeLink(delivery.link),
@@ -77,6 +79,7 @@ Deno.serve(async (request) => {
             p_permanent_failure: false,
           });
         } catch (error) {
+          failedDevices += 1;
           const status = Number((error as { statusCode?: number })?.statusCode ?? 0);
           const permanent = status === 404 || status === 410;
           if (permanent) invalidated += 1;
@@ -89,19 +92,24 @@ Deno.serve(async (request) => {
         }
       }
 
+      // A user with no active push subscriptions is complete at the push layer:
+      // the canonical in-app alert remains available and there is nothing to retry.
       const complete = subscriptions.length === 0 || successfulDevices > 0;
       const { error: completeError } = await client.rpc('complete_web_push_delivery', {
         p_delivery_id: delivery.delivery_id,
         p_lease_token: delivery.lease_token,
         p_delivered: complete,
+        p_delivered_count: successfulDevices,
+        p_failed_count: failedDevices,
         p_error: errors.join(' | ') || null,
       });
       if (completeError) throw completeError;
-      if (complete) delivered += 1;
+      if (successfulDevices > 0 && failedDevices > 0) partial += 1;
+      else if (complete) delivered += 1;
       else failed += 1;
     }
 
-    return new Response(JSON.stringify({ claimed: deliveries?.length ?? 0, delivered, failed, invalidated }), {
+    return new Response(JSON.stringify({ claimed: deliveries?.length ?? 0, delivered, partial, failed, invalidated }), {
       status: 200,
       headers: jsonHeaders,
     });
