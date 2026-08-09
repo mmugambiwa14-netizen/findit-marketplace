@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { onRequest } from '../functions/_middleware.js';
+import { renderPagesRuntimeConfig, validatePagesPublishableKey } from '../scripts/prepare-pages-functions-runtime.mjs';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const propertyId = 'a4ed6157-3a51-4386-9392-1e33c41081dd';
@@ -104,14 +105,33 @@ test('private listing covers use a stable Cloudflare route and anonymous Supabas
 });
 
 test('Cloudflare keeps preview and production metadata bindings separate without privileged keys', async () => {
-  const [middleware, preview, production] = await Promise.all([
+  const [middleware, preview, production, generated] = await Promise.all([
     read('functions/_middleware.js'),
     read('.github/workflows/peekalisting-preview.yml'),
     read('.github/workflows/deploy-production-pages.yml'),
+    read('cloudflare/pages-runtime-config.js'),
   ]);
   assert.match(preview, /deployment_configs:\{preview:\{env_vars:/);
   assert.match(production, /deployment_configs:\{production:\{env_vars:/);
   assert.match(preview, /SUPABASE_PUBLISHABLE_KEY:\{type:"secret_text"/);
   assert.match(production, /SUPABASE_PUBLISHABLE_KEY:\{type:"secret_text"/);
+  assert.match(preview, /prepare-pages-functions-runtime\.mjs/);
+  assert.match(production, /prepare-pages-functions-runtime\.mjs/);
+  assert.doesNotMatch(generated, /https:\/\/|sb_publishable_|eyJ/);
   assert.doesNotMatch(middleware, /service[_-]?role|secret[_-]?key/i);
+});
+
+test('Functions deployment config accepts only publishable or anonymous Supabase credentials', () => {
+  assert.equal(validatePagesPublishableKey('sb_publishable_browser_safe'), 'sb_publishable_browser_safe');
+  assert.throws(() => validatePagesPublishableKey('sb_secret_forbidden'), /secret key cannot be bundled/i);
+  const jwt = (role) => [
+    Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url'),
+    Buffer.from(JSON.stringify({ role })).toString('base64url'),
+    'signature',
+  ].join('.');
+  assert.equal(validatePagesPublishableKey(jwt('anon')), jwt('anon'));
+  assert.throws(() => validatePagesPublishableKey(jwt('service_role')), /publishable or legacy anon key/i);
+  const source = renderPagesRuntimeConfig('https://example.supabase.co', 'sb_publishable_browser_safe');
+  assert.match(source, /supabaseUrl: "https:\/\/example\.supabase\.co"/);
+  assert.match(source, /supabasePublishableKey: "sb_publishable_browser_safe"/);
 });

@@ -1,3 +1,5 @@
+import { generatedPagesRuntimeConfig } from '../cloudflare/pages-runtime-config.js';
+
 const UUID_SEGMENT = '[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}';
 const DETAIL_ROUTE = new RegExp(`^/(property|car|machinery|service)/(${UUID_SEGMENT})/?$`, 'i');
 const SHARE_IMAGE_ROUTE = new RegExp(`^/share-image/(property|car|machinery|service)/(${UUID_SEGMENT})/?$`, 'i');
@@ -38,8 +40,10 @@ function firstPhoto(record) {
 }
 
 function supabaseConfig(env) {
-  const url = safeHttpsUrl(env?.SUPABASE_URL);
-  const publishableKey = String(env?.SUPABASE_PUBLISHABLE_KEY || '').trim();
+  const url = safeHttpsUrl(env?.SUPABASE_URL || generatedPagesRuntimeConfig.supabaseUrl);
+  const publishableKey = String(
+    env?.SUPABASE_PUBLISHABLE_KEY || generatedPagesRuntimeConfig.supabasePublishableKey,
+  ).trim();
   return url && publishableKey ? { url: url.replace(/\/$/, ''), publishableKey } : null;
 }
 

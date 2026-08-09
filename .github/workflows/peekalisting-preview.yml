@@ -148,6 +148,9 @@ jobs:
             | jq -e '.success == true' >/dev/null
           echo 'Configured isolated Cloudflare preview metadata bindings.'
 
+      - name: Prepare staging Functions runtime
+        run: node ./scripts/prepare-pages-functions-runtime.mjs
+
       - name: Deploy preview branch without changing DNS
         run: >-
           npx wrangler pages deploy dist
