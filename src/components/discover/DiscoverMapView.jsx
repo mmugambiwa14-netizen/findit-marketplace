@@ -151,6 +151,7 @@ export default function DiscoverMapView({ location }) {
     let activePopupRoot;
     let activeMarkerElement;
     let closeTimer;
+    let mapResizeObserver;
     const markers = [];
     const markerIconRoots = [];
     const hoverCapable = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
@@ -226,6 +227,12 @@ export default function DiscoverMapView({ location }) {
           cooperativeGestures: false,
           touchPitch: false,
         });
+        if (typeof ResizeObserver !== 'undefined' && mapNode.current) {
+          mapResizeObserver = new ResizeObserver(() => {
+            if (!cancelled) map?.resize();
+          });
+          mapResizeObserver.observe(mapNode.current);
+        }
         registerOptionalStyleImageFallbacks(map);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
         const bounds = new maplibregl.LngLatBounds();
@@ -270,6 +277,7 @@ export default function DiscoverMapView({ location }) {
       closePreview();
       markerIconRoots.forEach((root) => root.unmount());
       markers.forEach((marker) => marker.remove());
+      mapResizeObserver?.disconnect();
       map?.remove();
     };
   }, [navigate, visible]);
@@ -278,7 +286,7 @@ export default function DiscoverMapView({ location }) {
   return (
     <section className="space-y-3" aria-label="Discover marketplace map">
       <div className="locked-map-panel relative min-h-[540px]">
-        <div ref={mapNode} className="h-[calc(100svh-270px)] min-h-[540px] max-h-[720px] w-full" />
+        <div ref={mapNode} className="findit-discover-map" />
         {failure && <div className="absolute inset-x-3 top-3 z-20 rounded-xl border border-border bg-background/94 px-3 py-2 text-xs shadow-lg backdrop-blur-xl">{failure}</div>}
         {!loading && !mapped.length && <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-xl border border-border bg-background/88 px-3 py-2 text-center text-xs text-muted-foreground shadow-lg backdrop-blur-xl">No listings with public coordinates yet. The map is centered on Zimbabwe.</div>}
       </div>

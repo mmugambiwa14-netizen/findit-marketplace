@@ -23,14 +23,14 @@ body {
 
 /* Keep iOS Safari and installed PWAs from auto-zooming the document when a
  * user focuses a small form control. 16px is the platform threshold; this
- * preserves normal pinch-to-zoom and therefore does not reduce accessibility. */
+ * preserves normal pinch-to-zoom and therefore does not reduce accessibility.
+ * The intentional !important defeats page-level utility classes such as
+ * text-sm on controls that are otherwise visually sized by their shell. */
 @media (max-width: 767px) {
-  :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
-    select,
-    textarea
-  ) {
-    font-size: 16px;
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
@@ -51,6 +51,10 @@ body {
 
 .findit-mobile-nav {
   bottom: max(0.625rem, env(safe-area-inset-bottom));
+  left: 50%;
+  width: min(500px, calc(100% - 1.25rem));
+  box-sizing: border-box;
+  transform: translateX(-50%);
   padding-bottom: 0;
 }
 

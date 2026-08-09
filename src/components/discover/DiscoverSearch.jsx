@@ -32,7 +32,7 @@ export default function DiscoverSearch({ location }) {
         placeholder="Search properties, cars, services..."
         aria-label="Search FindIt"
         maxLength={100}
-        className="locked-control h-14 rounded-[1.15rem] border-border/85 bg-card/80 pl-11 pr-4 text-sm placeholder:text-muted-foreground/80 sm:pr-28"
+        className="locked-control h-14 rounded-[1.15rem] border-border/85 bg-card/80 pl-11 pr-4 text-base placeholder:text-muted-foreground/80 md:text-sm sm:pr-28"
       />
       <button type="submit" className="clay-button absolute right-2 top-2 hidden h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold sm:flex">
         Search

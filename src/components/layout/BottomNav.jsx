@@ -36,9 +36,9 @@ export default function BottomNav() {
     <>
       <nav
         aria-label="Mobile navigation"
-        className="findit-mobile-nav fixed inset-x-2.5 bottom-2.5 z-40 md:hidden"
+        className="findit-mobile-nav fixed bottom-2.5 z-40 md:hidden"
       >
-        <div className="clay-nav mx-auto flex h-[var(--findit-nav-height)] max-w-[500px] items-stretch rounded-[var(--findit-panel-radius)] px-1">
+        <div className="clay-nav flex h-[var(--findit-nav-height)] w-full items-stretch rounded-[var(--findit-panel-radius)] px-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);

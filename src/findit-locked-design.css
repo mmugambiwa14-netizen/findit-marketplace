@@ -108,6 +108,20 @@
     0 20px 48px hsl(var(--clay-shadow-dark) / 0.2);
 }
 
+/* The map owns its canvas size. MapLibre changes the rendered viewport when
+ * users zoom or pan; the surrounding page and mobile navigation must not
+ * participate in that transform or reflow. */
+.findit-discover-map {
+  display: block;
+  height: clamp(540px, calc(var(--findit-viewport-height, 100dvh) - 270px), 720px);
+  min-height: 540px;
+  max-height: 720px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
 .findit-map-marker {
   display: flex;
   height: 52px;
