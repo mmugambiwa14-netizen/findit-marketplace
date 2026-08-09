@@ -18,7 +18,7 @@ GitHub Actions → Cloudflare Pages → PeekaListing Web/PWA → Supabase
 | Account | `fdcf3559c23354c2aadbb6ae5f612744` |
 | Staging Pages project | `peekalisting-staging`; production branch `staging` |
 | Staging domain | `https://staging.peekalisting.com`; active |
-| Staging deployment | commit `5fdaf8e`; hosted acceptance passed |
+| Staging deployment | commit `6570357`; hosted acceptance passed |
 | Production Pages project | `peekalisting`; production branch `main` |
 | Production deployment | none yet |
 | Production custom domains | none attached |
@@ -26,6 +26,12 @@ GitHub Actions → Cloudflare Pages → PeekaListing Web/PWA → Supabase
 | Apex / `www` | intentionally not routed while production gates are red |
 | Mail DNS | existing MX, DKIM and Google verification records preserved |
 | Git connection | neither Pages project uses Cloudflare Git integration; GitHub Actions is deployment authority |
+
+Zone edge policy is also explicit: Always Use HTTPS is enabled, the minimum TLS
+version is 1.2, TLS 1.3 is enabled and Automatic HTTPS Rewrites is enabled.
+The Universal SSL certificate covering `peekalisting.com` and
+`*.peekalisting.com` is active. HSTS remains repository-owned through
+`public/_headers`, where it is verified on each hosted deployment.
 
 The Pages projects are deliberately separate. Preview or staging uploads must
 never target `peekalisting`, and production uploads must never target
