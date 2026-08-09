@@ -4,8 +4,12 @@ function uuidLike(value) {
   return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(value);
 }
 
-export function normalizeCreatePeekRequest(input) {
-  const normalized = normalizePeekRequest(input);
+export function normalizeCreatePeekRequest(input = {}) {
+  const normalized = normalizePeekRequest({
+    ...input,
+    listingId: input.listingId ?? (input.parentType === 'listing' ? input.parentId : undefined),
+    serviceId: input.serviceId ?? (input.parentType === 'service' ? input.parentId : undefined),
+  });
   if (!normalized.ok) return normalized;
   return {
     ok: true,
