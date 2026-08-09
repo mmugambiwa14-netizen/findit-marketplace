@@ -61,12 +61,6 @@ export default defineConfig(({ command, mode }) => ({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // Realtime is disabled (supabase/config.toml [realtime]) and unused
-      // (no `.channel()` call anywhere in src/), but createClient() always
-      // instantiates a RealtimeClient. Alias it to a stub that keeps the
-      // methods SupabaseClient actually calls and throws if `.channel()` is
-      // ever invoked for real. See src/lib/noRealtimeClient.js.
-      '@supabase/realtime-js': fileURLToPath(new URL('./src/lib/noRealtimeClient.js', import.meta.url)),
     },
   },
   // Note: splitting node_modules into a separate vendor chunk was measured and
