@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabaseClient';
 
-const STAGING_PUBLIC_KEY = 'BLuirAxWgQ7PVQ2EyEORk_oSeN2N5jwwxBQjIM_5UrdHQmGoGFLZ_0zyDNcRQ0fInqZdgcH6_efeFy6tu478xJ4';
-
 function applicationServerKey() {
-  return String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || STAGING_PUBLIC_KEY).trim();
+  const value = String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || '').trim();
+  if (!value) throw new Error('Web Push is not configured for this deployment.');
+  return value;
 }
 
 function urlBase64ToUint8Array(value) {
@@ -27,9 +27,16 @@ export function webPushSupport() {
     && 'PushManager' in window
     && 'Notification' in window,
   );
-  const standalone = window.matchMedia?.('(display-mode: standalone)').matches
-    || window.navigator.standalone === true;
-  return { supported, standalone, permission: supported ? Notification.permission : 'unsupported' };
+  const standalone = Boolean(
+    window.matchMedia?.('(display-mode: standalone)')?.matches
+    || window.navigator.standalone === true,
+  );
+  return {
+    supported,
+    configured: Boolean(String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || '').trim()),
+    standalone,
+    permission: supported ? Notification.permission : 'unsupported',
+  };
 }
 
 export async function getCurrentPushSubscription() {
@@ -41,11 +48,14 @@ export async function getCurrentPushSubscription() {
 export async function enableWebPush() {
   const support = webPushSupport();
   if (!support.supported) throw new Error('Push notifications are not supported on this device.');
+  if (!support.configured) throw new Error('Push notifications are not configured for this deployment.');
   if (!support.standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
-    throw new Error('On iPhone or iPad, add FindIt to your Home Screen before enabling notifications.');
+    throw new Error('On iPhone or iPad, add PeekaListing to your Home Screen before enabling notifications.');
   }
 
-  const permission = await Notification.requestPermission();
+  const permission = Notification.permission === 'granted'
+    ? 'granted'
+    : await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('Notification permission was not granted.');
 
   const registration = await navigator.serviceWorker.ready;
@@ -58,14 +68,22 @@ export async function enableWebPush() {
   }
 
   const json = subscription.toJSON();
+  if (!json.keys?.p256dh || !json.keys?.auth) {
+    await subscription.unsubscribe().catch(() => false);
+    throw new Error('The browser returned an incomplete push subscription.');
+  }
+
   const { error } = await supabase.rpc('register_web_push_subscription', {
     p_endpoint: subscription.endpoint,
-    p_p256dh: json.keys?.p256dh,
-    p_auth: json.keys?.auth,
+    p_p256dh: json.keys.p256dh,
+    p_auth: json.keys.auth,
     p_user_agent: navigator.userAgent,
     p_platform: platformLabel(),
   });
-  if (error) throw error;
+  if (error) {
+    await subscription.unsubscribe().catch(() => false);
+    throw error;
+  }
   return subscription;
 }
 
