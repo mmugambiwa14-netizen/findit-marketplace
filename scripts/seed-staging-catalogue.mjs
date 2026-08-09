@@ -27,6 +27,7 @@ const MODE = process.argv[2] ?? "default";
 const EMIT_CATALOGUE_SQL = MODE === "emit-catalogue-sql";
 const EMIT_TOURS_SQL = MODE === "emit-tours-sql";
 const DIRECT_SEED = MODE === "seed";
+const MEDIA_ONLY = MODE === "media-only";
 const EMIT_SQL_MODE = EMIT_CATALOGUE_SQL || EMIT_TOURS_SQL;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -35,7 +36,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 if (!EMIT_SQL_MODE && !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("FINDIT_SUPABASE_SECRET_KEY is required for direct privileged writes");
 }
-if ((DIRECT_SEED || EMIT_TOURS_SQL) && (!FFMPEG_PATH || !fs.existsSync(FFMPEG_PATH))) {
+if ((DIRECT_SEED || MEDIA_ONLY || EMIT_TOURS_SQL) && (!FFMPEG_PATH || !fs.existsSync(FFMPEG_PATH))) {
   throw new Error("FFMPEG_PATH must point to the ffmpeg executable used for staging media");
 }
 
@@ -1120,16 +1121,20 @@ async function main() {
     }
   }
 
-  if (!DIRECT_SEED) {
-    throw new Error("Use seed, emit-catalogue-sql or emit-tours-sql.");
+  if (!DIRECT_SEED && !MEDIA_ONLY) {
+    throw new Error("Use seed, media-only, emit-catalogue-sql or emit-tours-sql.");
   }
 
-  await upsertInChunks("listings", listingData.rows, { onConflict: "id" });
-  await upsertInChunks("property_details", listingData.propertyDetails, { onConflict: "listing_id" });
-  await upsertInChunks("car_details", listingData.carDetails, { onConflict: "listing_id" });
-  await upsertInChunks("machinery_details", listingData.machineryDetails, { onConflict: "listing_id" });
-  await upsertInChunks("services", serviceData.services, { onConflict: "id" });
-  await upsertInChunks("peek_requests", buildPeeks(parents), { onConflict: "id" });
+  if (DIRECT_SEED) {
+    await upsertInChunks("listings", listingData.rows, { onConflict: "id" });
+    await upsertInChunks("property_details", listingData.propertyDetails, { onConflict: "listing_id" });
+    await upsertInChunks("car_details", listingData.carDetails, { onConflict: "listing_id" });
+    await upsertInChunks("machinery_details", listingData.machineryDetails, { onConflict: "listing_id" });
+    await upsertInChunks("services", serviceData.services, { onConflict: "id" });
+    await upsertInChunks("peek_requests", buildPeeks(parents), { onConflict: "id" });
+  } else {
+    supabase = root;
+  }
 
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "peekalisting-catalogue-"));
   try {

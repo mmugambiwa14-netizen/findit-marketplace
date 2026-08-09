@@ -48,5 +48,5 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends ffmpeg
 
-      - name: Verify taxonomy and seed Zimbabwe catalogue
-        run: node scripts/seed-staging-catalogue.mjs seed
+      - name: Verify taxonomy and refresh Zimbabwe catalogue media
+        run: node scripts/seed-staging-catalogue.mjs media-only
