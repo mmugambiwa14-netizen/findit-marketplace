@@ -30,6 +30,9 @@ jobs:
       VITE_DEPLOY_ENV: production
       VITE_BASE_PATH: /
       VITE_PUBLIC_APP_ORIGIN: https://peekalisting.com
+      VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+      VITE_SENTRY_ENVIRONMENT: production
+      VITE_SENTRY_RELEASE: ${{ github.sha }}
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_AUTH_GOOGLE_ENABLED: "true"

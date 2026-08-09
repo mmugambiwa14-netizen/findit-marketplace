@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import '@/index.css'
 import '@/findit-locked-design.css'
 import '@/pwa-viewport.css'
+import { initializeMonitoring, reportError } from '@/lib/monitoring'
 
 const rootElement = document.getElementById('root')
 
@@ -34,6 +35,8 @@ function StartupFailure() {
 
 async function bootstrap() {
   try {
+    await initializeMonitoring()
+
     const [{ default: App }, { default: AppErrorBoundary }] = await Promise.all([
       import('@/App.jsx'),
       import('@/components/AppErrorBoundary.jsx'),
@@ -46,6 +49,7 @@ async function bootstrap() {
     )
   } catch (error) {
     console.error('PeekaListing application bootstrap failed:', error)
+    reportError(error, { phase: 'bootstrap' })
     root.render(<StartupFailure />)
   }
 }

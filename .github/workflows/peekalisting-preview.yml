@@ -37,6 +37,9 @@ jobs:
       # Keep OAuth callbacks on the canonical Cloudflare staging origin even
       # when a tester opens a deployment-specific Pages URL.
       VITE_PUBLIC_APP_ORIGIN: https://staging.peekalisting.com
+      VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+      VITE_SENTRY_ENVIRONMENT: staging
+      VITE_SENTRY_RELEASE: ${{ github.sha }}
       FINDIT_STAGING_ORIGIN: https://staging.peekalisting.com
       FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
       # Prefer environment-scoped browser configuration. The fallback keeps

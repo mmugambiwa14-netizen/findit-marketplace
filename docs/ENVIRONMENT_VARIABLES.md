@@ -23,6 +23,9 @@ browser build, and public browser keys must still be provider-restricted.
 | `VITE_FEATURE_CURRENT_LOCATION` | Consent-gated device location to a supported public place | True after the Supabase/PostGIS registry is certified; independent of maps |
 | `VITE_MAPTILER_PUBLIC_KEY` | MapTiler browser key | Required when maps are enabled |
 | `VITE_MAPTILER_STYLE_ID` | Approved MapTiler map style | Defaults to `streets-v4` |
+| `VITE_SENTRY_DSN` | Public Sentry browser DSN | Optional; monitoring stays dormant when unset |
+| `VITE_SENTRY_ENVIRONMENT` | Sentry environment label | `staging` or `production` in Cloudflare workflows |
+| `VITE_SENTRY_RELEASE` | Sentry release identifier | Git commit SHA in Cloudflare workflows |
 | `VITE_FEATURE_REPORTING` | Marketplace reporting | True |
 | `VITE_FEATURE_TOURS` | Peek UI | True only for an accepted Peek release |
 | `VITE_FEATURE_TOURS_PREVIEW` | Development/staging preview | False in every production build |
