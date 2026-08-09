@@ -5,7 +5,11 @@ import { supabase } from '@/lib/supabaseClient';
  *   id: string,
  *   full_name: string | null,
  *   bio: string | null,
- *   avatar_url: string | null
+ *   display_name: string | null,
+ *   public_address: string | null,
+ *   website_url: string | null,
+ *   avatar_url: string | null,
+ *   avatar_storage_path: string | null
  * } | null>}
  */
 export async function findPublicSellerProfile(sellerId) {
@@ -21,7 +25,11 @@ export async function findPublicSellerProfile(sellerId) {
     id: string,
     full_name: string | null,
     bio: string | null,
-    avatar_url: string | null
+    display_name: string | null,
+    public_address: string | null,
+    website_url: string | null,
+    avatar_url: string | null,
+    avatar_storage_path: string | null
   } | null} */ (data);
   return profile ?? null;
 }

@@ -913,15 +913,16 @@ page,origin,inherited,line,element,name,type,handler,destination,disabled
 "SellerProfile.jsx","src\pages\SellerProfile.jsx","false","75","Button","Go back","button","() => goBackOrHome(navigate, '/')","",""
 "SellerProfile.jsx","src\pages\SellerProfile.jsx","false","89","Button","Try again","button","() => profileQuery.refetch()","",""
 "SellerProfile.jsx","src\pages\SellerProfile.jsx","false","100","Button","Go back","button","() => goBackOrHome(navigate, '/')","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","118","button","Go back","button","() => goBackOrHome(navigate, '/')","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","139","Button","WhatsApp","","() => {
-                  const number = whatsapp.replace(/[^0-9]/g, """");
-                  const message = encodeURIComponent(""Hi, I'm interested in one of your PeekaListing listings."");
-                  window.open(`https://wa.me/${number}?text=${message}`, ""_blank"", ""noopener,noreferrer"");
-                }","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","145","Button","Call","","() => { window.location.href = `tel:${phone}`; }","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","156","Button","Try again","button","() => listingsQuery.refetch()","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","162","Button","<><Loader2 className=""h-4 w-4 animate-spin"" /> Loading</> 'Load more listings'","button","() => listingsQuery.fetchNextPage()","","listingsQuery.isFetchingNextPage"
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","122","button","Go back","button","() => goBackOrHome(navigate, '/')","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","149","a","","","","profile.website_url",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","168","Button","WhatsApp","","() => {
+                    const number = whatsapp.replace(/[^0-9]/g, """");
+                    const message = encodeURIComponent(""Hi, I'm interested in one of your PeekaListing listings."");
+                    window.open(`https://wa.me/${number}?text=${message}`, ""_blank"", ""noopener,noreferrer"");
+                  }","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","174","Button","Call","","() => { window.location.href = `tel:${phone}`; }","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","189","Button","Try again","button","() => listingsQuery.refetch()","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","false","195","Button","<><Loader2 className=""h-4 w-4 animate-spin"" /> Loading</> 'Load more listings'","button","() => listingsQuery.fetchNextPage()","","listingsQuery.isFetchingNextPage"
 "SellerProfile.jsx","src\components\layout\BackButton.jsx","true","16","button","label","button","handleBack","",""
 "SellerProfile.jsx","src\components\dealers\DealerListings.jsx","true","38","button","{tab.label}","button","() => setActiveType(tab.value)","",""
 "SellerProfile.jsx","src\components\marketplace\MarketplaceCard.jsx","true","47","Link","`${title}, ${priceLabel}`","","onOpen","to",""
@@ -1097,8 +1098,13 @@ page,origin,inherited,line,element,name,type,handler,destination,disabled
 "Settings.jsx","src\components\settings\PersonalizationSettings.jsx","true","88","Button","Try again","button","() => preference.refetch()","",""
 "Settings.jsx","src\components\settings\PersonalizationSettings.jsx","true","94","AlertDialog","Clear recommendation activity Clear recommendation activity? This deletes account-linked recommendation activity and turns personalization off. It does not delete listings, saved items, or messages. Cancel 'Clearing...' 'Clear activity'","","","",""
 "Settings.jsx","src\components\settings\PersonalizationSettings.jsx","true","96","Button","Clear recommendation activity","button","","","busy"
-"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","49","Textarea","Tell buyers what you sell and how you work.","","(event) => setBio(event.target.value)","",""
-"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","60","Button","""Saving..."" <><Check className=""w-3 h-3 mr-1"" /> Save seller profile</>","","handleSave","","saving"
+"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","123","Button","<Loader2 className=""mr-1.5 h-4 w-4 animate-spin"" /> <Camera className=""mr-1.5 h-4 w-4"" /> ""Replace logo"" ""Add logo""","button","() => logoInputRef.current?.click()","","uploadingLogo || saving"
+"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","128","Button","Remove","button","removeLogo","","uploadingLogo || saving"
+"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","141","Input","Example: Moyo Properties","","(event) => setDisplayName(event.target.value)","",""
+"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","154","Input","https://example.co.zw","url","(event) => setWebsiteUrl(event.target.value)","",""
+"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","170","Input","Example: 12 Samora Machel Avenue, Harare","","(event) => setPublicAddress(event.target.value)","",""
+"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","184","Textarea","Tell buyers what you sell and how you work.","","(event) => setBio(event.target.value)","",""
+"Settings.jsx","src\components\settings\SellerProfileFields.jsx","true","195","Button","""Saving..."" <><Check className=""w-3 h-3 mr-1"" /> Save seller profile</>","","handleSave","","saving || uploadingLogo"
 "Tours.jsx","src\pages\Tours.jsx","false","177","button","`Peek settings. Autoplay is ${autoplay ? 'on' : 'off'}`","button","() => setSettingsOpen(true)","",""
 "Tours.jsx","src\pages\Tours.jsx","false","190","button","{label}","button","() => changeCategory(value)","",""
 "Tours.jsx","src\pages\Tours.jsx","false","210","Button","Try again","","() => feed.refetch()","",""

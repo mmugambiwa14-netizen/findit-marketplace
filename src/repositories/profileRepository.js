@@ -5,7 +5,7 @@ export async function updateOwnProfileRow(userId, updates) {
     .from('users')
     .update(updates)
     .eq('id', userId)
-    .select('id,email,full_name,phone,phone_verified,bio,avatar_url,role,status,ban_reason,ban_until')
+    .select('id,email,full_name,phone,phone_verified,bio,display_name,public_address,website_url,avatar_url,avatar_storage_path,role,status,ban_reason,ban_until')
     .maybeSingle();
 
   if (error) {

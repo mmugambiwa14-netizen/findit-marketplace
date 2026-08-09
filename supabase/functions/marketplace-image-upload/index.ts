@@ -7,7 +7,7 @@ const ALLOWED_ORIGINS = new Set(
     .map((origin) => origin.trim().replace(/\/$/, ""))
     .filter(Boolean),
 );
-const PURPOSES = new Set(["service_photo", "business_logo"]);
+const PURPOSES = new Set(["service_photo", "business_logo", "seller_logo"]);
 
 function configuredKey(name: string, legacyName: string): string {
   const direct = Deno.env.get(name) ?? Deno.env.get(legacyName);

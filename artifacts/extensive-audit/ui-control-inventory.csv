@@ -423,8 +423,13 @@ page,file,line,element,name,type,handler,destination,disabled
 "","src\components\settings\PersonalizationSettings.jsx","94","AlertDialog","Clear recommendation activity Clear recommendation activity? This deletes account-linked recommendation activity and turns personalization off. It does not delete listings, saved items, or messages. Cancel 'Clearing...' 'Clear activity'","","","",""
 "","src\components\settings\PersonalizationSettings.jsx","96","Button","Clear recommendation activity","button","","","busy"
 "","src\components\settings\PushNotificationSettings.jsx","76","Button","<Loader2 className=""mr-2 h-4 w-4 animate-spin"" /> <BellRing className=""mr-2 h-4 w-4"" /> 'Disable on this device' 'Enable push notifications'","button","toggle","","working || iosNeedsInstall || state.permission === 'denied'"
-"","src\components\settings\SellerProfileFields.jsx","49","Textarea","Tell buyers what you sell and how you work.","","(event) => setBio(event.target.value)","",""
-"","src\components\settings\SellerProfileFields.jsx","60","Button","""Saving..."" <><Check className=""w-3 h-3 mr-1"" /> Save seller profile</>","","handleSave","","saving"
+"","src\components\settings\SellerProfileFields.jsx","123","Button","<Loader2 className=""mr-1.5 h-4 w-4 animate-spin"" /> <Camera className=""mr-1.5 h-4 w-4"" /> ""Replace logo"" ""Add logo""","button","() => logoInputRef.current?.click()","","uploadingLogo || saving"
+"","src\components\settings\SellerProfileFields.jsx","128","Button","Remove","button","removeLogo","","uploadingLogo || saving"
+"","src\components\settings\SellerProfileFields.jsx","141","Input","Example: Moyo Properties","","(event) => setDisplayName(event.target.value)","",""
+"","src\components\settings\SellerProfileFields.jsx","154","Input","https://example.co.zw","url","(event) => setWebsiteUrl(event.target.value)","",""
+"","src\components\settings\SellerProfileFields.jsx","170","Input","Example: 12 Samora Machel Avenue, Harare","","(event) => setPublicAddress(event.target.value)","",""
+"","src\components\settings\SellerProfileFields.jsx","184","Textarea","Tell buyers what you sell and how you work.","","(event) => setBio(event.target.value)","",""
+"","src\components\settings\SellerProfileFields.jsx","195","Button","""Saving..."" <><Check className=""w-3 h-3 mr-1"" /> Save seller profile</>","","handleSave","","saving || uploadingLogo"
 "","src\components\tours\ImmersivePeekCard.jsx","183","button","Play Peek","button","togglePlayback","","loading"
 "","src\components\tours\ImmersivePeekCard.jsx","191","Button","Try again","button","togglePlayback","",""
 "","src\components\tours\ImmersivePeekCard.jsx","203","button","muted ? 'Turn sound on' : 'Mute'","button","() => setMuted((value) => !value)","",""
@@ -633,15 +638,16 @@ page,file,line,element,name,type,handler,destination,disabled
 "SellerProfile.jsx","src\pages\SellerProfile.jsx","75","Button","Go back","button","() => goBackOrHome(navigate, '/')","",""
 "SellerProfile.jsx","src\pages\SellerProfile.jsx","89","Button","Try again","button","() => profileQuery.refetch()","",""
 "SellerProfile.jsx","src\pages\SellerProfile.jsx","100","Button","Go back","button","() => goBackOrHome(navigate, '/')","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","118","button","Go back","button","() => goBackOrHome(navigate, '/')","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","139","Button","WhatsApp","","() => {
-                  const number = whatsapp.replace(/[^0-9]/g, """");
-                  const message = encodeURIComponent(""Hi, I'm interested in one of your PeekaListing listings."");
-                  window.open(`https://wa.me/${number}?text=${message}`, ""_blank"", ""noopener,noreferrer"");
-                }","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","145","Button","Call","","() => { window.location.href = `tel:${phone}`; }","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","156","Button","Try again","button","() => listingsQuery.refetch()","",""
-"SellerProfile.jsx","src\pages\SellerProfile.jsx","162","Button","<><Loader2 className=""h-4 w-4 animate-spin"" /> Loading</> 'Load more listings'","button","() => listingsQuery.fetchNextPage()","","listingsQuery.isFetchingNextPage"
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","122","button","Go back","button","() => goBackOrHome(navigate, '/')","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","149","a","","","","profile.website_url",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","168","Button","WhatsApp","","() => {
+                    const number = whatsapp.replace(/[^0-9]/g, """");
+                    const message = encodeURIComponent(""Hi, I'm interested in one of your PeekaListing listings."");
+                    window.open(`https://wa.me/${number}?text=${message}`, ""_blank"", ""noopener,noreferrer"");
+                  }","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","174","Button","Call","","() => { window.location.href = `tel:${phone}`; }","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","189","Button","Try again","button","() => listingsQuery.refetch()","",""
+"SellerProfile.jsx","src\pages\SellerProfile.jsx","195","Button","<><Loader2 className=""h-4 w-4 animate-spin"" /> Loading</> 'Load more listings'","button","() => listingsQuery.fetchNextPage()","","listingsQuery.isFetchingNextPage"
 "Services.jsx","src\pages\Services.jsx","99","Input","Search services","","(event) => setSearchInput(event.target.value)","",""
 "Services.jsx","src\pages\Services.jsx","107","button","Clear search","button","() => setSearchInput('')","",""
 "Services.jsx","src\pages\Services.jsx","117","Button","Offer service","","","",""
