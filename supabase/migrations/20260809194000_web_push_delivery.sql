@@ -16,7 +16,7 @@ alter table public.web_push_delivery_jobs
 
 create index if not exists web_push_delivery_jobs_claim_idx
   on public.web_push_delivery_jobs(status, available_at, id)
-  where status in ('pending','retrying','processing');
+  where status in ('pending','processing');
 
 create or replace function private.register_web_push_subscription(
   p_endpoint text,
@@ -97,7 +97,7 @@ begin
     select j.id
     from public.web_push_delivery_jobs j
     where (
-      j.status in ('pending','retrying')
+      j.status='pending'
       or (j.status='processing' and coalesce(j.lease_expires_at,j.locked_at) < now())
     )
       and j.available_at <= now()
@@ -153,9 +153,10 @@ as $function$
 begin
   update public.web_push_delivery_jobs
      set status=case
+       when p_delivered and coalesce(p_failed_count,0) > 0 then 'partial'
        when p_delivered then 'delivered'
        when attempts >= 5 then 'failed'
-       else 'retrying'
+       else 'pending'
      end,
      delivered_count=greatest(0,coalesce(p_delivered_count,0)),
      failed_count=greatest(0,coalesce(p_failed_count,0)),
@@ -166,7 +167,7 @@ begin
      locked_at=null,
      lease_token=null,
      lease_expires_at=null,
-     last_error=case when p_delivered then null else left(coalesce(p_error,'delivery failed'),1000) end,
+     last_error=case when p_delivered and coalesce(p_failed_count,0)=0 then null else left(coalesce(p_error,'delivery failed'),1000) end,
      updated_at=now()
    where id=p_delivery_id and lease_token=p_lease_token and status='processing';
 end;
