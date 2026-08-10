@@ -7,9 +7,9 @@ export function AnimatedTabs({
   onValueChange,
   tabs,
   ariaLabel,
-  className,
-  tabClassName,
-  indicatorClassName,
+  className = '',
+  tabClassName = '',
+  indicatorClassName = '',
   semantics = 'tabs',
 }) {
   const items = Array.isArray(tabs) ? tabs.filter(Boolean) : [];
