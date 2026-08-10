@@ -204,24 +204,26 @@ const SheetContent = React.forwardRef(
         <SheetOverlay />
         <SheetPrimitive.Content
           ref={setContentRef}
-          className={cn(sheetVariants({ side }), dragging && "fluid-sheet--dragging", className)}
+          className={cn(sheetVariants({ side }), className)}
           data-fluid-sheet-side={side}
           style={{
+            overscrollBehavior: "contain",
             ...style,
+            ...(dragging ? { animation: "none", transition: "none", userSelect: "none" } : null),
             ...(dragY === null ? null : { transform: `translate3d(0, ${dragY}px, 0)` }),
           }}
           {...props}
         >
           {side === "bottom" && (
             <div
-              className="fluid-sheet-handle-region"
+              className="fluid-sheet-handle-region flex h-5 touch-none items-center justify-center"
               role="presentation"
               onPointerDown={beginDrag}
               onPointerMove={moveDrag}
               onPointerUp={finishDrag}
               onPointerCancel={cancelDrag}
             >
-              <span className="fluid-sheet-handle" aria-hidden="true" />
+              <span className="fluid-sheet-handle h-1 w-9 rounded-full bg-muted-foreground/35" aria-hidden="true" />
             </div>
           )}
           <SheetPrimitive.Close
