@@ -40,8 +40,9 @@ test('notification center and global unread badge recover on a bounded foregroun
   assert.match(unreadHook, /refetchOnReconnect: "always"/);
 });
 
-test('notification center uses current product language', () => {
-  assert.match(center, /PeekaListing only sends essential/);
+test('notification center uses current PeekaListing product language and coverage', () => {
+  assert.match(center, /Messages, Peek activity, listing changes, business updates and important account notices will appear here\./);
+  assert.match(center, /Important messages and marketplace updates/);
   assert.doesNotMatch(center, /FindIt only sends essential/);
 });
 
