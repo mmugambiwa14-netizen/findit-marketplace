@@ -23,7 +23,8 @@ function explicitSharedOriginPreview() {
 function stagingLikeOrigin() {
   if (typeof window === 'undefined') return false;
   const hostname = String(window.location.hostname || '').trim().toLowerCase();
-  return hostname.includes('staging')
+  return hostname === 'staging.peekalisting.com'
+    || hostname.includes('staging')
     || hostname.startsWith('findit-marketplace-stagi')
     || hostname.startsWith('peekalisting-stagi');
 }
@@ -38,15 +39,13 @@ function activateWaitingStagingWorker() {
 
 export function previewDeployment() {
   return explicitSharedOriginPreview()
-    || String(viteEnv.VITE_VERCEL_ENV || '').trim() === 'preview'
-    || String(viteEnv.VITE_VERCEL_TARGET_ENV || '').trim() === 'preview';
+    || String(viteEnv.VITE_DEPLOY_ENV || '').trim().toLowerCase() === 'preview';
 }
 
 export function serviceWorkerSupported() {
   return typeof navigator !== 'undefined'
     && 'serviceWorker' in navigator
     && typeof window !== 'undefined'
-    // A worker on an insecure origin is impossible; attempting it throws.
     && (window.isSecureContext || window.location.hostname === 'localhost');
 }
 
@@ -62,19 +61,10 @@ async function deleteFindItCaches() {
 
 function registrationBelongsToCurrentPreview(entry) {
   if (!explicitSharedOriginPreview() || typeof window === 'undefined') return true;
-
-  // GitHub Pages project sites share an origin. Never unregister a worker that
-  // belongs to a different project on the same github.io host.
   const appBase = new URL(String(viteEnv.BASE_URL || '/'), window.location.origin).href;
   return String(entry.scope || '').startsWith(appBase);
 }
 
-/**
- * Removes stale preview-only delivery state without touching unrelated caches.
- *
- * @returns {Promise<boolean>} whether a controller, registration, or PeekaListing
- * cache existed and a one-time reload is therefore useful.
- */
 export async function resetPreviewServiceWorkerState() {
   if (!previewDeployment() || !serviceWorkerSupported()) return false;
 
@@ -93,8 +83,6 @@ export async function resetPreviewServiceWorkerState() {
     registration = null;
     return hadController || unregisterResults.some(Boolean) || deletedCache;
   } catch {
-    // Preview recovery is best effort and must never prevent the application
-    // from rendering.
     return false;
   }
 }
@@ -109,23 +97,19 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
   if (!serviceWorkerSupported() || previewDeployment()) return null;
 
   try {
-    registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL, { scope: '/', updateViaCache: 'none' });
+    registration = await navigator.serviceWorker.register(SERVICE_WORKER_URL, {
+      scope: '/',
+      updateViaCache: 'none',
+    });
   } catch {
-    // A failed registration must never break the application. The app works
-    // exactly as before without a worker; it simply loses offline support.
     return null;
   }
 
-  // Staging is an operational test surface, not a draft-preserving production
-  // surface. Always force a byte check on startup and activate a waiting build
-  // immediately so an installed iOS PWA cannot stay pinned to yesterday's JS.
   if (stagingLikeOrigin()) {
     try { await registration.update(); } catch { /* best effort */ }
     activateWaitingStagingWorker();
   }
 
-  // A worker already waiting means the user loaded the page with an update
-  // pending from a previous visit.
   if (registration.waiting && navigator.serviceWorker.controller) {
     if (!activateWaitingStagingWorker()) onUpdateReady?.();
   }
@@ -136,7 +120,6 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
     installing.addEventListener('statechange', () => {
       if (installing.state !== 'installed') return;
       if (navigator.serviceWorker.controller) {
-        // An existing controller means this is an update, not a first install.
         if (!activateWaitingStagingWorker()) onUpdateReady?.();
       } else {
         onReady?.();
@@ -144,8 +127,6 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
     });
   });
 
-  // One reload, and only after the new worker takes control. Without the guard
-  // a fast double activation can loop the page.
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;
     refreshing = true;
@@ -155,7 +136,6 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
   return registration;
 }
 
-/** Activates a waiting worker. Called only after the user accepts the prompt. */
 export function applyPendingUpdate() {
   const waiting = registration?.waiting;
   if (!waiting) {
@@ -165,11 +145,6 @@ export function applyPendingUpdate() {
   waiting.postMessage({ type: 'SKIP_WAITING' });
 }
 
-/**
- * Asks the browser to re-check for a new worker. Browsers do this on
- * navigation anyway; this covers long-lived sessions in an installed app that
- * may not navigate for days.
- */
 export async function checkForUpdate() {
   if (!registration || previewDeployment()) return false;
   try {
@@ -181,7 +156,6 @@ export async function checkForUpdate() {
   }
 }
 
-/** The running worker's build fingerprint, for support and diagnostics. */
 export async function getActiveVersion() {
   if (!navigator.serviceWorker?.controller || previewDeployment()) return null;
   return new Promise((resolve) => {
@@ -195,13 +169,6 @@ export async function getActiveVersion() {
   });
 }
 
-/**
- * Removes the worker and every cache it owns.
- *
- * Two uses: recovering from a corrupted cache (§16), and sign-out. Even though
- * the worker never caches user data, clearing on sign-out means a shared device
- * cannot serve the previous account's shell state.
- */
 export async function unregisterServiceWorker() {
   if (!serviceWorkerSupported()) return;
   try {
