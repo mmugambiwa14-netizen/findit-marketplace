@@ -5,16 +5,40 @@ select extensions.no_plan();
 select extensions.is(
   (
     select count(*)::bigint
-    from unnest(array[
-      'private.admin_review_report(uuid,public.report_status,text)'::regprocedure,
-      'private.admin_tour_queue(text,text,integer,integer)'::regprocedure,
-      'private.seller_peek_request_queue(bigint,timestamptz,uuid,integer)'::regprocedure
-    ]) as targets(function_oid)
-    join pg_proc p on p.oid = targets.function_oid::oid
-    where position('#variable_conflict use_column' in p.prosrc) > 0
+    from (
+      select 1
+      where position(
+        'v_target_type text'
+        in (select p.prosrc from pg_proc p where p.oid = 'private.admin_review_report(uuid,public.report_status,text)'::regprocedure::oid)
+      ) > 0
+        and position(
+          'r.target_type'
+          in (select p.prosrc from pg_proc p where p.oid = 'private.admin_review_report(uuid,public.report_status,text)'::regprocedure::oid)
+        ) > 0
+      union all
+      select 1
+      where position(
+        '#variable_conflict use_column'
+        in (select p.prosrc from pg_proc p where p.oid = 'private.admin_tour_queue(text,text,integer,integer)'::regprocedure::oid)
+      ) > 0
+      union all
+      select 1
+      where position(
+        'order by e.queue_score desc'
+        in (select p.prosrc from pg_proc p where p.oid = 'private.seller_peek_request_queue(bigint,timestamptz,uuid,integer)'::regprocedure::oid)
+      ) > 0
+        and position(
+          'order by p.queue_score desc'
+          in (select p.prosrc from pg_proc p where p.oid = 'private.seller_peek_request_queue(bigint,timestamptz,uuid,integer)'::regprocedure::oid)
+        ) > 0
+        and position(
+          'order by v.queue_score desc'
+          in (select p.prosrc from pg_proc p where p.oid = 'private.seller_peek_request_queue(bigint,timestamptz,uuid,integer)'::regprocedure::oid)
+        ) > 0
+    ) as ambiguity_repairs
   ),
   3::bigint,
-  'all three previously ambiguous PL/pgSQL functions lock column precedence'
+  'all three previously ambiguous PL/pgSQL functions prevent column-variable ambiguity'
 );
 
 select extensions.is(

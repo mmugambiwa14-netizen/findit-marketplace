@@ -14,7 +14,7 @@ test('Request a Peek composer parent shape is translated into the RPC contract',
 
 test('Request a Peek controls cannot silently no-op before the mutation', async () => {
   const section = await read('src/components/peekThreads/PeekThreadsSection.jsx');
-  assert.match(section, /function guard === 'function'/);
+  assert.match(section, /typeof guard === 'function'/);
   assert.match(section, /Sign in to request a Peek\./);
   assert.match(section, /Describe what you want to see in at least 8 characters\./);
   assert.match(section, /onClick=\{submitRequest\}/);
@@ -22,14 +22,18 @@ test('Request a Peek controls cannot silently no-op before the mutation', async 
   assert.doesNotMatch(section, /guard\?\.\('request a Peek'/);
 });
 
-test('business workflow form actions always reach React submit handling or visible validation', async () => {
+test('business workflow form actions always reach explicit React handling or visible validation', async () => {
   const gate = await read('src/components/business/BusinessPublishingGate.jsx');
   assert.match(gate, /function reportInvalidForm/);
   assert.match(gate, /formElement\?\.reportValidity\?\.\(\)/);
-  assert.match(gate, /<form noValidate[\s\S]*onSubmit=\{submit\}/);
+  assert.ok((gate.match(/<form noValidate/g) || []).length >= 3);
   assert.match(gate, /Choose at least one business category\./);
-  assert.match(gate, /<Button type="submit" className="w-full" disabled=\{submitting\}>/);
-  assert.match(gate, /<Button type="submit" className="w-full" disabled=\{busy\}>/);
+  assert.match(gate, /const sendResponse = async \(formElement\)/);
+  assert.match(gate, /const submitApplication = async \(formElement\)/);
+  assert.match(gate, /const submitManaged = async \(formElement\)/);
+  assert.match(gate, /onClick=\{\(event\) => void sendResponse\(event\.currentTarget\.form\)\}/);
+  assert.match(gate, /onClick=\{\(event\) => void submitApplication\(event\.currentTarget\.form\)\}/);
+  assert.match(gate, /onClick=\{\(event\) => void submitManaged\(event\.currentTarget\.form\)\}/);
   assert.doesNotMatch(gate, /disabled=\{submitting \|\| form\.requestedCategories\.length === 0\}/);
 });
 

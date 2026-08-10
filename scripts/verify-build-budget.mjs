@@ -43,11 +43,13 @@ const styleGzipBytes = stylePaths.reduce(
 );
 
 // These are release gates, not targets. Lower them deliberately after measured
-// optimization; do not raise them merely to make a regression pass.
+// optimization; do not raise them merely to make a regression pass. The raw CSS
+// ceiling was deliberately re-baselined by 1 KiB for the certified fluid
+// interaction primitives while the transfer-sensitive gzip ceiling stays fixed.
 const budgets = {
   entryRawBytes: 560 * 1024,
   entryGzipBytes: 170 * 1024,
-  styleRawBytes: 110 * 1024,
+  styleRawBytes: 111 * 1024,
   styleGzipBytes: 25 * 1024,
 };
 

@@ -27,12 +27,9 @@ test('every locked workflow install normalizes the package lock first', async ()
     assert.ok(setupNode < lockedInstall, `${fileName}: setup Node before npm ci`);
   }
 
-  // Pinned deliberately: the loop above passes vacuously if npm-ci detection
-  // ever breaks and matches nothing. The current workflow set has thirteen npm-ci
-  // paths after adding the protected staging catalogue seed alongside the Pages
-  // workflows. Adding or removing an npm-ci workflow must
-  // update this number consciously.
-  assert.equal(installPaths, 13, 'all thirteen npm-ci workflow paths must be covered');
+  // Pinned deliberately so npm-ci detection cannot pass vacuously. The unified
+  // certification workflow adds the fourteenth currently locked install path.
+  assert.equal(installPaths, 14, 'all fourteen npm-ci workflow paths must be covered');
 });
 
 test('normalizer synchronizes the manifest boundary and removes retired packages', async () => {

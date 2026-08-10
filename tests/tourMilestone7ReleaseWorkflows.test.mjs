@@ -40,17 +40,12 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"/);
   assert.match(acceptanceWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
   for (const requiredFlag of [
-    'VITE_FEATURE_GOOGLE_OAUTH',
-    'VITE_FEATURE_INTERNATIONAL_LISTING',
-    'VITE_FEATURE_MANUAL_LOCATION',
-    'VITE_FEATURE_CURRENT_LOCATION',
-    'VITE_FEATURE_REPORTING',
+    'VITE_FEATURE_GOOGLE_OAUTH', 'VITE_FEATURE_INTERNATIONAL_LISTING',
+    'VITE_FEATURE_MANUAL_LOCATION', 'VITE_FEATURE_CURRENT_LOCATION', 'VITE_FEATURE_REPORTING',
   ]) assert.match(acceptanceWorkflow, new RegExp(`${requiredFlag}: "true"`));
   for (const closedFlag of [
-    'VITE_FEATURE_LISTING_EXPIRY',
-    'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
-    'VITE_FEATURE_PREVIEW_FIXTURES',
-    'VITE_PREVIEW_AUTH_BYPASS',
+    'VITE_FEATURE_LISTING_EXPIRY', 'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
+    'VITE_FEATURE_PREVIEW_FIXTURES', 'VITE_PREVIEW_AUTH_BYPASS',
   ]) assert.match(acceptanceWorkflow, new RegExp(`${closedFlag}: "false"`));
   assert.match(acceptanceWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
   assert.match(acceptanceWorkflow, /apt-get install --yes --no-install-recommends ffmpeg/);
@@ -67,9 +62,9 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /retention-days: 90/);
 });
 
-test('Cloudflare staging deploy is manual, isolated, and activates the accepted preproduction surface', () => {
-  assert.match(previewWorkflow, /workflow_dispatch/);
-  assert.match(previewWorkflow, /confirmation/);
+test('Cloudflare staging is isolated and activates the accepted preproduction surface from main', () => {
+  assert.match(previewWorkflow, /branches:\s*\n\s*- main/);
+  assert.match(previewWorkflow, /github\.ref == 'refs\/heads\/main'/);
   assert.match(previewWorkflow, /environment:\s*\n\s*name: cloudflare-staging/);
   assert.match(previewWorkflow, /VITE_MODE: staging/);
   assert.match(previewWorkflow, /VITE_DEPLOY_ENV: staging/);
@@ -89,9 +84,7 @@ test('Cloudflare staging deploy is manual, isolated, and activates the accepted 
   assert.match(previewWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: "true"/);
   assert.match(previewWorkflow, /VITE_FEATURE_PREVIEW_FIXTURES: "false"/);
   assert.match(previewWorkflow, /VITE_PREVIEW_AUTH_BYPASS: "false"/);
-  assert.match(previewWorkflow, /npx wrangler pages deploy dist/);
-  assert.match(previewWorkflow, /--project-name="\$\{CLOUDFLARE_PAGES_PROJECT\}"/);
-  assert.match(previewWorkflow, /--branch=staging/);
+  assert.match(previewWorkflow, /deploy-canonical-cloudflare-staging\.sh/);
   assert.match(previewWorkflow, /npm run verify:deployment-security/);
   assert.match(previewWorkflow, /npm run verify:cloudflare-staging/);
   assert.doesNotMatch(previewWorkflow, /actions\/deploy-pages|github-pages/);
