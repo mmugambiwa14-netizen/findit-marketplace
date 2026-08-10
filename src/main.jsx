@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import '@/index.css'
 import '@/findit-locked-design.css'
 import '@/pwa-viewport.css'
+import '@/fluid-ui.css'
 
 const rootElement = document.getElementById('root')
 
