@@ -105,6 +105,9 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
     return null;
   }
 
+  // Staging is an operational test surface. Force a byte check on startup and
+  // immediately activate a waiting staging build so installed iOS PWAs cannot
+  // remain pinned to an obsolete JavaScript bundle.
   if (stagingLikeOrigin()) {
     try { await registration.update(); } catch { /* best effort */ }
     activateWaitingStagingWorker();
