@@ -140,7 +140,27 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
   });
 
   const isOwner = Boolean(user?.id && ownerId && user.id === ownerId);
-  const submitRequest = () => guard?.('request a Peek', () => {
+  const runGuarded = (action, callback) => {
+    if (typeof guard === 'function') {
+      guard(action, callback);
+      return;
+    }
+    if (!user) {
+      toast.error('Sign in to request a Peek.');
+      return;
+    }
+    callback();
+  };
+
+  const submitRequest = () => runGuarded('request a Peek', () => {
+    if (!parentId) {
+      toast.error('This listing is not ready for Peek Requests.');
+      return;
+    }
+    if (body.trim().length < 8) {
+      toast.error('Describe what you want to see in at least 8 characters.');
+      return;
+    }
     if (duplicate) {
       if (duplicateItem?.status === 'answered') {
         setBody('');
@@ -178,7 +198,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
             <h2 id={`peek-threads-${parentId}`} className="mt-1 text-xl font-black tracking-tight">Peek Requests</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">Ask for specific visual proof before you decide. Seller responses become public Peeks that other buyers can also use.</p>
           </div>
-          {!isOwner && <Button type="button" size="sm" className="self-start" onClick={() => guard?.('request a Peek', () => setComposerOpen((open) => !open))}><Plus className="mr-2 h-4 w-4" />Request a Peek</Button>}
+          {!isOwner && <Button type="button" size="sm" className="self-start" onClick={() => runGuarded('request a Peek', () => setComposerOpen((open) => !open))}><Plus className="mr-2 h-4 w-4" />Request a Peek</Button>}
         </div>
 
         {composerOpen && !isOwner && (
@@ -213,7 +233,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
             )}
             <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={() => setComposerOpen(false)}>Cancel</Button>
-              <Button type="button" disabled={body.trim().length < 8 || createMutation.isPending || supportMutation.isPending} onClick={submitRequest}>
+              <Button type="button" disabled={createMutation.isPending || supportMutation.isPending} onClick={submitRequest}>
                 {(createMutation.isPending || supportMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{duplicateActionLabel}
               </Button>
             </div>
@@ -229,7 +249,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
         {threadQuery.isLoading && <ListRowsSkeleton rows={4} className="p-3" label="Loading Peek Requests" />}
         {threadQuery.isError && <div className="p-6 text-center"><p className="text-sm text-destructive">Peek Requests could not be loaded.</p><Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => threadQuery.refetch()}>Try again</Button></div>}
         {!threadQuery.isLoading && !threadQuery.isError && items.length === 0 && <div className="p-8 text-center"><Eye className="mx-auto h-7 w-7 text-muted-foreground" /><p className="mt-3 font-semibold">No Peek Requests here yet</p><p className="mt-1 text-sm text-muted-foreground">Be the first buyer to ask for useful visual evidence.</p></div>}
-        {items.map((item) => <ThreadCard key={item.requestId} item={item} isOwner={isOwner} busy={supportMutation.isPending || declineMutation.isPending} onSupport={() => guard?.('update your interest in this Peek Request', () => supportMutation.mutate({ requestId: item.requestId, supported: item.supportedByMe }))} onDecline={() => { setDeclineTarget(item); setDeclineReason(''); }} />)}
+        {items.map((item) => <ThreadCard key={item.requestId} item={item} isOwner={isOwner} busy={supportMutation.isPending || declineMutation.isPending} onSupport={() => runGuarded('update your interest in this Peek Request', () => supportMutation.mutate({ requestId: item.requestId, supported: item.supportedByMe }))} onDecline={() => { setDeclineTarget(item); setDeclineReason(''); }} />)}
         {!threadQuery.isLoading && !threadQuery.isError && threadQuery.hasNextPage && (
           <div className="flex justify-center p-4">
             <Button type="button" variant="outline" disabled={threadQuery.isFetchingNextPage} onClick={() => threadQuery.fetchNextPage()}>
