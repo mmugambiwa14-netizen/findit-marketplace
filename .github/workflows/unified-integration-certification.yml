@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: unified-latest-certification
@@ -133,3 +133,46 @@ jobs:
           node-version: 24
       - name: Run clean-database certification matrix
         run: bash ./scripts/run-migration-database-certification.sh
+
+  record:
+    name: Record unified certification result
+    if: always()
+    needs:
+      - application
+      - database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record exact candidate result
+        env:
+          APPLICATION_RESULT: ${{ needs.application.result }}
+          DATABASE_RESULT: ${{ needs.database.result }}
+          CERTIFIED_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init status
+          cd status
+          git config user.name 'peekalisting-certification-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git checkout --orphan unified-certification-status
+          mkdir -p .certification
+          conclusion=success
+          if [[ "$APPLICATION_RESULT" != "success" || "$DATABASE_RESULT" != "success" ]]; then conclusion=failure; fi
+          cat > .certification/unified-latest.json <<EOF
+          {
+            "workflow": "Unified latest integration certification",
+            "conclusion": "${conclusion}",
+            "application": "${APPLICATION_RESULT}",
+            "database": "${DATABASE_RESULT}",
+            "head_sha": "${CERTIFIED_SHA}",
+            "run_id": "${RUN_ID}"
+          }
+          EOF
+          git add .certification/unified-latest.json
+          git commit -m "unified certification: ${conclusion} ${CERTIFIED_SHA}"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin HEAD:unified-certification-status
+          [[ "$conclusion" == "success" ]]
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
