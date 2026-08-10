@@ -19,6 +19,7 @@ const productionEnvironment = {
   FINDIT_EXPECT_EMAIL_CONFIRMATIONS: 'true',
   FINDIT_EXPECT_PASSWORD_MIN_LENGTH: '12',
   FINDIT_EXPECT_PASSWORD_REQUIRED_CHARACTERS: 'a-z,A-Z,0-9,!@#$%^&*',
+  FINDIT_EXPECT_PASSWORD_REAUTHENTICATION: 'true',
   FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION: 'true',
   FINDIT_EXPECT_TOTP_MFA: 'true',
   FINDIT_EXPECT_AUTH_CAPTCHA: 'true',
@@ -35,6 +36,7 @@ const hardenedConfiguration = {
   mailer_autoconfirm: false,
   password_min_length: 14,
   password_required_characters: '!@#$%^&*,0-9,A-Z,a-z',
+  security_update_password_require_reauthentication: true,
   password_hibp_enabled: true,
   mfa_totp_enroll_enabled: true,
   mfa_totp_verify_enabled: true,
@@ -52,6 +54,7 @@ test('production Auth policy accepts a complete hardened configuration', () => {
   assert.equal(result.status, 'passed');
   assert.deepEqual(result.problems, []);
   assert.equal(result.summary.passwordMinimumLength, 14);
+  assert.equal(result.summary.passwordChangeReauthentication, true);
   assert.equal(result.summary.redirectUrlCount, 2);
   assert.equal(result.summary.totpMfa, true);
   assert.equal(result.summary.customSmtp, true);
@@ -64,6 +67,7 @@ test('production Auth policy rejects weak and incomplete provider configuration'
     uri_allow_list: 'http://localhost:3000',
     mailer_autoconfirm: true,
     password_min_length: 6,
+    security_update_password_require_reauthentication: false,
     password_hibp_enabled: false,
     mfa_totp_verify_enabled: false,
     security_captcha_enabled: false,
@@ -76,6 +80,7 @@ test('production Auth policy rejects weak and incomplete provider configuration'
   assert.ok(result.problems.some((problem) => problem.includes('site URL')));
   assert.ok(result.problems.some((problem) => problem.includes('redirect allow list')));
   assert.ok(result.problems.some((problem) => problem.includes('minimum length')));
+  assert.ok(result.problems.some((problem) => problem.includes('passwordChangeReauthentication')));
   assert.ok(result.problems.some((problem) => problem.includes('leakedPasswordProtection')));
   assert.ok(result.problems.some((problem) => problem.includes('TOTP MFA')));
   assert.ok(result.problems.some((problem) => problem.includes('custom SMTP')));
@@ -84,8 +89,9 @@ test('production Auth policy rejects weak and incomplete provider configuration'
 test('production Auth policy fails closed when expected values or API fields are absent', () => {
   const result = evaluateHostedAuthConfig({}, { FINDIT_AUTH_PREFLIGHT_MODE: 'production' });
   assert.equal(result.status, 'failed');
-  assert.ok(result.problems.length >= 10);
+  assert.ok(result.problems.length >= 11);
   assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_AUTH_SITE_URL')));
+  assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_PASSWORD_REAUTHENTICATION')));
   assert.ok(result.problems.some((problem) => problem.includes('FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION')));
 });
 
@@ -110,6 +116,7 @@ test('Auth hardening preflight is an explicit documented release gate', () => {
     'FINDIT_EXPECT_AUTH_SITE_URL',
     'FINDIT_EXPECT_AUTH_REDIRECT_URLS',
     'FINDIT_EXPECT_PASSWORD_MIN_LENGTH',
+    'FINDIT_EXPECT_PASSWORD_REAUTHENTICATION',
     'FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION',
     'FINDIT_EXPECT_TOTP_MFA',
     'FINDIT_EXPECT_AUTH_CAPTCHA',
