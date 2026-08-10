@@ -5,10 +5,16 @@ function uuidLike(value) {
 }
 
 export function normalizeCreatePeekRequest(input = {}) {
+  // Listing/detail surfaces expose the parent as { parentType, parentId } while
+  // the domain validator deliberately models the database shape as
+  // { listingId, serviceId }. Accept both shapes at this boundary so a valid
+  // Request a Peek action reaches create_peek_request instead of being rejected
+  // as having no parent before the RPC is called.
+  const parentId = typeof input.parentId === 'string' && input.parentId ? input.parentId : null;
   const normalized = normalizePeekRequest({
     ...input,
-    listingId: input.listingId ?? (input.parentType === 'listing' ? input.parentId : undefined),
-    serviceId: input.serviceId ?? (input.parentType === 'service' ? input.parentId : undefined),
+    listingId: input.listingId ?? (input.parentType === 'listing' ? parentId : null),
+    serviceId: input.serviceId ?? (input.parentType === 'service' ? parentId : null),
   });
   if (!normalized.ok) return normalized;
   return {
