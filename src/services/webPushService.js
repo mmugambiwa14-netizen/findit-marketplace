@@ -1,9 +1,19 @@
 import { supabase } from '@/lib/supabaseClient';
 
-const STAGING_PUBLIC_KEY = 'BLuirAxWgQ7PVQ2EyEORk_oSeN2N5jwwxBQjIM_5UrdHQmGoGFLZ_0zyDNcRQ0fInqZdgcH6_efeFy6tu478xJ4';
+const STAGING_PROJECT_REF = 'bwgklpxoetrrkutottdb';
+const STAGING_PUBLIC_VAPID_KEY = 'BLuirAxWgQ7PVQ2EyEORk_oSeN2N5jwwxBQjIM_5UrdHQmGoGFLZ_0zyDNcRQ0fInqZdgcH6_efeFy6tu478xJ4';
+
+function configuredPublicKey() {
+  const explicit = String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || '').trim();
+  if (explicit) return explicit;
+  const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
+  return supabaseUrl.includes(STAGING_PROJECT_REF) ? STAGING_PUBLIC_VAPID_KEY : '';
+}
 
 function applicationServerKey() {
-  return String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || STAGING_PUBLIC_KEY).trim();
+  const value = configuredPublicKey();
+  if (!value) throw new Error('Web Push is not configured for this deployment.');
+  return value;
 }
 
 function urlBase64ToUint8Array(value) {
@@ -27,9 +37,16 @@ export function webPushSupport() {
     && 'PushManager' in window
     && 'Notification' in window,
   );
-  const standalone = window.matchMedia?.('(display-mode: standalone)').matches
-    || window.navigator.standalone === true;
-  return { supported, standalone, permission: supported ? Notification.permission : 'unsupported' };
+  const standalone = Boolean(
+    window.matchMedia?.('(display-mode: standalone)')?.matches
+    || window.navigator.standalone === true,
+  );
+  return {
+    supported,
+    configured: Boolean(configuredPublicKey()),
+    standalone,
+    permission: supported ? Notification.permission : 'unsupported',
+  };
 }
 
 export async function getCurrentPushSubscription() {
@@ -41,11 +58,14 @@ export async function getCurrentPushSubscription() {
 export async function enableWebPush() {
   const support = webPushSupport();
   if (!support.supported) throw new Error('Push notifications are not supported on this device.');
+  if (!support.configured) throw new Error('Push notifications are not configured for this deployment.');
   if (!support.standalone && /iphone|ipad|ipod/i.test(navigator.userAgent)) {
-    throw new Error('On iPhone or iPad, add FindIt to your Home Screen before enabling notifications.');
+    throw new Error('On iPhone or iPad, add PeekaListing to your Home Screen before enabling notifications.');
   }
 
-  const permission = await Notification.requestPermission();
+  const permission = Notification.permission === 'granted'
+    ? 'granted'
+    : await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('Notification permission was not granted.');
 
   const registration = await navigator.serviceWorker.ready;
@@ -58,14 +78,22 @@ export async function enableWebPush() {
   }
 
   const json = subscription.toJSON();
+  if (!json.keys?.p256dh || !json.keys?.auth) {
+    await subscription.unsubscribe().catch(() => false);
+    throw new Error('The browser returned an incomplete push subscription.');
+  }
+
   const { error } = await supabase.rpc('register_web_push_subscription', {
     p_endpoint: subscription.endpoint,
-    p_p256dh: json.keys?.p256dh,
-    p_auth: json.keys?.auth,
+    p_p256dh: json.keys.p256dh,
+    p_auth: json.keys.auth,
     p_user_agent: navigator.userAgent,
     p_platform: platformLabel(),
   });
-  if (error) throw error;
+  if (error) {
+    await subscription.unsubscribe().catch(() => false);
+    throw error;
+  }
   return subscription;
 }
 
@@ -78,4 +106,36 @@ export async function disableWebPush() {
   });
   if (error) throw error;
   await subscription.unsubscribe();
+}
+
+export async function getWebPushPreferences() {
+  const { data, error } = await supabase.rpc('get_web_push_notification_preferences');
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    messages: row?.messages !== false,
+    peekActivity: row?.peek_activity !== false,
+    listingActivity: row?.listing_activity !== false,
+    businessActivity: row?.business_activity !== false,
+    moderation: row?.moderation !== false,
+  };
+}
+
+export async function updateWebPushPreferences(preferences) {
+  const { data, error } = await supabase.rpc('update_web_push_notification_preferences', {
+    p_messages: Boolean(preferences.messages),
+    p_peek_activity: Boolean(preferences.peekActivity),
+    p_listing_activity: Boolean(preferences.listingActivity),
+    p_business_activity: Boolean(preferences.businessActivity),
+    p_moderation: Boolean(preferences.moderation),
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    messages: row?.messages !== false,
+    peekActivity: row?.peek_activity !== false,
+    listingActivity: row?.listing_activity !== false,
+    businessActivity: row?.business_activity !== false,
+    moderation: row?.moderation !== false,
+  };
 }
