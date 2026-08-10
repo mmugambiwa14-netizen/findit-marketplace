@@ -12,7 +12,7 @@ const [
   serviceDetail,
 ] = await Promise.all([
   read('src/components/listings/ListingDetailTabs.jsx'),
-  read('src/components/listings/FeatureItem.jsx'),
+  read('src/components/listings/ListingFeatureItem.jsx'),
   read('src/pages/PropertyDetail.jsx'),
   read('src/pages/CarDetail.jsx'),
   read('src/pages/MachineryDetail.jsx'),
