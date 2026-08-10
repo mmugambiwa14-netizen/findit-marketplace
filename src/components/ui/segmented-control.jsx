@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Pressable } from '@/components/ui/pressable';
 
@@ -7,9 +6,9 @@ export function SegmentedControl({
   onValueChange,
   options,
   ariaLabel,
-  className,
-  indicatorClassName,
-  buttonClassName,
+  className = '',
+  indicatorClassName = '',
+  buttonClassName = '',
   size = 'default',
 }) {
   const items = Array.isArray(options) ? options.filter(Boolean) : [];
