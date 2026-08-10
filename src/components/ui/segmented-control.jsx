@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Pressable } from '@/components/ui/pressable';
+import { motionDurations, motionEasings, prefersReducedMotion } from '@/lib/motionTokens';
 
 export function SegmentedControl({
   value,
@@ -14,6 +15,9 @@ export function SegmentedControl({
   const items = Array.isArray(options) ? options.filter(Boolean) : [];
   const activeIndex = Math.max(0, items.findIndex((item) => item.value === value));
   const columns = Math.max(1, items.length);
+  const indicatorTransition = prefersReducedMotion()
+    ? 'none'
+    : `transform ${motionDurations.standard}ms ${motionEasings.standard}, width ${motionDurations.standard}ms ${motionEasings.standard}`;
 
   if (!items.length) return null;
 
@@ -29,6 +33,7 @@ export function SegmentedControl({
         style={{
           width: `calc((100% - 0.5rem) / ${columns})`,
           transform: `translate3d(${activeIndex * 100}%, 0, 0)`,
+          transition: indicatorTransition,
         }}
       />
       <div className="relative z-[1] grid" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
