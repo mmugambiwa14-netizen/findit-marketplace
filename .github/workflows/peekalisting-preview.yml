@@ -1,57 +1,48 @@
-name: Deploy staging to Cloudflare Pages
+name: Deploy canonical PeekaListing staging
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      confirmation:
-        description: Type DEPLOY to publish the isolated staging build
-        required: true
-        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: cloudflare-pages-staging
+  group: peekalisting-canonical-staging
   cancel-in-progress: true
 
 jobs:
   deploy:
-    if: inputs.confirmation == 'DEPLOY'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     environment:
       name: cloudflare-staging
+      url: https://staging.peekalisting.com
     env:
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_PAGES_PROJECT: peekalisting-staging
       CLOUDFLARE_STAGING_DOMAIN: staging.peekalisting.com
       NODE_ENV: production
       VITE_MODE: staging
-      # This is an isolated staging deployment, not a disposable preview.
-      # `preview` intentionally unregisters the service worker, which makes
-      # the installed PWA unusable on the staging URL.
       VITE_DEPLOY_ENV: staging
       VITE_BASE_PATH: /
-      # Keep OAuth callbacks on the canonical Cloudflare staging origin even
-      # when a tester opens a deployment-specific Pages URL.
       VITE_PUBLIC_APP_ORIGIN: https://staging.peekalisting.com
+      VITE_PREVIEW_DEPLOYMENT: "false"
       FINDIT_STAGING_ORIGIN: https://staging.peekalisting.com
-      FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
-      # Prefer environment-scoped browser configuration. The fallback keeps
-      # this staging-only workflow compatible with the existing public staging
-      # Supabase configuration while the owner finishes environment setup.
+      FINDIT_EXPECTED_PROJECT_REF: bwgklpxoetrrkutottdb
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || vars.FINDIT_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || secrets.FINDIT_SUPABASE_ANON_KEY }}
       VITE_AUTH_GOOGLE_ENABLED: "true"
       VITE_AUTH_APPLE_ENABLED: "false"
+      VITE_FEATURE_CURATED_BUSINESS_MARKETPLACE: "true"
       VITE_FEATURE_BUSINESS_PROFILES: "true"
       VITE_FEATURE_MESSAGING: "true"
       VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
       VITE_FEATURE_GOOGLE_OAUTH: "true"
-      # Staging exercises the real MapLibre stack with the no-key OpenFreeMap
-      # fallback. Production remains protected by the MapTiler key gate.
       VITE_FEATURE_MAPS: "true"
       VITE_FEATURE_CURRENT_LOCATION: "true"
       VITE_FEATURE_MANUAL_LOCATION: "true"
@@ -79,7 +70,7 @@ jobs:
       TOURS_BACKEND_ENABLED: "true"
       FINDIT_TOURS_WORKERS_ENABLED: "true"
       FINDIT_TOURS_RELEASE_ACCEPTED: "true"
-      FINDIT_TOUR_PROCESSOR_MODE: "github-actions"
+      FINDIT_TOUR_PROCESSOR_MODE: github-actions
       FINDIT_TOUR_CLEANUP_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
       FINDIT_TOUR_CACHE_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
       FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
@@ -89,8 +80,25 @@ jobs:
       FINDIT_RECOMMENDATION_WORKER_SECRET: ${{ secrets.FINDIT_RECOMMENDATION_WORKER_SECRET }}
 
     steps:
-      - name: Check out staging source
+      - name: Check out exact main head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Verify canonical source and credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$VITE_SUPABASE_URL"
+          test -n "$VITE_SUPABASE_ANON_KEY"
+          case "$VITE_SUPABASE_URL" in
+            *bwgklpxoetrrkutottdb*) ;;
+            *) echo "::error::Canonical staging is not bound to FindIt Staging Supabase"; exit 1 ;;
+          esac
 
       - name: Normalize locked dependency metadata
         run: node ./scripts/normalize-package-lock.mjs --write
@@ -107,58 +115,38 @@ jobs:
       - name: Validate staging environment
         run: npm run validate:env
 
-      - name: Build and verify staging artifact
+      - name: Build canonical staging PWA
         run: npm run build
 
       - name: Verify Cloudflare security contracts
         run: npm run verify:deployment-security
 
-      - name: Ensure the Pages project exists
-        shell: bash
-        run: |
-          set -euo pipefail
-          projects="$(curl --fail-with-body --silent --show-error \
-            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects")"
-          if jq -e --arg name "${CLOUDFLARE_PAGES_PROJECT}" '.result[] | select(.name == $name)' <<<"${projects}" >/dev/null; then
-            production_branch="$(jq -r --arg name "${CLOUDFLARE_PAGES_PROJECT}" '.result[] | select(.name == $name) | .production_branch' <<<"${projects}")"
-            if [[ "${production_branch}" != "staging" ]]; then
-              curl --fail-with-body --silent --show-error \
-                --request PATCH \
-                --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-                --header 'Content-Type: application/json' \
-                --data '{"production_branch":"staging"}' \
-                "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}" \
-                | jq -e '.success == true' >/dev/null
-              echo "Set ${CLOUDFLARE_PAGES_PROJECT} production branch to staging."
-            else
-              echo "Cloudflare Pages project ${CLOUDFLARE_PAGES_PROJECT} already exists."
-            fi
-          else
-            curl --fail-with-body --silent --show-error \
-              --request POST \
-              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              --header 'Content-Type: application/json' \
-              --data "$(jq -n --arg name "${CLOUDFLARE_PAGES_PROJECT}" '{name:$name,production_branch:"staging"}')" \
-              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects" \
-              | jq -e '.success == true' >/dev/null
-            echo "Created isolated Cloudflare Pages project ${CLOUDFLARE_PAGES_PROJECT}."
-          fi
-
       - name: Prepare staging Functions runtime
         run: node ./scripts/prepare-pages-functions-runtime.mjs
 
-      - name: Deploy the isolated staging project
-        run: >-
-          npx wrangler pages deploy dist
-          --project-name="${CLOUDFLARE_PAGES_PROJECT}"
-          --branch=staging
-          --commit-hash="$GITHUB_SHA"
-          --commit-message="Cloudflare staging $GITHUB_SHA"
+      - name: Stamp exact build identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > dist/current-build.txt <<EOF
+          product=PeekaListing
+          environment=staging
+          host=staging.peekalisting.com
+          branch=main
+          sha=$GITHUB_SHA
+          run_id=$GITHUB_RUN_ID
+          backend=bwgklpxoetrrkutottdb
+          EOF
+          cat > dist/staging-build.json <<EOF
+          {"product":"PeekaListing","environment":"staging","host":"staging.peekalisting.com","branch":"main","sha":"$GITHUB_SHA","run_id":"$GITHUB_RUN_ID","backend":"bwgklpxoetrrkutottdb"}
+          EOF
+          test -f dist/index.html
+          test -f dist/manifest.webmanifest
+          test -f dist/sw.js
 
-      # Wrangler applies file-managed vars while uploading. Configure logical
-      # staging and browser-safe Supabase runtime metadata after the upload so
-      # wrangler.jsonc cannot replace them with production defaults.
+      - name: Deploy and verify staging.peekalisting.com
+        run: bash ./scripts/deploy-canonical-cloudflare-staging.sh
+
       - name: Configure isolated staging metadata bindings
         shell: bash
         run: |
@@ -174,49 +162,6 @@ jobs:
             --data "${payload}" \
             "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}" \
             | jq -e '.success == true' >/dev/null
-          echo 'Configured logical staging and browser-safe Supabase bindings.'
-
-      - name: Provision the canonical staging hostname
-        shell: bash
-        run: |
-          set -euo pipefail
-          domains="$(curl --fail-with-body --silent --show-error \
-            --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}/domains")"
-          if jq -e --arg name "${CLOUDFLARE_STAGING_DOMAIN}" '.result[] | select(.name == $name)' <<<"${domains}" >/dev/null; then
-            echo "Pages custom domain ${CLOUDFLARE_STAGING_DOMAIN} already exists."
-          else
-            curl --fail-with-body --silent --show-error \
-              --request POST \
-              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              --header 'Content-Type: application/json' \
-              --data "$(jq -n --arg name "${CLOUDFLARE_STAGING_DOMAIN}" '{name:$name}')" \
-              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}/domains" \
-              | jq -e '.success == true' >/dev/null
-            echo "Requested Pages custom domain ${CLOUDFLARE_STAGING_DOMAIN}."
-          fi
-
-          domain_status=""
-          for attempt in $(seq 1 90); do
-            domain="$(curl --fail-with-body --silent --show-error \
-              --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${CLOUDFLARE_PAGES_PROJECT}/domains/${CLOUDFLARE_STAGING_DOMAIN}")"
-            domain_status="$(jq -r '.result.status' <<<"${domain}")"
-            if [[ "${domain_status}" == "active" ]]; then
-              echo "Pages custom domain ${CLOUDFLARE_STAGING_DOMAIN} is active."
-              break
-            fi
-            if [[ "${domain_status}" =~ ^(blocked|deactivated|error)$ ]]; then
-              jq -r '.result | {status, validation_data, verification_data}' <<<"${domain}"
-              exit 1
-            fi
-            echo "Waiting for ${CLOUDFLARE_STAGING_DOMAIN} (${domain_status}, attempt ${attempt}/90)."
-            sleep 5
-          done
-          if [[ "${domain_status}" != "active" ]]; then
-            echo "Timed out waiting for ${CLOUDFLARE_STAGING_DOMAIN} to activate."
-            exit 1
-          fi
 
       - name: Verify hosted staging
         run: npm run verify:cloudflare-staging
