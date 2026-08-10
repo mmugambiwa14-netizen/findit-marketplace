@@ -1,0 +1,42 @@
+name: Unified certification heartbeat
+
+on:
+  push:
+    branches:
+      - integration/unified-latest-20260810
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record candidate SHA immediately
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CANDIDATE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init status
+          cd status
+          git config user.name 'peekalisting-certification-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git checkout --orphan unified-certification-status
+          mkdir -p .certification
+          cat > .certification/unified-latest.json <<EOF
+          {
+            "workflow": "Unified latest integration certification",
+            "conclusion": "running",
+            "application": "running",
+            "database": "running",
+            "head_sha": "${CANDIDATE_SHA}",
+            "run_id": "${RUN_ID}"
+          }
+          EOF
+          git add .certification/unified-latest.json
+          git commit -m "unified certification: running ${CANDIDATE_SHA}"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin HEAD:unified-certification-status
