@@ -119,12 +119,13 @@ expectations include:
 
 - `FINDIT_ALLOW_HOSTED_AUTH_PREFLIGHT` to explicitly authorize the read-only check;
 - `FINDIT_EXPECT_AUTH_SITE_URL` and `FINDIT_EXPECT_AUTH_REDIRECT_URLS` for exact URL checks;
-- `FINDIT_EXPECT_PASSWORD_MIN_LENGTH` and `FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION` for password policy;
+- `FINDIT_EXPECT_PASSWORD_MIN_LENGTH`, `FINDIT_EXPECT_PASSWORD_REQUIRED_CHARACTERS`, `FINDIT_EXPECT_PASSWORD_REAUTHENTICATION`, and `FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION` for password policy;
 - `FINDIT_EXPECT_TOTP_MFA`, `FINDIT_EXPECT_AUTH_CAPTCHA`, and `FINDIT_EXPECT_CUSTOM_SMTP` for account hardening;
 
 - canonical HTTPS site URL and exact redirect allowlist;
 - email confirmations enabled;
-- password minimum length at least 12 with the approved character policy;
+- password minimum length at least 12 with the approved lowercase, uppercase, number and symbol policy;
+- reauthentication required for password changes when the current session is not recent;
 - leaked-password protection enabled;
 - TOTP enrollment and verification enabled;
 - CAPTCHA/bot protection enabled;
