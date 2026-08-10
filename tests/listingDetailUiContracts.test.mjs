@@ -52,7 +52,9 @@ test('location map communicates the public-area privacy boundary', () => {
 
 test('seller surface exposes identity context and a dedicated profile route', () => {
   assert.match(detailTabs, /\/seller\/\$\{encodeURIComponent\(sellerId\)\}/);
-  assert.match(detailTabs, /active listing/);
+  assert.match(detailTabs, /resolvedActiveListingCount/);
+  assert.match(detailTabs, /hasActiveListingCount/);
+  assert.match(detailTabs, /active \{roleLabel === 'Provider' \? 'services' : 'listings'\}/);
   assert.match(detailTabs, /Joined/);
 });
 
