@@ -1,20 +1,18 @@
+import { readStoredString, writeStoredString } from '@/lib/browserStorage';
+
 const SOUND_KEY = '__peekalisting_notification_sound_enabled';
 const MIN_GAP_MS = 1800;
 let audioContext = null;
 let primed = false;
 let lastPlayedAt = 0;
 
-function storage() {
-  try { return window.localStorage; } catch { return null; }
-}
-
 export function notificationSoundEnabled() {
-  const value = storage()?.getItem(SOUND_KEY);
+  const value = readStoredString('local', SOUND_KEY, null);
   return value === null ? true : value === '1';
 }
 
 export function setNotificationSoundEnabled(enabled) {
-  storage()?.setItem(SOUND_KEY, enabled ? '1' : '0');
+  return writeStoredString('local', SOUND_KEY, enabled ? '1' : '0');
 }
 
 export async function primeNotificationSound() {
