@@ -1,0 +1,135 @@
+name: Unified latest integration certification
+
+on:
+  push:
+    branches:
+      - integration/unified-latest-20260810
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unified-latest-certification
+  cancel-in-progress: true
+
+jobs:
+  application:
+    name: Unified application release boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NODE_ENV: production
+      VITE_SUPABASE_URL: https://findit-release-validation.supabase.co
+      VITE_SUPABASE_ANON_KEY: release-validation-key
+      VITE_FEATURE_BUSINESS_PROFILES: "true"
+      VITE_FEATURE_MESSAGING: "true"
+      VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: "true"
+      VITE_AUTH_GOOGLE_ENABLED: "true"
+      VITE_FEATURE_GOOGLE_OAUTH: "true"
+      VITE_FEATURE_MAPS: "true"
+      VITE_MAPTILER_PUBLIC_KEY: release-validation-maptiler-key
+      VITE_MAPTILER_STYLE_ID: streets-v4
+      VITE_FEATURE_INTERNATIONAL_LISTING: "false"
+      VITE_FEATURE_MANUAL_LOCATION: "true"
+      VITE_FEATURE_CURRENT_LOCATION: "true"
+      VITE_FEATURE_CURRENCY_CONVERSION: "false"
+      VITE_FEATURE_PHONE_VERIFICATION: "false"
+      VITE_FEATURE_SERVICE_RADIUS: "false"
+      VITE_FEATURE_REPORTING: "true"
+      VITE_FEATURE_PAYMENTS: "false"
+      VITE_FEATURE_SUBSCRIPTIONS: "false"
+      VITE_FEATURE_ESCROW: "false"
+      VITE_FEATURE_PREMIUM_LISTINGS: "false"
+      VITE_FEATURE_AI_MODERATION: "false"
+      VITE_FEATURE_AI_BAN_EVASION: "false"
+      VITE_FEATURE_AI_TICKET_TRIAGE: "false"
+      VITE_FEATURE_AI_SUPPORT_CHAT: "false"
+      VITE_FEATURE_SCHEDULED_REMINDERS: "false"
+      VITE_FEATURE_MARKETING_EMAILS: "false"
+      VITE_FEATURE_LISTING_EXPIRY: "false"
+      VITE_FEATURE_LISTING_FRESHNESS_REMINDERS: "false"
+      VITE_FEATURE_TOURS: "true"
+      VITE_FEATURE_TOURS_PREVIEW: "false"
+      VITE_FEATURE_PREVIEW_FIXTURES: "false"
+      VITE_PREVIEW_AUTH_BYPASS: "false"
+      TOURS_BACKEND_ENABLED: "true"
+      FINDIT_TOURS_WORKERS_ENABLED: "true"
+      FINDIT_TOUR_PROCESSOR_MODE: github-actions
+      FINDIT_TOUR_CLEANUP_WORKER_SECRET: release-validation-cleanup-secret
+      FINDIT_TOUR_CACHE_WORKER_SECRET: release-validation-cache-secret
+      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: release-validation-observability-secret
+      FINDIT_TOURS_RELEASE_ACCEPTED: "true"
+      FINDIT_TOURS_ACCEPTANCE_ID: tour-acceptance-ci-build-validation-0001
+      FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
+      FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: release-validation-fanout-secret
+      FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"
+      FINDIT_RECOMMENDATION_WORKER_SECRET: release-validation-recommendation-secret
+    steps:
+      - name: Check out exact integration head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Normalize locked dependency metadata
+        run: node ./scripts/normalize-package-lock.mjs --write
+      - name: Use Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: npm
+      - name: Use Deno for Edge Function checks
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
+        with:
+          deno-version: v2.x
+      - name: Install locked dependencies
+        run: npm ci --include=dev --ignore-scripts
+      - name: Validate release environment
+        run: npm run validate:env
+      - name: Verify source graph
+        run: npm run verify:source-graph
+      - name: Verify repository hygiene
+        run: npm run verify:hygiene
+      - name: Verify deployment security boundary
+        run: npm run verify:deployment-security
+      - name: Verify SQL migration boundary
+        run: npm run verify:sql-boundary
+      - name: Verify workflow pinning
+        run: node ./scripts/verify-workflow-pinning.mjs
+      - name: Audit routed product surface
+        run: npm run audit:product-surface
+      - name: Restore tracked audit snapshots
+        run: git restore --worktree -- artifacts/product-audit/page-control-matrix.csv artifacts/product-audit/product-surface-audit.json artifacts/product-audit/route-matrix.csv
+      - name: Run all contracts
+        run: npm run test:contracts
+      - name: Run Tours contracts
+        run: npm run test:tours-contracts
+      - name: Verify Base44 elimination
+        run: npm run verify:base44-elimination
+      - name: Lint application
+        run: npm run lint
+      - name: Typecheck application
+        run: npm run typecheck
+      - name: Typecheck migration boundary
+        run: npm run typecheck:migration
+      - name: Typecheck active release surface
+        run: npm run typecheck:active
+      - name: Typecheck Supabase Edge Functions
+        run: npm run typecheck:edge-functions
+      - name: Build production application
+        run: npm run build
+      - name: Audit production dependency boundary
+        run: npm run audit:production
+      - name: Run reproducible internal certification
+        run: npm run certify:internal
+
+  database:
+    name: Unified clean-database certification
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Check out exact integration head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Use Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+      - name: Run clean-database certification matrix
+        run: bash ./scripts/run-migration-database-certification.sh
