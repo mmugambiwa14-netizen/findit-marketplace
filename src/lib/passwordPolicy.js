@@ -1,11 +1,16 @@
 export const PASSWORD_MIN_LENGTH = 10;
 
+const PASSWORD_SYMBOLS = "!@#$%^&*()_+-=[]{};'\\:\"|<>?,./`~";
+
 export function passwordPolicyError(password) {
   if (typeof password !== 'string' || password.length < PASSWORD_MIN_LENGTH) {
     return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
   }
   if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
     return 'Password must include lowercase, uppercase and a number';
+  }
+  if (![...password].some((character) => PASSWORD_SYMBOLS.includes(character))) {
+    return 'Password must include a symbol';
   }
   return '';
 }
