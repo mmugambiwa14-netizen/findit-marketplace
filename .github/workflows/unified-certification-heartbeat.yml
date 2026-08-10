@@ -1,5 +1,6 @@
 name: Unified certification heartbeat
 
+# Explicit rerun trigger after the guarded-storage product-gate repair.
 on:
   push:
     branches:
