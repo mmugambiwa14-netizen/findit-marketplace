@@ -25,6 +25,7 @@ import {
   supportPeekRequest,
   withdrawPeekRequestSupport,
 } from '@/services/peekThreadsService';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const FILTERS = [
   { value: 'all', label: 'Top requests', sort: 'most_wanted' },
@@ -207,7 +208,8 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
               {PEEK_REQUEST_CATEGORIES.map((entry) => <option key={entry.value} value={entry.value}>{entry.label}</option>)}
             </select>
             <p className="mt-2 text-xs text-muted-foreground">{PEEK_REQUEST_CATEGORIES.find((entry) => entry.value === category)?.hint}</p>
-            <textarea value={body} onChange={(event) => setBody(event.target.value)} maxLength={280} rows={3} placeholder="Describe one clear thing the seller can show" className="mt-3 w-full resize-none rounded-xl border border-border bg-card p-3 text-sm outline-none focus:ring-2 focus:ring-primary" />
+            <label htmlFor={`peek-body-${parentId}`} className="sr-only">Describe what you want the seller to show</label>
+            <textarea id={`peek-body-${parentId}`} value={body} onChange={(event) => setBody(event.target.value)} maxLength={280} rows={3} placeholder="Describe one clear thing the seller can show" className="mt-3 w-full resize-none rounded-xl border border-border bg-card p-3 text-sm outline-none focus:ring-2 focus:ring-primary" />
             <div className="mt-2 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>{body.trim().length}/280</span>
               <div className="flex flex-wrap gap-2 sm:justify-end">
@@ -244,7 +246,7 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
       </div></div>
 
       <div className="divide-y divide-border">
-        {threadQuery.isLoading && <div className="flex items-center justify-center gap-2 p-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Loading Peek Requests</div>}
+        {threadQuery.isLoading && <ListRowsSkeleton rows={4} className="p-3" label="Loading Peek Requests" />}
         {threadQuery.isError && <div className="p-6 text-center"><p className="text-sm text-destructive">Peek Requests could not be loaded.</p><Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => threadQuery.refetch()}>Try again</Button></div>}
         {!threadQuery.isLoading && !threadQuery.isError && items.length === 0 && <div className="p-8 text-center"><Eye className="mx-auto h-7 w-7 text-muted-foreground" /><p className="mt-3 font-semibold">No Peek Requests here yet</p><p className="mt-1 text-sm text-muted-foreground">Be the first buyer to ask for useful visual evidence.</p></div>}
         {items.map((item) => <ThreadCard key={item.requestId} item={item} isOwner={isOwner} busy={supportMutation.isPending || declineMutation.isPending} onSupport={() => runGuarded('update your interest in this Peek Request', () => supportMutation.mutate({ requestId: item.requestId, supported: item.supportedByMe }))} onDecline={() => { setDeclineTarget(item); setDeclineReason(''); }} />)}
