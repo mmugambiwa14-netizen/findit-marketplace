@@ -66,10 +66,12 @@ test('asset listings prioritize Peek Requests before secondary pricing controls'
   assert.match(serviceDetail, /<PeekThreadsSection/);
 });
 
-test('listing section navigation is a sticky elevated segmented surface', () => {
+test('listing section navigation is sticky, fluid and spatially continuous', () => {
   assert.match(detailTabs, /sticky top-\[calc\(env\(safe-area-inset-top,0px\)\+3\.75rem\)\]/);
-  assert.match(detailTabs, /rounded-2xl border border-border\/80 bg-card\/90 p-1 shadow-floating/);
-  assert.match(detailTabs, /bg-primary\/12 text-primary shadow-sm/);
+  assert.match(detailTabs, /<AnimatedTabs/);
+  assert.match(detailTabs, /semantics="navigation"/);
+  assert.match(detailTabs, /prefersReducedMotion\(\) \? 'auto' : 'smooth'/);
+  assert.doesNotMatch(detailTabs, /shadow-floating/);
   for (const label of ['Listing info', 'Description', 'Location', 'Seller']) {
     assert.match(detailTabs, new RegExp(label));
   }
