@@ -19,13 +19,13 @@ export function SegmentedControl({
 
   return (
     <div
-      className={cn('fluid-segmented-control', size === 'compact' && 'fluid-segmented-control--compact', className)}
+      className={cn('fluid-segmented-control relative isolate overflow-hidden rounded-xl border border-border/75 p-1', size === 'compact' && 'text-sm', className)}
       role="group"
       aria-label={ariaLabel}
     >
       <span
         aria-hidden="true"
-        className={cn('fluid-segmented-indicator', indicatorClassName)}
+        className={cn('fluid-segmented-indicator absolute inset-y-1 left-1 z-0 rounded-lg bg-card/95', indicatorClassName)}
         style={{
           width: `calc((100% - 0.5rem) / ${columns})`,
           transform: `translate3d(${activeIndex * 100}%, 0, 0)`,
@@ -43,8 +43,8 @@ export function SegmentedControl({
               aria-label={item.ariaLabel || item.label}
               onClick={() => onValueChange?.(item.value)}
               className={cn(
-                'fluid-segmented-button',
-                selected && 'fluid-segmented-button--active',
+                'relative z-[1] inline-flex min-h-9 items-center justify-center px-2.5 font-semibold text-muted-foreground',
+                selected && 'text-foreground',
                 buttonClassName,
                 item.className,
               )}
