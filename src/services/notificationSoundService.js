@@ -17,7 +17,8 @@ export function setNotificationSoundEnabled(enabled) {
 
 export async function primeNotificationSound() {
   if (primed || typeof window === 'undefined') return;
-  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  const browserWindow = /** @type {Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }} */ (window);
+  const AudioContextCtor = browserWindow.AudioContext || browserWindow.webkitAudioContext;
   if (!AudioContextCtor) return;
   try {
     audioContext ||= new AudioContextCtor();
