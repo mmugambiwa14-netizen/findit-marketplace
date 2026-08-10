@@ -148,6 +148,7 @@ jobs:
           DATABASE_RESULT: ${{ needs.database.result }}
           CERTIFIED_SHA: ${{ github.sha }}
           RUN_ID: ${{ github.run_id }}
+          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -174,5 +175,3 @@ jobs:
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force origin HEAD:unified-certification-status
           [[ "$conclusion" == "success" ]]
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
