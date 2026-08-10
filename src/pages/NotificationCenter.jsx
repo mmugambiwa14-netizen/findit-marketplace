@@ -17,9 +17,11 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
+import { goBackOrHome } from '@/lib/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
+import { NotificationListSkeleton } from '@/components/loading/LoadingSkeletons';
 import {
   getNotificationsPage,
   getUnreadNotificationCount,
@@ -181,7 +183,7 @@ export default function NotificationCenter() {
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted" aria-label="Go back">
+            <button type="button" onClick={() => goBackOrHome(navigate, '/')} className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-muted" aria-label="Go back">
               <ArrowLeft className="h-5 w-5" />
             </button>
             <div><h1 className="font-bold text-lg">Notifications</h1><p className="text-xs text-muted-foreground">Important messages and marketplace updates</p></div>
@@ -195,7 +197,10 @@ export default function NotificationCenter() {
       </header>
 
       {notificationsQuery.isLoading ? (
-        <div className="flex items-center justify-center py-16" role="status" aria-label="Loading notifications"><div className="h-7 w-7 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
+        <div role="status" aria-live="polite" aria-busy="true">
+          <span className="sr-only">Loading notifications</span>
+          <NotificationListSkeleton announce={false} />
+        </div>
       ) : notificationsQuery.isError && items.length === 0 ? (
         <div className="mx-4 mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center" role="alert"><p className="font-medium">We could not load notifications</p><p className="mt-1 text-sm text-muted-foreground">Check your connection and try again.</p><Button className="mt-4" variant="outline" onClick={() => notificationsQuery.refetch()}>Try again</Button></div>
       ) : items.length === 0 ? (
