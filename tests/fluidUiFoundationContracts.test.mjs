@@ -23,6 +23,8 @@ test('Pressable owns immediate pointer and keyboard feedback instead of page-spe
   assert.match(source, /event\.key === 'Enter' \|\| event\.key === ' '/);
   assert.match(source, /data-pressed=\{pressed \? 'true' : 'false'\}/);
   assert.match(source, /asChild \? Slot : 'button'/);
+  assert.match(source, /prefersReducedMotion\(\)/);
+  assert.match(source, /transform: 'scale\(0\.98\)'/);
 });
 
 test('shared Button routes through Pressable so all application buttons inherit touch-down feedback', async () => {
@@ -44,12 +46,16 @@ test('bottom sheets support direct manipulation velocity dismissal and reduced m
   assert.match(source, /translate3d\(0, 105%, 0\)/);
 });
 
-test('fluid material layer includes reduced motion transparency and contrast equivalents', async () => {
-  const css = await read('src/fluid-ui.css');
-  assert.match(css, /\.fluid-pressable\[data-pressed='true'\]/);
-  assert.match(css, /\.fluid-segmented-indicator/);
-  assert.match(css, /\.fluid-tabs-indicator/);
-  assert.match(css, /prefers-reduced-motion: reduce/);
+test('fluid material layer includes component-owned reduced motion and CSS transparency/contrast equivalents', async () => {
+  const [css, segmented, tabs] = await Promise.all([
+    read('src/fluid-ui.css'),
+    read('src/components/ui/segmented-control.jsx'),
+    read('src/components/ui/animated-tabs.jsx'),
+  ]);
+  assert.match(segmented, /fluid-segmented-indicator/);
+  assert.match(segmented, /prefersReducedMotion\(\)/);
+  assert.match(tabs, /fluid-tabs-indicator/);
+  assert.match(tabs, /prefersReducedMotion\(\)/);
   assert.match(css, /prefers-reduced-transparency: reduce/);
   assert.match(css, /prefers-contrast: more/);
   assert.match(css, /\.surface-panel,[\s\S]*\.clay-card[\s\S]*background-image: none/);
