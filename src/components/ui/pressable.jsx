@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
+import { motionDurations, motionEasings, prefersReducedMotion } from '@/lib/motionTokens';
 
 const MOVE_CANCEL_THRESHOLD = 10;
 
@@ -15,6 +16,7 @@ const Pressable = React.forwardRef(
   (({
     asChild = false,
     className,
+    style,
     disabled = false,
     type,
     onPointerDown,
@@ -34,6 +36,7 @@ const Pressable = React.forwardRef(
     const Comp = asChild ? Slot : 'button';
     const ariaDisabled = props['aria-disabled'] === true || props['aria-disabled'] === 'true';
     const blocked = Boolean(disabled || ariaDisabled);
+    const reduceMotion = prefersReducedMotion();
 
     const clearPress = React.useCallback(() => {
       pointer.current = null;
@@ -94,6 +97,15 @@ const Pressable = React.forwardRef(
       onClick?.(event);
     };
 
+    const interactionStyle = {
+      touchAction: 'manipulation',
+      WebkitTapHighlightColor: 'transparent',
+      transition: reduceMotion ? 'none' : `transform ${motionDurations.instant}ms ${motionEasings.instant}, opacity ${motionDurations.instant}ms`,
+      ...(pressed ? (reduceMotion ? { opacity: 0.82 } : { transform: 'scale(0.98)' }) : null),
+      ...(blocked ? { opacity: 0.46 } : null),
+      ...style,
+    };
+
     return (
       <Comp
         ref={ref}
@@ -103,6 +115,7 @@ const Pressable = React.forwardRef(
         type={asChild ? undefined : (type ?? 'button')}
         disabled={asChild ? undefined : disabled}
         aria-disabled={asChild && blocked ? true : props['aria-disabled']}
+        style={interactionStyle}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
