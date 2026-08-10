@@ -3,6 +3,7 @@ import { BellRing, Loader2, Smartphone, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 import {
   disableWebPush,
   enableWebPush,
@@ -37,6 +38,7 @@ export default function PushNotificationSettings() {
   const [state, setState] = useState(() => ({ ...webPushSupport(), subscribed: false }));
   const [soundEnabled, setSoundEnabled] = useState(notificationSoundEnabled);
   const [preferences, setPreferences] = useState(DEFAULT_PREFS);
+  const [initializing, setInitializing] = useState(true);
   const [working, setWorking] = useState(false);
   const [savingPreference, setSavingPreference] = useState(null);
 
@@ -47,6 +49,8 @@ export default function PushNotificationSettings() {
       const subscription = subscriptionResult.status === 'fulfilled' ? subscriptionResult.value : null;
       setState({ ...webPushSupport(), subscribed: Boolean(subscription) });
       if (preferenceResult.status === 'fulfilled') setPreferences(preferenceResult.value);
+    }).finally(() => {
+      if (active) setInitializing(false);
     });
     return () => { active = false; };
   }, []);
@@ -91,6 +95,8 @@ export default function PushNotificationSettings() {
       setSavingPreference(null);
     }
   };
+
+  if (initializing) return <ListRowsSkeleton rows={2} showThumbnail={false} label="Checking push notification status" />;
 
   if (!state.supported) {
     return <p className="text-sm text-muted-foreground">This browser does not support Web Push notifications.</p>;
