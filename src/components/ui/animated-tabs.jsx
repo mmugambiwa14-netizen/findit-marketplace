@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Pressable } from '@/components/ui/pressable';
+import { motionDurations, motionEasings, prefersReducedMotion } from '@/lib/motionTokens';
 
 export function AnimatedTabs({
   value,
@@ -17,6 +18,9 @@ export function AnimatedTabs({
   const tabRefs = React.useRef(new Map());
   const [indicator, setIndicator] = React.useState({ x: 0, width: 0, ready: false });
   const tabSemantics = semantics === 'tabs';
+  const indicatorTransition = prefersReducedMotion()
+    ? 'none'
+    : `transform ${motionDurations.standard}ms ${motionEasings.standard}, width ${motionDurations.standard}ms ${motionEasings.standard}`;
 
   const measure = React.useCallback(() => {
     const active = tabRefs.current.get(value);
@@ -84,7 +88,11 @@ export function AnimatedTabs({
       <span
         aria-hidden="true"
         className={cn('fluid-tabs-indicator absolute inset-y-1 left-0 z-0 rounded-lg bg-primary/10', !indicator.ready && 'opacity-0', indicatorClassName)}
-        style={{ width: indicator.width, transform: `translate3d(${indicator.x}px, 0, 0)` }}
+        style={{
+          width: indicator.width,
+          transform: `translate3d(${indicator.x}px, 0, 0)`,
+          transition: indicatorTransition,
+        }}
       />
       {items.map((tab, index) => {
         const Icon = tab.icon;
