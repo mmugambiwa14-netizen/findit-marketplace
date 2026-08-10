@@ -1,6 +1,7 @@
 import { Children, isValidElement, useId, useMemo, useState } from 'react';
 import { ExternalLink, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AnimatedTabs } from '@/components/ui/animated-tabs';
 import { cn } from '@/lib/utils';
 import SearchResultsMap from '@/components/search/SearchResultsMap';
 
@@ -37,56 +38,29 @@ export function ListingDetailTabs({ children }) {
   const [active, setActive] = useState(availableTabs[0]?.id || TABS[0].id);
   const activeTab = availableTabs.find((tab) => tab.id === active) || availableTabs[0] || TABS[0];
   const activePanel = panelChildren.find((child) => childId(child) === activeTab.id) || panelChildren[0] || null;
+  const animatedTabs = useMemo(() => availableTabs.map((tab) => ({
+    value: tab.id,
+    label: tab.label,
+    id: `${tabRootId}-tab-${tab.id}`,
+    controls: `${tabRootId}-panel-${tab.id}`,
+  })), [availableTabs, tabRootId]);
 
   const selectTab = (id) => {
     if (availableTabs.some((tab) => tab.id === id)) setActive(id);
   };
 
-  const handleTabKeyDown = (event, index) => {
-    if (!availableTabs.length) return;
-    if (event.key === 'Home' || event.key === 'End') {
-      event.preventDefault();
-      const targetIndex = event.key === 'Home' ? 0 : availableTabs.length - 1;
-      const target = availableTabs[targetIndex];
-      selectTab(target.id);
-      document.getElementById(`${tabRootId}-tab-${target.id}`)?.focus();
-      return;
-    }
-    const direction = event.key === 'ArrowRight' || event.key === 'ArrowDown'
-      ? 1
-      : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 0;
-    if (!direction) return;
-    event.preventDefault();
-    const target = availableTabs[(index + direction + availableTabs.length) % availableTabs.length];
-    selectTab(target.id);
-    document.getElementById(`${tabRootId}-tab-${target.id}`)?.focus();
-  };
-
   return (
     <>
       <nav className="px-3 py-2 md:px-5" aria-label="Listing details">
-        <div id={`${tabRootId}-list`} role="tablist" aria-label="Listing detail sections" className="no-scrollbar mx-auto flex max-w-4xl overflow-x-auto rounded-2xl border border-border/80 bg-card/90 p-1 shadow-floating">
-          {availableTabs.map((tab, index) => (
-            <button
-              key={tab.id}
-              type="button"
-              id={`${tabRootId}-tab-${tab.id}`}
-              role="tab"
-              aria-selected={activeTab.id === tab.id}
-              aria-controls={`${tabRootId}-panel-${tab.id}`}
-              tabIndex={activeTab.id === tab.id ? 0 : -1}
-              data-listing-detail-tab={tab.id}
-              onClick={() => selectTab(tab.id)}
-              onKeyDown={(event) => handleTabKeyDown(event, index)}
-              className={cn(
-                'min-h-11 flex-1 whitespace-nowrap rounded-xl px-3 text-xs font-bold text-muted-foreground transition-colors sm:text-sm',
-                activeTab.id === tab.id && 'bg-primary/12 text-primary shadow-sm',
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <AnimatedTabs
+          value={activeTab.id}
+          onValueChange={selectTab}
+          tabs={animatedTabs}
+          ariaLabel="Listing detail sections"
+          semantics="tabs"
+          className="mx-auto max-w-4xl bg-card/90"
+          tabClassName="min-w-[7rem] text-xs sm:min-w-0 sm:text-sm"
+        />
       </nav>
       <div className="mx-auto max-w-4xl px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7">
         {activePanel && (
