@@ -77,13 +77,13 @@ export function AnimatedTabs({
   return (
     <div
       ref={containerRef}
-      className={cn('fluid-tabs no-scrollbar', className)}
+      className={cn('fluid-tabs no-scrollbar relative isolate flex overflow-x-auto rounded-xl border border-border/75 p-1', className)}
       role={tabSemantics ? 'tablist' : 'group'}
       aria-label={ariaLabel}
     >
       <span
         aria-hidden="true"
-        className={cn('fluid-tabs-indicator', !indicator.ready && 'opacity-0', indicatorClassName)}
+        className={cn('fluid-tabs-indicator absolute inset-y-1 left-0 z-0 rounded-lg bg-primary/10', !indicator.ready && 'opacity-0', indicatorClassName)}
         style={{ width: indicator.width, transform: `translate3d(${indicator.x}px, 0, 0)` }}
       />
       {items.map((tab, index) => {
@@ -104,7 +104,12 @@ export function AnimatedTabs({
             tabIndex={tabSemantics ? (selected ? 0 : -1) : undefined}
             onKeyDown={(event) => handleTabKeyDown(event, index)}
             onClick={() => onValueChange?.(tab.value)}
-            className={cn('fluid-tab', selected && 'fluid-tab--active', tabClassName, tab.className)}
+            className={cn(
+              'relative z-[1] inline-flex min-h-11 flex-1 shrink-0 items-center justify-center px-3.5 font-semibold text-muted-foreground',
+              selected && 'text-primary',
+              tabClassName,
+              tab.className,
+            )}
           >
             {Icon && <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />}
             <span>{tab.label}</span>
