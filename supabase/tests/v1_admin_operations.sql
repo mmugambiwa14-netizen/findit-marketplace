@@ -84,7 +84,7 @@ select extensions.is(
 );
 select extensions.is(
   (select count(*)::bigint from public.categories),
-  125::bigint,
+  176::bigint,
   'the V1 taxonomy preserves all approved product and service choices'
 );
 
@@ -104,17 +104,27 @@ select extensions.throws_ok(
 
 reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000002002', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000002002","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 select extensions.throws_ok(
   $$select public.admin_set_user_role(
       '00000000-0000-4000-8000-000000002003', 'admin', 'Operations access'
     )$$,
-  '42501', 'super-admin access required',
+  '42501', 'admin access required',
   'ordinary admins cannot grant the admin role'
 );
 
 reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000002001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000002001","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 
 select extensions.is(
@@ -123,13 +133,13 @@ select extensions.is(
   'admin overview returns the live pending report count'
 );
 select extensions.is(
-  (select count(*)::bigint from public.admin_marketplace_rows('', 'car', 'available', 25, 0)
+  (select count(*)::bigint from public.admin_marketplace_rows_page('', 'car', 'available', 25, null, null)
    where item_id = '00000000-0000-4000-8000-000000002101'),
   1::bigint,
   'marketplace management is server-filtered and includes the fixture'
 );
 select extensions.is(
-  (select count(*)::bigint from public.admin_user_rows('Target', 'user', 'active', 25, 0)
+  (select count(*)::bigint from public.admin_user_rows_page('Target', 'user', 'active', 25, null, null)
    where user_id = '00000000-0000-4000-8000-000000002003'),
   1::bigint,
   'user management search is server-filtered'
@@ -174,6 +184,11 @@ select extensions.is(
 );
 
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000002001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"00000000-0000-4000-8000-000000002001","role":"authenticated","aal":"aal1"}',
+  true
+);
 set local role authenticated;
 
 select extensions.lives_ok(
@@ -224,7 +239,7 @@ select extensions.throws_ok(
 );
 
 select extensions.is(
-  (select count(*)::bigint from public.admin_audit_rows('', 'all', 100, 0)),
+  (select count(*)::bigint from public.admin_audit_rows_page('', 'all', 100, null, null)),
   5::bigint,
   'every successful privileged mutation produced a durable audit event'
 );

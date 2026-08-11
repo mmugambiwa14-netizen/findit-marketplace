@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
 import { assertSmokeTarget } from './lib/smoke-target.mjs';
+import { grantCuratedPublishing } from './lib/curated-publisher-smoke-fixtures.mjs';
 
 const supabaseUrl = process.env.FINDIT_SUPABASE_URL ?? 'http://127.0.0.1:55321';
 const anonKey = process.env.FINDIT_SUPABASE_ANON_KEY;
@@ -105,10 +106,11 @@ try {
   assert.ok(legal.error, 'an owner cannot activate a legal profile in V1');
   const managed = await owner.from('business_profiles').update({ verified: true }).eq('id', profileId);
   assert.ok(managed.error, 'an owner cannot self-verify');
+  await grantCuratedPublishing(root, ownerId, ['car', 'property', 'service'], 'Business profile smoke publisher');
 
   for (const fixture of [
     { kind: 'car', title: 'Toyota Hilux dealer smoke', category: 'cars_sale', status: 'available' },
-    { kind: 'property', title: 'Business office smoke', category: 'houses_sale', status: 'available' },
+    { kind: 'property', title: 'Business office smoke', category: 'house_sale', status: 'available' },
     { kind: 'car', title: 'Private vehicle draft', category: 'cars_sale', status: 'draft' },
   ]) {
     const row = success(await root.from('listings').insert({

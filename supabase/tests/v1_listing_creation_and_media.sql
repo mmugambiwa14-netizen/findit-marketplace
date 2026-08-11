@@ -8,19 +8,35 @@ values
   ('84000000-0000-4000-8000-000000000001', 'listing-owner@example.test', '{"full_name":"Listing Owner"}', now(), now()),
   ('84000000-0000-4000-8000-000000000002', 'listing-stranger@example.test', '{"full_name":"Listing Stranger"}', now(), now());
 
-insert into public.business_category_approvals (
-  user_id, category, status, reviewed_at
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
 ) values (
+  '84000000-0000-4000-8000-000000000401',
+  '84000000-0000-4000-8000-000000000001',
+  'Listing Certification Motors', 'Listing Owner', 'listing-owner@example.test',
+  '+263700000401', 'ZW', 'Harare',
+  'Approved Cars publisher used by the listing creation certification suite.',
+  '1-10', 'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status, approved_at
+) values (
+  '84000000-0000-4000-8000-000000000402',
+  '84000000-0000-4000-8000-000000000401',
   '84000000-0000-4000-8000-000000000001', 'car', 'approved', now()
 );
 
 create temporary table listing_fixture (
   intent_id uuid,
   storage_path text,
-  listing_id uuid
+  listing_id uuid,
+  alert_ids uuid[] not null default '{}'::uuid[]
 ) on commit drop;
 
 grant select, insert, update on listing_fixture to service_role, authenticated;
+grant select on listing_fixture to anon;
 
 set local role service_role;
 insert into listing_fixture(intent_id, storage_path)
@@ -142,7 +158,7 @@ select extensions.is(
   'a valid live edit remains published'
 );
 select extensions.throws_ok(
-  $$update public.listings set status = 'available'
+  $$update public.listings set status = 'draft'
     where id = (select listing_id from listing_fixture)$$,
   '42501',
   'listing-managed fields require a trusted operation',
@@ -173,8 +189,41 @@ select extensions.throws_ok(
 );
 reset role;
 
+select extensions.is(
+  (
+    select count(*)::bigint
+    from pg_constraint
+    where conname in (
+      'app_alerts_listing_id_fkey',
+      'legal_bookings_listing_id_fkey',
+      'reports_listing_id_fkey',
+      'seller_ratings_listing_id_fkey',
+      'support_tickets_listing_id_fkey'
+    )
+      and confrelid = 'public.listings'::regclass
+      and confdeltype = 'n'
+  ),
+  5::bigint,
+  'historical listing references detach instead of blocking owner deletion'
+);
+
+update listing_fixture fixture
+set alert_ids = coalesce((
+  select array_agg(alert.id order by alert.id)
+  from public.app_alerts alert
+  where alert.listing_id = fixture.listing_id
+), '{}'::uuid[]);
+
 select set_config('request.jwt.claim.sub', '84000000-0000-4000-8000-000000000001', true);
 set local role authenticated;
+select extensions.throws_ok(
+  $$update public.app_alerts
+    set listing_id = null
+    where array_position((select alert_ids from listing_fixture), id) is not null$$,
+  '42501',
+  'permission denied for table app_alerts',
+  'an owner cannot directly detach listing history from their notifications'
+);
 select extensions.lives_ok(
   $$delete from public.listings where id = (select listing_id from listing_fixture)$$,
   'the owner can permanently delete their listing through the protected owner boundary'
@@ -190,6 +239,16 @@ select extensions.is(
   (select count(*)::bigint from public.listing_media where listing_id = (select listing_id from listing_fixture)),
   0::bigint,
   'permanent deletion cascades listing media metadata'
+);
+select extensions.is(
+  (
+    select count(*)::bigint
+    from public.app_alerts alert
+    where array_position((select alert_ids from listing_fixture), alert.id) is not null
+      and alert.listing_id is null
+  ),
+  (select cardinality(alert_ids)::bigint from listing_fixture),
+  'listing-linked notification history survives deletion with its foreign key detached'
 );
 
 select * from extensions.finish();

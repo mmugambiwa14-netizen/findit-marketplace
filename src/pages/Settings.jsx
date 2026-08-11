@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BellRing, Check, Eye, EyeOff, Lock, Mail, ShieldCheck, Trash2, User } from "lucide-react";
+import { ArrowLeft, BellRing, Check, Eye, EyeOff, Lock, Mail, ShieldCheck, Trash2, User, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
 import * as authService from "@/services/authService";
@@ -17,6 +17,7 @@ import DeleteAccountSection from "@/components/settings/DeleteAccountSection";
 import MfaSettings from "@/components/settings/MfaSettings";
 import PermissionStatusPanel from "@/components/settings/PermissionStatusPanel";
 import EmailNotificationSettings from "@/components/settings/EmailNotificationSettings";
+import NotificationSoundSettings from "@/components/settings/NotificationSoundSettings";
 import { goBackOrHome } from "@/lib/navigation";
 
 export default function Settings() {
@@ -72,6 +73,7 @@ export default function Settings() {
 
       <div className="mx-auto max-w-lg space-y-6 px-4 py-4">
         <Section icon={BellRing} title="Push notifications"><PushNotificationSettings /></Section>
+        <Section icon={Volume2} title="Notification sound"><NotificationSoundSettings /></Section>
         <Section icon={Mail} title="Email notifications"><EmailNotificationSettings /></Section>
         <Section icon={ShieldCheck} title="Permissions & privacy"><PermissionStatusPanel /></Section>
 

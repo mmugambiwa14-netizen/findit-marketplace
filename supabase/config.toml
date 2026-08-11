@@ -575,3 +575,8 @@ verify_jwt = false
 [functions.essential-notification-fanout]
 # Internal scheduler endpoint; protected by FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET.
 verify_jwt = false
+
+[functions.web-push-dispatch]
+# Internal scheduler endpoint; protected by x-push-dispatch-token and the
+# PUSH_DISPATCH_TOKEN Edge Function secret.
+verify_jwt = false

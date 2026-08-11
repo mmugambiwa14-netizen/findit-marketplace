@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
 import { assertSmokeTarget } from './lib/smoke-target.mjs';
+import { grantCuratedPublishing } from './lib/curated-publisher-smoke-fixtures.mjs';
 
 const supabaseUrl = process.env.FINDIT_SUPABASE_URL ?? 'http://127.0.0.1:55321';
 const anonKey = process.env.FINDIT_SUPABASE_ANON_KEY;
@@ -60,6 +61,7 @@ try {
   }), 'create owner');
   userId = created.user.id;
   const login = success(await owner.auth.signInWithPassword({ email, password }), 'owner sign in');
+  await grantCuratedPublishing(admin, userId, ['service'], 'Services smoke publisher');
 
   for (const status of ['active', 'paused']) {
     const row = success(await owner.from('services').insert({

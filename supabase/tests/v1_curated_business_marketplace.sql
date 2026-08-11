@@ -45,6 +45,38 @@ select extensions.ok(
   'notification trigger function is not directly executable by browser users'
 );
 
+select set_config('request.jwt.claim.sub', '', true);
+select set_config('request.jwt.claim.role', 'service_role', true);
+set local role service_role;
+select extensions.lives_ok(
+  $$insert into public.listings (
+      id, kind, seller_id, seller_name, title, description, price, currency,
+      native_price, native_currency, photos, category, listing_type, status
+    ) values (
+      '41000000-0000-4000-8000-000000000498', 'car',
+      '41000000-0000-4000-8000-000000000002', 'Trusted backend',
+      'Trusted backend listing fixture',
+      'A disposable listing proving that the explicit service-role backend boundary remains usable.',
+      1, 'USD', 1, 'USD', '[]'::jsonb, 'cars_sale', 'sale', 'draft'
+    )$$,
+  'service-role backend can seed a listing without impersonating a browser user'
+);
+select extensions.lives_ok(
+  $$insert into public.services (
+      id, provider_id, provider_name, title, description, category,
+      subcategory, subcategories, pricing_type, status
+    ) values (
+      '41000000-0000-4000-8000-000000000499',
+      '41000000-0000-4000-8000-000000000002', 'Trusted backend',
+      'Trusted backend service fixture',
+      'A disposable service proving that the explicit service-role backend boundary remains usable.',
+      'mechanic', 'maintenance_repair', '["maintenance_repair"]'::jsonb, 'quote', 'paused'
+    )$$,
+  'service-role backend can seed a service without impersonating a browser user'
+);
+reset role;
+select set_config('request.jwt.claim.role', '', true);
+
 select set_config('request.jwt.claim.sub', '41000000-0000-4000-8000-000000000001', true);
 set local role authenticated;
 select extensions.ok(public.can_publish_in_category('car'), 'approved Cars publisher passes the category gate');

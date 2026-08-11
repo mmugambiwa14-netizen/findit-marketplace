@@ -1,6 +1,7 @@
 import {
   TOUR_LIMITS,
   adminClient,
+  browserReachableUrl,
   correlationId,
   elapsedMilliseconds,
   isUuid,
@@ -42,13 +43,6 @@ type FeedRow = {
 
 const CATEGORIES = new Set(["all", "property", "car", "machinery", "service"]);
 const LEGACY_URL = /^https?:\/\//i;
-const LOCAL_INTERNAL_ORIGIN = "http://kong:8000";
-
-function browserReachableUrl(req: Request, value: string | null | undefined): string | null {
-  if (!value) return null;
-  if (!value.startsWith(LOCAL_INTERNAL_ORIGIN)) return value;
-  return `${new URL(req.url).origin}${value.slice(LOCAL_INTERNAL_ORIGIN.length)}`;
-}
 
 function text(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";

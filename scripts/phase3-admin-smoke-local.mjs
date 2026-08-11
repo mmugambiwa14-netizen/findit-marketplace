@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
+import { deleteDisposableFounder, signInFounder } from './lib/founder-smoke-fixtures.mjs';
 import { assertSmokeTarget } from './lib/smoke-target.mjs';
 
 const supabaseUrl = process.env.FINDIT_SUPABASE_URL ?? 'http://127.0.0.1:55321';
@@ -16,10 +17,10 @@ const admin = createClient(supabaseUrl, anonKey, options);
 const ordinary = createClient(supabaseUrl, anonKey, options);
 const guest = createClient(supabaseUrl, anonKey, options);
 const stamp = Date.now();
-const adminEmail = `findit-admin-smoke-${stamp}@example.test`;
 const userEmail = `findit-admin-target-${stamp}@example.test`;
 const password = `FindIt!Admin${stamp}`;
 let adminId;
+let founder;
 let userId;
 let listingId;
 let reportId;
@@ -32,10 +33,9 @@ function success(result, label) {
 }
 
 try {
-  adminId = success(await root.auth.admin.createUser({ email: adminEmail, password, email_confirm: true, user_metadata: { full_name: 'Admin Smoke' } }), 'create super admin').user.id;
+  founder = await signInFounder({ root, browser: admin, smokeTarget, password, label: 'admin smoke' });
+  adminId = founder.userId;
   userId = success(await root.auth.admin.createUser({ email: userEmail, password, email_confirm: true, user_metadata: { full_name: 'Target Smoke' } }), 'create target user').user.id;
-  success(await root.from('users').update({ role: 'admin', super_admin: true }).eq('id', adminId), 'grant local super admin');
-  success(await admin.auth.signInWithPassword({ email: adminEmail, password }), 'admin sign in');
   success(await ordinary.auth.signInWithPassword({ email: userEmail, password }), 'ordinary sign in');
 
   const denied = await ordinary.rpc('admin_dashboard_stats');
@@ -77,15 +77,17 @@ try {
   success(await admin.rpc('admin_update_category', { p_category_id: vehicleCategory.category_id, p_display_label: 'Vehicles smoke label', p_sort_order: vehicleCategory.sort_order, p_is_active: true, p_reason: 'Local smoke verification' }), 'update category label');
   success(await admin.rpc('admin_update_category', { p_category_id: vehicleCategory.category_id, p_display_label: 'Vehicles', p_sort_order: vehicleCategory.sort_order, p_is_active: true, p_reason: 'Restore smoke fixture label' }), 'restore category label');
 
-  success(await admin.rpc('admin_set_user_role', { p_user_id: userId, p_role: 'admin', p_reason: 'Local role operation verification' }), 'promote target');
-  success(await admin.rpc('admin_set_user_role', { p_user_id: userId, p_role: 'user', p_reason: 'Restore target role' }), 'restore target role');
+  const delegationDenied = await admin.rpc('admin_set_user_role', { p_user_id: userId, p_role: 'admin', p_reason: 'Local role boundary verification' });
+  assert.ok(delegationDenied.error, 'founder-operated V1 must reject browser-level admin role delegation');
+  const unchangedTarget = success(await root.from('users').select('role,super_admin').eq('id', userId).single(), 'verify denied role delegation');
+  assert.deepEqual(unchangedTarget, { role: 'user', super_admin: false });
   success(await admin.rpc('admin_set_user_status', { p_user_id: userId, p_status: 'suspended', p_reason: 'Local status operation verification', p_ban_until: null }), 'suspend target');
   success(await admin.rpc('admin_set_user_status', { p_user_id: userId, p_status: 'active', p_reason: 'Restore smoke target', p_ban_until: null }), 'restore target');
   success(await admin.rpc('admin_review_report', { p_report_id: reportId, p_status: 'reviewed', p_notes: 'Local report review verification' }), 'review report');
   success(await admin.rpc('admin_moderate_marketplace_item', { p_item_id: listingId, p_kind: 'car', p_action: 'pause', p_reason: 'Local moderation verification' }), 'pause listing');
 
   const audit = success(await admin.rpc('admin_audit_rows_page', { p_query: '', p_target_type: 'all', p_limit: 100, p_cursor_at: null, p_cursor_id: null }), 'load audit');
-  assert.ok(audit.length >= 9, 'all privileged smoke operations must be audited');
+  assert.ok(audit.length >= 7, 'all successful privileged smoke operations must be audited');
 
   console.log(`Phase 3 ${smokeTarget.label} admin smoke: PASS`);
   console.log('Verified admin authorization, overview, marketplace, users, reports, founder support inbox, categories, and audit operations.');
@@ -99,5 +101,5 @@ try {
   await admin.auth.signOut();
   await ordinary.auth.signOut();
   if (userId) await root.auth.admin.deleteUser(userId);
-  if (adminId) await root.auth.admin.deleteUser(adminId);
+  await deleteDisposableFounder(root, founder);
 }

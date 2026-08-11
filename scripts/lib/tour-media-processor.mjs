@@ -6,6 +6,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { spawn } from 'node:child_process';
+import ffmpegStatic from 'ffmpeg-static';
+import ffprobeStatic from 'ffprobe-static';
 
 const MAX_SOURCE_BYTES = 262_144_000;
 const MAX_DURATION_SECONDS = 120;
@@ -15,7 +17,8 @@ const CAPTURE_LIMIT = 16_384;
 function commandName(name) {
   const configured = process.env[name]?.trim();
   if (configured) return configured;
-  return name === 'FINDIT_FFMPEG_PATH' ? 'ffmpeg' : 'ffprobe';
+  if (name === 'FINDIT_FFMPEG_PATH') return ffmpegStatic || 'ffmpeg';
+  return ffprobeStatic?.path || 'ffprobe';
 }
 
 function boundedAppend(current, chunk) {

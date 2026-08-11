@@ -47,8 +47,10 @@ test('location remains explanation-first and user initiated', () => {
 });
 
 test('notification permission remains behind an explicit opt-in control', () => {
-  assert.match(pushSettings, /const toggle = async/);
+  assert.match(pushSettings, /const enable = async/);
   assert.match(pushSettings, /await enableWebPush\(\)/);
-  assert.match(pushSettings, /onClick=\{toggle\}/);
+  assert.match(pushSettings, /setExplanationOpen\(true\)/);
+  assert.match(pushSettings, /Continue and allow notifications/);
+  assert.match(pushSettings, /Not now/);
   assert.doesNotMatch(effectBodies(pushSettings), /enableWebPush/);
 });

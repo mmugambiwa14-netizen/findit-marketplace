@@ -27,6 +27,7 @@ browser build, and public browser keys must still be provider-restricted.
 | `VITE_SENTRY_ENVIRONMENT` | Sentry environment label | `staging` or `production` in Cloudflare workflows |
 | `VITE_SENTRY_RELEASE` | Sentry release identifier | Git commit SHA in Cloudflare workflows |
 | `VITE_FEATURE_REPORTING` | Marketplace reporting | True |
+| `VITE_WEB_PUSH_PUBLIC_KEY` | Browser-safe VAPID application-server key | Required only when Web Push is enabled for that deployment |
 | `VITE_FEATURE_TOURS` | Peek UI | True only for an accepted Peek release |
 | `VITE_FEATURE_TOURS_PREVIEW` | Development/staging preview | False in every production build |
 | `VITE_FEATURE_PREVIEW_FIXTURES` | Preview fixtures | False in production |
@@ -89,7 +90,12 @@ provider, database, privacy and acceptance work.
 | `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | Privileged internal work | Yes |
 | `FINDIT_ALLOWED_ORIGINS` | Exact comma-separated browser origins | No |
 | `FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED` | Notification worker activation | No |
+| `FINDIT_WEB_PUSH_WORKERS_ENABLED` | Web Push dispatcher scheduler activation | No |
 | `FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET` | Notification scheduler bearer | Yes |
+| `WEB_PUSH_PUBLIC_KEY` | VAPID public key used by the trusted dispatcher | No |
+| `WEB_PUSH_PRIVATE_KEY` | VAPID private key used by the trusted dispatcher | Yes |
+| `WEB_PUSH_SUBJECT` | VAPID contact URI, normally `mailto:...` | No |
+| `PUSH_DISPATCH_TOKEN` | Scheduler-to-dispatcher bearer | Yes |
 | `FINDIT_RECOMMENDATION_WORKERS_ENABLED` | Recommendation maintenance activation | No |
 | `FINDIT_RECOMMENDATION_WORKER_SECRET` | Recommendation scheduler bearer | Yes |
 | `FINDIT_REQUEST_BUDGET_SALT` | Opaque request-budget digest salt | Yes |

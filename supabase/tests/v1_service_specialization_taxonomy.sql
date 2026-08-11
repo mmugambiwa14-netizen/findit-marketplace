@@ -74,7 +74,7 @@ select extensions.is(
     from public.public_category_taxonomy_v2('service', 'ZW')
     where stable_slug = 'plumbing'
   ),
-  array['service', 'construction', 'construction_trades', 'plumbing']::text[],
+  array['services', 'construction', 'construction_trades', 'plumbing']::text[],
   'construction plumbing is organized beneath the Trades group without changing its stable slug'
 );
 
@@ -84,7 +84,7 @@ select extensions.is(
     from public.public_category_taxonomy_v2('service', 'ZW')
     where stable_slug = 'architectural_design'
   ),
-  array['Services', 'Construction & Equipment', 'Design & Professional', 'Architectural Design & Drawings']::text[],
+  array['Services', 'Construction', 'Design & Professional', 'Architectural Design & Drawings']::text[],
   'architecture is exposed through the coherent Design & Professional branch'
 );
 
@@ -94,7 +94,7 @@ select extensions.is(
     from public.public_category_taxonomy_v2('service', 'ZW')
     where stable_slug = 'solar_installation'
   ),
-  array['Services', 'Construction & Equipment', 'Property Infrastructure', 'Solar & Backup Power Installation']::text[],
+  array['Services', 'Construction', 'Property Infrastructure', 'Solar & Backup Power Installation']::text[],
   'solar installation is exposed through Property Infrastructure'
 );
 
@@ -104,7 +104,7 @@ select extensions.is(
     from public.public_category_taxonomy_v2('service', 'ZW')
     where stable_slug = 'plant_hire'
   ),
-  array['Services', 'Construction & Equipment', 'Plant & Machinery Services', 'Plant & Equipment Hire']::text[],
+  array['Services', 'Construction', 'Plant & Machinery Services', 'Plant & Equipment Hire']::text[],
   'plant hire is exposed through Plant & Machinery Services'
 );
 
@@ -118,9 +118,10 @@ select extensions.ok(
 );
 
 select extensions.ok(
-  'vehicle inspection' = any(
-    (select synonyms from public.categories where marketplace_kind = 'service' and slug = 'pre_purchase_inspection')
-  ),
+  array_position(
+    (select synonyms from public.categories where marketplace_kind = 'service' and slug = 'pre_purchase_inspection'),
+    'vehicle inspection'
+  ) is not null,
   'service specializations carry searchable synonyms in canonical reference data'
 );
 

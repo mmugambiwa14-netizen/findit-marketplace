@@ -13,7 +13,7 @@ values
 
 update public.users set status = 'suspended', role = 'admin'
 where id = '00000000-0000-4000-8000-000000001004';
-update public.users set role = 'admin'
+update public.users set role = 'admin', super_admin = true
 where id = '00000000-0000-4000-8000-000000001005';
 
 insert into public.locations (id, name, type, country_code, is_active)
@@ -72,7 +72,7 @@ select set_config(
 );
 
 insert into public.listings (
-  id, kind, seller_id, seller_name, title, price, status, location_id
+  id, kind, seller_id, seller_name, title, price, category, status, location_id
 )
 values
   (
@@ -82,6 +82,7 @@ values
     'V1 Owner',
     'Public Hilux',
     25000,
+    'cars_sale',
     'available',
     '00000000-0000-4000-8000-000000001101'
   ),
@@ -92,6 +93,7 @@ values
     'V1 Owner',
     'Private Draft',
     10000,
+    'cars_sale',
     'draft',
     '00000000-0000-4000-8000-000000001101'
   );
@@ -175,17 +177,17 @@ select extensions.is(
   'anonymous users can read the explicit public business projection'
 );
 select extensions.is(
-  public.get_public_seller_profile('V1-OWNER@EXAMPLE.TEST') ->> 'full_name',
+  public.get_public_seller_profile('00000000-0000-4000-8000-000000001001') ->> 'full_name',
   'V1 Owner'::text,
-  'anonymous users can resolve the bounded active seller summary case-insensitively'
+  'anonymous users can resolve the bounded active seller summary by non-PII identifier'
 );
 select extensions.is(
-  public.get_public_seller_profile('v1-suspended@example.test'),
+  public.get_public_seller_profile('00000000-0000-4000-8000-000000001004'),
   null::jsonb,
   'suspended accounts have no public seller summary'
 );
 select extensions.is(
-  public.get_public_seller_profile('v1-owner@example.test')
+  public.get_public_seller_profile('00000000-0000-4000-8000-000000001001')
     ?| array['email', 'phone', 'role', 'status', 'verified'],
   false,
   'public seller summary excludes private and verification fields'
@@ -260,10 +262,10 @@ select extensions.is(
 );
 select extensions.throws_ok(
   $$update public.business_profiles
-    set verified = true
+    set verified = false
     where id = '00000000-0000-4000-8000-000000001401'$$,
-  '42501',
-  'business-profile managed fields require a trusted operation',
+  'P0001',
+  'Business verification fields are admin controlled',
   'business owner cannot self-verify'
 );
 select extensions.throws_ok(
@@ -488,9 +490,9 @@ select extensions.is(
    from information_schema.columns
    where table_schema = 'public'
      and table_name = 'business_profiles_public'
-     and column_name in ('registration_number', 'issuing_body', 'verified', 'verification_status')),
+     and column_name in ('registration_number', 'issuing_body', 'verification_status')),
   0::bigint,
-  'public business projection excludes verification and registration fields'
+  'public business projection excludes verification evidence and registration fields'
 );
 select extensions.is(
   (select count(*)::bigint

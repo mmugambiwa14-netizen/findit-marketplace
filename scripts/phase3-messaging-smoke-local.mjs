@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
+import { deleteDisposableFounder, signInFounder } from './lib/founder-smoke-fixtures.mjs';
 import { assertSmokeTarget } from './lib/smoke-target.mjs';
 
 const url = process.env.FINDIT_SUPABASE_URL ?? 'http://127.0.0.1:55321';
@@ -22,6 +23,7 @@ let buyerId;
 let sellerId;
 let strangerId;
 let adminId;
+let founder;
 let listingId;
 let conversationId;
 
@@ -34,16 +36,14 @@ try {
   const buyerEmail = `findit-message-buyer-${stamp}@example.test`;
   const sellerEmail = `findit-message-seller-${stamp}@example.test`;
   const strangerEmail = `findit-message-stranger-${stamp}@example.test`;
-  const adminEmail = `findit-message-admin-${stamp}@example.test`;
   buyerId = success(await root.auth.admin.createUser({ email: buyerEmail, password, email_confirm: true, user_metadata: { full_name: 'Message Buyer' } }), 'create buyer').user.id;
   sellerId = success(await root.auth.admin.createUser({ email: sellerEmail, password, email_confirm: true, user_metadata: { full_name: 'Message Seller' } }), 'create seller').user.id;
   strangerId = success(await root.auth.admin.createUser({ email: strangerEmail, password, email_confirm: true, user_metadata: { full_name: 'Message Stranger' } }), 'create stranger').user.id;
-  adminId = success(await root.auth.admin.createUser({ email: adminEmail, password, email_confirm: true, user_metadata: { full_name: 'Message Admin' } }), 'create admin').user.id;
-  success(await root.from('users').update({ role: 'admin', super_admin: true }).eq('id', adminId), 'grant admin');
+  founder = await signInFounder({ root, browser: admin, smokeTarget, password, label: 'messaging smoke' });
+  adminId = founder.userId;
   success(await buyer.auth.signInWithPassword({ email: buyerEmail, password }), 'buyer sign in');
   success(await seller.auth.signInWithPassword({ email: sellerEmail, password }), 'seller sign in');
   success(await stranger.auth.signInWithPassword({ email: strangerEmail, password }), 'stranger sign in');
-  success(await admin.auth.signInWithPassword({ email: adminEmail, password }), 'admin sign in');
 
   listingId = success(await root.from('listings').insert({
     kind: 'car', seller_id: sellerId, seller_name: 'Message Seller',
@@ -56,12 +56,12 @@ try {
   const reopened = success(await buyer.rpc('start_listing_conversation', { p_listing_id: listingId, p_message: 'I am interested in viewing it.' }), 'reuse conversation');
   assert.equal(reopened, conversationId, 'one buyer/listing pair must reuse one conversation');
 
-  const sellerInbox = success(await seller.rpc('message_inbox', { p_query: '', p_unread_only: false, p_limit: 50, p_cursor_at: null, p_cursor_id: null }), 'seller inbox');
+  const sellerInbox = success(await seller.rpc('message_inbox_page', { p_query: '', p_unread_only: false, p_limit: 50, p_cursor_at: null, p_cursor_id: null }), 'seller inbox');
   assert.equal(sellerInbox.length, 1);
   assert.equal(sellerInbox[0].other_user_name, 'Message Buyer');
   assert.equal(sellerInbox[0].has_unread, true);
 
-  const strangerInbox = success(await stranger.rpc('message_inbox', { p_query: '', p_unread_only: false, p_limit: 50, p_cursor_at: null, p_cursor_id: null }), 'stranger inbox');
+  const strangerInbox = success(await stranger.rpc('message_inbox_page', { p_query: '', p_unread_only: false, p_limit: 50, p_cursor_at: null, p_cursor_id: null }), 'stranger inbox');
   assert.equal(strangerInbox.length, 0);
   const strangerRows = success(await stranger.from('inquiries').select('id').eq('conversation_id', conversationId), 'stranger direct read');
   assert.equal(strangerRows.length, 0);
@@ -69,7 +69,7 @@ try {
   assert.ok(strangerThread.error, 'non-participant must not load a thread');
 
   success(await seller.rpc('mark_conversation_seen', { p_conversation_id: conversationId }), 'mark seen');
-  const sellerInboxSeen = success(await seller.rpc('message_inbox', { p_query: '', p_unread_only: true, p_limit: 50, p_cursor_at: null, p_cursor_id: null }), 'unread inbox');
+  const sellerInboxSeen = success(await seller.rpc('message_inbox_page', { p_query: '', p_unread_only: true, p_limit: 50, p_cursor_at: null, p_cursor_id: null }), 'unread inbox');
   assert.equal(sellerInboxSeen.length, 0);
   success(await seller.rpc('send_conversation_message', { p_conversation_id: conversationId, p_message: 'Yes, it is available.' }), 'seller reply');
 
@@ -121,5 +121,5 @@ try {
   if (buyerId) await root.auth.admin.deleteUser(buyerId);
   if (sellerId) await root.auth.admin.deleteUser(sellerId);
   if (strangerId) await root.auth.admin.deleteUser(strangerId);
-  if (adminId) await root.auth.admin.deleteUser(adminId);
+  await deleteDisposableFounder(root, founder);
 }

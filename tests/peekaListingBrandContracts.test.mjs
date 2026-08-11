@@ -44,8 +44,8 @@ test('startup and push fallbacks never expose the former product name', async ()
   assert.match(startup, /PeekaListing startup failed/);
   assert.match(startup, /PeekaListing preview could not start/);
   assert.doesNotMatch(startup, /FindIt/);
-  assert.match(push, /title: 'PeekaListing'/);
-  assert.match(push, /peekalisting-binoculars\.svg/);
+  assert.match(push, /boundedText\(raw\.title, 'PeekaListing'/);
+  assert.match(push, /peekalisting-icon-192\.png/);
 });
 
 test('live user-facing surfaces never expose the former product name', async () => {

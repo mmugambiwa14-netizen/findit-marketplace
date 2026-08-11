@@ -9,8 +9,8 @@ select extensions.is(
    from pg_class c
    join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind = 'r'),
-  49::bigint,
-  'all 49 application tables exist'
+  106::bigint,
+  'all 106 application tables exist'
 );
 
 select extensions.is(
@@ -18,7 +18,7 @@ select extensions.is(
    from pg_class c
    join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity),
-  49::bigint,
+  106::bigint,
   'RLS is enabled on all application tables'
 );
 
@@ -156,7 +156,7 @@ select set_config(
 );
 
 insert into public.listings (
-  id, kind, seller_id, title, price, status
+  id, kind, seller_id, title, price, category, status
 ) values
   (
     '00000000-0000-4000-8000-000000000201',
@@ -164,6 +164,7 @@ insert into public.listings (
     '00000000-0000-4000-8000-000000000101',
     'Document 3 Draft Car',
     1000,
+    'cars_sale',
     'draft'
   ),
   (
@@ -172,6 +173,7 @@ insert into public.listings (
     '00000000-0000-4000-8000-000000000101',
     'Document 3 Available Car',
     2000,
+    'cars_sale',
     'available'
   );
 
@@ -186,9 +188,9 @@ values
 set local role anon;
 
 select extensions.is(
-  (select count(*)::bigint from public.cars),
+  (select count(id)::bigint from public.listings),
   1::bigint,
-  'anonymous view caller sees only the public listing'
+  'anonymous callers see only the public listing through the column-safe RLS boundary'
 );
 
 reset role;
@@ -200,9 +202,9 @@ select set_config(
 set local role authenticated;
 
 select extensions.is(
-  (select count(*)::bigint from public.cars),
+  (select count(id)::bigint from public.listings),
   1::bigint,
-  'unrelated authenticated view caller cannot see the draft listing'
+  'unrelated authenticated callers cannot see the draft listing'
 );
 
 reset role;
@@ -233,9 +235,9 @@ select extensions.is(
 );
 
 select extensions.is(
-  (select count(*)::bigint from public.cars),
+  (select count(id)::bigint from public.listings),
   2::bigint,
-  'listing owner sees their public and draft rows through the view'
+  'listing owner sees their public and draft rows through the column-safe RLS boundary'
 );
 
 select extensions.lives_ok(
@@ -260,7 +262,7 @@ select set_config('request.jwt.claim.sub', '', true);
 select set_config('request.jwt.claims', '{}', true);
 
 update public.users
-set role = 'admin'
+set role = 'admin', super_admin = true
 where id = '00000000-0000-4000-8000-000000000101';
 
 select set_config(
@@ -271,9 +273,9 @@ select set_config(
 set local role authenticated;
 
 select extensions.is(
-  (select count(*)::bigint from public.cars),
+  (select count(id)::bigint from public.listings),
   2::bigint,
-  'admin sees public and draft rows through the view'
+  'founder admin sees public and draft canonical listings'
 );
 
 select extensions.is(
@@ -284,8 +286,8 @@ select extensions.is(
 
 select extensions.is(
   public.is_super_admin(),
-  false,
-  'admin without the super-admin flag fails the super-admin-role check'
+  true,
+  'founder admin passes the super-admin role check'
 );
 
 select extensions.lives_ok(

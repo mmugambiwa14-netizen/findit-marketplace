@@ -1,24 +1,15 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { grantCuratedPublishing } from './lib/curated-publisher-smoke-fixtures.mjs';
+import { deleteDisposableFounder, signInFounder } from './lib/founder-smoke-fixtures.mjs';
+import { assertSmokeTarget } from './lib/smoke-target.mjs';
 
 const url = process.env.FINDIT_SUPABASE_URL ?? 'http://127.0.0.1:55321';
 const anonKey = process.env.FINDIT_SUPABASE_ANON_KEY;
 const secretKey = process.env.FINDIT_SUPABASE_SECRET_KEY;
-const parsedUrl = new URL(url);
-const isLocal = ['127.0.0.1', 'localhost'].includes(parsedUrl.hostname);
-const expectedProjectRef = process.env.FINDIT_EXPECTED_PROJECT_REF;
-const isApprovedStaging = (
-  process.env.FINDIT_ALLOW_HOSTED_SMOKE === 'staging'
-  && /^[a-z]{20}$/.test(expectedProjectRef ?? '')
-  && parsedUrl.protocol === 'https:'
-  && parsedUrl.hostname === `${expectedProjectRef}.supabase.co`
-);
-if (!anonKey || !secretKey || (!isLocal && !isApprovedStaging)) {
-  throw new Error(
-    'A local target or explicitly approved exact-project staging target, publishable key, and secret key are required.',
-  );
-}
+const smokeTarget = assertSmokeTarget(url, 'The listing-creation smoke test');
+if (!anonKey || !secretKey) throw new Error('A Supabase publishable key and secret key are required.');
 
 const options = { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } };
 const root = createClient(url, secretKey, options);
@@ -29,13 +20,13 @@ const guest = createClient(url, anonKey, options);
 const stamp = Date.now();
 const password = `FindIt-${crypto.randomBytes(24).toString('base64url')}!9aA`;
 const ownerEmail = `findit-listing-owner-${stamp}@example.test`;
-const adminEmail = `findit-listing-admin-${stamp}@example.test`;
 const strangerEmail = `findit-listing-stranger-${stamp}@example.test`;
 const functionUrl = `${url}/functions/v1/listing-image-upload`;
 let ownerId;
 let adminId;
 let strangerId;
 let listingId;
+let founder;
 const storagePaths = [];
 
 function success(result, label) {
@@ -43,7 +34,7 @@ function success(result, label) {
   return result.data;
 }
 
-async function uploadRequest(accessToken, file, origin = 'http://127.0.0.1:5173') {
+async function uploadRequest(accessToken, file, origin = smokeTarget.origin) {
   const form = new FormData();
   if (file) form.append('file', file);
   const response = await fetch(functionUrl, {
@@ -82,22 +73,17 @@ try {
     email_confirm: true,
     user_metadata: { full_name: 'Listing Smoke Owner' },
   }), 'create owner').user.id;
-  adminId = success(await root.auth.admin.createUser({
-    email: adminEmail,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: 'Listing Smoke Admin' },
-  }), 'create admin').user.id;
+  founder = await signInFounder({ root, browser: admin, smokeTarget, password, label: 'listing creation smoke' });
+  adminId = founder.userId;
   strangerId = success(await root.auth.admin.createUser({
     email: strangerEmail,
     password,
     email_confirm: true,
     user_metadata: { full_name: 'Listing Smoke Stranger' },
   }), 'create stranger').user.id;
-  success(await root.from('users').update({ role: 'admin', super_admin: true }).eq('id', adminId), 'grant admin');
+  await grantCuratedPublishing(root, ownerId, ['car'], 'Listing creation smoke publisher');
 
   const ownerSession = success(await owner.auth.signInWithPassword({ email: ownerEmail, password }), 'owner sign in').session;
-  success(await admin.auth.signInWithPassword({ email: adminEmail, password }), 'admin sign in');
   success(await stranger.auth.signInWithPassword({ email: strangerEmail, password }), 'stranger sign in');
 
   const noAuth = await uploadRequest(null, new File(['x'], 'x.png', { type: 'image/png' }));
@@ -153,7 +139,7 @@ try {
     p_media: [{ intentId: uploaded.body.intentId, path: storagePath }],
   }), 'submit listing');
   listingId = created.id;
-  assert.equal(created.status, 'pending_review');
+  assert.equal(created.status, 'available');
 
   const retry = success(await owner.rpc('create_v1_listing_submission', {
     p_submission_key: submissionKey,
@@ -162,27 +148,23 @@ try {
     p_media: [],
   }), 'idempotent retry');
   assert.equal(retry.id, listingId);
+  assert.equal(retry.status, 'available');
 
-  const pendingOwner = success(await owner.from('listings').select('id,status').eq('id', listingId).single(), 'owner sees pending');
-  assert.equal(pendingOwner.status, 'pending_review');
-  assert.equal(success(await stranger.from('listings').select('id').eq('id', listingId), 'stranger pending read').length, 0);
-  assert.equal(success(await guest.from('listings').select('id').eq('id', listingId), 'anonymous pending read').length, 0);
-
-  success(await admin.rpc('admin_moderate_marketplace_item', {
-    p_item_id: listingId,
-    p_kind: 'car',
-    p_action: 'publish',
-    p_reason: 'HTTP smoke test approval',
-  }), 'approve listing');
-  assert.equal(success(await guest.from('listings').select('id').eq('id', listingId), 'anonymous approved read').length, 1);
+  const publishedOwner = success(await owner.from('listings').select('id,status,expires_at').eq('id', listingId).single(), 'owner sees automatic publication');
+  assert.equal(publishedOwner.status, 'available');
+  assert.ok(publishedOwner.expires_at, 'automatic publication assigns a server-managed expiry');
+  assert.equal(success(await stranger.from('listings').select('id').eq('id', listingId), 'stranger published read').length, 1);
+  assert.equal(success(await guest.from('listings').select('id').eq('id', listingId), 'anonymous published read').length, 1);
+  const initialReviewAlerts = success(await owner.from('app_alerts')
+    .select('event_type')
+    .eq('listing_id', listingId)
+    .in('event_type', ['listing_approved', 'listing_rejected']), 'read automatic-publication alerts');
+  assert.equal(initialReviewAlerts.length, 0, 'automatic publication must not claim a human review occurred');
 
   const signed = success(await guest.storage.from('listing-images').createSignedUrl(storagePath, 60), 'anonymous signed media read');
   const imageResponse = await fetch(signed.signedUrl);
   assert.equal(imageResponse.status, 200, 'approved listing image signed URL is downloadable');
   assert.deepEqual(Buffer.from(await imageResponse.arrayBuffer()), pngBytes, 'downloaded image matches uploaded bytes');
-
-  const alert = success(await owner.from('app_alerts').select('event_type').eq('listing_id', listingId).eq('event_type', 'listing_approved').single(), 'owner approval alert');
-  assert.equal(alert.event_type, 'listing_approved');
 
   const directPhotoBypass = await owner.from('listings').update({ photos: ['https://evil.example/image.png'] }).eq('id', listingId);
   assert.ok(directPhotoBypass.error, 'an owner cannot bypass trusted listing image replacement');
@@ -209,13 +191,15 @@ try {
     p_action: 'publish',
     p_reason: 'Replacement image smoke approval',
   }), 'approve replacement image');
+  const replacementAlert = success(await owner.from('app_alerts').select('event_type').eq('listing_id', listingId).eq('event_type', 'listing_approved').single(), 'owner replacement approval alert');
+  assert.equal(replacementAlert.event_type, 'listing_approved');
   const replacementSigned = success(await guest.storage.from('listing-images').createSignedUrl(replacementUpload.body.path, 60), 'sign replacement listing image');
   const replacementResponse = await fetch(replacementSigned.signedUrl);
   assert.equal(replacementResponse.status, 200, 'replacement listing image download failed');
   assert.deepEqual(Buffer.from(await replacementResponse.arrayBuffer()), pngBytes);
 
   console.log(
-    `Phase 4 ${isLocal ? 'local' : 'hosted staging'} listing creation, trusted upload, and atomic image replacement smoke test passed.`,
+    `Phase 4 ${smokeTarget.label} listing creation, trusted upload, and atomic image replacement smoke test passed.`,
   );
 } finally {
   if (listingId) {
@@ -232,5 +216,5 @@ try {
   await stranger.auth.signOut();
   if (ownerId) await root.auth.admin.deleteUser(ownerId);
   if (strangerId) await root.auth.admin.deleteUser(strangerId);
-  if (adminId) await root.auth.admin.deleteUser(adminId);
+  await deleteDisposableFounder(root, founder);
 }

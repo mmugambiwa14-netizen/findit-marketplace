@@ -12,6 +12,8 @@ test('media cleanup is an internal service-credential boundary', async () => {
   ]);
   assert.match(config, /\[functions\.media-lifecycle-cleanup\][\s\S]*?verify_jwt = false/);
   assert.match(worker, /FINDIT_MEDIA_CLEANUP_WORKER_SECRET/);
+  assert.match(worker, /Missing FINDIT_MEDIA_CLEANUP_WORKER_SECRET/);
+  assert.doesNotMatch(worker, /configuredWorkerSecret\(adminKey\)|\?\? adminKey/);
   assert.match(worker, /constantTimeEqual\(suppliedAuthorization, `Bearer \$\{workerSecret\}`\)/);
   assert.match(worker, /createClient\(supabaseUrl, adminKey/);
   assert.doesNotMatch(worker, /Access-Control-Allow-Origin/);

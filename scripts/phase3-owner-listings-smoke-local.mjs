@@ -59,6 +59,8 @@ try {
         contact_email: email,
         title: 'Owner smoke published listing',
         description: 'Disposable local owner-listing fixture',
+        category: 'house_sale',
+        listing_type: 'sale',
         price: 125000,
         currency: 'USD',
         status: 'available',
@@ -140,11 +142,11 @@ try {
   );
   assert.equal(updated.title, 'Owner smoke revised');
   assert.equal(Number(updated.price), 130000);
-  assert.equal(updated.status, 'pending_review', 'Editing a live listing must return it to moderation');
+  assert.equal(updated.status, 'available', 'A valid live edit remains immediately available in the current MVP');
 
   const publishBypass = await ownerClient
     .from('listings')
-    .update({ status: 'available' })
+    .update({ status: 'draft' })
     .eq('id', listingId);
   assert.ok(publishBypass.error, 'An owner must not publish by directly changing status');
 
@@ -170,7 +172,7 @@ try {
   assert.equal(detailAfterDelete.count, 0, 'Deleting a listing did not cascade to its detail row');
 
   console.log(`Phase 3 ${smokeTarget.label} owner-listing smoke: PASS`);
-  console.log('Verified owner read, Favourite list/remove, detail join, re-review after edit, publish-bypass denial, delete, and detail cascade.');
+  console.log('Verified owner read, Favourite list/remove, detail join, live edit, status-bypass denial, delete, and detail cascade.');
 } finally {
   if (listingId) {
     await adminClient.from('listings').delete().eq('id', listingId);

@@ -11,6 +11,8 @@ test('listing expiry worker is an internal service-credential boundary', () => {
   assert.match(config, /\[functions\.listing-expiry-worker\][\s\S]*?verify_jwt = false/);
   assert.match(worker, /constantTimeEqual/);
   assert.match(worker, /FINDIT_LISTING_EXPIRY_WORKER_SECRET/);
+  assert.match(worker, /Missing FINDIT_LISTING_EXPIRY_WORKER_SECRET/);
+  assert.doesNotMatch(worker, /configuredWorkerSecret\(adminKey\)|\?\? adminKey/);
   assert.match(worker, /constantTimeEqual\(suppliedAuthorization, `Bearer \$\{workerSecret\}`\)/);
   assert.match(worker, /createClient\(supabaseUrl, adminKey/);
   assert.match(worker, /A trusted scheduler credential is required/);

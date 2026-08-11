@@ -211,6 +211,26 @@ jobs:
             --data '{"jobLimit":10,"recipientLimit":200}' \
             "${SUPABASE_URL}/functions/v1/essential-notification-fanout"
 
+  web-push-dispatch:
+    if: vars.FINDIT_WEB_PUSH_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Drain bounded Web Push delivery attempts
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          PUSH_DISPATCH_TOKEN: ${{ secrets.PUSH_DISPATCH_TOKEN }}
+        run: |
+          test -n "${PUSH_DISPATCH_TOKEN}" || { echo "PUSH_DISPATCH_TOKEN is not configured"; exit 1; }
+          curl --fail-with-body --silent --show-error --retry 2 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "x-push-dispatch-token: ${PUSH_DISPATCH_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data '{"limit":25}' \
+            "${SUPABASE_URL}/functions/v1/web-push-dispatch"
+
   transactional-email-dispatch:
     if: vars.FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
     runs-on: ubuntu-latest

@@ -32,6 +32,9 @@ test('first-party processor performs bounded FFmpeg transcoding and validated up
   assert.match(runner, /processClaimedTour/);
   assert.match(runner, /fail_tour_processing/);
   assert.match(mediaProcessor, /MAX_SOURCE_BYTES = 262_144_000/);
+  assert.match(mediaProcessor, /import ffmpegStatic from 'ffmpeg-static'/);
+  assert.match(mediaProcessor, /import ffprobeStatic from 'ffprobe-static'/);
+  assert.match(mediaProcessor, /process\.env\[name\].*ffmpegStatic.*ffprobeStatic/s);
   assert.match(mediaProcessor, /AbortSignal\.timeout\(60_000\)/);
   assert.match(mediaProcessor, /'-c:v', 'libx264'/);
   assert.match(mediaProcessor, /'-c:a', 'aac'/);

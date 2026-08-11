@@ -19,8 +19,10 @@ function configuredAdminKey(): string {
   throw new Error("Missing SUPABASE_SECRET_KEY");
 }
 
-function configuredWorkerSecret(adminKey: string): string {
-  return Deno.env.get("FINDIT_MEDIA_CLEANUP_WORKER_SECRET") ?? adminKey;
+function configuredWorkerSecret(): string {
+  const secret = Deno.env.get("FINDIT_MEDIA_CLEANUP_WORKER_SECRET")?.trim();
+  if (!secret) throw new Error("Missing FINDIT_MEDIA_CLEANUP_WORKER_SECRET");
+  return secret;
 }
 
 function constantTimeEqual(left: string, right: string): boolean {
@@ -49,7 +51,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     if (!supabaseUrl) throw new Error("Missing SUPABASE_URL");
     const adminKey = configuredAdminKey();
-    const workerSecret = configuredWorkerSecret(adminKey);
+    const workerSecret = configuredWorkerSecret();
     const suppliedAuthorization = req.headers.get("authorization") ?? "";
     if (!constantTimeEqual(suppliedAuthorization, `Bearer ${workerSecret}`)) {
       return json(401, { code: "authentication_required", message: "A trusted scheduler credential is required." });

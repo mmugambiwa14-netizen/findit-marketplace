@@ -2,6 +2,7 @@ import {
   TOUR_LIMITS,
   adminClient,
   bearerAuthorization,
+  browserReachableUrl,
   correlationId,
   isUuid,
   json,
@@ -74,8 +75,8 @@ Deno.serve(async (req: Request) => {
       durationSeconds: metadata.duration_seconds == null ? null : Number(metadata.duration_seconds),
       width: metadata.width,
       height: metadata.height,
-      playbackUrl,
-      thumbnailUrl,
+      playbackUrl: browserReachableUrl(req, playbackUrl),
+      thumbnailUrl: browserReachableUrl(req, thumbnailUrl),
       expiresInSeconds: TOUR_LIMITS.signedPlaybackLifetimeSeconds,
     });
   } catch (error) {

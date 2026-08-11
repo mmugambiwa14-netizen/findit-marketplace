@@ -3,6 +3,28 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select extensions.no_plan();
 
+select extensions.is(
+  (
+    select count(*)::bigint
+    from pg_proc function_row
+    where function_row.oid = any (array[
+      'private.apply_pending_response_peek_binding()'::regprocedure,
+      'private.bind_response_peek(uuid,uuid[])'::regprocedure,
+      'private.my_peek_request_activity_page(timestamptz,uuid,integer)'::regprocedure,
+      'private.peek_thread_page_v2(uuid,uuid,text,text,integer,timestamptz,uuid,integer)'::regprocedure,
+      'private.public_response_peek_metadata(uuid)'::regprocedure,
+      'private.response_peek_request_candidates(uuid)'::regprocedure,
+      'private.seller_unbound_response_peeks()'::regprocedure
+    ])
+      and (
+        lower(pg_get_functiondef(function_row.oid)) like '%status = ''published''%'
+        or lower(pg_get_functiondef(function_row.oid)) like '%status <> ''published''%'
+      )
+  ),
+  0::bigint,
+  'all Response Peek APIs use the canonical ready plus published_at lifecycle'
+);
+
 insert into auth.users (id, email, raw_user_meta_data, created_at, updated_at)
 values
   ('83000000-0000-4000-8000-000000000001', 'peek-owner@example.test', '{"full_name":"Peek Owner"}', now(), now()),
@@ -39,7 +61,7 @@ select extensions.lives_ok(
       '83000000-0000-4000-8000-000000000001', 'Peek Owner',
       'Peek fulfilment test vehicle',
       'A complete listing fixture used to certify the Response Peek fulfilment lifecycle.',
-      12000, 'USD', 12000, 'USD', '[]'::jsonb, 'cars', 'sale', 'available'
+      12000, 'USD', 12000, 'USD', '[]'::jsonb, 'cars_sale', 'sale', 'available'
     )$$,
   'the approved Cars owner can create the listing fixture through the authoritative boundary'
 );
@@ -90,7 +112,7 @@ insert into public.listing_tours (
   '83000000-0000-4000-8000-000000000301',
   '83000000-0000-4000-8000-000000000001',
   '83000000-0000-4000-8000-000000000101',
-  'listing/83000000-0000-4000-8000-000000000101/response-attempt-one.mp4',
+  '83000000-0000-4000-8000-000000000001/83000000-0000-4000-8000-000000000301/source/83000000-0000-4000-8000-000000000501.mp4',
   'uploaded', 'pending', 'response'
 );
 
@@ -153,15 +175,16 @@ select extensions.is(
 
 insert into public.listing_tours (
   id, owner_id, listing_id, source_storage_path, playback_storage_path,
-  thumbnail_storage_path, status, moderation_status, peek_kind
+  thumbnail_storage_path, duration_seconds, width, height, processed_byte_size,
+  ready_at, status, moderation_status, peek_kind
 ) values (
   '83000000-0000-4000-8000-000000000302',
   '83000000-0000-4000-8000-000000000001',
   '83000000-0000-4000-8000-000000000101',
-  'listing/83000000-0000-4000-8000-000000000101/response-attempt-two.mp4',
-  'listing/83000000-0000-4000-8000-000000000101/response-attempt-two-playback.mp4',
-  'listing/83000000-0000-4000-8000-000000000101/response-attempt-two.webp',
-  'ready', 'approved', 'response'
+  '83000000-0000-4000-8000-000000000001/83000000-0000-4000-8000-000000000302/source/83000000-0000-4000-8000-000000000502.mp4',
+  'listing/83000000-0000-4000-8000-000000000101/83000000-0000-4000-8000-000000000302.mp4',
+  'listing/83000000-0000-4000-8000-000000000101/83000000-0000-4000-8000-000000000302.webp',
+  30, 1280, 720, 2048, clock_timestamp(), 'ready', 'approved', 'response'
 );
 
 select set_config('request.jwt.claim.sub', '83000000-0000-4000-8000-000000000001', true);
@@ -175,9 +198,14 @@ select extensions.lives_ok(
 );
 reset role;
 
-update public.listing_tours
-set status = 'published', published_at = clock_timestamp()
-where id = '83000000-0000-4000-8000-000000000302';
+select set_config('request.jwt.claim.role', 'service_role', true);
+set local role service_role;
+select extensions.lives_ok(
+  $$select public.promote_approved_tour('83000000-0000-4000-8000-000000000302')$$,
+  'the trusted publication boundary promotes the ready approved Response Peek'
+);
+reset role;
+select set_config('request.jwt.claim.role', '', true);
 
 select extensions.is(
   (select status::text from public.peek_requests where id = '83000000-0000-4000-8000-000000000201'),

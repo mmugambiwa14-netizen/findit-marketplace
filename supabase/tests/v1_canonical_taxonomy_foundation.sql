@@ -44,7 +44,7 @@ select extensions.is(
 );
 
 select extensions.is(
-  (select schema_binding #>> '{defaults,listing_type}' from public.categories where marketplace_kind = 'property' and slug = 'house_sale'),
+  (select schema_binding #>> '{defaults,offer_type}' from public.categories where marketplace_kind = 'property' and slug = 'house_sale'),
   'sale',
   'legacy house-for-sale carries an independent transaction default'
 );
@@ -72,8 +72,22 @@ select extensions.has_function(
   'public taxonomy has one recursive read contract'
 );
 select extensions.has_function(
-  'public', 'resolve_category_taxonomy', array['text', 'text'],
-  'stable/canonical/alias taxonomy resolution exists'
+  'public', 'resolve_category_taxonomy', array['text', 'text', 'text'],
+  'stable/canonical/alias taxonomy resolution supports optional market scope'
+);
+select extensions.is(
+  (
+    select pronargdefaults::integer
+    from pg_proc
+    where oid = 'public.resolve_category_taxonomy(text,text,text)'::regprocedure
+  ),
+  1,
+  'the market-scoped resolver retains one optional country argument'
+);
+select extensions.is(
+  to_regprocedure('public.resolve_category_taxonomy(text,text)'),
+  null::regprocedure,
+  'no redundant two-argument overload can make resolver calls ambiguous'
 );
 select extensions.has_function(
   'public', 'admin_taxonomy_rows', array[]::text[],

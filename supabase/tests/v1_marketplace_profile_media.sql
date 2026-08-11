@@ -16,6 +16,28 @@ values
   ('00000000-0000-4000-8000-000000005001', 'media-owner@example.test', '{"full_name":"Media Owner"}', now(), now()),
   ('00000000-0000-4000-8000-000000005002', 'media-stranger@example.test', '{"full_name":"Media Stranger"}', now(), now());
 
+-- Pass the curated publisher gate so this suite isolates the media boundary.
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
+) values (
+  '00000000-0000-4000-8000-000000005401',
+  '00000000-0000-4000-8000-000000005001',
+  'Trusted Media Business', 'Media Owner', 'media-owner@example.test',
+  '+263700005001', 'ZW', 'Harare',
+  'Approved service publisher used to certify private marketplace media.',
+  '1-10', 'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status, approved_at
+) values (
+  '00000000-0000-4000-8000-000000005402',
+  '00000000-0000-4000-8000-000000005401',
+  '00000000-0000-4000-8000-000000005001',
+  'service', 'approved', now()
+);
+
 select extensions.is(
   (select public from storage.buckets where id = 'marketplace-images'),
   false,
@@ -223,11 +245,20 @@ select extensions.is(
 reset role;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000005001', true);
 set local role authenticated;
+select extensions.throws_ok(
+  $$delete from storage.objects where bucket_id = 'marketplace-images'
+      and name = (select storage_path from test_marketplace_uploads where label = 'service')$$,
+  '42501',
+  'Direct deletion from storage tables is not allowed. Use the Storage API instead.',
+  'direct SQL cannot bypass the Storage API deletion boundary'
+);
+select set_config('storage.allow_delete_query', 'true', true);
 select extensions.lives_ok(
   $$delete from storage.objects where bucket_id = 'marketplace-images'
       and name = (select storage_path from test_marketplace_uploads where label = 'service')$$,
-  'the owner can delete the service object detached by replacement'
+  'the Storage API-authorized path can delete the service object detached by replacement'
 );
+select set_config('storage.allow_delete_query', 'false', true);
 select extensions.throws_ok(
   $$update public.business_profiles set avatar_storage_path = null
     where id = '00000000-0000-4000-8000-000000005202'$$,
@@ -278,10 +309,11 @@ select extensions.is(
   '[]'::jsonb,
   'detaching rebuilds the service photo list'
 );
+select set_config('storage.allow_delete_query', 'true', true);
 select extensions.lives_ok(
   $$delete from storage.objects where bucket_id = 'marketplace-images'
       and name = (select storage_path from test_marketplace_uploads where label = 'service-edit')$$,
-  'the owner can delete a detached service object'
+  'the Storage API-authorized path can delete a detached service object'
 );
 select extensions.lives_ok(
   $$select public.detach_marketplace_image(
@@ -292,8 +324,9 @@ select extensions.lives_ok(
 select extensions.lives_ok(
   $$delete from storage.objects where bucket_id = 'marketplace-images'
       and name = (select storage_path from test_marketplace_uploads where label = 'business')$$,
-  'the owner can delete a detached business object'
+  'the Storage API-authorized path can delete a detached business object'
 );
+select set_config('storage.allow_delete_query', 'false', true);
 
 select * from extensions.finish();
 rollback;

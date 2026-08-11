@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
+import { signInFounder } from './founder-smoke-fixtures.mjs';
 import { assertSmokeTarget } from './smoke-target.mjs';
+import { grantCuratedPublishing } from './curated-publisher-smoke-fixtures.mjs';
 
 export const url = process.env.FINDIT_SUPABASE_URL ?? 'http://127.0.0.1:55321';
 export const anonKey = process.env.FINDIT_SUPABASE_ANON_KEY;
@@ -16,6 +18,9 @@ export const clientOptions = {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
 };
 export const root = createClient(url, secretKey, clientOptions);
+const smokeUsersById = new Map();
+const readyEdgeFunctions = new Map();
+const EDGE_READY_ATTEMPTS = 3;
 
 export function client() {
   return createClient(url, anonKey, clientOptions);
@@ -26,7 +31,35 @@ export function success(result, label) {
   return result.data;
 }
 
+async function ensureEdgeFunctionReady(name) {
+  if (smokeTarget.label !== 'local') return;
+  if (!readyEdgeFunctions.has(name)) {
+    readyEdgeFunctions.set(name, (async () => {
+      let lastFailure = 'no response';
+      for (let attempt = 1; attempt <= EDGE_READY_ATTEMPTS; attempt += 1) {
+        try {
+          const response = await fetch(`${url}/functions/v1/${name}`, {
+            method: 'OPTIONS',
+            headers: { Origin: smokeTarget.origin },
+          });
+          if (response.status !== 546) {
+            await response.body?.cancel();
+            return;
+          }
+          lastFailure = `HTTP ${response.status}`;
+        } catch (error) {
+          lastFailure = error instanceof Error ? error.message : String(error);
+        }
+      }
+      throw new Error(`${name} local Edge function did not become ready after ${EDGE_READY_ATTEMPTS} probes: ${lastFailure}`);
+    })());
+  }
+  await readyEdgeFunctions.get(name);
+}
+
 export async function createSmokeUser(prefix, role = 'user') {
+  const stamp = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+  const password = `FindIt-${crypto.randomBytes(24).toString('base64url')}!9aA`;
   if (role === 'admin' && smokeTarget.label === 'hosted staging') {
     if (process.env.FINDIT_ALLOW_STAGING_FOUNDER_SESSION !== 'staging') {
       throw new Error('FINDIT_ALLOW_STAGING_FOUNDER_SESSION=staging is required for hosted admin smoke coverage.');
@@ -57,28 +90,39 @@ export async function createSmokeUser(prefix, role = 'user') {
       preserveUser: true,
     };
   }
+  if (role === 'admin') {
+    const browser = client();
+    const founder = await signInFounder({ root, browser, smokeTarget, password, label: prefix });
+    return { ...founder, browser, password: founder.preserveUser ? undefined : password };
+  }
 
-  const stamp = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
   const email = `${prefix}-${stamp}@example.test`;
-  const password = `FindIt-${crypto.randomBytes(24).toString('base64url')}!9aA`;
   const userId = success(await root.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     user_metadata: { full_name: `${prefix} smoke` },
   }), `create ${prefix}`).user.id;
-  if (role === 'admin') {
-    success(await root.from('users').update({ role: 'admin', super_admin: true }).eq('id', userId), `grant ${prefix} admin`);
+  try {
+    const browser = client();
+    const session = success(await browser.auth.signInWithPassword({ email, password }), `sign in ${prefix}`).session;
+    const smokeUser = { userId, email, password, browser, session };
+    smokeUsersById.set(userId, smokeUser);
+    return smokeUser;
+  } catch (error) {
+    const cleanup = await root.auth.admin.deleteUser(userId);
+    if (cleanup.error) {
+      throw new AggregateError([error, cleanup.error], `Failed to initialize and remove ${prefix} fixture user`);
+    }
+    throw error;
   }
-  const browser = client();
-  const session = success(await browser.auth.signInWithPassword({ email, password }), `sign in ${prefix}`).session;
-  return { userId, email, password, browser, session };
 }
 
 export async function createListingWithStatus(ownerId, title = 'Tour smoke listing', status = 'available') {
   const data = success(await root.from('listings').insert({
     kind: 'car',
     seller_id: ownerId,
+    country_code: 'ZW',
     seller_name: 'Tour smoke owner',
     title,
     description: 'A listing fixture used only for the isolated Tours lifecycle smoke suite.',
@@ -96,8 +140,16 @@ export function createAvailableListing(ownerId, title = 'Tour smoke listing') {
 }
 
 export async function createServiceWithStatus(ownerId, title = 'Tour smoke service', status = 'active', category = 'mechanic') {
-  const data = success(await root.from('services').insert({
+  const owner = smokeUsersById.get(ownerId);
+  assert.ok(owner, 'Tour service owner must be created through createSmokeUser');
+  await grantCuratedPublishing(root, ownerId, ['service'], 'Tour service smoke publisher');
+  // Legal services are intentionally excluded by the browser INSERT policy;
+  // seed that negative-case parent through the trusted fixture client so the
+  // Edge function can prove it rejects Tours for the legal category.
+  const writer = category === 'legal' ? root : owner.browser;
+  const data = success(await writer.from('services').insert({
     provider_id: ownerId,
+    country_code: 'ZW',
     provider_name: 'Tour smoke owner',
     contact_phone: '+263771234567',
     title,
@@ -135,6 +187,7 @@ export async function setToursDatabaseEnabled(enabled) {
  * @returns {Promise<{ response: Response, body: any }>}
  */
 export async function invokeFunction(name, { accessToken, body = {}, authorization, apiKey = anonKey } = {}) {
+  await ensureEdgeFunctionReady(name);
   const response = await fetch(`${url}/functions/v1/${name}`, {
     method: 'POST',
     headers: {
@@ -309,6 +362,10 @@ export async function cleanupTourFixtures({ listingId, serviceId, users = [] } =
   for (const user of users) {
     try { await user.browser?.auth.signOut(); } catch { /* best effort */ }
     if (user.userId && !user.preserveUser) {
+      success(
+        await root.from('audit_logs').delete().eq('admin_user_id', user.userId),
+        'delete disposable admin audit fixtures',
+      );
       success(await root.auth.admin.deleteUser(user.userId), 'delete fixture auth user');
     }
   }

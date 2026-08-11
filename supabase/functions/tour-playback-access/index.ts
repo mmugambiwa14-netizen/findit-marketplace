@@ -1,6 +1,7 @@
 import {
   TOUR_LIMITS,
   adminClient,
+  browserReachableUrl,
   correlationId,
   elapsedMilliseconds,
   isUuid,
@@ -10,13 +11,6 @@ import {
   shouldSample,
   toursBackendEnabled,
 } from "../_shared/tour-runtime.ts";
-
-const LOCAL_INTERNAL_ORIGIN = "http://kong:8000";
-
-function browserReachableUrl(req: Request, value: string): string {
-  if (!value.startsWith(LOCAL_INTERNAL_ORIGIN)) return value;
-  return `${new URL(req.url).origin}${value.slice(LOCAL_INTERNAL_ORIGIN.length)}`;
-}
 
 type PlaybackPayload = {
   parentType?: unknown;

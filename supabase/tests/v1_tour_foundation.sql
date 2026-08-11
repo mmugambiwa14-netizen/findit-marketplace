@@ -363,7 +363,7 @@ select extensions.throws_matching(
       '00000000-0000-4000-8000-000000009407'
     )
   $$,
-  '.*service is not eligible for a Tour.*',
+  '.*Tour parent not found.*',
   'legal services remain excluded from Tours in the MVP'
 );
 

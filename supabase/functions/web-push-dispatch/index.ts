@@ -7,8 +7,81 @@ const corsHeaders = {
   "cache-control": "no-store",
 };
 
+const DEFAULT_BATCH_SIZE = 25;
+const MAX_BATCH_SIZE = 100;
+const LEASE_SECONDS = 120;
+const DEFAULT_ICON = "/brand/peekalisting-icon-192.png";
+const UUID_PART = "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}";
+const SAFE_PATH = new RegExp(
+  `^(?:/(?:notifications|my-listings|profile|settings|chats|saved|post|peek-requests)|/peek-requests\\?request=${UUID_PART}|/(?:chats|messages)/${UUID_PART}|/(?:property|car|machinery|service)/${UUID_PART}(?:\\?responsePeek=${UUID_PART})?(?:#peek-threads)?)$`,
+  "i",
+);
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: corsHeaders });
+}
+
+function boundedText(value: unknown, fallback: string, maximum: number) {
+  const text = typeof value === "string" ? value.trim() : "";
+  return (text || fallback).slice(0, maximum);
+}
+
+function safeNotificationPath(value: unknown) {
+  if (typeof value !== "string") return "/notifications";
+  const candidate = value.trim();
+  if (!candidate || candidate.startsWith("//") || !candidate.startsWith("/")) {
+    return "/notifications";
+  }
+  try {
+    const parsed = new URL(candidate, "https://peekalisting.invalid");
+    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    if (parsed.username || parsed.password || parsed.origin !== "https://peekalisting.invalid" || !SAFE_PATH.test(path)) {
+      return "/notifications";
+    }
+    return path;
+  } catch {
+    return "/notifications";
+  }
+}
+
+function serviceKey() {
+  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (legacy) return legacy;
+  try {
+    const keys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}");
+    return typeof keys?.default === "string" ? keys.default : "";
+  } catch {
+    return "";
+  }
+}
+
+function statusCode(error: unknown) {
+  return Number((error as { statusCode?: number })?.statusCode || 0);
+}
+
+function errorText(error: unknown) {
+  return boundedText(error instanceof Error ? error.message : String(error), "delivery_failed", 120);
+}
+
+function isPermanentSubscriptionFailure(code: number) {
+  return code === 400 || code === 401 || code === 403 || code === 404 || code === 410;
+}
+
+type RpcClient = {
+  rpc: (functionName: string, body: Record<string, unknown>) => PromiseLike<{
+    data: unknown;
+    error: { message: string } | null;
+  }>;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+async function invoke(supabase: RpcClient, functionName: string, body: Record<string, unknown>) {
+  const { data, error } = await supabase.rpc(functionName, body);
+  if (error) throw new Error(`${functionName}: ${error.message}`);
+  return data;
 }
 
 Deno.serve(async (request: Request) => {
@@ -19,100 +92,109 @@ Deno.serve(async (request: Request) => {
   if (!expectedToken || suppliedToken !== expectedToken) return json({ error: "unauthorized" }, 401);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const secretKey = serviceKey();
   const publicKey = Deno.env.get("WEB_PUSH_PUBLIC_KEY") || "";
   const privateKey = Deno.env.get("WEB_PUSH_PRIVATE_KEY") || "";
-  const subject = Deno.env.get("WEB_PUSH_SUBJECT") || "mailto:support@findit.market";
-  if (!supabaseUrl || !serviceRoleKey || !publicKey || !privateKey) {
+  const subject = Deno.env.get("WEB_PUSH_SUBJECT") || "mailto:support@peekalisting.com";
+  if (!supabaseUrl || !secretKey || !publicKey || !privateKey) {
     return json({ error: "push_not_configured" }, 503);
   }
 
-  webpush.setVapidDetails(subject, publicKey, privateKey);
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  let requestedBatchSize = DEFAULT_BATCH_SIZE;
+  try {
+    const body = await request.json();
+    if (body && typeof body === "object" && Number.isFinite(Number((body as { limit?: unknown }).limit))) {
+      requestedBatchSize = Math.min(MAX_BATCH_SIZE, Math.max(1, Math.trunc(Number((body as { limit?: unknown }).limit))));
+    }
+  } catch {
+    // An empty body is the normal scheduler invocation. Invalid JSON does not
+    // need to prevent a bounded worker pass.
+  }
+
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+  } catch {
+    return json({ error: "push_not_configured" }, 503);
+  }
+
+  const supabase = createClient(supabaseUrl, secretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const { data: jobs, error: jobsError } = await supabase
-    .from("web_push_delivery_jobs")
-    .select("id, alert_id, user_id, attempts")
-    .in("status", ["pending", "failed"])
-    .lte("available_at", new Date().toISOString())
-    .order("id", { ascending: true })
-    .limit(25);
-  if (jobsError) return json({ error: "queue_read_failed", detail: jobsError.message }, 500);
-  if (!jobs?.length) return json({ processed: 0, delivered: 0, failed: 0 });
+  let claims: Array<Record<string, unknown>>;
+  try {
+    const claimData = await invoke(supabase, "claim_web_push_delivery_attempts", {
+      p_limit: requestedBatchSize,
+      p_lease_seconds: LEASE_SECONDS,
+    });
+    claims = Array.isArray(claimData)
+      ? claimData.filter(isRecord)
+      : [];
+  } catch (error) {
+    return json({ error: "queue_claim_failed", detail: errorText(error) }, 500);
+  }
 
-  let deliveredTotal = 0;
-  let failedTotal = 0;
+  let delivered = 0;
+  let failed = 0;
 
-  for (const job of jobs) {
-    const lockedAt = new Date().toISOString();
-    const { data: locked } = await supabase
-      .from("web_push_delivery_jobs")
-      .update({ status: "processing", locked_at: lockedAt, attempts: Number(job.attempts || 0) + 1, updated_at: lockedAt })
-      .eq("id", job.id)
-      .in("status", ["pending", "failed"])
-      .select("id")
-      .maybeSingle();
-    if (!locked) continue;
-
-    const [{ data: alert, error: alertError }, { data: subscriptions, error: subscriptionError }] = await Promise.all([
-      supabase.from("app_alerts").select("id,title,message,type,link,event_type,source_key").eq("id", job.alert_id).maybeSingle(),
-      supabase.from("web_push_subscriptions").select("id,endpoint,p256dh,auth").eq("user_id", job.user_id).eq("enabled", true),
-    ]);
-
-    if (alertError || subscriptionError || !alert) {
-      const message = alertError?.message || subscriptionError?.message || "alert_not_found";
-      await supabase.from("web_push_delivery_jobs").update({
-        status: "failed", last_error: message, available_at: new Date(Date.now() + 60_000).toISOString(), updated_at: new Date().toISOString(),
-      }).eq("id", job.id);
-      failedTotal += 1;
+  for (const claim of claims) {
+    const attemptId = Number(claim.attempt_id);
+    const leaseToken = typeof claim.lease_token === "string" ? claim.lease_token : "";
+    const subscriptionId = typeof claim.subscription_id === "string" ? claim.subscription_id : "";
+    if (!Number.isInteger(attemptId) || !leaseToken || !subscriptionId) {
+      failed += 1;
       continue;
     }
 
-    let delivered = 0;
-    let failed = 0;
-    let lastError = "";
+    const eventType = boundedText(claim.event_type, "account", 80);
+    const body = eventType === "message_received"
+      ? "You have a new message in PeekaListing."
+      : boundedText(claim.message, "You have a new PeekaListing update.", 180);
     const payload = JSON.stringify({
-      title: alert.title,
-      body: alert.message,
-      url: alert.link || "/notifications",
-      alertId: alert.id,
-      type: alert.event_type || alert.type || "account",
-      tag: alert.source_key || alert.id,
-      icon: "/brand/findit-icon-192.png",
-      badge: "/brand/findit-icon-192.png",
+      title: boundedText(claim.title, "PeekaListing", 80),
+      body,
+      url: safeNotificationPath(claim.link),
+      alertId: typeof claim.alert_id === "string" ? claim.alert_id : null,
+      type: eventType,
+      tag: boundedText(claim.source_key, typeof claim.alert_id === "string" ? claim.alert_id : "peekalisting", 120),
+      icon: DEFAULT_ICON,
+      badge: "/brand/peekalisting-icon-64.png",
+      timestamp: new Date().toISOString(),
     });
 
-    for (const subscription of subscriptions || []) {
+    try {
+      await webpush.sendNotification({
+        endpoint: String(claim.endpoint || ""),
+        keys: { p256dh: String(claim.p256dh || ""), auth: String(claim.auth || "") },
+      }, payload, { TTL: 300, urgency: "high" });
+      await invoke(supabase, "complete_web_push_delivery_attempt", {
+        p_attempt_id: attemptId,
+        p_lease_token: leaseToken,
+      });
+      delivered += 1;
+    } catch (error) {
+      const code = statusCode(error);
+      const message = errorText(error);
       try {
-        await webpush.sendNotification({
-          endpoint: subscription.endpoint,
-          keys: { p256dh: subscription.p256dh, auth: subscription.auth },
-        }, payload, { TTL: 300, urgency: "high" });
-        delivered += 1;
-      } catch (error) {
-        failed += 1;
-        const statusCode = Number((error as { statusCode?: number }).statusCode || 0);
-        lastError = error instanceof Error ? error.message : String(error);
-        if (statusCode === 404 || statusCode === 410) {
-          await supabase.from("web_push_subscriptions").update({ enabled: false, updated_at: new Date().toISOString() }).eq("id", subscription.id);
+        if (isPermanentSubscriptionFailure(code)) {
+          await invoke(supabase, "retire_web_push_subscription", {
+            p_subscription_id: subscriptionId,
+            p_reason: `push_${code || "invalid"}`,
+          });
+        } else {
+          await invoke(supabase, "fail_web_push_delivery_attempt", {
+            p_attempt_id: attemptId,
+            p_lease_token: leaseToken,
+            p_error_code: message,
+            p_retryable: true,
+          });
         }
+      } catch (finalizeError) {
+        console.error("Could not finalize push delivery attempt", errorText(finalizeError));
       }
+      failed += 1;
     }
-
-    const status = delivered > 0 ? (failed > 0 ? "partial" : "delivered") : "failed";
-    await supabase.from("web_push_delivery_jobs").update({
-      status,
-      delivered_count: delivered,
-      failed_count: failed,
-      last_error: lastError || null,
-      available_at: status === "failed" ? new Date(Date.now() + 5 * 60_000).toISOString() : new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }).eq("id", job.id);
-    deliveredTotal += delivered;
-    failedTotal += failed;
   }
 
-  return json({ processed: jobs.length, delivered: deliveredTotal, failed: failedTotal });
+  return json({ processed: claims.length, delivered, failed });
 });

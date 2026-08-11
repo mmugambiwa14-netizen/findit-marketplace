@@ -6,6 +6,7 @@ const DEFAULT_ORIGINS = [
   "https://staging.peekalisting.com",
   "https://staging.peekalisting.pages.dev",
 ] as const;
+const LOCAL_INTERNAL_ORIGIN = "http://kong:8000";
 
 export const TOUR_LIMITS = Object.freeze({
   maxDurationSeconds: 120,
@@ -98,6 +99,42 @@ function isLocalPreviewOrigin(origin: string): boolean {
   } catch {
     return false;
   }
+}
+
+function firstForwardedValue(value: string | null): string {
+  return value?.split(",", 1)[0]?.trim() ?? "";
+}
+
+function localGatewayOrigin(req: Request): string {
+  const configuredPublicUrl = Deno.env.get("FINDIT_SUPABASE_PUBLIC_URL")?.trim();
+  if (configuredPublicUrl) {
+    try {
+      const configuredOrigin = new URL(configuredPublicUrl).origin;
+      if (isLocalPreviewOrigin(configuredOrigin)) return configuredOrigin;
+    } catch {
+      // Continue to trusted proxy metadata when local configuration is malformed.
+    }
+  }
+  const protocol = firstForwardedValue(req.headers.get("x-forwarded-proto"));
+  const host = firstForwardedValue(req.headers.get("x-forwarded-host"));
+  const port = firstForwardedValue(req.headers.get("x-forwarded-port"));
+  if ((protocol === "http" || protocol === "https") && host) {
+    const authority = host.includes(":") || !/^\d{1,5}$/.test(port) ? host : `${host}:${port}`;
+    try {
+      const candidate = new URL(`${protocol}://${authority}`).origin;
+      if (isLocalPreviewOrigin(candidate)) return candidate;
+    } catch {
+      // Fall through to the request URL when forwarded metadata is malformed.
+    }
+  }
+  return new URL(req.url).origin;
+}
+
+export function browserReachableUrl(req: Request, value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (supabaseUrl() !== LOCAL_INTERNAL_ORIGIN || !value.startsWith(LOCAL_INTERNAL_ORIGIN)) return value;
+  const parsed = new URL(value);
+  return `${localGatewayOrigin(req)}${parsed.pathname}${parsed.search}${parsed.hash}`;
 }
 
 function originAllowed(origin: string): boolean {

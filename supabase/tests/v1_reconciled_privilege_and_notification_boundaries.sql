@@ -41,27 +41,23 @@ select extensions.ok(
   'browser roles cannot read web push delivery jobs'
 );
 
-select extensions.like(
-  pg_get_functiondef('private.notification_rows(text,boolean,integer,integer)'::regprocedure),
-  '%peek_request_created%',
+select extensions.ok(
+  position('peek_request_created' in pg_get_functiondef('private.notification_rows(text,boolean,integer,integer)'::regprocedure)) > 0,
   'offset notification projection supports Peek request creation events'
 );
 
-select extensions.like(
-  pg_get_functiondef('private.notification_rows(text,boolean,integer,integer)'::regprocedure),
-  '%peek_request_answered%',
+select extensions.ok(
+  position('peek_request_answered' in pg_get_functiondef('private.notification_rows(text,boolean,integer,integer)'::regprocedure)) > 0,
   'offset notification projection supports answered Peek requests'
 );
 
-select extensions.like(
-  pg_get_functiondef('private.notification_rows_page(text,boolean,timestamptz,uuid,integer)'::regprocedure),
-  '%tour_ready%',
+select extensions.ok(
+  position('tour_ready' in pg_get_functiondef('private.notification_rows_page(text,boolean,timestamptz,uuid,integer)'::regprocedure)) > 0,
   'keyset notification projection supports ready Peek media events'
 );
 
-select extensions.like(
-  pg_get_functiondef('private.notification_rows_page(text,boolean,timestamptz,uuid,integer)'::regprocedure),
-  '%saved_listing_unavailable%',
+select extensions.ok(
+  position('saved_listing_unavailable' in pg_get_functiondef('private.notification_rows_page(text,boolean,timestamptz,uuid,integer)'::regprocedure)) > 0,
   'keyset notification projection supports saved-listing availability events'
 );
 

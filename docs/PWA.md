@@ -16,7 +16,7 @@ says something works, there is a test or a build gate behind it.
 | Connectivity awareness (offline, slow, metered, reconnect) | Implemented |
 | iOS standalone metadata and safe areas | Implemented |
 | Background sync | **Not implemented** — see Not yet built |
-| Push notifications | **Not implemented** — see Not yet built |
+| Push notifications | Implemented behind owner-provisioned VAPID and scheduler secrets |
 
 ## The caching boundary — read this before changing `public/sw.js`
 
@@ -178,19 +178,23 @@ foreground flush on next launch.
 
 ### Push notifications (§5)
 
-Needs, in order:
+The Web Push foundation is now implemented in the existing notification domain:
 
-1. A VAPID key pair. The **public** key may be `VITE_`-prefixed; the **private
-   key must not be** — it belongs in Supabase Edge Function secrets. The bundle
-   secret scan will fail the build if a private key reaches `dist/`.
-2. A `push_subscriptions` table with RLS restricting rows to their owner, and
-   the same `TRUNCATE`/write-grant treatment as migrations 0110/0111.
-3. A send path in the existing `essential-notification-fanout` Edge Function.
-4. `push` and `notificationclick` handlers in the worker.
-5. Respect for existing notification preferences before any send.
+- `notification_preferences` stores push and foreground-tone preferences;
+- `web_push_subscriptions` remains owner-scoped and supports multiple devices;
+- `web_push_delivery_jobs` plus `web_push_delivery_attempts` provide bounded,
+  leased, idempotent delivery;
+- the trusted `web-push-dispatch` Edge Function uses server-only VAPID secrets;
+- the stamped service worker handles foreground handoff, background display,
+  safe clicks and subscription renewal;
+- permission is requested only after an explanation and a user action;
+- the optional PeekaListing tone is foreground-only. Background/closed sound is
+  controlled by the browser and operating system.
 
-Permission must be requested from a user gesture tied to a specific benefit, not
-on load.
+Remaining live acceptance requires owner-provisioned VAPID keys, dispatcher
+secret, scheduler invocation and browser/OS permission. The browser public key
+may be `VITE_`-prefixed; the private key must never be. The bundle secret scan
+fails if a private key reaches `dist/`.
 
 ## Performance targets (§8) — not measured
 

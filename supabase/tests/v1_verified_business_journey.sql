@@ -11,7 +11,7 @@ values
   ('82000000-0000-4000-8000-000000000004', 'verified-admin@example.test', '{"full_name":"Verified Admin"}', now(), now());
 
 update public.users
-set role = 'admin'
+set role = 'admin', super_admin = true
 where id = '82000000-0000-4000-8000-000000000004';
 
 insert into public.business_profiles (

@@ -82,8 +82,25 @@ values (
   now()
 );
 
-insert into public.business_category_approvals (user_id, category, status, reviewed_at)
-values ('85000000-0000-4000-8000-000000000001', 'car', 'approved', now());
+insert into public.business_applications (
+  id, user_id, business_name, contact_name, business_email, business_phone,
+  country_code, city, description, expected_inventory_band, status
+) values (
+  '85000000-0000-4000-8000-000000000401',
+  '85000000-0000-4000-8000-000000000001',
+  'V2 Listing Certification Motors', 'Listing V2 Owner',
+  'listing-v2-owner@example.test', '+263700000402', 'ZW', 'Harare',
+  'Approved Cars publisher used by the V2 listing schema certification suite.',
+  '1-10', 'approved'
+);
+
+insert into public.business_category_approvals (
+  id, business_application_id, user_id, category, status, approved_at
+) values (
+  '85000000-0000-4000-8000-000000000402',
+  '85000000-0000-4000-8000-000000000401',
+  '85000000-0000-4000-8000-000000000001', 'car', 'approved', now()
+);
 
 create temporary table listing_v2_fixture (
   intent_id uuid,

@@ -25,6 +25,7 @@ import AccountBlocked from '@/components/auth/AccountBlocked';
 import MfaChallengeScreen from '@/components/auth/MfaChallengeScreen';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import PushNotificationRuntime from '@/components/notifications/PushNotificationRuntime';
 import AdminLayout from '@/components/layout/AdminLayout';
 import AppLayout from '@/components/layout/AppLayout';
 import { AppShellSkeleton } from '@/components/loading/LoadingSkeletons';
@@ -161,8 +162,10 @@ const AuthenticatedApp = () => {
   }
 
   return (
-    <Suspense fallback={<LoadingScreen />}>
-      <Routes>
+    <>
+      <PushNotificationRuntime />
+      <Suspense fallback={<LoadingScreen />}>
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -221,8 +224,9 @@ const AuthenticatedApp = () => {
           </Route>
         </Route>
         <Route path="*" element={<PageNotFound />} />
-      </Routes>
-    </Suspense>
+        </Routes>
+      </Suspense>
+    </>
   );
 };
 

@@ -28,12 +28,12 @@ if (files.length === 0) {
   process.exit(1);
 }
 
-// Deno 2 defaults to manual node_modules resolution when package.json exists.
 // Supabase's Edge Runtime declarations include npm type dependencies that are
-// not application dependencies, so the checker must resolve them through
-// Deno's isolated automatic npm boundary rather than the npm application lock.
-// The checker is intentionally read-only and must not create or update deno.lock.
-const denoArgs = ['check', '--node-modules-dir=auto', '--no-lock', ...files];
+// not application dependencies. Resolve them from Deno's global cache without
+// creating a local node_modules tree: automatic mode can replace npm's locked
+// root packages with Deno-managed links and make a subsequent Vite build
+// nondeterministic. The checker is read-only and must not update deno.lock.
+const denoArgs = ['check', '--node-modules-dir=none', '--no-lock', ...files];
 let result = spawnSync('deno', denoArgs, {
   cwd: root,
   encoding: 'utf8',

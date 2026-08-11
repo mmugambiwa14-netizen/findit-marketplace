@@ -44,6 +44,10 @@ const EVENT_STYLE = {
   saved_listing_unavailable: { label: 'Saved listing update', icon: AlertCircle, className: 'text-amber-600 dark:text-amber-400' },
   peek_request_created: { label: 'New Peek Request', icon: MessageSquareMore, className: 'text-primary' },
   peek_request_answered: { label: 'Peek Request answered', icon: Film, className: 'text-green-600 dark:text-green-400' },
+  business_application_updated: { label: 'Business application update', icon: ShieldCheck, className: 'text-primary' },
+  business_category_updated: { label: 'Business category update', icon: ShieldCheck, className: 'text-primary' },
+  managed_listing_updated: { label: 'Managed listing update', icon: Clock3, className: 'text-primary' },
+  message_received: { label: 'New message', icon: MessageSquareMore, className: 'text-primary' },
 };
 
 function markPageRead(page, notificationId = null, readAt = new Date().toISOString()) {

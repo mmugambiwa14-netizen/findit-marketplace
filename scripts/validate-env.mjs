@@ -74,6 +74,7 @@ for (const name of [
   'TOURS_BACKEND_ENABLED',
   'FINDIT_TOURS_RELEASE_ACCEPTED',
   'FINDIT_TOURS_WORKERS_ENABLED',
+  'FINDIT_WEB_PUSH_WORKERS_ENABLED',
   'FINDIT_RECOMMENDATION_WORKERS_ENABLED',
 ]) {
   if (env[name] !== undefined && env[name] !== '' && !['true', 'false'].includes(env[name])) {
@@ -133,6 +134,9 @@ if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== undefined
 }
 if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED === 'true' && !env.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET?.trim()) {
   problems.push('FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET is required when essential notification workers are enabled');
+}
+if (env.FINDIT_WEB_PUSH_WORKERS_ENABLED === 'true' && !env.PUSH_DISPATCH_TOKEN?.trim()) {
+  problems.push('PUSH_DISPATCH_TOKEN is required when Web Push workers are enabled');
 }
 if (env.FINDIT_RECOMMENDATION_WORKERS_ENABLED === 'true' && !env.FINDIT_RECOMMENDATION_WORKER_SECRET?.trim()) {
   problems.push('FINDIT_RECOMMENDATION_WORKER_SECRET is required when recommendation workers are enabled');
@@ -195,6 +199,10 @@ if (env.VITE_FEATURE_GOOGLE_OAUTH === 'true' && env.VITE_AUTH_GOOGLE_ENABLED !==
   problems.push('VITE_AUTH_GOOGLE_ENABLED must be true when VITE_FEATURE_GOOGLE_OAUTH=true');
 }
 
+const webPushPublicKey = env.VITE_WEB_PUSH_PUBLIC_KEY?.trim();
+if (webPushPublicKey && !/^[A-Za-z0-9_-]{60,160}$/.test(webPushPublicKey)) {
+  problems.push('VITE_WEB_PUSH_PUBLIC_KEY must be a base64url VAPID public key');
+}
 if (mode === 'production') {
   for (const name of requiredMvpLaunchFlags) {
     if (env[name] !== 'true') problems.push(`${name} must be true for a V1 production release`);

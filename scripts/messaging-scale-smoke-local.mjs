@@ -6,11 +6,31 @@ import {
   smokeTarget,
   success,
 } from './lib/tour-smoke-fixtures.mjs';
+import { clearMessageBudgets, openSmokeDatabase } from './lib/postgres-smoke-fixtures.mjs';
 
 let buyer;
 let seller;
 let stranger;
 const listingIds = [];
+const database = openSmokeDatabase(smokeTarget);
+
+async function insertHistoricalMessages(rows, label) {
+  let offset = 0;
+  while (offset < rows.length) {
+    const senderCounts = new Map();
+    const batch = [];
+    while (offset < rows.length) {
+      const row = rows[offset];
+      const count = senderCounts.get(row.sender_id) ?? 0;
+      if (count >= 10) break;
+      senderCounts.set(row.sender_id, count + 1);
+      batch.push(row);
+      offset += 1;
+    }
+    success(await root.from('inquiries').insert(batch), `${label} batch`);
+    await clearMessageBudgets(database, [...senderCounts.keys()]);
+  }
+}
 
 try {
   buyer = await createSmokeUser('message-scale-buyer');
@@ -63,7 +83,7 @@ try {
     attachments: [],
     created_at: conversation.last_message_at,
   }));
-  success(await root.from('inquiries').insert(initialMessages), 'create messaging scale initial messages');
+  await insertHistoricalMessages(initialMessages, 'create messaging scale initial messages');
 
   const seenConversationIds = [];
   let inboxCursor = null;
@@ -111,7 +131,7 @@ try {
     attachments: [],
     created_at: new Date(baseTime + (index + 1) * 1000).toISOString(),
   }));
-  success(await root.from('inquiries').insert(extraMessages), 'create deep message thread');
+  await insertHistoricalMessages(extraMessages, 'create deep message thread');
 
   const seenMessageIds = [];
   let threadCursor = null;
@@ -147,9 +167,12 @@ try {
 
   console.log(`Messaging ${smokeTarget.label} scale smoke passed: ${conversationCount} inbox rows across ${inboxPages} pages and ${extraThreadCount + 1} thread messages across ${threadPages} pages, with no duplicates or skips.`);
 } finally {
+  const senderIds = [buyer?.userId, seller?.userId].filter(Boolean);
+  if (senderIds.length) await clearMessageBudgets(database, senderIds, ['message.minute', 'message.day']);
   if (listingIds.length) await root.from('listings').delete().in('id', listingIds);
   for (const user of [buyer, seller, stranger].filter(Boolean)) {
     try { await user.browser.auth.signOut(); } catch { /* best effort */ }
     try { await root.auth.admin.deleteUser(user.userId); } catch { /* best effort */ }
   }
+  await database.end({ timeout: 5 });
 }
