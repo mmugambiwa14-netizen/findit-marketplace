@@ -40,6 +40,9 @@ jobs:
       VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
       VITE_SENTRY_ENVIRONMENT: staging
       VITE_SENTRY_RELEASE: ${{ github.sha }}
+      # Browser-safe VAPID public key only. Private VAPID material remains in
+      # the trusted Supabase Edge Function secret store.
+      VITE_WEB_PUSH_PUBLIC_KEY: ${{ vars.VITE_WEB_PUSH_PUBLIC_KEY }}
       FINDIT_STAGING_ORIGIN: https://staging.peekalisting.com
       FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
       # Prefer environment-scoped browser configuration. The fallback keeps
