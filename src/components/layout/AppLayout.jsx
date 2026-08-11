@@ -81,7 +81,7 @@ export default function AppLayout() {
   const showSharedMobileTopBar = !immersiveConversation && !immersivePeek && !listingDetail;
 
   return (
-    <div className="peekalisting-design-theme findit-screen min-h-[100dvh]">
+    <div className="findit-screen min-h-[100dvh]">
       <a
         href="#main-content"
         className="fixed left-4 top-4 z-[1100] -translate-y-24 rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background shadow-floating transition-transform focus:translate-y-0"
