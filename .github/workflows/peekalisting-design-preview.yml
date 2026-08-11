@@ -1,0 +1,51 @@
+name: Deploy isolated PeekaListing design preview
+
+on:
+  push:
+    branches:
+      - agent/peekalisting-design-preview
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: peekalisting-design-preview
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: cloudflare-staging
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_PAGES_PROJECT: peekalisting-design-preview
+
+    steps:
+      - name: Check out preview branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5026
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Build isolated design preview
+        run: npx vite build
+
+      - name: Ensure isolated Pages project exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! npx wrangler pages project list --json | jq -e --arg name "$CLOUDFLARE_PAGES_PROJECT" '.[] | select(.name == $name)' >/dev/null; then
+            npx wrangler pages project create "$CLOUDFLARE_PAGES_PROJECT" --production-branch="$GITHUB_REF_NAME"
+          fi
+
+      - name: Deploy isolated Pages preview
+        run: npx wrangler pages deploy dist --project-name="$CLOUDFLARE_PAGES_PROJECT" --branch="$GITHUB_REF_NAME"
