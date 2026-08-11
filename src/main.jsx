@@ -35,12 +35,6 @@ function StartupFailure() {
 
 async function bootstrap() {
   try {
-    if (window.location.pathname.replace(/\/+$/, '') === '/design-preview') {
-      const { default: DesignPreviewShell } = await import('@/pages/DesignPreviewShell.jsx');
-      root.render(<DesignPreviewShell />);
-      return;
-    }
-
     const [{ default: App }, { default: AppErrorBoundary }] = await Promise.all([
       import('@/App.jsx'),
       import('@/components/AppErrorBoundary.jsx'),

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, List, Map } from 'lucide-react';
+import { ArrowUpRight, Check, List, Map, MapPin, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { readStoredJson, removeStoredValue, writeStoredJson } from '@/lib/browserStorage';
 import { featureFlags } from '@/lib/featureFlags';
@@ -8,9 +8,9 @@ import DiscoverHeader from '@/components/discover/DiscoverHeader';
 import DiscoverMapView from '@/components/discover/DiscoverMapView';
 import DiscoverSearch from '@/components/discover/DiscoverSearch';
 import HomePeekRail from '@/components/discover/HomePeekRail';
-import BrandLogo from '@/components/BrandLogo';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
+import './home-redesign.css';
 
 const LOCATION_STORAGE_KEY = 'findit.discover-location';
 const DISCOVER_VIEWS = [
@@ -52,57 +52,99 @@ export default function Home() {
   };
 
   return (
-    <div className="findit-screen">
-      <div className="findit-hero-panel findit-discover-safe-top mx-auto w-full max-w-[1180px] px-4 pb-6 sm:px-6 lg:px-8">
-        <h1 className="sr-only md:hidden">Find what you need, right where you are.</h1>
-        <header className="relative mb-3 flex min-h-11 items-center justify-center md:hidden">
-          <BrandLogo className="gap-2" markClassName="h-8 w-8" wordmarkClassName="text-[1.75rem] tracking-[-0.045em]" />
-          {featureFlags.essentialNotifications ? (
-            <Link to="/notifications" aria-label="Open notifications" className="findit-header-action absolute right-0"><Bell className="h-5 w-5" /></Link>
-          ) : (
-            <span className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground/65" aria-hidden="true"><Bell className="h-5 w-5" /></span>
-          )}
-        </header>
-
-        <section className="hidden max-w-3xl pb-7 pt-7 md:block" aria-labelledby="discover-heading">
-          <p className="findit-overline">Your local marketplace</p>
-          <h1 id="discover-heading" className="fluid-display mt-3 max-w-[680px] text-foreground lg:text-[3.35rem]">Find what you need, right where you are.</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground lg:text-lg">Explore homes, vehicles, equipment, and professional services in one trusted place.</p>
-        </section>
-
-        <div className="md:rounded-[1.65rem] md:border md:border-border/70 md:bg-card/45 md:p-3 md:shadow-[0_12px_36px_hsl(var(--clay-shadow-dark)/.08)] md:backdrop-blur-xl">
-          <DiscoverSearch location={location} />
-          <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] gap-3 md:grid-cols-[minmax(240px,360px)_auto] md:justify-between">
-            <DiscoverHeader location={location} onLocationChange={updateLocation} />
-            {featureFlags.maps && (
-              <SegmentedControl
-                value={view}
-                onValueChange={setView}
-                options={DISCOVER_VIEWS}
-                ariaLabel="Discover view"
-                size="compact"
-                className="h-12 min-w-[6rem] min-[400px]:min-w-[9.4rem]"
-              />
-            )}
-          </div>
+    <div className="peekalisting-discover-page">
+      <div className="peekalisting-discover-shell">
+        <div className="peekalisting-discover-context" aria-label="Marketplace context">
+          <span>FindIt marketplace</span>
+          <span aria-hidden="true">/</span>
+          <strong>Find your next good thing</strong>
         </div>
 
-        <main className="mt-5 md:mt-7">
-          {view === 'map' && featureFlags.maps ? (
-            <DiscoverMapView location={location} />
-          ) : (
-            <section aria-labelledby="discover-categories-title">
-              <div className="mb-4 flex items-end justify-between gap-4">
-                <div>
-                  <p className="findit-overline">Discover</p>
-                  <h2 id="discover-categories-title" className="fluid-section-title mt-1 text-foreground">Browse categories</h2>
-                </div>
-                <p className="hidden max-w-sm text-right text-sm leading-6 text-muted-foreground sm:block">Everything local, organised around how you search.</p>
+        <section className="peekalisting-discover-hero" aria-labelledby="discover-heading">
+          <div className="peekalisting-discover-hero-copy">
+            <span className="peekalisting-design-eyebrow"><Sparkles className="h-3.5 w-3.5" />Curated for your point of view</span>
+            <h1 id="discover-heading">Find the places worth a closer look.</h1>
+            <p>A quieter way to discover homes, vehicles, equipment, and services that feel right for your next chapter.</p>
+          </div>
+
+          <div className="peekalisting-discover-tools">
+            <div className="peekalisting-discover-search">
+              <DiscoverSearch location={location} />
+            </div>
+            <div className="peekalisting-discover-location">
+              <DiscoverHeader location={location} onLocationChange={updateLocation} />
+              <span className="peekalisting-discover-location-note">
+                <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                {location?.cityName ? `Showing ${location.cityName}` : 'Choose a location for closer results'}
+              </span>
+            </div>
+            <div className="peekalisting-discover-stats" aria-label="Marketplace features">
+              <div><strong>4</strong><span>live categories</span></div>
+              <div><strong>2</strong><span>discovery views</span></div>
+              <div><strong>Peeks</strong><span>before you visit</span></div>
+            </div>
+          </div>
+        </section>
+
+        <main className="peekalisting-discover-results">
+          <section aria-labelledby="discover-categories-title">
+            <div className="peekalisting-discover-section-heading">
+              <div>
+                <span className="peekalisting-design-eyebrow">Your shortlist</span>
+                <h2 id="discover-categories-title">A few good places to begin.</h2>
+                <p>Everything local, organised around how you search.</p>
               </div>
+              <Link to="/post" className="clay-button inline-flex min-h-11 items-center gap-2 px-4 text-sm font-bold">
+                List a place <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+
+            <div className="peekalisting-discover-toolbar">
+              <div className="peekalisting-discover-availability" aria-label="Included marketplace features">
+                {['Property', 'Cars', 'Machinery', 'Services'].map((label) => (
+                  <span key={label}><Check className="h-4 w-4" aria-hidden="true" />{label}</span>
+                ))}
+              </div>
+              {featureFlags.maps && (
+                <SegmentedControl
+                  value={view}
+                  onValueChange={setView}
+                  options={DISCOVER_VIEWS}
+                  ariaLabel="Discover view"
+                  size="compact"
+                  className="h-12 min-w-[6rem] min-[400px]:min-w-[9.4rem]"
+                />
+              )}
+            </div>
+
+            {view === 'map' && featureFlags.maps ? (
+              <DiscoverMapView location={location} />
+            ) : (
               <DiscoverCategoryGrid location={location} />
-            </section>
-          )}
+            )}
+          </section>
+
           <HomePeekRail location={location} />
+
+          <section className="peekalisting-discover-lower-grid" aria-label="Marketplace shortcuts">
+            <Link to="/post" className="peekalisting-discover-creator-card">
+              <div>
+                <span className="peekalisting-design-eyebrow">Creator corner</span>
+                <h2>Have a place people should see?</h2>
+                <p>Turn your photos and details into a listing people can feel before they visit.</p>
+              </div>
+              <span className="clay-button inline-flex min-h-11 shrink-0 items-center gap-2 px-4 text-sm font-bold">Create a listing <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></span>
+            </Link>
+            <aside className="peekalisting-discover-activity" aria-labelledby="discover-shortcuts-title">
+              <div className="flex items-center justify-between gap-4">
+                <span className="peekalisting-design-eyebrow" id="discover-shortcuts-title">Keep exploring</span>
+                <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+              </div>
+              <Link to="/saved"><strong>Saved listings</strong><span>Keep your shortlist together <ArrowUpRight className="h-3.5 w-3.5" /></span></Link>
+              <Link to="/services"><strong>Services near you</strong><span>Find skilled local help <ArrowUpRight className="h-3.5 w-3.5" /></span></Link>
+              <Link to="/chats"><strong>Conversations</strong><span>Pick up where you left off <ArrowUpRight className="h-3.5 w-3.5" /></span></Link>
+            </aside>
+          </section>
         </main>
       </div>
     </div>
