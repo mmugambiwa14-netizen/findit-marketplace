@@ -22,8 +22,8 @@ Everything below was read from the live connectors, not assumed.
 | Account | reachable |
 | Workers | **0 deployed** |
 | KV namespaces | 2 — **provisioned by this pass**, see §2 |
-| R2 | **not enabled** — `403 code 10042, "Please enable R2 through the Cloudflare Dashboard"` |
-| Queues | not provisioned |
+| R2 | **enabled** — 2 buckets, see §2 |
+| Queues | created by owner; consumer settings come from wrangler config, see §2.1 |
 | Turnstile | unknown — no connector visibility |
 | DNS / `peekalisting.com` zone | unknown — no connector visibility |
 | Pages project | none created |
@@ -56,13 +56,40 @@ These are resource identifiers, not credentials. Substitute them for
 `REPLACE_WITH_STAGING_NAMESPACE_ID` / `REPLACE_WITH_PREVIEW_NAMESPACE_ID` when generating a real
 `wrangler.toml`.
 
+### R2 buckets (enabled and created by the account owner)
+
+| Bucket | Location | Jurisdiction |
+|---|---|---|
+| `peekalisting-media-staging` | `EEUR` | `default` (unset) |
+| `peekalisting-media-production` | `EEUR` | `default` (unset) |
+
+Jurisdiction is correctly left unset, which keeps the irreversible choice open. **Location came out
+`EEUR` (Eastern Europe), not the recommended `weur`.** See §3.3.
+
+### 2.1 Queues need no dashboard configuration
+
+`max_batch_size`, `max_batch_timeout`, `max_retries`, `dead_letter_queue`, `max_concurrency` and
+`retry_delay` are `[[queues.consumers]]` fields in the Worker's wrangler config, applied at Worker deploy
+time — they are not standalone dashboard settings. `wrangler.toml.example` already declares batch 20,
+timeout 5, retries 5 and a DLQ. Cloudflare also creates a named dead-letter queue automatically on deploy
+if it does not exist, so DLQs need no pre-creation.
+
+### 2.2 Deployment workflow
+
+`.github/workflows/deploy-cloudflare-pages.yml` builds in CI and uploads `dist/` via `wrangler pages
+deploy`. Because the bundle is built in CI, `VITE_*` values are baked in **there**, not read from
+Cloudflare Pages settings — so environment separation is enforced by GitHub Environments: `main` selects
+`production`, every other ref selects `preview`, and each supplies its own
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`. The job refuses to build if either is missing, or if the
+supplied key looks like a secret rather than a publishable key.
+
 Also already in the repository from the migration work: `public/_headers` and `public/_redirects` carry the
 full production security posture (CSP, HSTS, Permissions-Policy, COOP/CORP, frame denial, cache policy, SPA
 fallback), generated from `vercel.json` and enforced by `tests/cloudflareHeadersContracts.test.mjs`.
 
 ---
 
-## 3. Two findings that block a safe cutover
+## 3. Findings that affect a safe cutover
 
 ### 3.1 Staging is 21 migrations behind
 
@@ -100,6 +127,40 @@ is scoped as work, not done blind — see §6.
 **No secret is exposed by either file.** The key is an `sb_publishable_` browser-public key, not a
 service-role key. It is still wrong to pin an environment's connection in source.
 
+### 3.3 R2 buckets landed in EEUR, not WEUR
+
+Both buckets report `location: EEUR` (Eastern Europe). The recommendation was `weur` (Western Europe), to
+sit alongside Supabase in `eu-west-2` (London).
+
+This is a consistency and origin-latency question, not a safety one. Reads are edge-cached including at
+African PoPs, so user-facing read latency is largely unaffected; the hint governs where the origin copy
+lives and therefore write/origin-fetch latency.
+
+Whether to change it:
+
+- **Both buckets are empty**, so now is the cheapest possible moment — there is nothing to migrate.
+- Changing location requires **new bucket names**. Cloudflare only honours a location hint the first time a
+  given name is created; deleting and recreating the same name silently reuses the original location.
+- If counsel later requires EU data residency, these buckets need replacing anyway, because jurisdiction is
+  fixed at creation and is currently `default`.
+
+Reasonable to leave as-is for the MVP. Revisit before any production media is written.
+
+### 3.4 Bucket count does not match the Worker's bindings
+
+`workers/edge/src/index.ts` declares three R2 bindings — `PEEK_SOURCE_MEDIA`, `PEEK_DERIVATIVE_MEDIA`,
+`LISTING_MEDIA` — resolved by `mediaBucket()` (`:77-87`) with a fail-closed default. Two buckets exist, one
+per environment.
+
+Do **not** resolve this by binding all three names to the same bucket. `mediaBucket()`'s allowlist exists to
+bound the blast radius of a `media.cleanup` job; collapsing the three onto one bucket would let a job
+claiming `source` delete a `listing/` object, which weakens a real control.
+
+The MVP-correct answer is narrower: **Peeks are release-gated off** (F-003), so peek source and derivative
+buckets are storage for a feature that does not ship yet — provisioning them now would be the RC-3
+scaffolding pattern the audit warns about. Bind `LISTING_MEDIA` to the existing bucket, make the two peek
+bindings optional in `Env`, and create those buckets when Peeks actually launch.
+
 ---
 
 ## 4. Environment model (target)
@@ -108,8 +169,11 @@ service-role key. It is still wrong to pin an environment's connection in source
 |---|---|---|---|
 | Web | vite dev | Cloudflare preview deployment | Cloudflare production |
 | Supabase | local CLI stack | `bwgklpxoetrrkutottdb` | to be confirmed (see §6) |
-| `VITE_SUPABASE_URL` | `.env.local` | Cloudflare Preview var | Cloudflare Production var |
-| `VITE_SUPABASE_ANON_KEY` | `.env.local` | Cloudflare Preview var | Cloudflare Production var |
+| `VITE_SUPABASE_URL` | `.env.local` | GitHub Environment `preview` var | GitHub Environment `production` var |
+| `VITE_SUPABASE_ANON_KEY` | `.env.local` | GitHub Environment `preview` var | GitHub Environment `production` var |
+
+These are **GitHub** Environment variables, not Cloudflare Pages settings, because the bundle is built in CI
+before upload — see §2.2. Setting them in Cloudflare would have no effect on a CI-built deployment.
 
 **Never expose through `VITE_*`:** the Supabase service-role key, Cloudflare API tokens, R2 secret
 credentials, `MEDIA_SIGNING_SECRET`, `TURNSTILE_SECRET_KEY`. Every `VITE_*` value reaches the browser.
@@ -123,12 +187,9 @@ Preview deployments must never target the production Supabase project.
 
 Each blocks only its own subsystem. All other work continued around them.
 
-### B-CF-1 — R2 not enabled
-Connector returns `403 code 10042`. R2 bucket creation is impossible until enabled on the account.
-Free tier: 10 GB storage, 1M Class A + 10M Class B operations/month. Enabling requires a payment method on
-file even to use the free allowance. Blocks: `peekalisting-media-staging` / `-production`, the media
-delivery path, and R2 bindings in `wrangler.toml`. **Postponable** — Supabase Storage remains operational
-and must stay so until R2 is behaviour-proven.
+### B-CF-1 — RESOLVED
+R2 is enabled and both buckets exist. Supabase Storage remains the operational media path until R2 is
+behaviour-proven; do not migrate media before then.
 
 ### B-CF-2 — No connector coverage for DNS, Turnstile, Queues, Pages, or Worker deployment
 The Cloudflare connector exposes only D1, KV, R2, Hyperdrive, read-only Workers, and documentation search.
