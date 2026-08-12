@@ -45,6 +45,8 @@ test('MFA remains append-only at the canonical auth service boundary', () => {
 
 test('existing authentication safety behavior remains intact', () => {
   assert.match(authService, /signOut\(\{\s*scope:\s*['"]global['"]\s*\}\)/);
+  assert.match(authService, /globalSignOutError/);
+  assert.match(authService, /if \(globalSignOutError\) await discardInvalidLocalSession\(\)/);
   assert.match(authService, /isOAuthProviderEnabled\(provider\)/);
   assert.match(authService, /profileError\.code === ['"]PGRST116['"]/);
   assert.match(authService, /finditAuthFailure:\s*['"]profile_missing['"]|profile_missing/);
