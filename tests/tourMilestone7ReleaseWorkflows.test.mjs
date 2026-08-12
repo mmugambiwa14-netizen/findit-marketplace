@@ -3,10 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [releaseWorkflow, acceptanceWorkflow, stagingWorkflow, validator, supabaseConfig] = await Promise.all([
+const [releaseWorkflow, acceptanceWorkflow, validator, supabaseConfig] = await Promise.all([
   read('.github/workflows/release-candidate-gates.yml'),
   read('.github/workflows/tours-staging-acceptance.yml'),
-  read('.github/workflows/deploy-staging-pages.yml'),
   read('scripts/validate-env.mjs'),
   read('supabase/config.toml'),
 ]);
@@ -68,42 +67,10 @@ test('staging acceptance is manual, guarded, comprehensive and emits a named rec
   assert.match(acceptanceWorkflow, /retention-days: 90/);
 });
 
-test('staging deployment can expose preview or public Tours without weakening production gates', () => {
-  assert.match(stagingWorkflow, /VITE_MODE: staging/);
-  assert.match(stagingWorkflow, /npm ci --include=dev --ignore-scripts/);
-  assert.match(stagingWorkflow, /VITE_BASE_PATH: \/findit-marketplace\//);
-  assert.match(supabaseConfig, /site_url = "https:\/\/findit-marketplace-staging\.vercel\.app\/"/);
-  assert.match(supabaseConfig, /"https:\/\/findit-marketplace-staging\.vercel\.app\/\*\*"/);
-  assert.doesNotMatch(`${stagingWorkflow}\n${supabaseConfig}`, /\/-findit-marketplace\//);
-  assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_ENABLED/);
-  assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_PREVIEW/);
-  assert.match(stagingWorkflow, /FINDIT_STAGING_TOURS_BACKEND_ENABLED/);
-  assert.match(stagingWorkflow, /FINDIT_TOUR_PROCESSOR_MODE: "github-actions"/);
-  assert.match(stagingWorkflow, /FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET/);
-  assert.match(stagingWorkflow, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
-  assert.match(stagingWorkflow, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED/);
-  assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED: \$\{\{ vars\.FINDIT_TOURS_RELEASE_ACCEPTED \}\}/);
-  assert.match(stagingWorkflow, /FINDIT_TOURS_ACCEPTANCE_ID: \$\{\{ vars\.FINDIT_TOURS_ACCEPTANCE_ID \}\}/);
-  // VITE_FEATURE_INTERNATIONAL_LISTING was dropped from this list during F-049.
-  // It is deliberately "false" in staging *and* in release-candidate-gates.yml:33,
-  // because the MVP is Zimbabwe-first. The workflow is correct and the expectation
-  // was stale, so the test moved to match the decision rather than the reverse.
-  for (const requiredFlag of [
-    'VITE_FEATURE_GOOGLE_OAUTH',
-    'VITE_FEATURE_MANUAL_LOCATION',
-    'VITE_FEATURE_CURRENT_LOCATION',
-    'VITE_FEATURE_REPORTING',
-  ]) assert.match(stagingWorkflow, new RegExp(`${requiredFlag}: "true"`));
-  assert.match(stagingWorkflow, /VITE_FEATURE_INTERNATIONAL_LISTING: "false"/);
-  for (const closedFlag of [
-    'VITE_FEATURE_PREVIEW_FIXTURES',
-    'VITE_PREVIEW_AUTH_BYPASS',
-    'VITE_FEATURE_LISTING_EXPIRY',
-    'VITE_FEATURE_LISTING_FRESHNESS_REMINDERS',
-  ]) assert.match(stagingWorkflow, new RegExp(`${closedFlag}: "false"`));
-  assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKERS_ENABLED: \$\{\{ vars\.FINDIT_RECOMMENDATION_WORKERS_ENABLED \}\}/);
-  assert.match(stagingWorkflow, /FINDIT_RECOMMENDATION_WORKER_SECRET/);
-});
+// Retired with the GitHub Pages staging workflow this asserted on, and with the
+// Vercel staging URLs it pinned in supabase/config.toml. Cloudflare is the
+// authoritative host; Tours release gating is covered by the feature-flag and
+// staging-capability contracts rather than by a deployment workflow's env block.
 
 test('preview access cannot be enabled without the complete backend worker boundary', () => {
   assert.match(validator, /toursPreviewEnabled/);

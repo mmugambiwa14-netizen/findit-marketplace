@@ -23,7 +23,6 @@ const [
   observabilityFunction,
   supabaseConfig,
   maintenanceWorkflow,
-  stagingWorkflow,
   adminRepository,
   adminService,
   adminDashboard,
@@ -49,7 +48,6 @@ const [
   read('supabase/functions/tour-observability-monitor/index.ts'),
   read('supabase/config.toml'),
   read('.github/workflows/maintenance-workers.yml'),
-  read('.github/workflows/deploy-staging-pages.yml'),
   read('src/repositories/adminRepository.js'),
   read('src/services/adminService.js'),
   read('src/pages/admin/AdminDashboard.jsx'),
@@ -201,8 +199,6 @@ test('production Tours activation requires a named accepted staging record', () 
   assert.match(validator, /Tours must remain disabled in production/);
   assert.match(envExample, /FINDIT_TOURS_RELEASE_ACCEPTED=false/);
   assert.match(envExample, /FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET/);
-  assert.match(stagingWorkflow, /VITE_FEATURE_TOURS_PREVIEW/);
-  assert.match(stagingWorkflow, /FINDIT_TOURS_RELEASE_ACCEPTED/);
 });
 
 test('scale smoke harnesses traverse multiple pages and enforce authorization', () => {

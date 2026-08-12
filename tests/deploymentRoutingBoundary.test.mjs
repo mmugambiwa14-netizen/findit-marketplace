@@ -12,10 +12,6 @@ const authSource = readFileSync(
 const registerSource = readFileSync(resolve(projectRoot, 'src/pages/Register.jsx'), 'utf8');
 const indexSource = readFileSync(resolve(projectRoot, 'index.html'), 'utf8');
 const documentBootstrapSource = readFileSync(resolve(projectRoot, 'src/documentBootstrap.js'), 'utf8');
-const pagesWorkflow = readFileSync(
-  resolve(projectRoot, '.github/workflows/deploy-staging-pages.yml'),
-  'utf8',
-);
 const pagesFallback = readFileSync(
   resolve(projectRoot, 'scripts/create-pages-spa-fallback.mjs'),
   'utf8',
@@ -35,9 +31,12 @@ test('all provider-driven auth callbacks use the deployment-aware URL helper', (
   assert.match(authSource, /redirectTo: appUrl\('\/reset-password'\)/);
 });
 
-test('Pages deep links redirect through a 200 shell and restore the route safely', () => {
-  assert.match(pagesWorkflow, /create-pages-spa-fallback\.mjs dist "\$VITE_BASE_PATH"/);
-  assert.doesNotMatch(pagesWorkflow, /cp dist\/index\.html dist\/404\.html/);
+// The GitHub Pages staging workflow that used to be asserted here was retired
+// when Cloudflare became the authoritative host. Cloudflare serves the app at the
+// domain root and handles deep links with a `/* /index.html 200` rewrite in
+// public/_redirects, which tests/cloudflareHeadersContracts.test.mjs asserts. The
+// client-side route restoration below is still live behaviour and stays covered.
+test('deep links restore the intended route safely', () => {
   assert.match(pagesFallback, /window\.location\.replace\(destination\.toString\(\)\)/);
   assert.match(pagesFallback, /currentPath\.startsWith\(basePath\)/);
   assert.match(indexSource, /src\/documentBootstrap\.js/);

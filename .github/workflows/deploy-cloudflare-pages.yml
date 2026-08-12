@@ -117,6 +117,9 @@ jobs:
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is not configured"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "CLOUDFLARE_ACCOUNT_ID is not configured"; exit 1; }
-          npx --yes wrangler@4 pages deploy dist \
+          # Pinned, not floating. A floating wrangler@4 resolved to an
+          # unpublished 4.120.0 and broke CI; 4.119.0 is the version
+          # cloudflare-provisioning-gates.yml has proven.
+          npx --yes wrangler@4.119.0 pages deploy dist \
             --project-name=peekalisting \
             --branch="$DEPLOY_BRANCH"

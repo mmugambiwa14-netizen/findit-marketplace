@@ -29,11 +29,12 @@ test('every locked workflow install normalizes the package lock first', async ()
 
   // Pinned deliberately: the loop above passes vacuously if `npm ci` detection
   // ever breaks and matches nothing, so this count is the guard that we actually
-  // inspected something. It has grown 8 -> 12 -> 13 as the repository added
-  // npm-ci workflows, most recently deploy-cloudflare-pages.yml; every one of
-  // them satisfies the ordering assertions above. Adding another npm-ci
-  // workflow should update this number consciously, not silently.
-  assert.equal(installPaths, 13, 'all thirteen npm-ci workflow paths must be covered');
+  // inspected something. It moves as workflows are added and retired -- most
+  // recently down to 11, as the GitHub Pages hosting workflows were retired in
+  // favour of Cloudflare and deploy-cloudflare-pages.yml replaced them. Every
+  // matched workflow satisfies the ordering assertions above. Changing this
+  // number should be a conscious act, not a silent one.
+  assert.equal(installPaths, 11, 'all eleven npm-ci workflow paths must be covered');
 });
 
 test('normalizer synchronizes the manifest boundary and removes retired packages', async () => {
