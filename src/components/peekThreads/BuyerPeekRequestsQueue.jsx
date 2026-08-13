@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dialog';
 import TourUploader from '@/components/tours/TourUploader';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { useAuth } from '@/lib/AuthContext';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import {
   acceptPeekRequest,
@@ -107,6 +108,7 @@ function updateQueuePage(page, requestId, updater) {
 }
 
 export default function BuyerPeekRequestsQueue() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedId = searchParams.get('request');
@@ -118,12 +120,13 @@ export default function BuyerPeekRequestsQueue() {
   const [responseDraft, setResponseDraft] = useState(null);
   const [responseBusy, setResponseBusy] = useState(false);
   const [bindingBusy, setBindingBusy] = useState(false);
-  const historyKey = useMemo(() => ['seller-peek-request-queue', 'pages'], []);
-  const tailKey = useMemo(() => ['seller-peek-request-queue', 'tail'], []);
+  const historyKey = useMemo(() => ['seller-peek-request-queue', user?.id ?? null, 'pages'], [user?.id]);
+  const tailKey = useMemo(() => ['seller-peek-request-queue', user?.id ?? null, 'tail'], [user?.id]);
 
   const queue = useInfiniteQuery({
     queryKey: historyKey,
     queryFn: ({ pageParam, signal }) => getSellerPeekRequestQueue({ cursor: pageParam || null, limit: SELLER_QUEUE_PAGE_SIZE }, signal),
+    enabled: Boolean(user?.id),
     initialPageParam: null,
     getNextPageParam: (page) => page.nextCursor || undefined,
     staleTime: Infinity,
@@ -134,7 +137,7 @@ export default function BuyerPeekRequestsQueue() {
   const tail = useQuery({
     queryKey: tailKey,
     queryFn: ({ signal }) => getSellerPeekRequestQueue({ limit: SELLER_QUEUE_PAGE_SIZE }, signal),
-    enabled: Boolean(queue.data),
+    enabled: Boolean(user?.id && queue.data),
     staleTime: 15_000,
     refetchInterval: SELLER_QUEUE_REFRESH_MS,
     refetchIntervalInBackground: false,

@@ -175,6 +175,8 @@ test('trusted dispatcher uses server-only VAPID secrets, durable RPC claims and 
   assert.match(dispatcherSource, /retire_web_push_subscription/);
   assert.match(dispatcherSource, /You have a new message in PeekaListing/);
   assert.match(dispatcherSource, /code === 404.*code === 410/s);
+  assert.match(dispatcherSource, /constantTimeEqual/);
+  assert.doesNotMatch(dispatcherSource, /suppliedToken\s*!==\s*expectedToken/);
   assert.doesNotMatch(dispatcherSource, /VITE_WEB_PUSH_PRIVATE_KEY/);
 });
 

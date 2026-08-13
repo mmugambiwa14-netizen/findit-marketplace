@@ -1,6 +1,8 @@
 -- Roll back migration 0093 by removing the public SECURITY INVOKER wrapper
 -- and moving the canonical marketplace view SECURITY DEFINER implementation
--- back to public with its original search path and execution grants.
+-- back to public with the original execution grants. Keep the hardened empty
+-- search_path: restoring search_path=public would reintroduce the exact
+-- SECURITY DEFINER search-path vulnerability that 0093 removed.
 
 begin;
 
@@ -48,7 +50,7 @@ begin
 
   drop function public.record_marketplace_view(text, uuid);
 
-  alter function private.record_marketplace_view(text, uuid) set search_path = public;
+  alter function private.record_marketplace_view(text, uuid) set search_path = '';
   alter function private.record_marketplace_view(text, uuid) set schema public;
 
   revoke all on function public.record_marketplace_view(text, uuid)
@@ -67,7 +69,7 @@ begin
     and function_language.lanname = 'plpgsql'
     and function_record.prosecdef
     and function_record.provolatile = 'v'
-    and function_record.proconfig = array['search_path=public']::text[]
+    and function_record.proconfig = array['search_path=""']::text[]
     and coalesce(function_record.proacl::text, '') = '{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}'
     and md5(replace(function_record.prosrc, E'\r\n', E'\n')) = '16ed1360668ed6295a3d8ed0e219f55c';
 

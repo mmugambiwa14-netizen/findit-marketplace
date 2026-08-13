@@ -3,6 +3,7 @@ import { Mail, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getEmailNotificationPreferences, updateEmailNotificationPreferences } from '@/repositories/emailNotificationRepository';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { useAuth } from '@/lib/AuthContext';
 
 const OPTIONS = [
   ['messages', 'Messages', 'New conversations and enquiries'],
@@ -13,15 +14,18 @@ const OPTIONS = [
 ];
 
 export default function EmailNotificationSettings() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+  const preferencesKey = ['email-notification-preferences', user?.id ?? null];
   const query = useQuery({
-    queryKey: ['email-notification-preferences'],
+    queryKey: preferencesKey,
     queryFn: getEmailNotificationPreferences,
+    enabled: Boolean(user?.id),
     staleTime: 5 * 60_000,
   });
   const mutation = useMutation({
     mutationFn: updateEmailNotificationPreferences,
-    onSuccess: (data) => queryClient.setQueryData(['email-notification-preferences'], data),
+    onSuccess: (data) => queryClient.setQueryData(preferencesKey, data),
     onError: (error) => toast.error(error.message || 'Could not update email notifications'),
   });
 

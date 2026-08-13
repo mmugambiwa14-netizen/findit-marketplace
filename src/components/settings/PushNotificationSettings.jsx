@@ -12,23 +12,25 @@ import {
 import { getNotificationPreferences, updateNotificationPreferences } from '@/repositories/notificationPreferencesRepository';
 import { classifyPushPermission } from '@/services/pushContracts';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
-
-const PREFERENCES_KEY = ['notification-preferences'];
+import { useAuth } from '@/lib/AuthContext';
 
 export default function PushNotificationSettings() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [state, setState] = useState(() => ({ ...webPushSupport(), subscribed: false }));
   const [initializing, setInitializing] = useState(true);
   const [working, setWorking] = useState(false);
   const [explanationOpen, setExplanationOpen] = useState(false);
+  const preferencesKey = ['notification-preferences', user?.id ?? null];
   const preferencesQuery = useQuery({
-    queryKey: PREFERENCES_KEY,
+    queryKey: preferencesKey,
     queryFn: getNotificationPreferences,
+    enabled: Boolean(user?.id),
     staleTime: 5 * 60_000,
   });
   const preferenceMutation = useMutation({
     mutationFn: updateNotificationPreferences,
-    onSuccess: (data) => queryClient.setQueryData(PREFERENCES_KEY, data),
+    onSuccess: (data) => queryClient.setQueryData(preferencesKey, data),
     onError: (error) => toast.error(error.message || 'Could not update notification preferences'),
   });
 

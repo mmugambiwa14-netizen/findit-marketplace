@@ -22,6 +22,8 @@ test('marketplace view counter moves behind a private volatile implementation an
   assert.match(migration, /stored marketplace view callers exist/);
   assert.match(migration, /left a PUBLIC execute grant on a marketplace view function/);
   assert.match(rollback, /alter function private\.record_marketplace_view\(text, uuid\) set schema public/);
+  assert.match(rollback, /Keep the hardened empty[\s\S]*search_path/);
+  assert.doesNotMatch(rollback, /set search_path = public/i);
   assert.doesNotMatch(migration, /drop table|truncate|delete from/i);
   assert.doesNotMatch(rollback, /drop table|truncate|delete from/i);
 });
@@ -32,6 +34,7 @@ test('marketplace view boundary preserves signature, roles and exact rollback id
   assert.match(migration, /returns bigint/);
   assert.match(migration, /grant execute on function private\.record_marketplace_view\(text, uuid\)[\s\S]{0,120}to anon, authenticated, service_role/);
   assert.match(migration, /grant execute on function public\.record_marketplace_view\(text, uuid\)[\s\S]{0,120}to anon, authenticated, service_role/);
+  assert.match(rollback, /function_record\.proconfig = array\['search_path=""'\]/);
   assert.match(rollback, /did not restore the canonical public marketplace view implementation/);
 });
 

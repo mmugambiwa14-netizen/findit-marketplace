@@ -39,7 +39,7 @@ export default function Inquiries() {
   const request = useMemo(() => ({ query: deferredSearch, unreadOnly, limit: PAGE_SIZE }), [deferredSearch, unreadOnly]);
 
   const inboxQuery = useInfiniteQuery({
-    queryKey: ['message-inbox', request],
+    queryKey: ['message-inbox', user?.id ?? null, request],
     queryFn: ({ pageParam, signal }) => getMessageInboxPage({ ...request, cursor: pageParam || null }, signal),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,

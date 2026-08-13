@@ -21,6 +21,8 @@ import {
   removeStagedMarketplaceImage,
   replaceServiceMedia,
   resolveMarketplaceImages,
+  resolveMarketplaceImageMap,
+  safeLegacyUrl,
 } from '@/services/marketplaceImagesService';
 import { isTrustedMarketplaceImagePath } from '@/services/marketplaceImageContracts';
 import { attachPublicTourSummaries } from '@/services/listingToursService';
@@ -144,7 +146,7 @@ async function normalizeCanonicalPublicServiceRequest(request = {}) {
   );
 }
 
-async function mapService(row) {
+async function mapService(row, signedByPath = null) {
   if (!row) return null;
   const photoPaths = Array.isArray(row.photos) ? row.photos : [];
   const trustedPhotoPaths = photoPaths.filter((value) => isTrustedMarketplaceImagePath(value, 'service_photo'));
@@ -156,7 +158,9 @@ async function mapService(row) {
     price: row.price == null ? null : Number(row.price),
     photo_paths: trustedPhotoPaths,
     has_legacy_media: photoPaths.some((value) => !isTrustedMarketplaceImagePath(value, 'service_photo')),
-    photos: await resolveMarketplaceImages(photoPaths, 'service_photo'),
+    photos: signedByPath
+      ? photoPaths.map((value) => signedByPath.get(value) ?? safeLegacyUrl(value)).filter(Boolean)
+      : await resolveMarketplaceImages(photoPaths, 'service_photo'),
     subcategories: Array.isArray(row.subcategories) ? row.subcategories : [],
   };
 }
@@ -199,7 +203,8 @@ export async function getPublicServicesByIds(ids, { signal } = {}) {
 export async function getOwnerServicesPage(providerId, request = {}) {
   const normalized = normalizeOwnerServicePageRequest(providerId, request);
   const page = createKeysetPage(await findOwnerServices(normalized), normalized.limit);
-  const services = await Promise.all(page.items.map(mapService));
+  const signedByPath = await resolveMarketplaceImageMap(page.items, 'service_photo');
+  const services = await Promise.all(page.items.map((row) => mapService(row, signedByPath)));
   return {
     items: await attachServiceTaxonomyPresentation(services),
     nextCursor: page.nextCursor,

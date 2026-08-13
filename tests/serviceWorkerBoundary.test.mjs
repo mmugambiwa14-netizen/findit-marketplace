@@ -35,6 +35,7 @@ function loadWorker() {
       match: async () => undefined,
     },
     fetch: async () => new Response('ok', { status: 200 }),
+    importScripts: () => {},
     Request,
     Response,
     Headers,

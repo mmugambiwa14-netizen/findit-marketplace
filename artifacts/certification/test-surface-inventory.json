@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-11T17:43:43.944Z",
+  "generatedAt": "2026-08-12T15:55:48.071Z",
   "repositoryCommit": null,
   "policy": {
     "noProductionData": true,
@@ -23,14 +23,14 @@
     "interactionSurfaces": 77,
     "codeModules": 95,
     "featureFlags": 27,
-    "existingNodeTestFiles": 176,
+    "existingNodeTestFiles": 177,
     "existingSqlTestFiles": 65,
-    "migrations": 196,
+    "migrations": 199,
     "edgeFunctions": 30,
-    "databaseTables": 105,
-    "databaseFunctions": 352,
-    "rlsPolicies": 179,
-    "triggers": 115,
+    "databaseTables": 107,
+    "databaseFunctions": 359,
+    "rlsPolicies": 180,
+    "triggers": 118,
     "storageBuckets": 5,
     "orphanedSurfaces": 0
   },
@@ -1765,8 +1765,10 @@
         "removeStagedMarketplaceImage",
         "detachMarketplaceImage",
         "replaceServiceMedia",
+        "safeLegacyUrl",
         "hydrateMarketplaceCardImages",
         "resolveMarketplaceImages",
+        "resolveMarketplaceImageMap",
         "resolveMarketplaceImage"
       ]
     },
@@ -2526,6 +2528,14 @@
           "owner": "test:db"
         },
         {
+          "name": "public.email_delivery_jobs",
+          "owner": "test:db"
+        },
+        {
+          "name": "public.email_notification_preferences",
+          "owner": "test:db"
+        },
+        {
           "name": "public.email_templates",
           "owner": "test:db"
         },
@@ -2942,6 +2952,11 @@
           "name": "private.discover_listing_is_countable",
           "area": "listings",
           "owner": "test:db"
+        },
+        {
+          "name": "private.email_event_enabled",
+          "area": "security",
+          "owner": "test:rls"
         },
         {
           "name": "private.enforce_business_application_abuse_budget",
@@ -3474,6 +3489,11 @@
           "owner": "test:db"
         },
         {
+          "name": "public.claim_email_delivery_jobs",
+          "area": "foundation",
+          "owner": "test:db"
+        },
+        {
           "name": "public.claim_expired_image_uploads",
           "area": "media",
           "owner": "test:db"
@@ -3506,6 +3526,11 @@
         {
           "name": "public.clear_my_recommendation_personalization_data_v1",
           "area": "recommendations",
+          "owner": "test:db"
+        },
+        {
+          "name": "public.complete_email_delivery_job",
+          "area": "foundation",
           "owner": "test:db"
         },
         {
@@ -3669,6 +3694,11 @@
           "owner": "test:db"
         },
         {
+          "name": "public.enqueue_email_for_alert",
+          "area": "foundation",
+          "owner": "test:db"
+        },
+        {
           "name": "public.enqueue_listing_recommendation_projection",
           "area": "listings",
           "owner": "test:db"
@@ -3714,6 +3744,11 @@
           "owner": "test:db"
         },
         {
+          "name": "public.fail_email_delivery_job",
+          "area": "foundation",
+          "owner": "test:db"
+        },
+        {
           "name": "public.fail_notification_fanout_job",
           "area": "notifications",
           "owner": "test:db"
@@ -3746,6 +3781,11 @@
         {
           "name": "public.finalize_tour_processing",
           "area": "peeks",
+          "owner": "test:db"
+        },
+        {
+          "name": "public.get_email_notification_preferences",
+          "area": "notifications",
           "owner": "test:db"
         },
         {
@@ -4579,6 +4619,11 @@
           "owner": "test:db"
         },
         {
+          "name": "public.update_email_notification_preferences",
+          "area": "notifications",
+          "owner": "test:db"
+        },
+        {
           "name": "public.update_notification_preferences",
           "area": "notifications",
           "owner": "test:db"
@@ -4743,6 +4788,10 @@
         },
         {
           "name": "public.discover_category_count_snapshots:discover_category_count_snapshots_public_read",
+          "owner": "test:rls"
+        },
+        {
+          "name": "public.email_notification_preferences:email_notification_preferences_owner_access",
           "owner": "test:rls"
         },
         {
@@ -5802,6 +5851,18 @@
         {
           "name": "supabase/migrations/20260811143931_web_push_reliability_and_preferences.sql:web_push_delivery_attempts_updated_at",
           "owner": "test:db"
+        },
+        {
+          "name": "supabase/migrations/20260812150656_email_notifications_indexes_and_runtime_hardening.sql:app_alerts_enqueue_email",
+          "owner": "test:db"
+        },
+        {
+          "name": "supabase/migrations/20260812150656_email_notifications_indexes_and_runtime_hardening.sql:email_delivery_jobs_updated_at",
+          "owner": "test:db"
+        },
+        {
+          "name": "supabase/migrations/20260812150656_email_notifications_indexes_and_runtime_hardening.sql:email_notification_preferences_updated_at",
+          "owner": "test:db"
         }
       ],
       "buckets": [
@@ -6023,7 +6084,10 @@
       "supabase/migrations/20260809170000_listing_deletion_history_reference_integrity.sql",
       "supabase/migrations/20260809180000_allow_referential_notification_detach.sql",
       "supabase/migrations/20260809190000_curated_publisher_service_role_boundary.sql",
-      "supabase/migrations/20260811143931_web_push_reliability_and_preferences.sql"
+      "supabase/migrations/20260811143931_web_push_reliability_and_preferences.sql",
+      "supabase/migrations/20260812150656_email_notifications_indexes_and_runtime_hardening.sql",
+      "supabase/migrations/20260812153000_email_notification_policy_cleanup.sql",
+      "supabase/migrations/20260812160000_runtime_advisor_hardening.sql"
     ]
   },
   "existingTests": [
@@ -6866,6 +6930,13 @@
       "owner": "test:e2e:peeks",
       "classification": "strengthen",
       "reason": "Retain the existing contract coverage and add runtime, browser, database, or adversarial coverage at the same boundary."
+    },
+    {
+      "file": "tests/runtimeHardeningContracts.test.mjs",
+      "area": "foundation",
+      "owner": "test:unit",
+      "classification": "retain",
+      "reason": "The test protects a valid deterministic repository contract and remains part of certification."
     },
     {
       "file": "tests/safetyOperationsJourneyContracts.test.mjs",

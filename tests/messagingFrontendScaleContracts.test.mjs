@@ -82,20 +82,20 @@ test('open thread refresh cost stays constant as older history pages accumulate'
 
   const historyBlock = thread.slice(historyStart, tailStart);
   const tailBlock = thread.slice(tailStart, mergeStart);
-  assert.match(historyBlock, /queryKey: \['message-thread', conversationId\]/);
+  assert.match(historyBlock, /queryKey: \['message-thread', accountId, conversationId\]/);
   assert.match(historyBlock, /staleTime:\s*Infinity/);
   assert.match(historyBlock, /refetchOnWindowFocus:\s*false/);
   assert.match(historyBlock, /refetchOnReconnect:\s*false/);
   assert.doesNotMatch(historyBlock, /refetchInterval:/);
 
-  assert.match(tailBlock, /queryKey: \['message-thread-tail', conversationId\]/);
+  assert.match(tailBlock, /queryKey: \['message-thread-tail', accountId, conversationId\]/);
   assert.match(tailBlock, /getMessageThreadPage\(conversationId, \{ limit: THREAD_PAGE_SIZE \}, signal\)/);
   assert.match(tailBlock, /refetchInterval:\s*realtimeConnected \? CONNECTED_THREAD_REFRESH_MS : DISCONNECTED_THREAD_REFRESH_MS/);
   assert.match(thread, /const overlaps = incomingItems\.some/);
   assert.match(thread, /pages: \[incomingPage\], pageParams: \[null\]/);
-  assert.match(thread, /refetchQueries\(\{ queryKey: \['message-thread-tail', conversationId\], exact: true, type: 'active' \}\)/);
+  assert.match(thread, /refetchQueries\(\{ queryKey: \['message-thread-tail', accountId, conversationId\], exact: true, type: 'active' \}\)/);
   assert.doesNotMatch(thread, /resetQueries\(\{ queryKey: \['message-thread', conversationId\]/);
 
-  assert.match(realtimeThread, /queryKey: \['message-thread-tail', conversationId\]/);
+  assert.match(realtimeThread, /queryKey: \['message-thread-tail', accountId, conversationId\]/);
   assert.doesNotMatch(realtimeThread, /queryKey: \['message-thread', conversationId\]/);
 });

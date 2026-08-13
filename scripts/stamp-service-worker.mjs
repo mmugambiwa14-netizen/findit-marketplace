@@ -13,6 +13,7 @@ const projectRoot = resolve(import.meta.dirname, '..');
 const outputRoot = join(projectRoot, 'dist');
 const workerPath = join(outputRoot, 'sw.js');
 const pushImport = "importScripts('/push-sw.js');\n";
+const verifyOnly = process.argv.includes('--check');
 
 function collect(directory, files = []) {
   for (const name of readdirSync(directory)) {
@@ -29,6 +30,19 @@ try {
 } catch {
   console.error('Service worker stamp: FAIL (dist/sw.js not found -- is public/sw.js present?)');
   process.exit(1);
+}
+
+if (verifyOnly) {
+  if (source.includes('__SW_VERSION__')) {
+    console.error('Service worker verification: FAIL (dist/sw.js is not stamped)');
+    process.exit(1);
+  }
+  if (!source.startsWith(pushImport)) {
+    console.error('Service worker verification: FAIL (push handlers are not loaded)');
+    process.exit(1);
+  }
+  console.log('Service worker verification: PASS (stamped version and push handlers present)');
+  process.exit(0);
 }
 
 if (!source.includes('__SW_VERSION__')) {

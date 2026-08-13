@@ -15,6 +15,7 @@ const METADATA_REFRESH_MS = 15_000;
  */
 export default function RealtimeConversationThread(props) {
   const { conversationId, currentUser } = props;
+  const accountId = currentUser?.id ?? null;
   const queryClient = useQueryClient();
   const [realtimeConnected, setRealtimeConnected] = useState(false);
 
@@ -26,7 +27,7 @@ export default function RealtimeConversationThread(props) {
     const refreshMetadata = () => {
       if (cancelled) return;
       queryClient.invalidateQueries({
-        queryKey: ['message-conversation-metadata', conversationId],
+        queryKey: ['message-conversation-metadata', accountId, conversationId],
         exact: true,
       });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
@@ -34,7 +35,7 @@ export default function RealtimeConversationThread(props) {
     const refreshMessages = () => {
       if (cancelled) return;
       queryClient.invalidateQueries({
-        queryKey: ['message-thread-tail', conversationId],
+        queryKey: ['message-thread-tail', accountId, conversationId],
         exact: true,
       });
     };
@@ -85,7 +86,7 @@ export default function RealtimeConversationThread(props) {
       document.removeEventListener('visibilitychange', refreshWhenVisible);
       if (channel) void supabase.removeChannel(channel).catch(() => {});
     };
-  }, [conversationId, currentUser?.id, queryClient]);
+  }, [accountId, conversationId, queryClient]);
 
   return <ConversationThread {...props} realtimeConnected={realtimeConnected} />;
 }

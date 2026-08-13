@@ -42,7 +42,13 @@ begin
   delete from public.user_presence where user_id = v_user_id;
   delete from public.peek_request_supporters where user_id = v_user_id;
   delete from public.web_push_subscriptions where user_id = v_user_id;
-  delete from public.email_notification_preferences where user_id = v_user_id;
+  -- Email preferences are introduced after the original account-deletion
+  -- migration in some deployed histories. Keep deletion idempotent across a
+  -- clean migration and those older hosted databases.
+  if to_regclass('public.email_notification_preferences') is not null then
+    execute 'delete from public.email_notification_preferences where user_id = $1'
+      using v_user_id;
+  end if;
 
   update public.users
      set email = 'deleted-' || replace(v_user_id::text, '-', '') || '@deleted.invalid',

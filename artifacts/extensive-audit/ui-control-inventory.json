@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-11T17:43:39.765Z",
+  "generatedAt": "2026-08-12T15:57:31.381Z",
   "sourceFiles": 341,
   "pageModules": 40,
   "directControlDeclarations": 774,
@@ -28,43 +28,43 @@
       "page": "BusinessProfiles.jsx",
       "directControls": 5,
       "expandedControls": 20,
-      "localModulesInClosure": 49
+      "localModulesInClosure": 52
     },
     {
       "page": "BuyerPeekRequests.jsx",
       "directControls": 3,
       "expandedControls": 35,
-      "localModulesInClosure": 41
+      "localModulesInClosure": 49
     },
     {
       "page": "CarDetail.jsx",
       "directControls": 0,
       "expandedControls": 85,
-      "localModulesInClosure": 118
+      "localModulesInClosure": 121
     },
     {
       "page": "ContactSupport.jsx",
       "directControls": 9,
       "expandedControls": 9,
-      "localModulesInClosure": 21
+      "localModulesInClosure": 24
     },
     {
       "page": "CreateListing.jsx",
       "directControls": 2,
       "expandedControls": 82,
-      "localModulesInClosure": 69
+      "localModulesInClosure": 72
     },
     {
       "page": "CreateService.jsx",
       "directControls": 21,
       "expandedControls": 27,
-      "localModulesInClosure": 50
+      "localModulesInClosure": 53
     },
     {
       "page": "CuratedCreateService.jsx",
       "directControls": 2,
       "expandedControls": 59,
-      "localModulesInClosure": 55
+      "localModulesInClosure": 58
     },
     {
       "page": "FAQs.jsx",
@@ -88,7 +88,7 @@
       "page": "Inquiries.jsx",
       "directControls": 7,
       "expandedControls": 27,
-      "localModulesInClosure": 41
+      "localModulesInClosure": 44
     },
     {
       "page": "LegalPage.jsx",
@@ -106,43 +106,43 @@
       "page": "MachineryDetail.jsx",
       "directControls": 0,
       "expandedControls": 85,
-      "localModulesInClosure": 118
+      "localModulesInClosure": 121
     },
     {
       "page": "MyListings.jsx",
       "directControls": 14,
       "expandedControls": 52,
-      "localModulesInClosure": 70
+      "localModulesInClosure": 73
     },
     {
       "page": "MyServices.jsx",
       "directControls": 4,
       "expandedControls": 35,
-      "localModulesInClosure": 57
+      "localModulesInClosure": 60
     },
     {
       "page": "NotificationCenter.jsx",
       "directControls": 6,
       "expandedControls": 6,
-      "localModulesInClosure": 19
+      "localModulesInClosure": 22
     },
     {
       "page": "Profile.jsx",
       "directControls": 3,
       "expandedControls": 5,
-      "localModulesInClosure": 35
+      "localModulesInClosure": 38
     },
     {
       "page": "PropertyDetail.jsx",
       "directControls": 0,
       "expandedControls": 85,
-      "localModulesInClosure": 118
+      "localModulesInClosure": 121
     },
     {
       "page": "PublicBusinessProfile.jsx",
       "directControls": 15,
       "expandedControls": 41,
-      "localModulesInClosure": 82
+      "localModulesInClosure": 85
     },
     {
       "page": "Register.jsx",
@@ -160,43 +160,43 @@
       "page": "Saved.jsx",
       "directControls": 6,
       "expandedControls": 30,
-      "localModulesInClosure": 76
+      "localModulesInClosure": 79
     },
     {
       "page": "Search.jsx",
       "directControls": 2,
       "expandedControls": 67,
-      "localModulesInClosure": 89
+      "localModulesInClosure": 92
     },
     {
       "page": "SellerProfile.jsx",
       "directControls": 9,
       "expandedControls": 34,
-      "localModulesInClosure": 67
+      "localModulesInClosure": 70
     },
     {
       "page": "ServiceDetail.jsx",
       "directControls": 0,
       "expandedControls": 63,
-      "localModulesInClosure": 92
+      "localModulesInClosure": 95
     },
     {
       "page": "Services.jsx",
       "directControls": 11,
       "expandedControls": 42,
-      "localModulesInClosure": 73
+      "localModulesInClosure": 76
     },
     {
       "page": "Settings.jsx",
       "directControls": 7,
       "expandedControls": 37,
-      "localModulesInClosure": 46
+      "localModulesInClosure": 47
     },
     {
       "page": "Tours.jsx",
       "directControls": 6,
       "expandedControls": 31,
-      "localModulesInClosure": 62
+      "localModulesInClosure": 65
     },
     {
       "page": "ToursPlaceholder.jsx",
@@ -262,7 +262,7 @@
       "page": "admin\\AdminUsers.jsx",
       "directControls": 10,
       "expandedControls": 23,
-      "localModulesInClosure": 30
+      "localModulesInClosure": 33
     }
   ],
   "controls": [
@@ -3327,17 +3327,6 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 218,
-      "element": "Button",
-      "name": "Back to messages",
-      "type": "button",
-      "handler": "onBack",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\messaging\\ConversationThread.jsx",
-      "page": "",
       "line": 219,
       "element": "Button",
       "name": "Back to messages",
@@ -3349,7 +3338,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 229,
+      "line": 220,
       "element": "Button",
       "name": "Back to messages",
       "type": "button",
@@ -3360,7 +3349,18 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 235,
+      "line": 230,
+      "element": "Button",
+      "name": "Back to messages",
+      "type": "button",
+      "handler": "onBack",
+      "destination": "",
+      "disabled": ""
+    },
+    {
+      "file": "src\\components\\messaging\\ConversationThread.jsx",
+      "page": "",
+      "line": 236,
       "element": "DropdownMenuTrigger",
       "name": "",
       "type": "",
@@ -3371,7 +3371,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 236,
+      "line": 237,
       "element": "Button",
       "name": "Conversation options",
       "type": "button",
@@ -3382,7 +3382,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 246,
+      "line": 247,
       "element": "Link",
       "name": "`View ${conversation.listing_title}`",
       "type": "",
@@ -3393,7 +3393,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 251,
+      "line": 252,
       "element": "Link",
       "name": "{conversation.listing_title}",
       "type": "",
@@ -3404,7 +3404,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 256,
+      "line": 257,
       "element": "Link",
       "name": "Peek ` · ${durationLabel(conversation.tour_duration_seconds)}` ''",
       "type": "",
@@ -3415,7 +3415,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 259,
+      "line": 260,
       "element": "Button",
       "name": "View listing",
       "type": "",
@@ -3426,7 +3426,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 259,
+      "line": 260,
       "element": "Link",
       "name": "",
       "type": "",
@@ -3437,7 +3437,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 268,
+      "line": 269,
       "element": "Button",
       "name": "<><Loader2 className=\"h-4 w-4 animate-spin\" /> Loading</> 'Load older messages'",
       "type": "button",
@@ -3448,7 +3448,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 289,
+      "line": 290,
       "element": "Textarea",
       "name": "Write a message",
       "type": "",
@@ -3459,7 +3459,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 290,
+      "line": 291,
       "element": "Button",
       "name": "Send message",
       "type": "button",
@@ -3470,7 +3470,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 296,
+      "line": 297,
       "element": "Dialog",
       "name": "'Unblock conversation?' 'Block conversation?' 'Both participants can send again unless the other participant has also blocked the conversation.' 'Neither participant can send while either side has a block in place. Existing messages remain visible.' 'Saving…' conversation.blocked_by_me ? 'Unblock' : 'Block'",
       "type": "",
@@ -3481,7 +3481,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 296,
+      "line": 297,
       "element": "Button",
       "name": "'Saving…' conversation.blocked_by_me ? 'Unblock' : 'Block'",
       "type": "button",
@@ -3492,7 +3492,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 298,
+      "line": 299,
       "element": "Dialog",
       "name": "Report conversation Reason Spam Scam or fraud Harassment Unsafe behaviour Other Details (optional) 'Submitting…' 'Submit report'",
       "type": "",
@@ -3503,7 +3503,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 298,
+      "line": 299,
       "element": "Select",
       "name": "Spam Scam or fraud Harassment Unsafe behaviour Other",
       "type": "",
@@ -3514,7 +3514,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 298,
+      "line": 299,
       "element": "SelectTrigger",
       "name": "",
       "type": "",
@@ -3525,7 +3525,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 298,
+      "line": 299,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -3536,7 +3536,7 @@
     {
       "file": "src\\components\\messaging\\ConversationThread.jsx",
       "page": "",
-      "line": 298,
+      "line": 299,
       "element": "Button",
       "name": "'Submitting…' 'Submit report'",
       "type": "button",
@@ -3547,7 +3547,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 315,
+      "line": 318,
       "element": "Button",
       "name": "Try again",
       "type": "",
@@ -3558,7 +3558,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 339,
+      "line": 342,
       "element": "Button",
       "name": "View listing",
       "type": "",
@@ -3569,7 +3569,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 339,
+      "line": 342,
       "element": "Link",
       "name": "View listing",
       "type": "",
@@ -3580,7 +3580,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 340,
+      "line": 343,
       "element": "Button",
       "name": "Accept",
       "type": "",
@@ -3591,7 +3591,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 341,
+      "line": 344,
       "element": "Button",
       "name": "'Continue upload' 'Record response'",
       "type": "",
@@ -3602,7 +3602,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 342,
+      "line": 345,
       "element": "Button",
       "name": "Retry",
       "type": "",
@@ -3613,7 +3613,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 343,
+      "line": 346,
       "element": "Button",
       "name": "Cancel attempt",
       "type": "",
@@ -3624,7 +3624,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 344,
+      "line": 347,
       "element": "Button",
       "name": "Decline",
       "type": "",
@@ -3635,7 +3635,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 349,
+      "line": 352,
       "element": "Button",
       "name": "<><Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />Loading</> 'Load more requests'",
       "type": "",
@@ -3646,7 +3646,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 350,
+      "line": 353,
       "element": "Button",
       "name": "Retry loading more",
       "type": "",
@@ -3657,7 +3657,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 354,
+      "line": 357,
       "element": "Dialog",
       "name": "Record Response Peek `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. PeekaListing attaches the video to this request automatically once it finishes processing.` 'Record visual evidence for this buyer request.' The accepted request stays open while the video uploads and processes. It becomes answered automatically as soon as processing finishes.",
       "type": "",
@@ -3668,7 +3668,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 380,
+      "line": 383,
       "element": "AlertDialog",
       "name": "Cancel this fulfilment attempt? The buyer request stays open, but the current upload or processing attempt will no longer be attached automatically. You can retry later. Keep attempt <><Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />Cancelling</> 'Cancel attempt'",
       "type": "",
@@ -3679,7 +3679,7 @@
     {
       "file": "src\\components\\peekThreads\\BuyerPeekRequestsQueue.jsx",
       "page": "",
-      "line": 395,
+      "line": 398,
       "element": "AlertDialog",
       "name": "Decline this Peek Request? Give buyers a short, useful reason. The request will no longer appear publicly as pending. Reason Cancel <><Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />Declining</> 'Decline request'",
       "type": "",
@@ -3690,7 +3690,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 135,
+      "line": 138,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -3701,7 +3701,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 141,
+      "line": 144,
       "element": "Button",
       "name": "Browse listings",
       "type": "button",
@@ -3712,7 +3712,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 141,
+      "line": 144,
       "element": "Link",
       "name": "Browse listings",
       "type": "",
@@ -3723,7 +3723,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 183,
+      "line": 186,
       "element": "Button",
       "name": "View listing",
       "type": "button",
@@ -3734,7 +3734,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 183,
+      "line": 186,
       "element": "Link",
       "name": "View listing",
       "type": "",
@@ -3745,7 +3745,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 188,
+      "line": 191,
       "element": "Button",
       "name": "Remove interest",
       "type": "button",
@@ -3756,7 +3756,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 198,
+      "line": 201,
       "element": "Button",
       "name": "<><Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />Loading</> 'Load more requests'",
       "type": "button",
@@ -3767,7 +3767,7 @@
     {
       "file": "src\\components\\peekThreads\\MyPeekRequestsQueue.jsx",
       "page": "",
-      "line": 204,
+      "line": 207,
       "element": "Button",
       "name": "Retry loading more",
       "type": "button",
@@ -3778,7 +3778,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 181,
+      "line": 184,
       "element": "Button",
       "name": "Request a Peek",
       "type": "button",
@@ -3789,7 +3789,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 197,
+      "line": 200,
       "element": "button",
       "name": "{suggestion.body}",
       "type": "button",
@@ -3800,7 +3800,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 215,
+      "line": 218,
       "element": "Button",
       "name": "Cancel",
       "type": "button",
@@ -3811,7 +3811,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 216,
+      "line": 219,
       "element": "Button",
       "name": "{duplicateActionLabel}",
       "type": "button",
@@ -3822,7 +3822,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 225,
+      "line": 228,
       "element": "button",
       "name": "{entry.label}",
       "type": "button",
@@ -3833,7 +3833,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 230,
+      "line": 233,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -3844,7 +3844,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 235,
+      "line": 238,
       "element": "Button",
       "name": "<><Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />Loading</> 'Load more requests'",
       "type": "button",
@@ -3855,7 +3855,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 242,
+      "line": 245,
       "element": "AlertDialog",
       "name": "Decline this Peek Request? Give buyers a short, useful reason. The request will no longer appear publicly as awaiting your response. Reason {declineReason.trim().length} /280 Cancel <><Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />Declining</> 'Decline request'",
       "type": "",
@@ -3866,7 +3866,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 274,
+      "line": 277,
       "element": "Button",
       "name": "<CheckCircle2 className=\"mr-2 h-4 w-4\" /> <ThumbsUp className=\"mr-2 h-4 w-4\" /> 'Interested' 'I want this too'",
       "type": "button",
@@ -3877,7 +3877,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 279,
+      "line": 282,
       "element": "Button",
       "name": "Decline",
       "type": "button",
@@ -3888,7 +3888,7 @@
     {
       "file": "src\\components\\peekThreads\\PeekThreadsSection.jsx",
       "page": "",
-      "line": 280,
+      "line": 283,
       "element": "Button",
       "name": "Record response",
       "type": "button",
@@ -3899,7 +3899,7 @@
     {
       "file": "src\\components\\peekThreads\\ResponsePeekBindingQueue.jsx",
       "page": "",
-      "line": 74,
+      "line": 78,
       "element": "Button",
       "name": "Select requests",
       "type": "",
@@ -3910,7 +3910,7 @@
     {
       "file": "src\\components\\peekThreads\\ResponsePeekBindingQueue.jsx",
       "page": "",
-      "line": 81,
+      "line": 85,
       "element": "AlertDialog",
       "name": "Which requests does this Peek answer? Select up to 25 requests for {active?.parentTitle} . Buyers receive one notification even when several requests are answered. ( <ListRowsSkeleton rows={4} className=\"p-2\" label=\"Loading matching Peek Requests\" /> ) candidates.isError ? ( <p className=\"rounded-xl bg-destructive/10 p-3 text-sm text-destructive\">Matching requests could not be loaded.</p> ) : ( <div className=\"space-y-2\"> {(candidates.data || []).map((item) => { const checked = selected.includes(item.requestId); return ( <label key={item.requestId} className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${checked ? 'border-primary bg-primary/5' : 'border-border'}`}> <input type=\"checkbox\" aria-label={`Select Peek request: ${item.body}`} checked={checked} onChange={() => toggle(item.requestId)} className=\"mt-1 h-4 w-4\" /> <span className=\"min-w-0 flex-1\"> <span className=\"flex flex-wrap items-center gap-2\"><Badge variant=\"secondary\">{peekRequestCategoryLabel(item.category)}</Badge><span className=\"text-xs font-semibold text-primary\">{item.supporterCount} interested</span></span> <span className=\"mt-2 block text-sm font-semibold\">{item.body}</span> </span> </label> ); })} {!candidates.data?.length && <p className=\"p-4 text-center text-sm text-muted-foreground\">No eligible requests remain for this listing.</p>} </div> ) Cancel <><Loader2 className=\"mr-2 h-4 w-4 animate-spin\" />Publishing</> <><CheckCircle2 className=\"mr-2 h-4 w-4\" />Publish response</>",
       "type": "",
@@ -4647,7 +4647,7 @@
     {
       "file": "src\\components\\settings\\NotificationSoundSettings.jsx",
       "page": "",
-      "line": 51,
+      "line": 53,
       "element": "Button",
       "name": "'Sound enabled' 'Sound disabled'",
       "type": "button",
@@ -4658,7 +4658,7 @@
     {
       "file": "src\\components\\settings\\NotificationSoundSettings.jsx",
       "page": "",
-      "line": 55,
+      "line": 57,
       "element": "Button",
       "name": "Play test tone",
       "type": "button",
@@ -4724,7 +4724,7 @@
     {
       "file": "src\\components\\settings\\PushNotificationSettings.jsx",
       "page": "",
-      "line": 97,
+      "line": 99,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -4735,7 +4735,7 @@
     {
       "file": "src\\components\\settings\\PushNotificationSettings.jsx",
       "page": "",
-      "line": 145,
+      "line": 147,
       "element": "Button",
       "name": "Enable push notifications",
       "type": "button",
@@ -4746,7 +4746,7 @@
     {
       "file": "src\\components\\settings\\PushNotificationSettings.jsx",
       "page": "",
-      "line": 156,
+      "line": 158,
       "element": "Button",
       "name": "<Loader2 className=\"mr-2 h-4 w-4 animate-spin\" /> <BellRing className=\"mr-2 h-4 w-4\" /> Disable push notifications",
       "type": "button",
@@ -4757,7 +4757,7 @@
     {
       "file": "src\\components\\settings\\PushNotificationSettings.jsx",
       "page": "",
-      "line": 171,
+      "line": 173,
       "element": "Button",
       "name": "<Loader2 className=\"mr-2 h-4 w-4 animate-spin\" /> <BellRing className=\"mr-2 h-4 w-4\" /> Continue and allow notifications",
       "type": "button",
@@ -4768,7 +4768,7 @@
     {
       "file": "src\\components\\settings\\PushNotificationSettings.jsx",
       "page": "",
-      "line": 175,
+      "line": 177,
       "element": "Button",
       "name": "Not now",
       "type": "button",
@@ -5219,7 +5219,7 @@
     {
       "file": "src\\components\\tours\\TourManagementPanel.jsx",
       "page": "",
-      "line": 143,
+      "line": 145,
       "element": "Button",
       "name": "Try again",
       "type": "button",
@@ -5230,7 +5230,7 @@
     {
       "file": "src\\components\\tours\\TourManagementPanel.jsx",
       "page": "",
-      "line": 157,
+      "line": 159,
       "element": "Button",
       "name": "Remove",
       "type": "button",
@@ -5241,7 +5241,7 @@
     {
       "file": "src\\components\\tours\\TourManagementPanel.jsx",
       "page": "",
-      "line": 181,
+      "line": 183,
       "element": "Button",
       "name": "Cancel this version",
       "type": "button",
@@ -5252,7 +5252,7 @@
     {
       "file": "src\\components\\tours\\TourManagementPanel.jsx",
       "page": "",
-      "line": 206,
+      "line": 208,
       "element": "AlertDialog",
       "name": "'Remove the public Peek?' 'Remove this Peek version?' `The Peek will be removed from this ${parentType}. The ${parentType} and its photos will remain.` 'The unfinished or replacement Peek version will be cancelled and removed.' Cancel <><Loader2 className=\"h-4 w-4 animate-spin\" aria-hidden=\"true\" />Removing</> 'Remove Peek'",
       "type": "",

@@ -129,9 +129,27 @@ export async function disableWebPush() {
   const subscription = await getCurrentPushSubscription();
   if (!subscription) return;
 
-  const { error } = await supabase.rpc('disable_web_push_subscription', {
-    p_endpoint: subscription.endpoint,
-  });
-  if (error) throw error;
-  await subscription.unsubscribe();
+  let remoteError = null;
+  try {
+    const { error } = await supabase.rpc('disable_web_push_subscription', {
+      p_endpoint: subscription.endpoint,
+    });
+    remoteError = error || null;
+  } catch (error) {
+    remoteError = error;
+  }
+
+  // The browser subscription belongs to this installation. Always remove it
+  // locally even if the authenticated cleanup RPC is unavailable (for
+  // example, during logout after a token has expired), otherwise the next
+  // account using this browser can inherit a stale endpoint.
+  let localError = null;
+  try {
+    await subscription.unsubscribe();
+  } catch (error) {
+    localError = error;
+  }
+
+  if (remoteError) throw remoteError;
+  if (localError) throw localError;
 }

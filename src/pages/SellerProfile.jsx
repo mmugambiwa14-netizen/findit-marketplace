@@ -60,7 +60,7 @@ export default function SellerProfile() {
   );
   const viewerOwnsProfile = Boolean(user) && user.id === profileSellerId;
   const revealQuery = useQuery({
-    queryKey: ["seller-contact-reveal", contactSource?.id ?? null],
+    queryKey: ["seller-contact-reveal", user?.id ?? null, contactSource?.id ?? null],
     queryFn: () => revealContactDetails(contactSource._type || "property", contactSource.id),
     enabled: Boolean(contactSource) && Boolean(user) && !viewerOwnsProfile
       && !contactSource?.contact_phone && !contactSource?.contact_whatsapp,

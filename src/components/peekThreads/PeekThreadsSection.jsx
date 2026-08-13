@@ -55,7 +55,10 @@ export default function PeekThreadsSection({ parentType = 'listing', parentId, l
   const [declineTarget, setDeclineTarget] = useState(null);
   const [declineReason, setDeclineReason] = useState('');
   const filter = FILTERS[activeFilter];
-  const queryKey = ['peek-threads', parentType, parentId, filter.value, filter.sort];
+  // The thread query is caller-relative: owners and requesters receive
+  // different private fields for the same parent. Keep the account scope at
+  // the end so existing prefix invalidations remain effective.
+  const queryKey = ['peek-threads', parentType, parentId, filter.value, filter.sort, user?.id ?? null];
 
   const threadQuery = useInfiniteQuery({
     queryKey,

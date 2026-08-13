@@ -1,3 +1,5 @@
+importScripts('/push-sw.js');
+
 /* PeekaListing service worker.
  *
  * Hand-written rather than generated. Workbox would be a new dependency and a
@@ -102,13 +104,13 @@ async function handleNavigation(event) {
     const preloaded = await event.preloadResponse;
     if (preloaded) {
       const shell = await caches.open(SHELL_CACHE);
-      if (isCacheableResponse(preloaded)) shell.put(SHELL_URL, preloaded.clone());
+      if (isCacheableResponse(preloaded)) await shell.put(SHELL_URL, preloaded.clone());
       return preloaded;
     }
     const response = await fetch(event.request);
     if (isCacheableResponse(response)) {
       const shell = await caches.open(SHELL_CACHE);
-      shell.put(SHELL_URL, response.clone());
+      await shell.put(SHELL_URL, response.clone());
     }
     return response;
   } catch {
@@ -134,23 +136,30 @@ async function handleImmutableAsset(request) {
   if (isCacheableResponse(response)) {
     const cache = await caches.open(ASSET_CACHE);
     await cache.put(request, response.clone());
-    trimCache(ASSET_CACHE, MAX_ASSET_ENTRIES);
+    await trimCache(ASSET_CACHE, MAX_ASSET_ENTRIES);
   }
   return response;
 }
 
-async function handleStatic(request) {
+async function handleStatic(event) {
+  const { request } = event;
   const cache = await caches.open(SHELL_CACHE);
   const cached = await cache.match(request);
 
   const network = fetch(request)
-    .then((response) => {
-      if (isCacheableResponse(response)) cache.put(request, response.clone());
+    .then(async (response) => {
+      if (isCacheableResponse(response)) await cache.put(request, response.clone());
       return response;
     })
     .catch(() => null);
 
-  return cached || (await network) || Response.error();
+  if (cached) {
+    // Preserve stale-while-revalidate without letting the worker terminate
+    // before the background cache write completes.
+    event.waitUntil(network);
+    return cached;
+  }
+  return (await network) || Response.error();
 }
 
 self.addEventListener('fetch', (event) => {
@@ -172,6 +181,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.pathname.startsWith('/brand/') || url.pathname === '/manifest.webmanifest') {
-    event.respondWith(handleStatic(request));
+    event.respondWith(handleStatic(event));
   }
 });

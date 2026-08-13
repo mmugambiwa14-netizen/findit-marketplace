@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { featureFlags } from '@/lib/featureFlags';
+import { useAuth } from '@/lib/AuthContext';
 import { invalidateCanonicalParentQueries } from '@/lib/canonicalQueryInvalidation';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
 import {
@@ -39,6 +40,7 @@ function isPending(row) {
 }
 
 export default function TourManagementPanel({ parentType = 'listing', parentId, category, compact = false, onBusyChange = null }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState(null);
   const [uploadBusy, setUploadBusy] = useState(false);
@@ -47,11 +49,11 @@ export default function TourManagementPanel({ parentType = 'listing', parentId, 
   useEffect(() => () => {
     if (draft?.previewUrl?.startsWith('blob:')) URL.revokeObjectURL(draft.previewUrl);
   }, [draft?.previewUrl]);
-  const key = listingTourQueryKeys.ownerParent(parentType, parentId);
+  const key = listingTourQueryKeys.ownerParent(parentType, parentId, user?.id ?? null);
   const query = useQuery({
     queryKey: key,
     queryFn: () => getOwnerTours(parentType, parentId),
-    enabled: featureFlags.tours && Boolean(parentId),
+    enabled: featureFlags.tours && Boolean(parentId && user?.id),
     refetchInterval: (state) => state.state.data?.some((row) => TRANSIENT_STATUSES.has(row.status)) ? 8000 : false,
   });
 

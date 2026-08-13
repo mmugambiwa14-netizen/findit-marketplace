@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabaseClient';
 
+const OWNER_TOUR_HISTORY_LIMIT = 50;
+
 function failure(message, error) {
   const result = new Error(error?.message || message);
   result.cause = error;
@@ -83,7 +85,8 @@ export async function readOwnerTourRows(parent) {
       failure_code, failure_message, rejection_reason, created_at, uploaded_at,
       processing_started_at, ready_at, approved_at, published_at, removed_at
     `)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .limit(OWNER_TOUR_HISTORY_LIMIT);
   query = parent.parentType === 'listing'
     ? query.eq('listing_id', parent.parentId)
     : query.eq('service_id', parent.parentId);

@@ -111,7 +111,7 @@ test('Response Peek binding refreshes only server-bounded lists and does not wak
   assert.match(unbound, /limit 50/);
   assert.match(candidates, /limit 100/);
   assert.match(bindingQueue, /refetchInterval: READY_RESPONSE_REFRESH_MS/);
-  assert.match(bindingQueue, /invalidateQueries\(\{ queryKey: \['seller-peek-request-queue', 'tail'\], exact: true \}\)/);
+  assert.match(bindingQueue, /invalidateQueries\(\{ queryKey: \['seller-peek-request-queue', accountId, 'tail'\], exact: true \}\)/);
   assert.doesNotMatch(bindingQueue, /invalidateQueries\(\{ queryKey: \['notifications'\]/);
 });
 

@@ -24,8 +24,8 @@ test('frontend upload sequence uses intent, signed direct upload and completion'
   assert.match(repository, /uploadToSignedUrl/);
 });
 
-test('Tour query keys stay parent-scoped rather than creating a second marketplace identity', () => {
-  assert.match(keys, /ownerParent: \(parentType, parentId\)/);
+test('Tour query keys stay parent- and account-scoped rather than creating a second marketplace identity', () => {
+  assert.match(keys, /ownerParent: \(parentType, parentId, userId = null\)/);
   assert.match(keys, /publicParent: \(parentType, parentId\)/);
   assert.doesNotMatch(keys, /creator|followers|likes|reels/i);
 });

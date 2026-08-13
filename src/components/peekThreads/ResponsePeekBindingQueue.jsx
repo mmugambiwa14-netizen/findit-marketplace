@@ -11,16 +11,20 @@ import {
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
 import { bindResponsePeek, getResponsePeekRequestCandidates, getUnboundResponsePeeks } from '@/services/peekThreadsService';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { useAuth } from '@/lib/AuthContext';
 
 const READY_RESPONSE_REFRESH_MS = 30_000;
 
 export default function ResponsePeekBindingQueue() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const accountId = user?.id ?? null;
   const [active, setActive] = useState(null);
   const [selected, setSelected] = useState([]);
   const ready = useQuery({
-    queryKey: ['unbound-response-peeks'],
+    queryKey: ['unbound-response-peeks', accountId],
     queryFn: ({ signal }) => getUnboundResponsePeeks(signal),
+    enabled: Boolean(accountId),
     staleTime: 15_000,
     refetchInterval: READY_RESPONSE_REFRESH_MS,
     refetchIntervalInBackground: false,
@@ -28,9 +32,9 @@ export default function ResponsePeekBindingQueue() {
     refetchOnReconnect: 'always',
   });
   const candidates = useQuery({
-    queryKey: ['response-peek-candidates', active?.tourId],
+    queryKey: ['response-peek-candidates', accountId, active?.tourId],
     queryFn: ({ signal }) => getResponsePeekRequestCandidates(active.tourId, signal),
-    enabled: Boolean(active?.tourId),
+    enabled: Boolean(accountId && active?.tourId),
     staleTime: 30_000,
   });
 
@@ -43,8 +47,8 @@ export default function ResponsePeekBindingQueue() {
     onSuccess: (count) => {
       toast.success(`${Number(count) || selected.length} Peek Request${(Number(count) || selected.length) === 1 ? '' : 's'} answered`);
       setActive(null); setSelected([]);
-      queryClient.invalidateQueries({ queryKey: ['unbound-response-peeks'], exact: true });
-      queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue', 'tail'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['unbound-response-peeks', accountId], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['seller-peek-request-queue', accountId, 'tail'], exact: true });
       queryClient.invalidateQueries({ queryKey: ['peek-threads'] });
     },
     onError: (error) => toast.error(error.message || 'Unable to publish the Response Peek'),

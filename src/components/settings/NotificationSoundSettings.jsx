@@ -6,20 +6,22 @@ import { Button } from '@/components/ui/button';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 import { getNotificationPreferences, updateNotificationPreferences } from '@/repositories/notificationPreferencesRepository';
 import { playNotificationTone, primeNotificationAudio } from '@/services/notificationTone';
-
-const PREFERENCES_KEY = ['notification-preferences'];
+import { useAuth } from '@/lib/AuthContext';
 
 export default function NotificationSoundSettings() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [testing, setTesting] = useState(false);
+  const preferencesKey = ['notification-preferences', user?.id ?? null];
   const query = useQuery({
-    queryKey: PREFERENCES_KEY,
+    queryKey: preferencesKey,
     queryFn: getNotificationPreferences,
+    enabled: Boolean(user?.id),
     staleTime: 5 * 60_000,
   });
   const mutation = useMutation({
     mutationFn: updateNotificationPreferences,
-    onSuccess: (data) => queryClient.setQueryData(PREFERENCES_KEY, data),
+    onSuccess: (data) => queryClient.setQueryData(preferencesKey, data),
     onError: (error) => toast.error(error.message || 'Could not update sound preference'),
   });
 

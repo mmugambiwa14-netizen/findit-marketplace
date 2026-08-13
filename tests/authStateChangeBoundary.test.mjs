@@ -9,7 +9,7 @@ const authContext = await readFile(
 
 test('auth state listeners defer Supabase profile work outside the callback', () => {
   const listener = authContext.match(
-    /authService\.onAuthStateChange\(\(\) => \{([\s\S]*?)\n    \}\);/,
+    /authService\.onAuthStateChange\(\(event\) => \{([\s\S]*?)\n    \}\);/,
   )?.[1] ?? '';
 
   assert.match(listener, /window\.setTimeout/);

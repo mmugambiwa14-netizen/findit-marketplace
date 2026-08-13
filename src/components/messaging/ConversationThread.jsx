@@ -48,6 +48,7 @@ function durationLabel(seconds) {
 
 export default function ConversationThread({ conversationId, currentUser, onBack, realtimeConnected = false }) {
   const queryClient = useQueryClient();
+  const accountId = currentUser?.id ?? null;
   const { format } = useCurrency();
   const scrollRef = useRef(null);
   const firstScrollRef = useRef(true);
@@ -72,7 +73,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   }, [conversationId]);
 
   const conversationQuery = useQuery({
-    queryKey: ['message-conversation-metadata', conversationId],
+    queryKey: ['message-conversation-metadata', accountId, conversationId],
     queryFn: ({ signal }) => getMessageConversationMetadata(conversationId, signal),
     enabled: Boolean(conversationId && currentUser?.id),
     staleTime: 15_000,
@@ -80,7 +81,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   });
 
   const messagesQuery = useInfiniteQuery({
-    queryKey: ['message-thread', conversationId],
+    queryKey: ['message-thread', accountId, conversationId],
     queryFn: ({ pageParam, signal }) => getMessageThreadPage(conversationId, { cursor: pageParam || null, limit: THREAD_PAGE_SIZE }, signal),
     initialPageParam: null,
     getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
@@ -91,7 +92,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   });
 
   const tailQuery = useQuery({
-    queryKey: ['message-thread-tail', conversationId],
+    queryKey: ['message-thread-tail', accountId, conversationId],
     queryFn: ({ signal }) => getMessageThreadPage(conversationId, { limit: THREAD_PAGE_SIZE }, signal),
     enabled: Boolean(conversationId && currentUser?.id && messagesQuery.data),
     staleTime: 2_000,
@@ -106,7 +107,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     const incomingItems = Array.isArray(incomingPage?.items) ? incomingPage.items : [];
     if (!incomingItems.length) return;
 
-    queryClient.setQueryData(['message-thread', conversationId], (currentValue) => {
+    queryClient.setQueryData(['message-thread', accountId, conversationId], (currentValue) => {
       const current = /** @type {any} */ (currentValue);
       if (!current?.pages?.length) return current;
       const firstPage = current.pages[0];
@@ -137,7 +138,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
         pages: [{ ...firstPage, items: mergedItems }, ...current.pages.slice(1)],
       };
     });
-  }, [conversationId, queryClient, tailQuery.data]);
+  }, [accountId, conversationId, queryClient, tailQuery.data]);
 
   const messages = useMemo(() => {
     const byId = new Map();
@@ -177,8 +178,8 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     onSuccess: async () => {
       setText('');
       scrollAfterSendRef.current = true;
-      await queryClient.refetchQueries({ queryKey: ['message-thread-tail', conversationId], exact: true, type: 'active' });
-      queryClient.invalidateQueries({ queryKey: ['message-conversation-metadata', conversationId] });
+      await queryClient.refetchQueries({ queryKey: ['message-thread-tail', accountId, conversationId], exact: true, type: 'active' });
+      queryClient.invalidateQueries({ queryKey: ['message-conversation-metadata', accountId, conversationId] });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
     },
     onError: (error) => toast.error(error.message),
@@ -188,7 +189,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     mutationFn: (/** @type {boolean} */ blocked) => setConversationBlocked({ conversationId, blocked }),
     onSuccess: () => {
       setBlockOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['message-conversation-metadata', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['message-conversation-metadata', accountId, conversationId] });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
       toast.success(conversationQuery.data?.blocked_by_me ? 'Conversation unblocked' : 'Conversation blocked');
     },

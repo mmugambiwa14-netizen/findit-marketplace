@@ -297,7 +297,7 @@ export default function ListingRecommendations({ subjectListingId }) {
   });
   const includePersonalized = personalization.data?.enabled === true;
   const query = useQuery({
-    queryKey: ['listing-recommendations', subjectListingId, includePersonalized],
+    queryKey: ['listing-recommendations', subjectListingId, includePersonalized, user?.id ?? null],
     queryFn: ({ signal }) => loadListingRecommendations(subjectListingId, signal, includePersonalized),
     enabled: Boolean(subjectListingId),
     staleTime: 30_000,

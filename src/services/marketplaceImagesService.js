@@ -41,7 +41,7 @@ export async function replaceServiceMedia(targetId, keepPaths, uploads) {
   return replaceServiceMediaRows(normalizeServiceMediaReplacement(targetId, keepPaths, uploads));
 }
 
-function safeLegacyUrl(value) {
+export function safeLegacyUrl(value) {
   if (typeof value !== 'string') return null;
   try {
     const parsed = new URL(value);
@@ -107,6 +107,25 @@ export async function resolveMarketplaceImages(values, purpose) {
     });
   }
   return images.map((value) => signedByPath.get(value) ?? safeLegacyUrl(value)).filter(Boolean);
+}
+
+/**
+ * Sign all trusted storage paths referenced by a page of rows in one request.
+ * Owner inventory pages commonly contain several services; signing each row
+ * independently creates an avoidable N+1 request pattern.
+ */
+export async function resolveMarketplaceImageMap(rows, purpose) {
+  const normalizedPurpose = normalizeMarketplaceImagePurpose(purpose);
+  const values = Array.isArray(rows) ? rows : [];
+  const storagePaths = [...new Set(values.flatMap((row) => imageValues(row)
+    .filter((value) => isTrustedMarketplaceImagePath(value, normalizedPurpose))))];
+  const signedByPath = new Map();
+  if (!storagePaths.length) return signedByPath;
+  const signedRows = await signMarketplaceImagePaths(storagePaths);
+  signedRows.forEach((row, index) => {
+    if (row?.signedUrl) signedByPath.set(storagePaths[index], row.signedUrl);
+  });
+  return signedByPath;
 }
 
 export async function resolveMarketplaceImage(value, purpose) {

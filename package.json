@@ -111,7 +111,7 @@
     "registry:locations": "node ./scripts/sync-sub-saharan-location-registry.mjs",
     "registry:locations:admin1": "node ./scripts/reconcile-sub-saharan-admin1.mjs",
     "verify:bundle-secrets": "node ./scripts/verify-bundle-secrets.mjs",
-    "verify:service-worker": "node ./scripts/stamp-service-worker.mjs"
+    "verify:service-worker": "node ./scripts/stamp-service-worker.mjs --check"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.6",

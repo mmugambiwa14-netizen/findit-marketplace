@@ -42,25 +42,25 @@ test('message delivery polls only a bounded live tail while loaded history remai
   assert.notEqual(historyStart, -1);
   assert.notEqual(tailStart, -1);
   const historyBlock = thread.slice(historyStart, tailStart);
-  assert.match(historyBlock, /queryKey: \['message-thread', conversationId\]/);
+  assert.match(historyBlock, /queryKey: \['message-thread', accountId, conversationId\]/);
   assert.match(historyBlock, /staleTime:\s*Infinity/);
   assert.match(historyBlock, /refetchOnWindowFocus:\s*false/);
   assert.match(historyBlock, /refetchOnReconnect:\s*false/);
   assert.doesNotMatch(historyBlock, /refetchInterval:/);
 
-  assert.match(thread, /queryKey: \['message-thread-tail', conversationId\]/);
+  assert.match(thread, /queryKey: \['message-thread-tail', accountId, conversationId\]/);
   assert.match(thread, /refetchInterval:\s*realtimeConnected \? CONNECTED_THREAD_REFRESH_MS : DISCONNECTED_THREAD_REFRESH_MS/);
   assert.match(thread, /refetchIntervalInBackground:\s*false/);
   assert.match(thread, /refetchOnWindowFocus:\s*'always'/);
   assert.match(thread, /refetchOnReconnect:\s*'always'/);
-  assert.match(thread, /queryClient\.setQueryData\(\['message-thread', conversationId\]/);
+  assert.match(thread, /queryClient\.setQueryData\(\['message-thread', accountId, conversationId\]/);
   assert.match(thread, /const overlaps = incomingItems\.some/);
   assert.match(thread, /pages: \[incomingPage\], pageParams: \[null\]/);
-  assert.match(thread, /refetchQueries\(\{ queryKey: \['message-thread-tail', conversationId\], exact: true, type: 'active' \}\)/);
+  assert.match(thread, /refetchQueries\(\{ queryKey: \['message-thread-tail', accountId, conversationId\], exact: true, type: 'active' \}\)/);
   assert.match(thread, /markConversationSeen\(conversationId\)/);
   assert.doesNotMatch(thread, /resetQueries\(\{ queryKey: \['message-thread', conversationId\]/);
 
-  assert.match(realtimeThread, /queryKey: \['message-thread-tail', conversationId\]/);
+  assert.match(realtimeThread, /queryKey: \['message-thread-tail', accountId, conversationId\]/);
   assert.doesNotMatch(realtimeThread, /queryKey: \['message-thread', conversationId\]/);
   assert.match(realtimeThread, /table:\s*'inquiries'/);
   assert.match(realtimeThread, /event:\s*'INSERT'/);

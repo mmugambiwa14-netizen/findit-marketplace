@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import ResponsePeekWatchButton from '@/components/peekThreads/ResponsePeekWatchButton';
 import { peekRequestCategoryLabel } from '@/domain/peekThreads/categories';
+import { useAuth } from '@/lib/AuthContext';
 import { getMyPeekRequestActivityPage, withdrawPeekRequestSupport } from '@/services/peekThreadsService';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
@@ -40,13 +41,15 @@ function removeRequestFromPage(page, requestId) {
 }
 
 export default function MyPeekRequestsQueue() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const historyKey = useMemo(() => ['peek-request-activity', 'pages'], []);
-  const tailKey = useMemo(() => ['peek-request-activity', 'tail'], []);
+  const historyKey = useMemo(() => ['peek-request-activity', user?.id ?? null, 'pages'], [user?.id]);
+  const tailKey = useMemo(() => ['peek-request-activity', user?.id ?? null, 'tail'], [user?.id]);
 
   const activity = useInfiniteQuery({
     queryKey: historyKey,
     queryFn: ({ pageParam, signal }) => getMyPeekRequestActivityPage({ cursor: pageParam || null, limit: ACTIVITY_PAGE_SIZE }, signal),
+    enabled: Boolean(user?.id),
     initialPageParam: null,
     getNextPageParam: (page) => page.nextCursor || undefined,
     staleTime: Infinity,
@@ -57,7 +60,7 @@ export default function MyPeekRequestsQueue() {
   const tail = useQuery({
     queryKey: tailKey,
     queryFn: ({ signal }) => getMyPeekRequestActivityPage({ limit: ACTIVITY_PAGE_SIZE }, signal),
-    enabled: Boolean(activity.data),
+    enabled: Boolean(user?.id && activity.data),
     staleTime: 15_000,
     refetchInterval: ACTIVITY_REFRESH_MS,
     refetchIntervalInBackground: false,

@@ -8,16 +8,15 @@ import { normalizePushPayload } from '@/services/pushContracts';
 import { playNotificationTone } from '@/services/notificationTone';
 import { syncWebPushSubscription, syncWebPushSubscriptionData } from '@/services/webPushService';
 
-const PREFERENCES_KEY = ['notification-preferences'];
-
 export default function PushNotificationRuntime() {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const seenIds = useRef(new Set());
+  const preferencesKey = ['notification-preferences', user?.id ?? null];
   const preferencesQuery = useQuery({
-    queryKey: PREFERENCES_KEY,
+    queryKey: preferencesKey,
     queryFn: getNotificationPreferences,
     enabled: Boolean(user?.id),
     staleTime: 5 * 60_000,

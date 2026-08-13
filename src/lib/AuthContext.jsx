@@ -15,8 +15,15 @@ import React, { createContext, useState, useContext, useEffect, useCallback, use
 import * as authService from '@/services/authService';
 import { deriveAuthState, toAuthError } from '@/lib/authState';
 import { localPreviewAuthBypassEnabled } from '@/lib/localPreview';
+import { queryClientInstance } from '@/lib/query-client';
+import { disableWebPush } from '@/services/webPushService';
 
 const AuthContext = createContext(null);
+
+function clearAuthScopedQueryCache() {
+  void queryClientInstance.cancelQueries().catch(() => {});
+  queryClientInstance.clear();
+}
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -26,6 +33,7 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [blockedAccount, setBlockedAccount] = useState(null); // { status, reason, banUntil } when suspended/banned
   const authCheckSequence = useRef(0);
+  const previousUserIdRef = useRef(null);
 
   // Base44 had a separate "app public settings" bootstrap (a multi-tenant
   // app-platform concept: is this app configured, is auth required for it,
@@ -47,6 +55,11 @@ export const AuthProvider = ({ children }) => {
       if (requestSequence !== authCheckSequence.current) return;
 
       const nextAuthState = deriveAuthState(currentUser);
+      const nextUserId = nextAuthState.user?.id ?? null;
+      if (previousUserIdRef.current !== nextUserId) {
+        clearAuthScopedQueryCache();
+        previousUserIdRef.current = nextUserId;
+      }
       setUser(nextAuthState.user);
       setIsAuthenticated(nextAuthState.isAuthenticated);
       setBlockedAccount(nextAuthState.blockedAccount);
@@ -56,6 +69,10 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       if (requestSequence !== authCheckSequence.current) return;
       console.error('User auth check failed:', error);
+      if (previousUserIdRef.current !== null) {
+        clearAuthScopedQueryCache();
+        previousUserIdRef.current = null;
+      }
       setUser(null);
       setIsAuthenticated(false);
       setBlockedAccount(null);
@@ -83,7 +100,14 @@ export const AuthProvider = ({ children }) => {
     // instead of Base44's single check-on-mount -- this is an improvement
     // over polling, not just a like-for-like swap, and it's what makes
     // logging out in one tab reflect in another without a reload.
-    const unsubscribe = authService.onAuthStateChange(() => {
+    const unsubscribe = authService.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        // This callback also runs for sign-outs initiated in another tab.
+        // Best-effort cleanup is intentional: auth state must not be held
+        // hostage by a failed push RPC or an unavailable provider.
+        void disableWebPush().catch(() => {});
+        clearAuthScopedQueryCache();
+      }
       // supabase-js currently deadlocks the next client request when an auth
       // listener starts another async client call before the listener returns.
       // Defer the profile refresh to the next task so public and authenticated
@@ -104,6 +128,8 @@ export const AuthProvider = ({ children }) => {
     try {
       // Do not render a guest state before the provider has actually cleared
       // the session. A failed sign-out must leave the authenticated UI honest.
+      await disableWebPush().catch(() => {});
+      clearAuthScopedQueryCache();
       await authService.signOut(shouldRedirect ? window.location.href : undefined);
       if (!shouldRedirect) {
         setUser(null);

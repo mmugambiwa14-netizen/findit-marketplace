@@ -26,6 +26,18 @@ function boundedText(value: unknown, fallback: string, maximum: number) {
   return (text || fallback).slice(0, maximum);
 }
 
+function constantTimeEqual(left: string, right: string) {
+  const encoder = new TextEncoder();
+  const a = encoder.encode(left);
+  const b = encoder.encode(right);
+  const length = Math.max(a.length, b.length);
+  let mismatch = a.length ^ b.length;
+  for (let index = 0; index < length; index += 1) {
+    mismatch |= (a[index] ?? 0) ^ (b[index] ?? 0);
+  }
+  return mismatch === 0;
+}
+
 function safeNotificationPath(value: unknown) {
   if (typeof value !== "string") return "/notifications";
   const candidate = value.trim();
@@ -89,7 +101,7 @@ Deno.serve(async (request: Request) => {
 
   const expectedToken = Deno.env.get("PUSH_DISPATCH_TOKEN") || "";
   const suppliedToken = request.headers.get("x-push-dispatch-token") || "";
-  if (!expectedToken || suppliedToken !== expectedToken) return json({ error: "unauthorized" }, 401);
+  if (!expectedToken || !constantTimeEqual(suppliedToken, expectedToken)) return json({ error: "unauthorized" }, 401);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const secretKey = serviceKey();
