@@ -23,18 +23,13 @@ import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
 import { useCursorStack } from '@/hooks/useCursorStack';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
+import {
+  ADMIN_PEEK_QUEUE_STATUS_OPTIONS,
+  ADMIN_REPORT_REASON_LABELS,
+} from '@/services/adminConfig';
 
 const PAGE_SIZE = 20;
-const REPORT_REASON_LABELS = {
-  unrelated_video: 'Unrelated video',
-  misleading_representation: 'Misleading representation',
-  stolen_content: 'Stolen content',
-  unsafe_content: 'Unsafe content',
-  inappropriate_content: 'Inappropriate content',
-  prohibited_watermark: 'Prohibited watermark',
-  suspected_fraud: 'Suspected fraud',
-  duplicate_content: 'Duplicate content',
-};
+const REPORT_REASON_LABELS = ADMIN_REPORT_REASON_LABELS;
 
 const decisionCopy = {
   approve: ['Approve Tour', 'Publish this ready Tour to its eligible parent.'],
@@ -121,7 +116,7 @@ export default function AdminTourQueue() {
     <div className="space-y-5">
       <Card><CardContent className="grid gap-3 pt-5 md:grid-cols-2">
         <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input aria-label="Search Tour moderation queue" className="pl-9" value={query} onChange={(event) => { setQuery(event.target.value); pagination.reset(); }} maxLength={100} placeholder="Listing, seller, report reason, or failure code" /></div>
-        <Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter Tours by moderation status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="pending">Pending review</SelectItem><SelectItem value="reported">Reported</SelectItem><SelectItem value="failed">Processing failures</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="all">All Tours</SelectItem></SelectContent></Select>
+        <Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter Peeks by moderation status"><SelectValue /></SelectTrigger><SelectContent>{ADMIN_PEEK_QUEUE_STATUS_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select>
       </CardContent></Card>
 
       {queue.error && <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{queue.error.message}</p>}

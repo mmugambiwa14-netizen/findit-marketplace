@@ -52,6 +52,7 @@
     "test:services-local": "node ./scripts/phase3-services-smoke-local.mjs",
     "test:services-hosted": "node ./scripts/phase3-services-smoke-local.mjs",
     "test:admin-local": "node ./scripts/phase3-admin-smoke-local.mjs",
+    "test:admin-control-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_admin_control_audit_hardening.sql --local",
     "test:admin-hosted": "node ./scripts/phase3-admin-smoke-local.mjs",
     "test:business-profiles-local": "node ./scripts/phase3-business-profiles-smoke-local.mjs",
     "test:business-profiles-hosted": "node ./scripts/phase3-business-profiles-smoke-local.mjs",

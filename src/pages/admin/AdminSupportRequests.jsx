@@ -15,10 +15,12 @@ import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { useCursorStack } from '@/hooks/useCursorStack';
 import { getAdminSupportRequests, resolveAdminSupportRequest } from '@/services/adminService';
 import { TableRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import {
+  ADMIN_SUPPORT_CATEGORY_OPTIONS,
+  ADMIN_SUPPORT_STATUS_OPTIONS,
+} from '@/services/adminConfig';
 
 const PAGE_SIZE = 25;
-const CATEGORIES = ['all', 'account', 'listing', 'report', 'safety', 'technical', 'other'];
-
 function maskEmail(value) {
   const email = String(value || '').trim();
   const [name, domain] = email.split('@');
@@ -63,8 +65,8 @@ export default function AdminSupportRequests() {
         </header>
         <Card><CardContent className="grid gap-3 pt-5 md:grid-cols-3">
           <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search support requests" value={query} onChange={(event) => { setQuery(event.target.value); pagination.reset(); }} placeholder="Reference, email or message" /></div>
-          <Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter support requests by status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="open">Open</SelectItem><SelectItem value="resolved">Resolved</SelectItem><SelectItem value="all">All statuses</SelectItem></SelectContent></Select>
-          <Select value={category} onValueChange={(value) => { setCategory(value); pagination.reset(); }}><SelectTrigger aria-label="Filter support requests by category"><SelectValue /></SelectTrigger><SelectContent>{CATEGORIES.map((item) => <SelectItem key={item} value={item}>{item === 'all' ? 'All categories' : item[0].toUpperCase() + item.slice(1)}</SelectItem>)}</SelectContent></Select>
+          <Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter support requests by status"><SelectValue /></SelectTrigger><SelectContent>{ADMIN_SUPPORT_STATUS_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select>
+          <Select value={category} onValueChange={(value) => { setCategory(value); pagination.reset(); }}><SelectTrigger aria-label="Filter support requests by category"><SelectValue /></SelectTrigger><SelectContent>{ADMIN_SUPPORT_CATEGORY_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select>
         </CardContent></Card>
         {support.error && <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive"><p>{support.error.message}</p>{support.error.correlationId && <p className="mt-1 text-xs opacity-80">Reference: {support.error.correlationId}</p>}<Button className="mt-3" size="sm" variant="outline" onClick={() => support.refetch()}>Try again</Button></div>}
         <Card className="overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[900px] text-sm"><thead><tr className="border-b bg-muted/30 text-left"><th className="p-3">Request</th><th className="p-3">Customer</th><th className="p-3">Category</th><th className="p-3">Status</th><th className="p-3">Received</th><th className="p-3">Action</th></tr></thead><tbody>

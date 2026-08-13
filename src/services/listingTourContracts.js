@@ -1,3 +1,5 @@
+import { ADMIN_PEEK_QUEUE_STATUSES } from './adminConfig.js';
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export const TOUR_MAX_DURATION_SECONDS = 120;
@@ -95,14 +97,7 @@ export function normalizeTourId(value) {
   return uuid(value, 'Tour');
 }
 
-export const TOUR_ADMIN_QUEUE_STATUSES = Object.freeze([
-  'all',
-  'pending',
-  'approved',
-  'rejected',
-  'reported',
-  'failed',
-]);
+export const TOUR_ADMIN_QUEUE_STATUSES = ADMIN_PEEK_QUEUE_STATUSES;
 
 const ADMIN_QUEUE_STATUSES = new Set(TOUR_ADMIN_QUEUE_STATUSES);
 

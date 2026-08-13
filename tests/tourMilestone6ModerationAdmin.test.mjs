@@ -7,6 +7,11 @@ import {
   normalizeTourReport,
 } from '../src/services/listingTourContracts.js';
 import { normalizeAdminReportsRequest } from '../src/services/adminContracts.js';
+import {
+  ADMIN_AUDIT_TARGET_OPTIONS,
+  ADMIN_PEEK_QUEUE_STATUS_OPTIONS,
+  ADMIN_REPORT_KIND_OPTIONS,
+} from '../src/services/adminConfig.js';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 const [
@@ -81,10 +86,8 @@ test('admin report queue exposes Tour identity and exact video reasons', () => {
     assert.match(migration, new RegExp(field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
   assert.match(migration, /coalesce\(r\.tour_reason, r\.reason::text\)/);
-  // The report *value* stays "tour" because it is a database enum, but every label
-  // the operator reads was rebranded to Peek. This test asserted the old labels
-  // and so could never pass after the rename (F-049).
-  assert.match(adminReports, /<SelectItem value="tour">Peeks<\/SelectItem>/);
+  assert.match(adminReports, /ADMIN_REPORT_KIND_OPTIONS\.map/);
+  assert.deepEqual(ADMIN_REPORT_KIND_OPTIONS.find((option) => option.value === 'tour'), { value: 'tour', label: 'Peeks' });
   assert.match(adminReports, /Remove reported Peek/);
   assert.match(adminReports, /Dismiss report and restore Peek/);
 });
@@ -130,8 +133,9 @@ test('admin review media uses a short-lived signed boundary and never exposes so
 
 test('founder queue covers pending, reported, failed, rejected and approved Tours', () => {
   for (const status of ['pending', 'reported', 'failed', 'rejected', 'approved', 'all']) {
-    assert.match(adminQueue, new RegExp(`value="${status}"`));
+    assert.equal(ADMIN_PEEK_QUEUE_STATUS_OPTIONS.some((option) => option.value === status), true);
   }
+  assert.match(adminQueue, /ADMIN_PEEK_QUEUE_STATUS_OPTIONS\.map/);
   assert.match(adminQueue, /Approve/);
   assert.match(adminQueue, /Reject/);
   assert.match(adminQueue, /Restore/);
@@ -149,8 +153,9 @@ test('repeat-offender suspension remains manual, reasoned and audited', () => {
   assert.match(migration, /record_admin_action\([\s\S]*'tour_report\.'/);
   assert.match(priorModeration, /record_admin_action\([\s\S]*'tour_approved'/);
   assert.match(priorModeration, /record_admin_action\([\s\S]*'tour_rejected'/);
-  assert.match(adminAudit, /value="tour_report"/);
-  assert.match(adminAudit, /value="listing_tour"/);
+  assert.equal(ADMIN_AUDIT_TARGET_OPTIONS.some((option) => option.value === 'tour_report'), true);
+  assert.equal(ADMIN_AUDIT_TARGET_OPTIONS.some((option) => option.value === 'listing_tour'), true);
+  assert.match(adminAudit, /ADMIN_AUDIT_TARGET_OPTIONS\.map/);
   assert.match(smoke, /user\.status_changed/);
 });
 

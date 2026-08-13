@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "scope": "founder-admin-console",
+  "generatedFrom": "cloudflare-staging-ready",
+  "routes": [
+    { "path": "/admin", "component": "AdminDashboard", "read": ["admin_dashboard_stats", "admin_operational_health", "admin_notification_fanout_health", "admin_recommendation_analytics_v1"], "mutations": [] },
+    { "path": "/admin/listings", "component": "AdminListings", "read": ["admin_marketplace_rows_page"], "mutations": ["publish", "pause", "reject", "remove"] },
+    { "path": "/admin/business-applications", "component": "AdminBusinessApplications", "read": ["admin_list_business_applications"], "mutations": ["start_review", "request_information", "reject", "approve", "suspend", "reinstate"], "controls": ["status_filter", "keyset_paging", "required_reviewer_messages"] },
+    { "path": "/admin/managed-listings", "component": "AdminManagedListings", "read": ["admin_list_managed_listing_requests", "admin_user_rows_page"], "mutations": ["reviewing", "accepted", "needs_information", "declined", "published", "cancelled", "assign_reviewer"], "controls": ["status_filter", "keyset_paging", "reviewer_assignment", "required_reviewer_messages"] },
+    { "path": "/admin/peeks", "component": "AdminTourQueue", "read": ["admin_tour_queue_page", "tour-admin-review-access"], "mutations": ["approve", "reject", "restore", "remove", "suspend"] },
+    { "path": "/admin/users", "component": "AdminUsers", "read": ["admin_user_rows_page"], "mutations": ["active", "suspended", "banned"] },
+    { "path": "/admin/reports", "component": "AdminReports", "read": ["admin_report_rows_page"], "mutations": ["reviewed", "dismissed", "actioned"] },
+    { "path": "/admin/support", "component": "AdminSupportRequests", "read": ["admin_support_request_rows_page"], "mutations": ["resolved"] },
+    { "path": "/admin/categories", "component": "AdminCategories", "read": ["admin_taxonomy_rows_v2"], "mutations": ["create", "edit", "supersede", "deactivate"] },
+    { "path": "/admin/audit-log", "component": "AdminAuditLog", "read": ["admin_audit_rows_page"], "mutations": [] }
+  ],
+  "crossCuttingControls": {
+    "routeAuthorization": "ProtectedRoute requiredRole=admin plus server-side is_admin/MFA assurance",
+    "pagination": "Bounded keyset cursors; no offset or total-count contract",
+    "audit": ["audit_logs", "business_review_events", "managed_listing status transitions"],
+    "canonicalVocabulary": "src/services/adminConfig.js",
+    "loadingAndRecovery": "Skeleton states plus retryable query/mutation errors",
+    "legacySupportInbox": "Compatibility re-export only; routed support page is canonical"
+  },
+  "regressionOwners": {
+    "contracts": "tests/adminControlSurfaceContracts.test.mjs",
+    "authorization": "supabase/tests/v1_admin_operations.sql",
+    "business": "supabase/tests/v1_curated_business_marketplace.sql",
+    "migrations": "scripts/run-migration-database-certification.sh"
+  }
+}

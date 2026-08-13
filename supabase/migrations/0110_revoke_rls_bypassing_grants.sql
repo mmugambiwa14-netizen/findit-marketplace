@@ -22,6 +22,34 @@
 -- service_role is intentionally untouched. It is the trusted server-side role
 -- and already bypasses RLS by design.
 
+-- A clean Supabase database does not reliably materialize the trusted role's
+-- DML privileges on tables created by migrations.  Establish that backend
+-- boundary explicitly while keeping non-RLS-gated destructive privileges out
+-- of the browser roles.
+grant select, insert, update, delete on all tables in schema public to service_role;
+grant usage, select, update on all sequences in schema public to service_role;
+
+-- Preserve the narrower service-role boundaries established by the
+-- recommendation runtime.  The trusted role may execute the runtime APIs,
+-- but it must not mutate control-plane policy, contextual configuration, or
+-- the private abuse ledgers directly.
+revoke insert, update, delete on table public.recommendation_service_policies from service_role;
+grant select on table public.recommendation_service_policies to service_role;
+
+revoke insert, update, delete on table public.recommendation_contexts from service_role;
+revoke insert, update, delete on table public.recommendation_context_rules from service_role;
+grant select on table public.recommendation_contexts to service_role;
+grant select on table public.recommendation_context_rules to service_role;
+
+revoke all on table public.recommendation_service_circuit_state from service_role;
+revoke all on table public.recommendation_request_budget from service_role;
+
+alter default privileges for role postgres in schema public
+  grant select, insert, update, delete on tables to service_role;
+
+alter default privileges for role postgres in schema public
+  grant usage, select, update on sequences to service_role;
+
 -- 1. Existing tables --------------------------------------------------------
 
 do $$

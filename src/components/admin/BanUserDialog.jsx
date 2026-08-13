@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ADMIN_BAN_DURATION_OPTIONS, ADMIN_USER_ACTION_CONFIRMATIONS } from '@/services/adminConfig';
 
-const REQUIRED_CONFIRMATION = 'BAN';
+const REQUIRED_CONFIRMATION = ADMIN_USER_ACTION_CONFIRMATIONS.banned;
 
 export default function BanUserDialog({ open, onOpenChange, user, onConfirm, isLoading }) {
   const [duration, setDuration] = useState('7');
@@ -42,7 +43,7 @@ export default function BanUserDialog({ open, onOpenChange, user, onConfirm, isL
         <DialogHeader>
           <DialogTitle>Ban account</DialogTitle>
           <DialogDescription>
-            Temporarily block {user?.full_name || 'this user'} from using FindIt.
+            Temporarily block {user?.full_name || 'this user'} from using PeekaListing.
           </DialogDescription>
         </DialogHeader>
 
@@ -65,13 +66,7 @@ export default function BanUserDialog({ open, onOpenChange, user, onConfirm, isL
               <SelectTrigger id="ban-duration" className="mt-1">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1 day</SelectItem>
-                <SelectItem value="7">7 days</SelectItem>
-                <SelectItem value="30">30 days</SelectItem>
-                <SelectItem value="90">90 days</SelectItem>
-                <SelectItem value="365">1 year</SelectItem>
-              </SelectContent>
+              <SelectContent>{ADMIN_BAN_DURATION_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
             </Select>
           </div>
 

@@ -111,6 +111,7 @@ begin
   where control_key = 'maps';
 
   revoke all privileges on table public.recommendation_events_default from anon, authenticated;
+  grant select, insert, update, delete on table public.recommendation_events_default to service_role;
 
   if exists (
     select 1

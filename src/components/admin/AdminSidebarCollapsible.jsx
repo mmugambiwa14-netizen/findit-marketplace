@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import * as authService from '@/services/authService';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,19 @@ import { cn } from '@/lib/utils';
 export default function AdminSidebarCollapsible({ mobileOpen = false, onMobileOpenChange }) {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const mobileCloseRef = useRef(null);
 
   useEffect(() => { onMobileOpenChange?.(false); }, [location.pathname, onMobileOpenChange]);
+
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+    mobileCloseRef.current?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onMobileOpenChange?.(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [mobileOpen, onMobileOpenChange]);
 
   const handleLogout = async () => { await authService.signOut('/'); };
   const nav = (
@@ -21,8 +32,8 @@ export default function AdminSidebarCollapsible({ mobileOpen = false, onMobileOp
       'w-[min(88vw,22rem)]',
     )}>
       <div className="flex min-h-16 items-center justify-between border-b border-sidebar-border px-4 pt-[env(safe-area-inset-top)]">
-        <Link to="/admin" aria-label="FindIt admin overview"><BrandLogo showWordmark={!isCollapsed} markClassName="h-8 w-8" wordmarkClassName="text-lg" /></Link>
-        <button type="button" onClick={() => onMobileOpenChange?.(false)} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-sidebar-accent sm:hidden" aria-label="Close admin navigation"><X className="h-5 w-5" /></button>
+        <Link to="/admin" aria-label="PeekaListing admin overview"><BrandLogo showWordmark={!isCollapsed} markClassName="h-8 w-8" wordmarkClassName="text-lg" /></Link>
+        <button ref={mobileCloseRef} type="button" onClick={() => onMobileOpenChange?.(false)} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-sidebar-accent sm:hidden" aria-label="Close admin navigation"><X className="h-5 w-5" /></button>
         <button type="button" onClick={() => setIsCollapsed((value) => !value)} className="hidden h-9 w-9 items-center justify-center rounded-xl hover:bg-sidebar-accent sm:flex" aria-label={isCollapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}>
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </button>

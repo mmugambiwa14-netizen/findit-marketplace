@@ -30,6 +30,7 @@ TEST_FILES=(
   supabase/tests/v1_private_notification_read_implementations.sql
   supabase/tests/v1_notification_peek_request_delivery.sql
   supabase/tests/v1_essential_notifications.sql
+  supabase/tests/v1_admin_control_audit_hardening.sql
   supabase/tests/v1_recommendation_foundation.sql
   supabase/tests/v1_recommendation_projection_queue.sql
   supabase/tests/v1_recommendation_eligibility_geospatial.sql

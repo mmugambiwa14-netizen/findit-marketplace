@@ -17,6 +17,7 @@ with expected(table_name, policy_name) as (
     ('contact_reveal_events', 'contact_reveal_events_own_read'),
     ('conversation_reports', 'conversation_reports_reporter_or_admin_read'),
     ('conversations', 'conversations_participant_read'),
+    ('email_notification_preferences', 'email_notification_preferences_owner_access'),
     ('inquiries', 'inquiries_participant_read'),
     ('listing_media', 'listing_media_read'),
     ('listing_private_locations', 'listing_private_locations_owner_admin_read'),
@@ -73,7 +74,7 @@ with expected(table_name, policy_name) as (
 select extensions.is(
   (select count(*)::bigint from missing_or_uninitialized),
   0::bigint,
-  'all 52 locked RLS policies use an auth.uid initialization plan'
+  'all 53 locked RLS policies use an auth.uid initialization plan'
 );
 
 select extensions.is(
@@ -86,8 +87,8 @@ select extensions.is(
         or coalesce(with_check, '') ~* '\(\s*SELECT\s+auth\.uid\(\)\s+AS\s+uid\s*\)'
       )
   ),
-  52::bigint,
-  'exactly 52 public policies contain initialized auth.uid calls'
+  53::bigint,
+  'exactly 53 public policies contain initialized auth.uid calls'
 );
 
 select extensions.is(

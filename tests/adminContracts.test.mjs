@@ -81,12 +81,12 @@ test('Peek moderation uses a bounded priority cursor and explicit decision', () 
     query: ' engine ',
     status: 'failed',
     limit: 500,
-    cursor: { reportedPriority: 4, failedPriority: 2, at: '2026-08-05T10:00:00Z', id: ID },
+    cursor: { reportedPriority: 0, failedPriority: 1, at: '2026-08-05T10:00:00Z', id: ID },
   }), {
     query: 'engine',
     status: 'failed',
     limit: 100,
-    cursor: { reportedPriority: 4, failedPriority: 2, at: '2026-08-05T10:00:00.000Z', id: ID },
+    cursor: { reportedPriority: 0, failedPriority: 1, at: '2026-08-05T10:00:00.000Z', id: ID },
   });
   assert.deepEqual(normalizeAdminTourDecision({ tourId: ID, action: 'reject', reason: 'Private information visible' }), {
     tourId: ID,
@@ -94,6 +94,7 @@ test('Peek moderation uses a bounded priority cursor and explicit decision', () 
     reason: 'Private information visible',
   });
   assert.throws(() => normalizeAdminTourQueueRequest({ status: 'deleted' }), /Peek status is invalid/);
+  assert.throws(() => normalizeAdminTourQueueRequest({ cursor: { reportedPriority: 4, failedPriority: 1, at: '2026-08-05T10:00:00Z', id: ID } }), /priority is invalid/);
   assert.throws(() => normalizeAdminTourDecision({ tourId: ID, action: 'publish', reason: 'No' }), /Peek decision is invalid/);
 });
 

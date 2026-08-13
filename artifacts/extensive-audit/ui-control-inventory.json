@@ -1,23 +1,23 @@
 {
-  "generatedAt": "2026-08-12T15:57:31.381Z",
-  "sourceFiles": 341,
+  "generatedAt": "2026-08-13T11:51:25.656Z",
+  "sourceFiles": 343,
   "pageModules": 40,
-  "directControlDeclarations": 774,
-  "pageExpandedControlInstances": 1214,
+  "directControlDeclarations": 743,
+  "pageExpandedControlInstances": 1212,
   "byElement": {
     "AlertDialog": 13,
-    "Button": 273,
+    "Button": 255,
     "Checkbox": 1,
-    "Dialog": 22,
+    "Dialog": 20,
     "DropdownMenuTrigger": 2,
-    "Input": 103,
+    "Input": 100,
     "Link": 97,
     "PopoverTrigger": 1,
-    "Select": 30,
-    "SelectTrigger": 30,
+    "Select": 27,
+    "SelectTrigger": 27,
     "Sheet": 5,
     "Switch": 10,
-    "Textarea": 34,
+    "Textarea": 32,
     "a": 8,
     "button": 132,
     "form": 13
@@ -28,19 +28,19 @@
       "page": "BusinessProfiles.jsx",
       "directControls": 5,
       "expandedControls": 20,
-      "localModulesInClosure": 52
+      "localModulesInClosure": 53
     },
     {
       "page": "BuyerPeekRequests.jsx",
       "directControls": 3,
       "expandedControls": 35,
-      "localModulesInClosure": 49
+      "localModulesInClosure": 50
     },
     {
       "page": "CarDetail.jsx",
       "directControls": 0,
       "expandedControls": 85,
-      "localModulesInClosure": 121
+      "localModulesInClosure": 122
     },
     {
       "page": "ContactSupport.jsx",
@@ -52,19 +52,19 @@
       "page": "CreateListing.jsx",
       "directControls": 2,
       "expandedControls": 82,
-      "localModulesInClosure": 72
+      "localModulesInClosure": 73
     },
     {
       "page": "CreateService.jsx",
       "directControls": 21,
       "expandedControls": 27,
-      "localModulesInClosure": 53
+      "localModulesInClosure": 54
     },
     {
       "page": "CuratedCreateService.jsx",
       "directControls": 2,
       "expandedControls": 59,
-      "localModulesInClosure": 58
+      "localModulesInClosure": 59
     },
     {
       "page": "FAQs.jsx",
@@ -82,7 +82,7 @@
       "page": "Home.jsx",
       "directControls": 3,
       "expandedControls": 32,
-      "localModulesInClosure": 66
+      "localModulesInClosure": 67
     },
     {
       "page": "Inquiries.jsx",
@@ -106,19 +106,19 @@
       "page": "MachineryDetail.jsx",
       "directControls": 0,
       "expandedControls": 85,
-      "localModulesInClosure": 121
+      "localModulesInClosure": 122
     },
     {
       "page": "MyListings.jsx",
       "directControls": 14,
       "expandedControls": 52,
-      "localModulesInClosure": 73
+      "localModulesInClosure": 74
     },
     {
       "page": "MyServices.jsx",
       "directControls": 4,
       "expandedControls": 35,
-      "localModulesInClosure": 60
+      "localModulesInClosure": 61
     },
     {
       "page": "NotificationCenter.jsx",
@@ -136,13 +136,13 @@
       "page": "PropertyDetail.jsx",
       "directControls": 0,
       "expandedControls": 85,
-      "localModulesInClosure": 121
+      "localModulesInClosure": 122
     },
     {
       "page": "PublicBusinessProfile.jsx",
       "directControls": 15,
       "expandedControls": 41,
-      "localModulesInClosure": 85
+      "localModulesInClosure": 86
     },
     {
       "page": "Register.jsx",
@@ -160,31 +160,31 @@
       "page": "Saved.jsx",
       "directControls": 6,
       "expandedControls": 30,
-      "localModulesInClosure": 79
+      "localModulesInClosure": 80
     },
     {
       "page": "Search.jsx",
       "directControls": 2,
       "expandedControls": 67,
-      "localModulesInClosure": 92
+      "localModulesInClosure": 93
     },
     {
       "page": "SellerProfile.jsx",
       "directControls": 9,
       "expandedControls": 34,
-      "localModulesInClosure": 70
+      "localModulesInClosure": 71
     },
     {
       "page": "ServiceDetail.jsx",
       "directControls": 0,
       "expandedControls": 63,
-      "localModulesInClosure": 95
+      "localModulesInClosure": 96
     },
     {
       "page": "Services.jsx",
       "directControls": 11,
       "expandedControls": 42,
-      "localModulesInClosure": 76
+      "localModulesInClosure": 77
     },
     {
       "page": "Settings.jsx",
@@ -196,7 +196,7 @@
       "page": "Tours.jsx",
       "directControls": 6,
       "expandedControls": 31,
-      "localModulesInClosure": 65
+      "localModulesInClosure": 66
     },
     {
       "page": "ToursPlaceholder.jsx",
@@ -208,61 +208,61 @@
       "page": "admin\\AdminAuditLog.jsx",
       "directControls": 3,
       "expandedControls": 6,
-      "localModulesInClosure": 16
+      "localModulesInClosure": 17
     },
     {
       "page": "admin\\AdminBusinessApplications.jsx",
-      "directControls": 9,
-      "expandedControls": 9,
-      "localModulesInClosure": 8
+      "directControls": 5,
+      "expandedControls": 8,
+      "localModulesInClosure": 13
     },
     {
       "page": "admin\\AdminCategories.jsx",
       "directControls": 37,
       "expandedControls": 37,
-      "localModulesInClosure": 17
+      "localModulesInClosure": 18
     },
     {
       "page": "admin\\AdminDashboard.jsx",
       "directControls": 2,
       "expandedControls": 2,
-      "localModulesInClosure": 12
+      "localModulesInClosure": 13
     },
     {
       "page": "admin\\AdminListings.jsx",
-      "directControls": 15,
-      "expandedControls": 17,
-      "localModulesInClosure": 19
+      "directControls": 12,
+      "expandedControls": 14,
+      "localModulesInClosure": 20
     },
     {
       "page": "admin\\AdminManagedListings.jsx",
-      "directControls": 7,
-      "expandedControls": 7,
-      "localModulesInClosure": 8
+      "directControls": 3,
+      "expandedControls": 6,
+      "localModulesInClosure": 16
     },
     {
       "page": "admin\\AdminPeeks.jsx",
-      "directControls": 11,
-      "expandedControls": 13,
-      "localModulesInClosure": 19
+      "directControls": 0,
+      "expandedControls": 25,
+      "localModulesInClosure": 29
     },
     {
       "page": "admin\\AdminReports.jsx",
-      "directControls": 14,
-      "expandedControls": 26,
+      "directControls": 15,
+      "expandedControls": 17,
       "localModulesInClosure": 19
     },
     {
       "page": "admin\\AdminSupportRequests.jsx",
       "directControls": 10,
       "expandedControls": 12,
-      "localModulesInClosure": 19
+      "localModulesInClosure": 20
     },
     {
       "page": "admin\\AdminUsers.jsx",
       "directControls": 10,
       "expandedControls": 23,
-      "localModulesInClosure": 33
+      "localModulesInClosure": 34
     }
   ],
   "controls": [
@@ -500,9 +500,9 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 24,
+      "line": 35,
       "element": "Link",
-      "name": "FindIt admin overview",
+      "name": "PeekaListing admin overview",
       "type": "",
       "handler": "",
       "destination": "/admin",
@@ -511,7 +511,7 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 25,
+      "line": 36,
       "element": "button",
       "name": "Close admin navigation",
       "type": "button",
@@ -522,7 +522,7 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 26,
+      "line": 37,
       "element": "button",
       "name": "isCollapsed ? 'Expand admin navigation' : 'Collapse admin navigation'",
       "type": "button",
@@ -533,7 +533,7 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 37,
+      "line": 48,
       "element": "Link",
       "name": "isCollapsed ? item.label : undefined",
       "type": "",
@@ -544,7 +544,7 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 51,
+      "line": 62,
       "element": "Button",
       "name": "Back to app",
       "type": "",
@@ -555,7 +555,7 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 52,
+      "line": 63,
       "element": "Link",
       "name": "Back to app",
       "type": "",
@@ -566,7 +566,7 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 54,
+      "line": 65,
       "element": "Button",
       "name": "Sign out",
       "type": "",
@@ -577,7 +577,7 @@
     {
       "file": "src\\components\\admin\\AdminSidebarCollapsible.jsx",
       "page": "",
-      "line": 66,
+      "line": 77,
       "element": "button",
       "name": "Close admin navigation",
       "type": "button",
@@ -588,7 +588,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 123,
+      "line": 118,
       "element": "Input",
       "name": "Search Tour moderation queue",
       "type": "",
@@ -599,9 +599,9 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 124,
+      "line": 119,
       "element": "Select",
-      "name": "Pending review Reported Processing failures Rejected Approved All Tours",
+      "name": "",
       "type": "",
       "handler": "(value) => { setStatus(value); pagination.reset(); }",
       "destination": "",
@@ -610,9 +610,9 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 124,
+      "line": 119,
       "element": "SelectTrigger",
-      "name": "Filter Tours by moderation status",
+      "name": "Filter Peeks by moderation status",
       "type": "",
       "handler": "",
       "destination": "",
@@ -621,7 +621,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 138,
+      "line": 133,
       "element": "Dialog",
       "name": "Review Tour media {reviewTour?.parent_title} <SkeletonRegion label=\"Loading review media\"><Skeleton className=\"aspect-video w-full\" /></SkeletonRegion> media.error ? <div className=\"space-y-3 rounded-xl bg-destructive/10 p-4 text-sm text-destructive\" role=\"alert\"><p>{media.error.message}</p><Button type=\"button\" size=\"sm\" variant=\"outline\" onClick={() => media.refetch()}>Retry review media</Button></div> : media.data?.playbackUrl ? <video src={media.data.playbackUrl} poster={media.data.thumbnailUrl || undefined} controls playsInline preload=\"metadata\" className=\"aspect-video w-full rounded-xl bg-black object-contain\" /> : media.data?.thumbnailUrl ? <img src={media.data.thumbnailUrl} alt=\"Tour review thumbnail\" loading=\"lazy\" decoding=\"async\" className=\"aspect-video w-full rounded-xl bg-muted object-contain\" /> : <div className=\"flex aspect-video items-center justify-center rounded-xl bg-muted text-sm text-muted-foreground\">No processed review media is available for this state.</div>",
       "type": "",
@@ -632,7 +632,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 142,
+      "line": 137,
       "element": "Button",
       "name": "Retry review media",
       "type": "button",
@@ -643,7 +643,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 144,
+      "line": 139,
       "element": "Button",
       "name": "View parent",
       "type": "",
@@ -654,7 +654,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 144,
+      "line": 139,
       "element": "Link",
       "name": "View parent",
       "type": "",
@@ -665,7 +665,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 145,
+      "line": 140,
       "element": "Button",
       "name": "Approve",
       "type": "",
@@ -676,7 +676,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 145,
+      "line": 140,
       "element": "Button",
       "name": "Reject",
       "type": "",
@@ -687,7 +687,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 146,
+      "line": 141,
       "element": "Button",
       "name": "Restore",
       "type": "",
@@ -698,7 +698,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 146,
+      "line": 141,
       "element": "Button",
       "name": "Remove Tour",
       "type": "",
@@ -709,7 +709,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 151,
+      "line": 146,
       "element": "Dialog",
       "name": "decisionCopy[decision.action][0] 'Moderation decision' decisionCopy[decision.action][1] '' Decision reason 'Saving…' 'Confirm decision'",
       "type": "",
@@ -720,7 +720,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 156,
+      "line": 151,
       "element": "Textarea",
       "name": "Explain the policy or evidence behind this action",
       "type": "",
@@ -731,7 +731,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 157,
+      "line": 152,
       "element": "Button",
       "name": "'Saving…' 'Confirm decision'",
       "type": "",
@@ -742,7 +742,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 182,
+      "line": 177,
       "element": "Button",
       "name": "Review media",
       "type": "",
@@ -753,7 +753,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 183,
+      "line": 178,
       "element": "Button",
       "name": "Parent",
       "type": "",
@@ -764,7 +764,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 183,
+      "line": 178,
       "element": "Link",
       "name": "Parent",
       "type": "",
@@ -775,7 +775,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 184,
+      "line": 179,
       "element": "Button",
       "name": "Approve",
       "type": "",
@@ -786,7 +786,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 184,
+      "line": 179,
       "element": "Button",
       "name": "Reject",
       "type": "",
@@ -797,7 +797,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 185,
+      "line": 180,
       "element": "Button",
       "name": "Restore",
       "type": "",
@@ -808,7 +808,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 185,
+      "line": 180,
       "element": "Button",
       "name": "Remove Tour",
       "type": "",
@@ -819,7 +819,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 186,
+      "line": 181,
       "element": "Button",
       "name": "Remove Tour",
       "type": "",
@@ -830,7 +830,7 @@
     {
       "file": "src\\components\\admin\\AdminTourQueue.jsx",
       "page": "",
-      "line": 187,
+      "line": 182,
       "element": "Button",
       "name": "Suspend seller",
       "type": "",
@@ -841,9 +841,9 @@
     {
       "file": "src\\components\\admin\\BanUserDialog.jsx",
       "page": "",
-      "line": 40,
+      "line": 41,
       "element": "Dialog",
-      "name": "Ban account Temporarily block from using FindIt. Account access will be blocked immediately. The account currently has active or recorded advert '' 's' . Existing records remain available for audit and restoration. Ban duration 1 day 7 days 30 days 90 days 1 year Reason for ban Type {REQUIRED_CONFIRMATION} to confirm Cancel 'Banning…' `Ban for ${duration} day${duration === '1' ? '' : 's'}`",
+      "name": "Ban account Temporarily block from using PeekaListing. Account access will be blocked immediately. The account currently has active or recorded advert '' 's' . Existing records remain available for audit and restoration. Ban duration Reason for ban Type {REQUIRED_CONFIRMATION} to confirm Cancel 'Banning…' `Ban for ${duration} day${duration === '1' ? '' : 's'}`",
       "type": "",
       "handler": "",
       "destination": "",
@@ -852,9 +852,9 @@
     {
       "file": "src\\components\\admin\\BanUserDialog.jsx",
       "page": "",
-      "line": 64,
+      "line": 65,
       "element": "Select",
-      "name": "1 day 7 days 30 days 90 days 1 year",
+      "name": "",
       "type": "",
       "handler": "setDuration",
       "destination": "",
@@ -863,7 +863,7 @@
     {
       "file": "src\\components\\admin\\BanUserDialog.jsx",
       "page": "",
-      "line": 65,
+      "line": 66,
       "element": "SelectTrigger",
       "name": "",
       "type": "",
@@ -874,7 +874,7 @@
     {
       "file": "src\\components\\admin\\BanUserDialog.jsx",
       "page": "",
-      "line": 80,
+      "line": 75,
       "element": "Textarea",
       "name": "Describe the policy, safety, or operational reason.",
       "type": "",
@@ -885,7 +885,7 @@
     {
       "file": "src\\components\\admin\\BanUserDialog.jsx",
       "page": "",
-      "line": 92,
+      "line": 87,
       "element": "Input",
       "name": "REQUIRED_CONFIRMATION",
       "type": "",
@@ -896,7 +896,7 @@
     {
       "file": "src\\components\\admin\\BanUserDialog.jsx",
       "page": "",
-      "line": 104,
+      "line": 99,
       "element": "Button",
       "name": "Cancel",
       "type": "",
@@ -907,7 +907,7 @@
     {
       "file": "src\\components\\admin\\BanUserDialog.jsx",
       "page": "",
-      "line": 107,
+      "line": 102,
       "element": "Button",
       "name": "'Banning…' `Ban for ${duration} day${duration === '1' ? '' : 's'}`",
       "type": "",
@@ -936,116 +936,6 @@
       "handler": "onForward",
       "destination": "",
       "disabled": "!canGoForward"
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 58,
-      "element": "Button",
-      "name": "Marketplace reports",
-      "type": "",
-      "handler": "onShowReports",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 62,
-      "element": "Input",
-      "name": "Search support requests",
-      "type": "",
-      "handler": "(event) => { setQuery(event.target.value); pagination.reset(); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 63,
-      "element": "Select",
-      "name": "All statuses Open Resolved",
-      "type": "",
-      "handler": "(value) => { setStatus(value); pagination.reset(); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 63,
-      "element": "SelectTrigger",
-      "name": "Filter support requests by status",
-      "type": "",
-      "handler": "",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 64,
-      "element": "Select",
-      "name": "All categories",
-      "type": "",
-      "handler": "(value) => { setCategory(value); pagination.reset(); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 64,
-      "element": "SelectTrigger",
-      "name": "Filter support requests by category",
-      "type": "",
-      "handler": "",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 84,
-      "element": "Button",
-      "name": "Resolve",
-      "type": "",
-      "handler": "() => { setSelected(item); setNote(''); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 94,
-      "element": "Dialog",
-      "name": "Resolve {selected?.reference_id} Resolution note 'Saving…' 'Mark resolved'",
-      "type": "",
-      "handler": "",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 97,
-      "element": "Textarea",
-      "name": "Record what was done and why",
-      "type": "",
-      "handler": "(event) => setNote(event.target.value)",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\components\\admin\\SupportRequestInbox.jsx",
-      "page": "",
-      "line": 98,
-      "element": "Button",
-      "name": "'Saving…' 'Mark resolved'",
-      "type": "",
-      "handler": "() => mutation.mutate({ requestId: selected.request_id, note })",
-      "destination": "",
-      "disabled": "note.trim().length < 3 || mutation.isPending"
     },
     {
       "file": "src\\components\\admin\\UsersTable.jsx",
@@ -7485,7 +7375,7 @@
     {
       "file": "src\\pages\\admin\\AdminAuditLog.jsx",
       "page": "admin\\AdminAuditLog.jsx",
-      "line": 38,
+      "line": 39,
       "element": "Input",
       "name": "Search audit log",
       "type": "",
@@ -7496,9 +7386,9 @@
     {
       "file": "src\\pages\\admin\\AdminAuditLog.jsx",
       "page": "admin\\AdminAuditLog.jsx",
-      "line": 38,
+      "line": 39,
       "element": "Select",
-      "name": "All targets Users Property Vehicles Machinery Services Reports Peek reports Peeks Categories Support requests",
+      "name": "",
       "type": "",
       "handler": "(value) => { setTargetType(value); pagination.reset(); }",
       "destination": "",
@@ -7507,7 +7397,7 @@
     {
       "file": "src\\pages\\admin\\AdminAuditLog.jsx",
       "page": "admin\\AdminAuditLog.jsx",
-      "line": 38,
+      "line": 39,
       "element": "SelectTrigger",
       "name": "Filter audit log by target type",
       "type": "",
@@ -7518,7 +7408,7 @@
     {
       "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
       "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 71,
+      "line": 94,
       "element": "Button",
       "name": "Refresh",
       "type": "",
@@ -7529,40 +7419,18 @@
     {
       "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
       "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 109,
+      "line": 133,
       "element": "Button",
-      "name": "Approve",
+      "name": "{action.label}",
       "type": "",
-      "handler": "() => actOnCategory(application.application_id, category.id, 'approve')",
+      "handler": "() => actOnCategory(category.id, action.value)",
       "destination": "",
-      "disabled": "busy"
+      "disabled": "busy || (action.requiresMessage && (messages[categoryKey] || '').trim().length < 3)"
     },
     {
       "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
       "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 110,
-      "element": "Button",
-      "name": "Reject",
-      "type": "",
-      "handler": "() => actOnCategory(application.application_id, category.id, 'reject')",
-      "destination": "",
-      "disabled": "busy"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
-      "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 111,
-      "element": "Button",
-      "name": "Suspend",
-      "type": "",
-      "handler": "() => actOnCategory(application.application_id, category.id, 'suspend')",
-      "destination": "",
-      "disabled": "busy"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
-      "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 115,
+      "line": 137,
       "element": "Textarea",
       "name": "Required for rejection or suspension",
       "type": "",
@@ -7573,7 +7441,7 @@
     {
       "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
       "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 123,
+      "line": 146,
       "element": "Textarea",
       "name": "Message required when requesting information or rejecting the application",
       "type": "",
@@ -7584,40 +7452,18 @@
     {
       "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
       "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 125,
+      "line": 148,
       "element": "Button",
-      "name": "Start review",
+      "name": "{action.label}",
       "type": "",
-      "handler": "() => actOnApplication(application.application_id, 'start_review')",
+      "handler": "() => actOnApplication(application.application_id, action.value)",
       "destination": "",
-      "disabled": "busyKey === applicationKey"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
-      "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 126,
-      "element": "Button",
-      "name": "Request information",
-      "type": "",
-      "handler": "() => actOnApplication(application.application_id, 'request_information')",
-      "destination": "",
-      "disabled": "busyKey === applicationKey"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminBusinessApplications.jsx",
-      "page": "admin\\AdminBusinessApplications.jsx",
-      "line": 127,
-      "element": "Button",
-      "name": "Reject application",
-      "type": "",
-      "handler": "() => actOnApplication(application.application_id, 'reject')",
-      "destination": "",
-      "disabled": "busyKey === applicationKey"
+      "disabled": "busyKey === applicationKey || (action.requiresMessage && (messages[applicationKey] || '').trim().length < 3)"
     },
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 201,
+      "line": 202,
       "element": "Button",
       "name": "Add taxonomy node",
       "type": "",
@@ -7628,7 +7474,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 221,
+      "line": 222,
       "element": "Button",
       "name": "Edit root",
       "type": "",
@@ -7639,7 +7485,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 245,
+      "line": 246,
       "element": "Button",
       "name": "Edit",
       "type": "",
@@ -7650,9 +7496,9 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 259,
+      "line": 260,
       "element": "Dialog",
-      "name": "Add taxonomy node Parent node Stable slug Immutable after creation. Current slug Display label Node type Group Category Facet Description Sort order Postable Only category nodes may receive listings. Aliases Search synonyms Market availability Localized labels Reason 'Adding…' 'Add taxonomy node'",
+      "name": "Add taxonomy node Parent node Stable slug Immutable after creation. Current slug Display label Node type Description Sort order Postable Only category nodes may receive listings. Aliases Search synonyms Market availability Localized labels Reason 'Adding…' 'Add taxonomy node'",
       "type": "",
       "handler": "",
       "destination": "",
@@ -7661,7 +7507,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 263,
+      "line": 264,
       "element": "Select",
       "name": "",
       "type": "",
@@ -7672,7 +7518,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 263,
+      "line": 264,
       "element": "SelectTrigger",
       "name": "",
       "type": "",
@@ -7683,7 +7529,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 264,
+      "line": 265,
       "element": "Input",
       "name": "detached_house",
       "type": "",
@@ -7694,7 +7540,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 265,
+      "line": 266,
       "element": "Input",
       "name": "house",
       "type": "",
@@ -7705,7 +7551,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 266,
+      "line": 267,
       "element": "Input",
       "name": "",
       "type": "",
@@ -7716,9 +7562,9 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 267,
+      "line": 268,
       "element": "Select",
-      "name": "Group Category Facet",
+      "name": "",
       "type": "",
       "handler": "(nodeType) => setCreateForm((form) => ({ ...form, nodeType, isPostable: nodeType === 'category' ? form.isPostable : false }))",
       "destination": "",
@@ -7727,7 +7573,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 267,
+      "line": 268,
       "element": "SelectTrigger",
       "name": "",
       "type": "",
@@ -7738,7 +7584,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 268,
+      "line": 269,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -7749,7 +7595,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 269,
+      "line": 270,
       "element": "Input",
       "name": "",
       "type": "number",
@@ -7760,7 +7606,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 270,
+      "line": 271,
       "element": "Switch",
       "name": "",
       "type": "",
@@ -7771,7 +7617,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 271,
+      "line": 272,
       "element": "Input",
       "name": "old_slug, alternate_slug",
       "type": "",
@@ -7782,7 +7628,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 272,
+      "line": 273,
       "element": "Input",
       "name": "pickup, bakkie",
       "type": "",
@@ -7793,7 +7639,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 273,
+      "line": 274,
       "element": "Input",
       "name": "ZW, ZA (blank = all)",
       "type": "",
@@ -7804,7 +7650,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 274,
+      "line": 275,
       "element": "Textarea",
       "name": "'sn: Imba\\nnd: ...'",
       "type": "",
@@ -7815,7 +7661,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 275,
+      "line": 276,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -7826,7 +7672,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 276,
+      "line": 277,
       "element": "Button",
       "name": "'Adding…' 'Add taxonomy node'",
       "type": "",
@@ -7837,24 +7683,13 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 281,
+      "line": 282,
       "element": "Dialog",
       "name": "Edit {editing?.displayLabel}",
       "type": "",
       "handler": "",
       "destination": "",
       "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminCategories.jsx",
-      "page": "admin\\AdminCategories.jsx",
-      "line": 286,
-      "element": "Input",
-      "name": "",
-      "type": "",
-      "handler": "",
-      "destination": "",
-      "disabled": "true"
     },
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
@@ -7874,6 +7709,17 @@
       "element": "Input",
       "name": "",
       "type": "",
+      "handler": "",
+      "destination": "",
+      "disabled": "true"
+    },
+    {
+      "file": "src\\pages\\admin\\AdminCategories.jsx",
+      "page": "admin\\AdminCategories.jsx",
+      "line": 289,
+      "element": "Input",
+      "name": "",
+      "type": "",
       "handler": "(event) => setEditForm((form) => ({ ...form, canonicalSlug: event.target.value.toLowerCase().replace(/\\s+/g, '_') }))",
       "destination": "",
       "disabled": ""
@@ -7881,7 +7727,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 289,
+      "line": 290,
       "element": "Input",
       "name": "",
       "type": "",
@@ -7892,7 +7738,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 290,
+      "line": 291,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -7903,7 +7749,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 291,
+      "line": 292,
       "element": "Input",
       "name": "",
       "type": "number",
@@ -7914,7 +7760,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 292,
+      "line": 293,
       "element": "Switch",
       "name": "",
       "type": "",
@@ -7925,7 +7771,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 292,
+      "line": 293,
       "element": "Switch",
       "name": "",
       "type": "",
@@ -7936,7 +7782,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 293,
+      "line": 294,
       "element": "Input",
       "name": "",
       "type": "",
@@ -7947,7 +7793,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 294,
+      "line": 295,
       "element": "Input",
       "name": "",
       "type": "",
@@ -7958,7 +7804,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 295,
+      "line": 296,
       "element": "Input",
       "name": "Blank = all markets",
       "type": "",
@@ -7969,7 +7815,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 296,
+      "line": 297,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -7980,7 +7826,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 297,
+      "line": 298,
       "element": "Select",
       "name": "Not superseded",
       "type": "",
@@ -7991,7 +7837,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 297,
+      "line": 298,
       "element": "SelectTrigger",
       "name": "",
       "type": "",
@@ -8002,7 +7848,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 298,
+      "line": 299,
       "element": "Textarea",
       "name": "",
       "type": "",
@@ -8013,7 +7859,7 @@
     {
       "file": "src\\pages\\admin\\AdminCategories.jsx",
       "page": "admin\\AdminCategories.jsx",
-      "line": 299,
+      "line": 300,
       "element": "Button",
       "name": "'Saving…' 'Save taxonomy node'",
       "type": "",
@@ -8046,51 +7892,18 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 35,
-      "element": "Button",
-      "name": "Pause",
-      "type": "",
-      "handler": "() => decide(item, 'pause')",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminListings.jsx",
-      "page": "admin\\AdminListings.jsx",
-      "line": 36,
-      "element": "Button",
-      "name": "'Approve' 'Publish'",
-      "type": "",
-      "handler": "() => decide(item, 'publish')",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminListings.jsx",
-      "page": "admin\\AdminListings.jsx",
-      "line": 37,
-      "element": "Button",
-      "name": "Reject",
-      "type": "",
-      "handler": "() => decide(item, 'reject')",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminListings.jsx",
-      "page": "admin\\AdminListings.jsx",
       "line": 38,
       "element": "Button",
-      "name": "Remove",
+      "name": "{action.label}",
       "type": "",
-      "handler": "() => decide(item, 'remove')",
+      "handler": "() => decide(item, action.value)",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 73,
+      "line": 86,
       "element": "Input",
       "name": "Search adverts",
       "type": "",
@@ -8101,9 +7914,9 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 74,
+      "line": 87,
       "element": "Select",
-      "name": "All types Property Vehicles Machinery Services",
+      "name": "",
       "type": "",
       "handler": "(value) => { setKind(value); pagination.reset(); }",
       "destination": "",
@@ -8112,7 +7925,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 74,
+      "line": 87,
       "element": "SelectTrigger",
       "name": "Filter adverts by type",
       "type": "",
@@ -8123,9 +7936,9 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 75,
+      "line": 88,
       "element": "Select",
-      "name": "All statuses Pending product review Published products Rejected products Paused adverts Unavailable products Active services Sold Rented Expired",
+      "name": "",
       "type": "",
       "handler": "(value) => { setStatus(value); pagination.reset(); }",
       "destination": "",
@@ -8134,7 +7947,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 75,
+      "line": 88,
       "element": "SelectTrigger",
       "name": "Filter adverts by status",
       "type": "",
@@ -8145,7 +7958,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 77,
+      "line": 90,
       "element": "Button",
       "name": "Try again",
       "type": "",
@@ -8156,7 +7969,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 79,
+      "line": 92,
       "element": "Link",
       "name": "{item.title}",
       "type": "",
@@ -8167,7 +7980,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 83,
+      "line": 96,
       "element": "Dialog",
       "name": "'Approve' decision?.action advert This action is recorded in the audit log. ' Removing an advert is permanent and closes public access.' '' ' The owner will receive this reason.' '' Reason 'Saving…' 'Confirm action'",
       "type": "",
@@ -8178,7 +7991,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 83,
+      "line": 96,
       "element": "Textarea",
       "name": "Explain the policy or operational reason",
       "type": "",
@@ -8189,7 +8002,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 83,
+      "line": 96,
       "element": "Input",
       "name": "",
       "type": "",
@@ -8200,7 +8013,7 @@
     {
       "file": "src\\pages\\admin\\AdminListings.jsx",
       "page": "admin\\AdminListings.jsx",
-      "line": 83,
+      "line": 96,
       "element": "Button",
       "name": "'Saving…' 'Confirm action'",
       "type": "",
@@ -8211,7 +8024,7 @@
     {
       "file": "src\\pages\\admin\\AdminManagedListings.jsx",
       "page": "admin\\AdminManagedListings.jsx",
-      "line": 55,
+      "line": 86,
       "element": "Button",
       "name": "Refresh",
       "type": "",
@@ -8222,7 +8035,7 @@
     {
       "file": "src\\pages\\admin\\AdminManagedListings.jsx",
       "page": "admin\\AdminManagedListings.jsx",
-      "line": 84,
+      "line": 129,
       "element": "Textarea",
       "name": "Required when requesting information or declining",
       "type": "",
@@ -8233,194 +8046,40 @@
     {
       "file": "src\\pages\\admin\\AdminManagedListings.jsx",
       "page": "admin\\AdminManagedListings.jsx",
-      "line": 86,
+      "line": 131,
       "element": "Button",
-      "name": "Start review",
+      "name": "{action.label}",
       "type": "",
-      "handler": "() => update(row, 'reviewing')",
+      "handler": "() => update(row, action.value)",
       "destination": "",
-      "disabled": "busyId === row.id"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminManagedListings.jsx",
-      "page": "admin\\AdminManagedListings.jsx",
-      "line": 87,
-      "element": "Button",
-      "name": "Accept",
-      "type": "",
-      "handler": "() => update(row, 'accepted')",
-      "destination": "",
-      "disabled": "busyId === row.id"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminManagedListings.jsx",
-      "page": "admin\\AdminManagedListings.jsx",
-      "line": 88,
-      "element": "Button",
-      "name": "Request information",
-      "type": "",
-      "handler": "() => update(row, 'needs_information')",
-      "destination": "",
-      "disabled": "busyId === row.id"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminManagedListings.jsx",
-      "page": "admin\\AdminManagedListings.jsx",
-      "line": 89,
-      "element": "Button",
-      "name": "Mark published",
-      "type": "",
-      "handler": "() => update(row, 'published')",
-      "destination": "",
-      "disabled": "busyId === row.id"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminManagedListings.jsx",
-      "page": "admin\\AdminManagedListings.jsx",
-      "line": 90,
-      "element": "Button",
-      "name": "Decline",
-      "type": "",
-      "handler": "() => update(row, 'declined')",
-      "destination": "",
-      "disabled": "busyId === row.id"
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 70,
-      "element": "Input",
-      "name": "Search Peeks",
-      "type": "",
-      "handler": "(event) => { setQuery(event.target.value); pagination.reset(); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 71,
-      "element": "Select",
-      "name": "",
-      "type": "",
-      "handler": "(value) => { setStatus(value); pagination.reset(); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 71,
-      "element": "SelectTrigger",
-      "name": "Filter Peeks by status",
-      "type": "",
-      "handler": "",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 73,
-      "element": "Button",
-      "name": "Try again",
-      "type": "",
-      "handler": "() => queue.refetch()",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 75,
-      "element": "Link",
-      "name": "",
-      "type": "",
-      "handler": "",
-      "destination": "item.parent_path || '#'",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 75,
-      "element": "Button",
-      "name": "Approve",
-      "type": "",
-      "handler": "() => { setDecision({ item, action: 'approve' }); setReason(''); setConfirmation(''); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 75,
-      "element": "Button",
-      "name": "Reject",
-      "type": "",
-      "handler": "() => { setDecision({ item, action: 'reject' }); setReason(''); setConfirmation(''); }",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 79,
-      "element": "Dialog",
-      "name": "'Approve this Peek?' 'Reject this Peek?' This changes public evidence availability and creates an immutable audit entry. Review the listing and any reports before continuing. Decision reason Type {expectedConfirmation} to confirm 'Saving decision…' `Confirm ${decision?.action}`",
-      "type": "",
-      "handler": "",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 79,
-      "element": "Textarea",
-      "name": "State what was reviewed and why this decision is appropriate",
-      "type": "",
-      "handler": "(event) => setReason(event.target.value)",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 79,
-      "element": "Input",
-      "name": "",
-      "type": "",
-      "handler": "(event) => setConfirmation(event.target.value.toUpperCase())",
-      "destination": "",
-      "disabled": ""
-    },
-    {
-      "file": "src\\pages\\admin\\AdminPeeks.jsx",
-      "page": "admin\\AdminPeeks.jsx",
-      "line": 79,
-      "element": "Button",
-      "name": "'Saving decision…' `Confirm ${decision?.action}`",
-      "type": "",
-      "handler": "() => mutation.mutate({ tourId: decision.item.tour_id, action: decision.action, reason })",
-      "destination": "",
-      "disabled": "reason.trim().length < 3 || confirmation !== expectedConfirmation || mutation.isPending"
+      "disabled": "busyId === row.id || (action.requiresMessage && (messages[row.id] || '').trim().length < 3)"
     },
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 120,
+      "line": 100,
       "element": "Button",
       "name": "Support requests",
       "type": "",
-      "handler": "() => setShowSupport(true)",
+      "handler": "",
       "destination": "",
       "disabled": ""
     },
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 127,
+      "line": 100,
+      "element": "Link",
+      "name": "Support requests",
+      "type": "",
+      "handler": "",
+      "destination": "/admin/support",
+      "disabled": ""
+    },
+    {
+      "file": "src\\pages\\admin\\AdminReports.jsx",
+      "page": "admin\\AdminReports.jsx",
+      "line": 107,
       "element": "Input",
       "name": "Search reports",
       "type": "",
@@ -8431,9 +8090,9 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 135,
+      "line": 115,
       "element": "Select",
-      "name": "All statuses Pending Reviewed Dismissed Actioned",
+      "name": "",
       "type": "",
       "handler": "(value) => { setStatus(value); pagination.reset(); }",
       "destination": "",
@@ -8442,7 +8101,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 136,
+      "line": 116,
       "element": "SelectTrigger",
       "name": "Filter reports by status",
       "type": "",
@@ -8453,9 +8112,9 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 145,
+      "line": 119,
       "element": "Select",
-      "name": "All types Peeks Property Vehicles Machinery Services Messages",
+      "name": "",
       "type": "",
       "handler": "(value) => { setKind(value); pagination.reset(); }",
       "destination": "",
@@ -8464,7 +8123,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 146,
+      "line": 120,
       "element": "SelectTrigger",
       "name": "Filter reports by target type",
       "type": "",
@@ -8475,7 +8134,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 189,
+      "line": 155,
       "element": "Dialog",
       "name": "{actionTitle} Decision notes 'Saving…' 'Confirm decision'",
       "type": "",
@@ -8486,7 +8145,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 208,
+      "line": 174,
       "element": "Textarea",
       "name": "Explain this safety decision",
       "type": "",
@@ -8497,7 +8156,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 217,
+      "line": 183,
       "element": "Button",
       "name": "'Saving…' 'Confirm decision'",
       "type": "",
@@ -8508,7 +8167,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 262,
+      "line": 228,
       "element": "Button",
       "name": "View parent",
       "type": "",
@@ -8519,7 +8178,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 263,
+      "line": 229,
       "element": "Link",
       "name": "View parent",
       "type": "",
@@ -8530,7 +8189,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 270,
+      "line": 236,
       "element": "Button",
       "name": "Mark reviewed",
       "type": "",
@@ -8541,7 +8200,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 271,
+      "line": 237,
       "element": "Button",
       "name": "'Restore Peek' 'Dismiss'",
       "type": "",
@@ -8552,7 +8211,7 @@
     {
       "file": "src\\pages\\admin\\AdminReports.jsx",
       "page": "admin\\AdminReports.jsx",
-      "line": 275,
+      "line": 241,
       "element": "Button",
       "name": "'Close conversation' type === 'peek' ? 'Remove Peek' : 'Remove item'",
       "type": "",
@@ -8563,7 +8222,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 65,
+      "line": 67,
       "element": "Input",
       "name": "Search support requests",
       "type": "",
@@ -8574,9 +8233,9 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 66,
+      "line": 68,
       "element": "Select",
-      "name": "Open Resolved All statuses",
+      "name": "",
       "type": "",
       "handler": "(value) => { setStatus(value); pagination.reset(); }",
       "destination": "",
@@ -8585,7 +8244,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 66,
+      "line": 68,
       "element": "SelectTrigger",
       "name": "Filter support requests by status",
       "type": "",
@@ -8596,7 +8255,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 67,
+      "line": 69,
       "element": "Select",
       "name": "",
       "type": "",
@@ -8607,7 +8266,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 67,
+      "line": 69,
       "element": "SelectTrigger",
       "name": "Filter support requests by category",
       "type": "",
@@ -8618,7 +8277,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 69,
+      "line": 71,
       "element": "Button",
       "name": "Try again",
       "type": "",
@@ -8629,7 +8288,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 71,
+      "line": 73,
       "element": "Button",
       "name": "Resolve",
       "type": "",
@@ -8640,7 +8299,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 75,
+      "line": 77,
       "element": "Dialog",
       "name": "Resolve support request Record the action taken. This note is written to the audit trail. Resolution note 'Resolving…' 'Confirm resolution'",
       "type": "",
@@ -8651,7 +8310,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 75,
+      "line": 77,
       "element": "Textarea",
       "name": "Explain what was checked and how the request was resolved",
       "type": "",
@@ -8662,7 +8321,7 @@
     {
       "file": "src\\pages\\admin\\AdminSupportRequests.jsx",
       "page": "admin\\AdminSupportRequests.jsx",
-      "line": 75,
+      "line": 77,
       "element": "Button",
       "name": "'Resolving…' 'Confirm resolution'",
       "type": "",
@@ -8673,7 +8332,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 82,
+      "line": 87,
       "element": "Input",
       "name": "Search users",
       "type": "",
@@ -8684,9 +8343,9 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 82,
+      "line": 87,
       "element": "Select",
-      "name": "All roles Users Founder admin",
+      "name": "",
       "type": "",
       "handler": "(value) => { setRole(value); pagination.reset(); }",
       "destination": "",
@@ -8695,7 +8354,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 82,
+      "line": 87,
       "element": "SelectTrigger",
       "name": "Filter users by role",
       "type": "",
@@ -8706,9 +8365,9 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 82,
+      "line": 87,
       "element": "Select",
-      "name": "All statuses Active Suspended Banned",
+      "name": "",
       "type": "",
       "handler": "(value) => { setStatus(value); pagination.reset(); }",
       "destination": "",
@@ -8717,7 +8376,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 82,
+      "line": 87,
       "element": "SelectTrigger",
       "name": "Filter users by status",
       "type": "",
@@ -8728,7 +8387,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 83,
+      "line": 88,
       "element": "Button",
       "name": "Retry",
       "type": "",
@@ -8739,7 +8398,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 88,
+      "line": 93,
       "element": "Dialog",
       "name": "'Account access will be restored.' 'Account access will be blocked immediately.' has recorded adverts. The decision and reason will be written to the audit log. {decision?.user.email} Reason Type {requiredConfirmation} to confirm 'Saving…' `Confirm ${decision?.status === 'active' ? 'restore' : 'suspension'}`",
       "type": "",
@@ -8750,7 +8409,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 88,
+      "line": 93,
       "element": "Textarea",
       "name": "Explain the policy or operational reason",
       "type": "",
@@ -8761,7 +8420,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 88,
+      "line": 93,
       "element": "Input",
       "name": "requiredConfirmation",
       "type": "",
@@ -8772,7 +8431,7 @@
     {
       "file": "src\\pages\\admin\\AdminUsers.jsx",
       "page": "admin\\AdminUsers.jsx",
-      "line": 88,
+      "line": 93,
       "element": "Button",
       "name": "'Saving…' `Confirm ${decision?.status === 'active' ? 'restore' : 'suspension'}`",
       "type": "",

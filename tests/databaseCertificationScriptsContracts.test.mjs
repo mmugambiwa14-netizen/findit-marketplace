@@ -27,7 +27,8 @@ test('migration certification is pinned, exhaustive and self-cleaning', () => {
   assert.match(migration, /v1_message_unread_count_projection\.sql/);
   assert.match(migration, /v1_peek_request_buyer_state_and_activity\.sql/);
   assert.match(migration, /v1_notification_peek_request_delivery\.sql/);
-  assert.equal(suiteCount(migration), 43);
+  assert.match(migration, /v1_admin_control_audit_hardening\.sql/);
+  assert.equal(suiteCount(migration), 44);
   assert.match(migrationWorkflow, /bash \.\/scripts\/run-migration-database-certification\.sh/);
   assert.doesNotMatch(migrationWorkflow, /test db supabase\/tests\//);
 });

@@ -158,9 +158,11 @@ select extensions.lives_ok(
   'a super admin can grant the narrow admin role with a reason'
 );
 select extensions.is(
-  (select role from public.users where id = '00000000-0000-4000-8000-000000002003'),
+  (select role
+   from public.admin_user_rows_page('', 'admin', 'active', 25, null, null)
+   where user_id = '00000000-0000-4000-8000-000000002003'),
   'admin',
-  'role mutation persisted'
+  'role mutation is visible through the protected admin projection'
 );
 
 select extensions.lives_ok(
@@ -171,9 +173,11 @@ select extensions.lives_ok(
   'admin can suspend another account with a reason'
 );
 select extensions.is(
-  (select status::text from public.users where id = '00000000-0000-4000-8000-000000002003'),
+  (select status
+   from public.admin_user_rows_page('', 'admin', 'suspended', 25, null, null)
+   where user_id = '00000000-0000-4000-8000-000000002003'),
   'suspended',
-  'account suspension persisted'
+  'account suspension is visible through the protected admin projection'
 );
 reset role;
 select extensions.is(
@@ -199,9 +203,11 @@ select extensions.lives_ok(
   'admin can record a report decision atomically'
 );
 select extensions.is(
-  (select status::text from public.reports where id = '00000000-0000-4000-8000-000000002201'),
+  (select status
+   from public.admin_report_rows_page('', 'reviewed', 'all', 25, null, null)
+   where report_id = '00000000-0000-4000-8000-000000002201'),
   'reviewed',
-  'report decision persisted'
+  'report decision is visible through the protected admin projection'
 );
 
 select extensions.lives_ok(
@@ -212,9 +218,11 @@ select extensions.lives_ok(
   'admin can pause an advert through the narrow moderation operation'
 );
 select extensions.is(
-  (select status::text from public.listings where id = '00000000-0000-4000-8000-000000002101'),
+  (select status
+   from public.admin_marketplace_rows_page('', 'car', 'paused', 25, null, null)
+   where item_id = '00000000-0000-4000-8000-000000002101'),
   'paused',
-  'product pause uses the explicit paused state'
+  'product pause is visible through the protected admin projection'
 );
 
 select extensions.lives_ok(
@@ -244,10 +252,11 @@ select extensions.is(
   'every successful privileged mutation produced a durable audit event'
 );
 select extensions.is(
-  (select count(*)::bigint from public.audit_logs
+  (select count(*)::bigint
+   from public.admin_audit_rows_page('', 'all', 100, null, null)
    where reason is not null and correlation_id is not null and result = 'success'),
   5::bigint,
-  'audit events contain reason, correlation, and result evidence'
+  'audit projection contains reason, correlation, and result evidence'
 );
 
 select * from extensions.finish();

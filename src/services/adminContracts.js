@@ -1,13 +1,39 @@
+import {
+  ADMIN_AUDIT_TARGET_TYPES,
+  ADMIN_ASSIGNABLE_USER_ROLES,
+  ADMIN_MARKETPLACE_MODERATION_ACTION_VALUES,
+  ADMIN_MARKETPLACE_KINDS,
+  ADMIN_MARKETPLACE_STATUSES,
+  ADMIN_MUTABLE_USER_STATUSES,
+  ADMIN_PEEK_QUEUE_STATUSES,
+  ADMIN_PEEK_MODERATION_DECISIONS,
+  ADMIN_REPORT_KIND_DATABASE_VALUES,
+  ADMIN_REPORT_DECISION_STATUSES,
+  ADMIN_REPORT_STATUSES,
+  ADMIN_SUPPORT_CATEGORIES,
+  ADMIN_SUPPORT_STATUSES,
+  ADMIN_USER_ROLES,
+  ADMIN_USER_STATUSES,
+} from './adminConfig.js';
+
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
-const MARKETPLACE_KINDS = new Set(['all', 'property', 'car', 'machinery', 'service']);
-const USER_ROLES = new Set(['all', 'user', 'admin']);
-const USER_STATUSES = new Set(['all', 'active', 'suspended', 'banned']);
-const REPORT_STATUSES = new Set(['all', 'pending', 'reviewed', 'dismissed', 'actioned']);
-const REPORT_KINDS = new Set(['all', 'property', 'vehicle', 'machinery', 'service', 'tour', 'message']);
-const SUPPORT_STATUSES = new Set(['all', 'open', 'resolved']);
-const SUPPORT_CATEGORIES = new Set(['all', 'account', 'listing', 'report', 'safety', 'technical', 'other']);
-const TOUR_STATUSES = new Set(['all', 'pending', 'processing', 'ready', 'failed', 'approved', 'rejected', 'published']);
+const MARKETPLACE_KINDS = new Set(ADMIN_MARKETPLACE_KINDS);
+const MARKETPLACE_ITEM_KINDS = new Set(ADMIN_MARKETPLACE_KINDS.filter((value) => value !== 'all'));
+const MARKETPLACE_ACTIONS = new Set(ADMIN_MARKETPLACE_MODERATION_ACTION_VALUES);
+const MARKETPLACE_STATUSES = new Set(ADMIN_MARKETPLACE_STATUSES);
+const USER_ROLES = new Set(ADMIN_USER_ROLES);
+const ASSIGNABLE_USER_ROLES = new Set(ADMIN_ASSIGNABLE_USER_ROLES);
+const USER_STATUSES = new Set(ADMIN_USER_STATUSES);
+const MUTABLE_USER_STATUSES = new Set(ADMIN_MUTABLE_USER_STATUSES);
+const REPORT_STATUSES = new Set(ADMIN_REPORT_STATUSES);
+const REPORT_KINDS = new Set(ADMIN_REPORT_KIND_DATABASE_VALUES);
+const SUPPORT_STATUSES = new Set(ADMIN_SUPPORT_STATUSES);
+const SUPPORT_CATEGORIES = new Set(ADMIN_SUPPORT_CATEGORIES);
+const TOUR_STATUSES = new Set(ADMIN_PEEK_QUEUE_STATUSES);
+const TOUR_DECISIONS = new Set(ADMIN_PEEK_MODERATION_DECISIONS);
+const AUDIT_TARGET_TYPES = new Set(ADMIN_AUDIT_TARGET_TYPES);
+const REPORT_DECISIONS = new Set(ADMIN_REPORT_DECISION_STATUSES);
 
 function text(value, label, max, { required = false, min = 0 } = {}) {
   const normalized = typeof value === 'string' ? value.trim() : '';
@@ -61,15 +87,15 @@ export function normalizeAdminMarketplaceRequest(input = {}) {
   return {
     query: text(input.query, 'Search query', 100),
     kind: oneOf(input.kind ?? 'all', MARKETPLACE_KINDS, 'Marketplace kind'),
-    status: text(input.status ?? 'all', 'Status', 30, { required: true, min: 1 }),
+    status: oneOf(input.status ?? 'all', MARKETPLACE_STATUSES, 'Status'),
     limit: boundedLimit(input.limit, 25),
     cursor: normalizeCursor(input.cursor, 'Marketplace cursor'),
   };
 }
 
 export function normalizeMarketplaceModeration(input) {
-  const kind = oneOf(input?.kind, new Set(['property', 'car', 'machinery', 'service']), 'Marketplace kind');
-  const action = oneOf(input?.action, new Set(['publish', 'pause', 'reject', 'remove']), 'Moderation action');
+  const kind = oneOf(input?.kind, MARKETPLACE_ITEM_KINDS, 'Marketplace kind');
+  const action = oneOf(input?.action, MARKETPLACE_ACTIONS, 'Moderation action');
   return {
     itemId: normalizeAdminId(input?.itemId, 'Marketplace item id'),
     kind,
@@ -91,13 +117,13 @@ export function normalizeAdminUsersRequest(input = {}) {
 export function normalizeUserRoleChange(input) {
   return {
     userId: normalizeAdminId(input?.userId, 'User id'),
-    role: oneOf(input?.role, new Set(['user', 'admin']), 'User role'),
+    role: oneOf(input?.role, ASSIGNABLE_USER_ROLES, 'User role'),
     reason: normalizeAdminReason(input?.reason),
   };
 }
 
 export function normalizeUserStatusChange(input) {
-  const status = oneOf(input?.status, new Set(['active', 'suspended', 'banned']), 'User status');
+  const status = oneOf(input?.status, MUTABLE_USER_STATUSES, 'User status');
   let banUntil = null;
   if (status === 'banned' && input?.banUntil) {
     const timestamp = new Date(input.banUntil);
@@ -125,7 +151,7 @@ export function normalizeAdminReportsRequest(input = {}) {
 export function normalizeReportDecision(input) {
   return {
     reportId: normalizeAdminId(input?.reportId, 'Report id'),
-    status: oneOf(input?.status, new Set(['reviewed', 'dismissed', 'actioned']), 'Report decision'),
+    status: oneOf(input?.status, REPORT_DECISIONS, 'Report decision'),
     notes: normalizeAdminReason(input?.notes),
   };
 }
@@ -153,8 +179,8 @@ export function normalizeAdminTourQueueRequest(input = {}) {
     status: oneOf(input.status ?? 'pending', TOUR_STATUSES, 'Peek status'),
     limit: boundedLimit(input.limit, 25),
     cursor: input.cursor == null ? null : {
-      reportedPriority: boundedInteger(input.cursor.reportedPriority, 'Reported priority', 0, 1_000_000, 0),
-      failedPriority: boundedInteger(input.cursor.failedPriority, 'Failed priority', 0, 1_000_000, 0),
+      reportedPriority: boundedInteger(input.cursor.reportedPriority, 'Reported priority', 0, 1, 0),
+      failedPriority: boundedInteger(input.cursor.failedPriority, 'Failed priority', 0, 1, 0),
       ...normalizeCursor(input.cursor, 'Peek cursor'),
     },
   };
@@ -163,7 +189,7 @@ export function normalizeAdminTourQueueRequest(input = {}) {
 export function normalizeAdminTourDecision(input) {
   return {
     tourId: normalizeAdminId(input?.tourId, 'Peek id'),
-    action: oneOf(input?.action, new Set(['approve', 'reject']), 'Peek decision'),
+    action: oneOf(input?.action, TOUR_DECISIONS, 'Peek decision'),
     reason: normalizeAdminReason(input?.reason),
   };
 }
@@ -171,7 +197,7 @@ export function normalizeAdminTourDecision(input) {
 export function normalizeAdminAuditRequest(input = {}) {
   return {
     query: text(input.query, 'Search query', 100),
-    targetType: text(input.targetType ?? 'all', 'Target type', 40, { required: true, min: 1 }),
+    targetType: oneOf(input.targetType ?? 'all', AUDIT_TARGET_TYPES, 'Target type'),
     limit: boundedLimit(input.limit, 50),
     cursor: normalizeCursor(input.cursor, 'Audit cursor'),
   };

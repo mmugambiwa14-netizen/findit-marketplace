@@ -10,6 +10,90 @@
 -- structural operation into dozens of independent migrations would leave mixed
 -- exposure states and create significantly more rollback and drift risk.
 
+-- The historical authenticated RPC grants did not consistently include the
+-- trusted backend role.  Normalize that one precondition before taking the
+-- fail-closed catalog snapshot.  Keep the four recommendation-admin controls
+-- service-role closed by contract; all other authenticated RPCs are backend
+-- callable and are counted explicitly below.
+do $service_role_grants$
+declare
+  target record;
+  target_count integer;
+  granted_count integer;
+begin
+  select count(*)::integer
+  into target_count
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.prokind = 'f'
+    and p.prosecdef
+    and has_function_privilege('authenticated', p.oid, 'EXECUTE');
+
+  if target_count <> 57 then
+    raise exception
+      '0101 service-role precondition expected 57 authenticated RPCs, found %',
+      target_count;
+  end if;
+
+  for target in
+    select p.oid::regprocedure::text as signature
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.prokind = 'f'
+      and p.prosecdef
+      and has_function_privilege('authenticated', p.oid, 'EXECUTE')
+      and p.proname not in (
+        'admin_purge_recommendation_service_cache_v1',
+        'admin_recommendation_analytics_v1',
+        'admin_update_recommendation_service_policy_v1',
+        'admin_upsert_recommendation_context_rule_v1'
+      )
+  loop
+    execute format('grant execute on function %s to service_role', target.signature);
+  end loop;
+
+  select count(*)::integer
+  into granted_count
+  from pg_proc p
+  join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public'
+    and p.prokind = 'f'
+    and p.prosecdef
+    and has_function_privilege('authenticated', p.oid, 'EXECUTE')
+    and has_function_privilege('service_role', p.oid, 'EXECUTE')
+    and p.proname not in (
+      'admin_purge_recommendation_service_cache_v1',
+      'admin_recommendation_analytics_v1',
+      'admin_update_recommendation_service_policy_v1',
+      'admin_upsert_recommendation_context_rule_v1'
+    );
+
+  if granted_count <> 53 then
+    raise exception
+      '0101 service-role precondition granted % of 53 backend RPCs',
+      granted_count;
+  end if;
+
+  if exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and p.proname in (
+        'admin_purge_recommendation_service_cache_v1',
+        'admin_recommendation_analytics_v1',
+        'admin_update_recommendation_service_policy_v1',
+        'admin_upsert_recommendation_context_rule_v1'
+      )
+      and has_function_privilege('service_role', p.oid, 'EXECUTE')
+  ) then
+    raise exception '0101 service-role precondition opened a restricted recommendation-admin RPC';
+  end if;
+end
+$service_role_grants$;
+
 create temporary table findit_0101_snapshot on commit drop as
 select
   p.oid,

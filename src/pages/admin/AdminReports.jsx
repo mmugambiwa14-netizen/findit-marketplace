@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useCursorStack } from '@/hooks/useCursorStack';
 import CursorPager from '@/components/admin/CursorPager';
-import SupportRequestInbox from '@/components/admin/SupportRequestInbox';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,31 +15,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { getAdminReports, reviewAdminReport } from '@/services/adminService';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import {
+  ADMIN_REPORT_KIND_OPTIONS,
+  ADMIN_REPORT_REASON_LABELS,
+  ADMIN_REPORT_STATUS_OPTIONS,
+  ADMIN_SEVERE_REPORT_REASONS,
+} from '@/services/adminConfig';
 
 const PAGE_SIZE = 20;
-const reasonLabels = {
-  fake: 'Fake / misleading',
-  scam: 'Scam / fraud',
-  duplicate: 'Duplicate',
-  wrong_price: 'Wrong price',
-  inappropriate: 'Inappropriate',
-  spam: 'Spam',
-  harassment: 'Harassment',
-  unsafe: 'Unsafe behaviour',
-  other: 'Other',
-  unrelated_video: 'Unrelated Peek',
-  misleading_representation: 'Misleading representation',
-  stolen_content: 'Stolen content',
-  unsafe_content: 'Unsafe content',
-  inappropriate_content: 'Inappropriate content',
-  prohibited_watermark: 'Prohibited watermark',
-  suspected_fraud: 'Suspected fraud',
-  duplicate_content: 'Duplicate content',
-};
-const severeReasons = new Set([
-  'fake', 'scam', 'harassment', 'unsafe', 'unsafe_content',
-  'inappropriate_content', 'suspected_fraud', 'stolen_content',
-]);
+const reasonLabels = ADMIN_REPORT_REASON_LABELS;
+const severeReasons = new Set(ADMIN_SEVERE_REPORT_REASONS);
 
 function parentPath(report) {
   if (report.service_id) return `/service/${report.service_id}`;
@@ -56,7 +40,6 @@ function targetType(report) {
 }
 
 export default function AdminReports() {
-  const [showSupport, setShowSupport] = useState(false);
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('pending');
   const [kind, setKind] = useState('all');
@@ -69,7 +52,6 @@ export default function AdminReports() {
   const reportsQuery = useQuery({
     queryKey: ['admin-reports', request],
     queryFn: () => getAdminReports(request),
-    enabled: !showSupport,
   });
 
   const mutation = useMutation({
@@ -96,8 +78,6 @@ export default function AdminReports() {
     setNotes('');
   };
 
-  if (showSupport) return <SupportRequestInbox onShowReports={() => setShowSupport(false)} />;
-
   const type = decision ? targetType(decision.report) : null;
   const actionTitle = decision?.status === 'actioned'
     ? type === 'message' ? 'Close reported conversation'
@@ -117,7 +97,7 @@ export default function AdminReports() {
               Investigate user reports and take post-publication safety action. Listings and Peeks do not wait for routine approval.
             </p>
           </div>
-          <Button variant="outline" onClick={() => setShowSupport(true)}>Support requests</Button>
+          <Button asChild variant="outline"><Link to="/admin/support">Support requests</Link></Button>
         </div>
 
         <Card>
@@ -134,25 +114,11 @@ export default function AdminReports() {
             </div>
             <Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}>
               <SelectTrigger aria-label="Filter reports by status"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="reviewed">Reviewed</SelectItem>
-                <SelectItem value="dismissed">Dismissed</SelectItem>
-                <SelectItem value="actioned">Actioned</SelectItem>
-              </SelectContent>
+               <SelectContent>{ADMIN_REPORT_STATUS_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={kind} onValueChange={(value) => { setKind(value); pagination.reset(); }}>
               <SelectTrigger aria-label="Filter reports by target type"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="tour">Peeks</SelectItem>
-                <SelectItem value="property">Property</SelectItem>
-                <SelectItem value="vehicle">Vehicles</SelectItem>
-                <SelectItem value="machinery">Machinery</SelectItem>
-                <SelectItem value="service">Services</SelectItem>
-                <SelectItem value="message">Messages</SelectItem>
-              </SelectContent>
+               <SelectContent>{ADMIN_REPORT_KIND_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
             </Select>
           </CardContent>
         </Card>

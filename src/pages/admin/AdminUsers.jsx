@@ -17,6 +17,11 @@ import { getAdminUsers, setAdminUserStatus } from '@/services/adminService';
 import { useCursorStack } from '@/hooks/useCursorStack';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import {
+  ADMIN_USER_ACTION_CONFIRMATIONS,
+  ADMIN_USER_ROLE_OPTIONS,
+  ADMIN_USER_STATUS_OPTIONS,
+} from '@/services/adminConfig';
 
 const PAGE_SIZE = 25;
 
@@ -62,7 +67,7 @@ export default function AdminUsers() {
     setConfirmation('');
   };
 
-  const requiredConfirmation = decision?.status === 'active' ? 'RESTORE' : 'SUSPEND';
+  const requiredConfirmation = ADMIN_USER_ACTION_CONFIRMATIONS[decision?.status] || ADMIN_USER_ACTION_CONFIRMATIONS.suspended;
   const confirmDecision = () => {
     if (!decision || confirmation.trim().toUpperCase() !== requiredConfirmation) return;
     statusMutation.mutate({ userId: decision.user.user_id, status: decision.status, reason });
@@ -79,7 +84,7 @@ export default function AdminUsers() {
         <div><h1 className="text-3xl font-bold">Users</h1><p className="mt-1 text-muted-foreground">Manage account access. The founder account is the only administrative identity.</p></div>
         {isFetching && !isLoading && <p className="text-xs text-muted-foreground">Refreshing users…</p>}
       </div>
-      <Card><CardContent className="grid gap-3 pt-5 md:grid-cols-3"><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search users" value={query} onChange={(event) => { setQuery(event.target.value); pagination.reset(); }} placeholder="Name or email" /></div><Select value={role} onValueChange={(value) => { setRole(value); pagination.reset(); }}><SelectTrigger aria-label="Filter users by role"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All roles</SelectItem><SelectItem value="user">Users</SelectItem><SelectItem value="admin">Founder admin</SelectItem></SelectContent></Select><Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter users by status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="suspended">Suspended</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent></Select></CardContent></Card>
+      <Card><CardContent className="grid gap-3 pt-5 md:grid-cols-3"><div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search users" value={query} onChange={(event) => { setQuery(event.target.value); pagination.reset(); }} placeholder="Name or email" /></div><Select value={role} onValueChange={(value) => { setRole(value); pagination.reset(); }}><SelectTrigger aria-label="Filter users by role"><SelectValue /></SelectTrigger><SelectContent>{ADMIN_USER_ROLE_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select><Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter users by status"><SelectValue /></SelectTrigger><SelectContent>{ADMIN_USER_STATUS_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></CardContent></Card>
       {error && <div className="rounded-2xl border border-destructive/25 bg-destructive/8 p-4 text-sm"><p className="font-bold text-destructive">We could not load users.</p><p className="mt-1 text-muted-foreground">Try again. Reference: {error.correlationId || 'unavailable'}</p><Button size="sm" variant="outline" className="mt-3" onClick={() => refetch()}>Retry</Button></div>}
       {isLoading ? <Card className="p-4"><ListRowsSkeleton rows={7} label="Loading users" /></Card> : <UsersTable users={data.items} currentUserId={currentUser?.id} onStatusChange={openDecision} onBan={setBanUser} isUpdating={statusMutation.isPending} />}
       <CursorPager pageNumber={pagination.pageNumber} itemCount={data.items.length} itemLabel="users" canGoBack={pagination.canGoBack} canGoForward={Boolean(data.nextCursor)} onBack={pagination.back} onForward={() => pagination.forward(data.nextCursor)} />
