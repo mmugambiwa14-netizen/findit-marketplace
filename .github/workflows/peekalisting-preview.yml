@@ -105,6 +105,14 @@ jobs:
           node-version-file: .node-version
           cache: npm
 
+      - name: Provide jq for Windows API checks
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $jqPath = Join-Path $env:RUNNER_TEMP 'jq.exe'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-win64.exe' -OutFile $jqPath
+          Add-Content -Path $env:GITHUB_PATH -Value $env:RUNNER_TEMP
+
       - name: Normalize locked dependency metadata
         run: node ./scripts/normalize-package-lock.mjs --write
 
