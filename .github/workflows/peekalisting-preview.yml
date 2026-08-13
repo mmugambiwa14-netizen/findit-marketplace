@@ -18,8 +18,10 @@ concurrency:
 jobs:
   deploy:
     if: inputs.confirmation == 'DEPLOY'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The staging build fits the lightweight runner and keeps deployment
+    # available when standard runner billing is constrained.
+    runs-on: ubuntu-slim
+    timeout-minutes: 15
     environment:
       name: cloudflare-staging
     env:
