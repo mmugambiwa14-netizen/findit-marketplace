@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
 
-const [viewport, nav, search, map, design, indexHtml, authService, oauthCallback] = await Promise.all([
+const [viewport, nav, search, map, design, indexHtml, authService, oauthCallback, indexCss] = await Promise.all([
   read('src/pwa-viewport.css'),
   read('src/components/layout/BottomNav.jsx'),
   read('src/components/discover/DiscoverSearch.jsx'),
@@ -13,6 +13,7 @@ const [viewport, nav, search, map, design, indexHtml, authService, oauthCallback
   read('index.html'),
   read('src/services/authService.js'),
   read('src/components/auth/OAuthCallback.jsx'),
+  read('src/index.css'),
 ]);
 
 test('mobile form controls cannot trigger document auto-zoom', () => {
@@ -28,8 +29,11 @@ test('mobile navigation stays centered and contained by the viewport', () => {
   assert.doesNotMatch(nav, /findit-mobile-nav fixed bottom-2\.5/);
   assert.match(nav, /findit-mobile-nav fixed bottom-0/);
   assert.match(nav, /className="clay-nav flex[^\"]*w-full/);
+  assert.match(nav, /item\.prominent \? 'justify-center' : 'justify-end pb-0\.5'/);
+  assert.match(indexCss, /--findit-nav-height: 3\.5rem/);
   assert.match(viewport, /\.findit-mobile-nav[\s\S]*bottom: 0;[\s\S]*left: 50%;[\s\S]*width: min\(500px, calc\(100% - 1\.25rem\)\);[\s\S]*transform: translateX\(-50%\)/);
   assert.match(viewport, /\.findit-mobile-nav \.clay-nav[\s\S]*height: calc\(var\(--findit-nav-height\) \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*padding-bottom: env\(safe-area-inset-bottom, 0px\);/);
+  assert.match(viewport, /\.findit-mobile-nav-clearance[\s\S]*padding-bottom: calc\(var\(--findit-nav-height\) \+ max\(0\.75rem, env\(safe-area-inset-bottom\)\)\);/);
 });
 
 test('map zoom and pan stay inside a stable map-only viewport', () => {

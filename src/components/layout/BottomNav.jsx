@@ -52,7 +52,8 @@ export default function BottomNav() {
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={count > 0 ? `${item.label}, ${count} unread` : item.label}
                 className={cn(
-                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--findit-control-radius)] px-1 text-muted-foreground focus-visible:z-10',
+                  'relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-[var(--findit-control-radius)] px-1 text-muted-foreground focus-visible:z-10',
+                  item.prominent ? 'justify-center' : 'justify-end pb-0.5',
                   isActive && !item.prominent && 'text-primary',
                   item.prominent && 'text-foreground',
                 )}
