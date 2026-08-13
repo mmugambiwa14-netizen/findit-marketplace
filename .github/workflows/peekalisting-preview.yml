@@ -107,7 +107,7 @@ jobs:
 
       - name: Provide jq for Windows API checks
         if: runner.os == 'Windows'
-        shell: pwsh
+        shell: powershell
         run: |
           $jqPath = Join-Path $env:RUNNER_TEMP 'jq.exe'
           Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/jqlang/jq/releases/download/jq-1.8.2/jq-win64.exe' -OutFile $jqPath
