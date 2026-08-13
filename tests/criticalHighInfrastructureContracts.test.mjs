@@ -40,6 +40,22 @@ test('queue jobs carry immutable identity and distributed trace context', async 
   assert.match(worker, /message\.retry\(\)/);
 });
 
+test('every accepted queue job type has a real handler and never holds the service-role key', async () => {
+  const worker = await source('workers/edge/src/index.ts');
+  assert.doesNotMatch(worker, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(worker, /FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET/);
+  assert.match(worker, /EMAIL_DISPATCH_TOKEN/);
+  assert.match(worker, /PUSH_DISPATCH_TOKEN/);
+  assert.match(worker, /essential-notification-fanout/);
+  assert.match(worker, /transactional-email-dispatch/);
+  assert.match(worker, /web-push-dispatch/);
+  assert.doesNotMatch(worker, /'search\.sync'/);
+  assert.doesNotMatch(worker, /'analytics\.record'/);
+  assert.match(worker, /alreadyProcessed/);
+  assert.match(worker, /AbortController/);
+  assert.match(worker, /classifyDispatchStatus/);
+});
+
 test('Turnstile is fail-closed for origin, hostname, action and missing configuration', async () => {
   const turnstile = await source('supabase/functions/verify-turnstile/index.ts');
   assert.match(turnstile, /TURNSTILE_ALLOWED_ORIGINS/);

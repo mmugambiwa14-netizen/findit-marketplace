@@ -22,9 +22,13 @@ Cloudflare Queues are the target transport for:
 - notification fan-out,
 - transactional email dispatch,
 - web push dispatch,
-- media cleanup,
-- search synchronization,
-- analytics events.
+- media cleanup.
+
+Search synchronization and analytics events were originally scoped here but are
+not accepted job types: neither has a canonical destination with durable,
+idempotent semantics in this rollout (see "Not included in this rollout"
+below). Adding either back requires implementing a real handler and a
+producer-side contract, not just re-adding the job type string.
 
 Every message requires:
 

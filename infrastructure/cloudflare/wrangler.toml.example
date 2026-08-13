@@ -51,6 +51,13 @@ head_sampling_rate = 1
 
 # Configure secrets with `wrangler secret put`, never in this file:
 # SUPABASE_URL
-# SUPABASE_SERVICE_ROLE_KEY
+# FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET (matches the Edge Function secret of the same name)
+# EMAIL_DISPATCH_TOKEN (matches the transactional-email-dispatch Edge Function secret)
+# PUSH_DISPATCH_TOKEN (matches the web-push-dispatch Edge Function secret)
 # TURNSTILE_SECRET_KEY
 # MEDIA_SIGNING_SECRET
+#
+# The Worker deliberately never holds SUPABASE_SERVICE_ROLE_KEY. notification.dispatch,
+# email.dispatch, and web_push.dispatch jobs call their canonical Supabase Edge
+# Function over HTTPS with a narrow-purpose dispatch token; the service-role key
+# stays inside that Edge Function's own environment.

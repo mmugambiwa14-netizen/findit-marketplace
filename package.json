@@ -75,6 +75,7 @@
     "verify:hosted-auth-hardening": "node ./scripts/verify-hosted-auth-hardening.mjs",
     "preview": "vite preview",
     "test:tours-contracts": "node --experimental-strip-types --test ./tests/tour*.test.mjs",
+    "test:queue-worker": "node --experimental-strip-types --experimental-transform-types --test ./workers/edge/test/*.test.mjs",
     "test:tours-upload-local": "node ./scripts/tours-upload-smoke-local.mjs",
     "test:tours-processing-local": "node ./scripts/tours-processing-smoke-local.mjs",
     "test:tours-lifecycle-local": "node ./scripts/tours-lifecycle-smoke-local.mjs",
