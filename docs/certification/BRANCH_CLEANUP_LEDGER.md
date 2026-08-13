@@ -1,6 +1,6 @@
 # Branch Cleanup Ledger
 
-Updated: 2026-08-07
+Updated: 2026-08-13
 Canonical source of truth: `main`
 Promotion PR: `#34`
 Promotion merge: `c7ea23d1465aa37e9e0481a9874fffb21e86ffdd`
@@ -10,10 +10,11 @@ This ledger prevents historical branches from being treated as active product li
 ## Canonical
 
 - `main` — sole canonical product branch.
+- `cloudflare-staging-ready` — active Cloudflare staging candidate; do not delete while staging acceptance is in progress.
 
 ## Temporary identical alias
 
-- `integration/complete-current-stage` — certification branch used by PR #34. After merge it was fast-forwarded to canonical `main` and verified identical. It is not an independent product source and should be deleted when branch-ref deletion is available.
+- `integration/complete-current-stage` — certification branch used by PR #34. After merge it was fast-forwarded to canonical `main` and verified identical. Deleted from `origin` on 2026-08-13.
 
 ## Retain only for rollback provenance
 
@@ -78,4 +79,16 @@ Close or merge through normal dependency review; do not treat them as product so
 
 ## External limitation
 
-The current GitHub connector can fast-forward branch refs but does not expose branch-ref deletion. Historical refs therefore remain until deleted through a GitHub surface that supports deletion. Their existence does not change the source-of-truth rule: `main` is canonical.
+Remote branch cleanup was completed through the authenticated Git remote on 2026-08-13. The one-shot `cert/*` branches, the reconciled branches listed above, and the merged lock-metadata branch were deleted from `origin`. The backup branch remains intentionally until the first production release and rollback window close. Future branch deletion should continue to use an explicit, reviewed ref list; it must not remove `main`, the active staging candidate, an open-PR head, or an active worktree branch.
+
+The same cleanup removed these additional merged or status-only refs after a live open-PR check:
+
+- `certification/unified-base-20260810`
+- `claude/peekalisting-remediation-handoff-d1mr2x`
+- `deployment-status`
+- `feature/canonical-taxonomy-foundation`
+- `feature/web-push-notifications`
+- `unified-certification-status`
+
+Unique-history branches remain only where they are still useful as active work,
+open-PR material, rollback provenance, or unreconciled feature history.
