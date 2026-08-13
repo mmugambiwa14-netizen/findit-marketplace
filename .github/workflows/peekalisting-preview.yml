@@ -20,7 +20,7 @@ jobs:
     if: inputs.confirmation == 'DEPLOY'
     # The staging build fits the lightweight runner and keeps deployment
     # available when standard runner billing is constrained.
-    runs-on: [self-hosted, codex-staging, Windows]
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     environment:
       name: cloudflare-staging
