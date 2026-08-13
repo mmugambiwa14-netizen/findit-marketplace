@@ -63,6 +63,7 @@ body {
  * an opaque toolbar. */
 .findit-mobile-nav .clay-nav {
   height: calc(var(--findit-nav-height) + env(safe-area-inset-bottom, 0px));
+  /* Keep the panel behind the home indicator while keeping controls above it. */
   padding-bottom: env(safe-area-inset-bottom, 0px);
   border-color: hsl(var(--primary) / 0.34);
   background:
