@@ -25,8 +25,11 @@ test('mobile form controls cannot trigger document auto-zoom', () => {
 
 test('mobile navigation stays centered and contained by the viewport', () => {
   assert.doesNotMatch(nav, /fixed inset-x-2\.5/);
+  assert.doesNotMatch(nav, /findit-mobile-nav fixed bottom-2\.5/);
+  assert.match(nav, /findit-mobile-nav fixed bottom-0/);
   assert.match(nav, /className="clay-nav flex[^\"]*w-full/);
-  assert.match(viewport, /\.findit-mobile-nav[\s\S]*left: 50%;[\s\S]*width: min\(500px, calc\(100% - 1\.25rem\)\);[\s\S]*transform: translateX\(-50%\)/);
+  assert.match(viewport, /\.findit-mobile-nav[\s\S]*bottom: 0;[\s\S]*left: 50%;[\s\S]*width: min\(500px, calc\(100% - 1\.25rem\)\);[\s\S]*transform: translateX\(-50%\)/);
+  assert.match(viewport, /\.findit-mobile-nav \.clay-nav[\s\S]*height: calc\(var\(--findit-nav-height\) \+ env\(safe-area-inset-bottom, 0px\)\);[\s\S]*padding-bottom: env\(safe-area-inset-bottom, 0px\);/);
 });
 
 test('map zoom and pan stay inside a stable map-only viewport', () => {

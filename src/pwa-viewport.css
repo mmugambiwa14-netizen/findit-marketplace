@@ -50,7 +50,7 @@ body {
 }
 
 .findit-mobile-nav {
-  bottom: max(0.625rem, env(safe-area-inset-bottom));
+  bottom: 0;
   left: 50%;
   width: min(500px, calc(100% - 1.25rem));
   box-sizing: border-box;
@@ -62,6 +62,8 @@ body {
  * styling is not enough. This keeps it unmistakably separate without becoming
  * an opaque toolbar. */
 .findit-mobile-nav .clay-nav {
+  height: calc(var(--findit-nav-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   border-color: hsl(var(--primary) / 0.34);
   background:
     linear-gradient(180deg, hsl(var(--card) / 0.99), hsl(var(--surface-secondary) / 0.99)),
