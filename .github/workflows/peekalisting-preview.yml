@@ -164,6 +164,7 @@ jobs:
         run: node ./scripts/prepare-pages-functions-runtime.mjs
 
       - name: Deploy the isolated staging project
+        shell: bash
         run: >-
           npx wrangler pages deploy dist
           --project-name="${CLOUDFLARE_PAGES_PROJECT}"
