@@ -121,7 +121,7 @@ jobs:
         run: npm run verify:deployment-security
 
       - name: Ensure the Pages project exists
-        shell: bash
+        shell: 'C:/Program Files/Git/bin/bash.exe --noprofile --norc -e -o pipefail {0}'
         run: |
           set -euo pipefail
           projects="$(curl --fail-with-body --silent --show-error \
@@ -167,7 +167,7 @@ jobs:
       # staging and browser-safe Supabase runtime metadata after the upload so
       # wrangler.jsonc cannot replace them with production defaults.
       - name: Configure isolated staging metadata bindings
-        shell: bash
+        shell: 'C:/Program Files/Git/bin/bash.exe --noprofile --norc -e -o pipefail {0}'
         run: |
           set -euo pipefail
           payload="$(jq -n \
@@ -184,7 +184,7 @@ jobs:
           echo 'Configured logical staging and browser-safe Supabase bindings.'
 
       - name: Provision the canonical staging hostname
-        shell: bash
+        shell: 'C:/Program Files/Git/bin/bash.exe --noprofile --norc -e -o pipefail {0}'
         run: |
           set -euo pipefail
           domains="$(curl --fail-with-body --silent --show-error \
