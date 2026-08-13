@@ -18,9 +18,8 @@ concurrency:
 jobs:
   deploy:
     if: inputs.confirmation == 'DEPLOY'
-    # The staging build fits the lightweight runner and keeps deployment
-    # available when standard runner billing is constrained.
-    runs-on: ubuntu-slim
+    # Temporary one-job bridge while GitHub-hosted runner billing is blocked.
+    runs-on: [self-hosted, codex-staging]
     timeout-minutes: 15
     environment:
       name: cloudflare-staging
