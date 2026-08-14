@@ -18,9 +18,9 @@ concurrency:
 jobs:
   deploy:
     if: inputs.confirmation == 'DEPLOY'
-    # The staging build fits the lightweight runner and keeps deployment
-    # available when standard runner billing is constrained.
-    runs-on: ubuntu-slim
+    # Temporary bridge for the isolated staging publication when the hosted
+    # runner pool is unavailable. Restore the hosted label after publication.
+    runs-on: [self-hosted, codex-staging, Windows]
     timeout-minutes: 15
     environment:
       name: cloudflare-staging
