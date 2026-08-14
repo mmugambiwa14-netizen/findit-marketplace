@@ -35,8 +35,8 @@ export default function BottomNav() {
 
   return (
     <>
-      <nav aria-label="Mobile navigation" className="findit-mobile-nav fixed bottom-2.5 z-40 md:hidden">
-        <div className="clay-nav flex h-[var(--findit-nav-height)] w-full items-stretch rounded-[var(--findit-panel-radius)] px-1">
+      <nav aria-label="Mobile navigation" className="findit-mobile-nav fixed bottom-0 z-40 md:hidden">
+        <div className="clay-nav flex w-full items-stretch rounded-[var(--findit-panel-radius)] px-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = isNavigationItemActive(location.pathname, item.path, item.exact);
@@ -46,7 +46,8 @@ export default function BottomNav() {
                 key={item.path}
                 asChild
                 className={cn(
-                  'relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-[var(--findit-control-radius)] px-1 text-muted-foreground focus-visible:z-10',
+                  'relative flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-[var(--findit-control-radius)] px-1 text-muted-foreground focus-visible:z-10',
+                  item.prominent ? 'justify-center' : 'justify-end pb-0.5',
                   isActive && !item.prominent && 'text-primary',
                   item.prominent && 'text-foreground',
                 )}
