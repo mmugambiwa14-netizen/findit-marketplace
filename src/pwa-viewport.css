@@ -99,9 +99,6 @@ body {
     min-height: var(--findit-viewport-height, 100dvh);
   }
 
-  .findit-mobile-nav-clearance {
-    padding-bottom: calc(var(--findit-nav-height) + max(.75rem, env(safe-area-inset-bottom)));
-  }
 }
 
 /* iOS standalone mode renders normal document content beneath the translucent
