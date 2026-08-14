@@ -51,6 +51,7 @@ function runningStandalone() {
 export function PwaProvider({ children }) {
   const connectivity = useConnectivity();
   const [updateReady, setUpdateReady] = useState(false);
+  const [applyingUpdate, setApplyingUpdate] = useState(false);
   const [standalone, setStandalone] = useState(runningStandalone);
   const [installEvent, setInstallEvent] = useState(null);
   const [installDismissed, setInstallDismissed] = useState(installRecentlyDismissed);
@@ -144,24 +145,38 @@ export function PwaProvider({ children }) {
     setInstallDismissed(true);
   }, []);
 
+  const applyUpdate = useCallback(async () => {
+    if (applyingUpdate) return;
+    setApplyingUpdate(true);
+    // Do not leave an obsolete banner over the new shell while activation is
+    // finishing. If activation fails, the catch path restores it.
+    setUpdateReady(false);
+    try {
+      await applyPendingUpdate();
+    } catch (error) {
+      setApplyingUpdate(false);
+      setUpdateReady(true);
+      throw error;
+    }
+  }, [applyingUpdate]);
+
   const refreshApp = useCallback(async () => {
     // A manual refresh should also activate a version the browser has downloaded
     // but not yet promoted. When there is no waiting worker, use a normal reload.
     if (serviceWorkerSupported() && !previewDeployment()) {
       const waiting = await checkForUpdate();
       if (waiting) {
-        setUpdateReady(true);
-        applyPendingUpdate();
+        await applyUpdate();
         return;
       }
     }
     window.location.reload();
-  }, []);
+  }, [applyUpdate]);
 
   const value = useMemo(() => ({
     ...connectivity,
     updateReady,
-    applyUpdate: applyPendingUpdate,
+    applyUpdate,
     refreshApp,
     standalone,
     // Never offered when already installed, when the browser has not said the
@@ -169,7 +184,7 @@ export function PwaProvider({ children }) {
     canInstall: Boolean(installEvent) && !standalone && !installDismissed,
     promptInstall,
     dismissInstall,
-  }), [connectivity, updateReady, refreshApp, standalone, installEvent, installDismissed,
+  }), [connectivity, updateReady, applyUpdate, refreshApp, standalone, installEvent, installDismissed,
     promptInstall, dismissInstall]);
 
   return <PwaContext.Provider value={value}>{children}</PwaContext.Provider>;

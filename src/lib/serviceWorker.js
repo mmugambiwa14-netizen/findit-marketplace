@@ -10,6 +10,7 @@
 
 const SERVICE_WORKER_URL = '/sw.js';
 const OWNED_CACHE_PREFIXES = ['findit-', 'peekalisting-'];
+const ACTIVATION_FALLBACK_MS = 2500;
 
 let registration = null;
 let refreshing = false;
@@ -164,18 +165,7 @@ export async function applyPendingUpdate() {
   if (refreshing) return;
 
   const activeRegistration = await currentRegistration();
-  let waiting = activeRegistration?.waiting;
-
-  // A fast update can finish between the prompt render and the tap. Re-read
-  // the registration before falling back to a normal page reload.
-  if (!waiting && activeRegistration) {
-    try {
-      await activeRegistration.update();
-      waiting = activeRegistration.waiting;
-    } catch {
-      waiting = null;
-    }
-  }
+  const waiting = activeRegistration?.waiting;
 
   if (!waiting) {
     reloadAfterActivation();
@@ -183,6 +173,13 @@ export async function applyPendingUpdate() {
   }
 
   bindControllerChange();
+  const handleWaitingStateChange = () => {
+    if (waiting.state === 'activated') reloadAfterActivation();
+  };
+  waiting.addEventListener('statechange', handleWaitingStateChange);
+  handleWaitingStateChange();
+  if (refreshing) return;
+
   try {
     waiting.postMessage({ type: 'SKIP_WAITING' });
   } catch {
@@ -198,7 +195,7 @@ export async function applyPendingUpdate() {
   activationFallbackTimer = window.setTimeout(() => {
     activationFallbackTimer = null;
     reloadAfterActivation();
-  }, 5000);
+  }, ACTIVATION_FALLBACK_MS);
 }
 
 /**
