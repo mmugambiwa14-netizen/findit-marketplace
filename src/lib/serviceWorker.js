@@ -13,6 +13,8 @@ const OWNED_CACHE_PREFIXES = ['findit-', 'peekalisting-'];
 
 let registration = null;
 let refreshing = false;
+let activationFallbackTimer = null;
+let controllerChangeBound = false;
 
 const viteEnv = /** @type {Record<string, string | boolean | undefined>} */ (import.meta.env || {});
 
@@ -50,6 +52,39 @@ function registrationBelongsToCurrentPreview(entry) {
   // a worker outside this deployment's base path.
   const appBase = new URL(String(viteEnv.BASE_URL || '/'), window.location.origin).href;
   return String(entry.scope || '').startsWith(appBase);
+}
+
+function reloadWindow() {
+  if (typeof window !== 'undefined' && typeof window.location?.reload === 'function') {
+    window.location.reload();
+  }
+}
+
+function reloadAfterActivation() {
+  if (refreshing) return;
+  refreshing = true;
+  if (activationFallbackTimer !== null) {
+    window.clearTimeout(activationFallbackTimer);
+    activationFallbackTimer = null;
+  }
+  reloadWindow();
+}
+
+function bindControllerChange() {
+  if (controllerChangeBound || !serviceWorkerSupported()) return;
+  controllerChangeBound = true;
+  navigator.serviceWorker.addEventListener('controllerchange', reloadAfterActivation);
+}
+
+async function currentRegistration() {
+  if (registration) return registration;
+  if (!serviceWorkerSupported()) return null;
+  try {
+    registration = await navigator.serviceWorker.getRegistration('/');
+  } catch {
+    registration = null;
+  }
+  return registration;
 }
 
 /**
@@ -99,6 +134,8 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
     return null;
   }
 
+  bindControllerChange();
+
   // A worker already waiting means the user loaded the page with an update
   // pending from a previous visit.
   if (registration.waiting && navigator.serviceWorker.controller) {
@@ -119,25 +156,49 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
     });
   });
 
-  // One reload, and only after the new worker takes control. Without the guard
-  // a fast double activation can loop the page.
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
-    window.location.reload();
-  });
-
   return registration;
 }
 
 /** Activates a waiting worker. Called only after the user accepts the prompt. */
-export function applyPendingUpdate() {
-  const waiting = registration?.waiting;
+export async function applyPendingUpdate() {
+  if (refreshing) return;
+
+  const activeRegistration = await currentRegistration();
+  let waiting = activeRegistration?.waiting;
+
+  // A fast update can finish between the prompt render and the tap. Re-read
+  // the registration before falling back to a normal page reload.
+  if (!waiting && activeRegistration) {
+    try {
+      await activeRegistration.update();
+      waiting = activeRegistration.waiting;
+    } catch {
+      waiting = null;
+    }
+  }
+
   if (!waiting) {
-    window.location.reload();
+    reloadAfterActivation();
     return;
   }
-  waiting.postMessage({ type: 'SKIP_WAITING' });
+
+  bindControllerChange();
+  try {
+    waiting.postMessage({ type: 'SKIP_WAITING' });
+  } catch {
+    // A worker can disappear while it is being promoted. A normal reload is
+    // still useful and keeps the prompt from becoming a dead end.
+    reloadAfterActivation();
+    return;
+  }
+
+  // Safari/iOS and a few embedded browsers have historically missed
+  // controllerchange after skipWaiting(). Keep the normal event-driven path,
+  // but guarantee that the user's tap still produces a reload.
+  activationFallbackTimer = window.setTimeout(() => {
+    activationFallbackTimer = null;
+    reloadAfterActivation();
+  }, 5000);
 }
 
 /**
@@ -146,10 +207,12 @@ export function applyPendingUpdate() {
  * may not navigate for days.
  */
 export async function checkForUpdate() {
-  if (!registration || previewDeployment()) return false;
+  if (previewDeployment()) return false;
+  const activeRegistration = await currentRegistration();
+  if (!activeRegistration) return false;
   try {
-    await registration.update();
-    return Boolean(registration.waiting);
+    await activeRegistration.update();
+    return Boolean(activeRegistration.waiting);
   } catch {
     return false;
   }
@@ -183,6 +246,12 @@ export async function unregisterServiceWorker() {
     await Promise.all(registrations.map((entry) => entry.unregister()));
     await deleteFindItCaches();
     registration = null;
+    controllerChangeBound = false;
+    refreshing = false;
+    if (activationFallbackTimer !== null) {
+      window.clearTimeout(activationFallbackTimer);
+      activationFallbackTimer = null;
+    }
   } catch {
     /* best effort -- nothing here should surface to the user */
   }

@@ -1,6 +1,7 @@
 /* PeekaListing Web Push handlers. Loaded by the stamped service worker. */
 
 const STAGING_HOST_PREFIXES = ['peekalisting-stagi', 'findit-marketplace-stagi'];
+const CANONICAL_STAGING_HOST = 'staging.peekalisting.com';
 const DEFAULT_PATH = '/notifications';
 const DEFAULT_ICON = '/brand/peekalisting-icon-192.png';
 const DEFAULT_BADGE = '/brand/peekalisting-icon-64.png';
@@ -11,7 +12,9 @@ const SAFE_PATH = new RegExp(
 );
 
 function isStagingOrigin() {
-  return STAGING_HOST_PREFIXES.some((prefix) => self.location.hostname.startsWith(prefix));
+  const hostname = String(self.location.hostname || '').toLowerCase();
+  return hostname === CANONICAL_STAGING_HOST
+    || STAGING_HOST_PREFIXES.some((prefix) => hostname.startsWith(prefix));
 }
 
 function boundedText(value, fallback, maximum) {

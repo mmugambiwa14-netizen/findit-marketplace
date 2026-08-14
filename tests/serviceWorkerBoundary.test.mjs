@@ -14,6 +14,7 @@ const workerSource = readFileSync(
 function loadWorker() {
   const listeners = new Map();
   const cacheStore = new Map();
+  let skipWaitingCalls = 0;
   const fakeCache = {
     async match() { return undefined; },
     async put() {},
@@ -26,7 +27,7 @@ function loadWorker() {
       addEventListener: (type, handler) => listeners.set(type, handler),
       registration: { navigationPreload: null },
       clients: { claim: async () => {} },
-      skipWaiting: () => {},
+      skipWaiting: () => { skipWaitingCalls += 1; },
     },
     caches: {
       open: async (name) => { cacheStore.set(name, fakeCache); return fakeCache; },
@@ -57,6 +58,10 @@ function loadWorker() {
       };
       listeners.get('fetch')(event);
       return handled;
+    },
+    sendMessage(data) {
+      listeners.get('message')?.({ data });
+      return skipWaitingCalls;
     },
   };
 }
@@ -127,4 +132,9 @@ test('the worker does not call skipWaiting outside an explicit message', () => {
     .replace(/\/\*[\s\S]*?\*\//g, '');
   assert.ok(!installBody.includes('skipWaiting'));
   assert.ok(workerSource.includes("event.data?.type === 'SKIP_WAITING'"));
+});
+
+test('the worker promotes an update only after receiving the explicit client message', () => {
+  assert.equal(worker.sendMessage({ type: 'UNRELATED_MESSAGE' }), 0);
+  assert.equal(worker.sendMessage({ type: 'SKIP_WAITING' }), 1);
 });
