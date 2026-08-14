@@ -16,13 +16,14 @@ jobs:
   deliver:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: cloudflare-production
     if: ${{ vars.FINDIT_WEB_PUSH_WORKERS_ENABLED == 'true' }}
     steps:
       - name: Validate required configuration
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          PUSH_DISPATCH_TOKEN: ${{ secrets.PUSH_DISPATCH_TOKEN }}
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          PUSH_DISPATCH_TOKEN: ${{ secrets.FINDIT_PUSH_DISPATCH_TOKEN }}
         run: |
           test -n "$SUPABASE_URL"
           test -n "$SUPABASE_ANON_KEY"
@@ -30,9 +31,9 @@ jobs:
 
       - name: Deliver pending push notifications
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          PUSH_DISPATCH_TOKEN: ${{ secrets.PUSH_DISPATCH_TOKEN }}
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          PUSH_DISPATCH_TOKEN: ${{ secrets.FINDIT_PUSH_DISPATCH_TOKEN }}
         run: |
           curl --fail --silent --show-error \
             --retry 2 --retry-all-errors --max-time 45 \

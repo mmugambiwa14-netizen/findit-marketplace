@@ -1,0 +1,111 @@
+name: Run marketplace production maintenance workers
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+    - cron: "23 2 * * *"
+    - cron: "11 3 * * *"
+    - cron: "*/5 * * * *"
+    - cron: "37 * * * *"
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: findit-production-maintenance-workers
+  cancel-in-progress: false
+
+jobs:
+  http-workers:
+    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' || vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED == 'true' || vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED == 'true' || vars.FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: cloudflare-production
+    steps:
+      - name: Run bounded production maintenance calls
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          MEDIA_CLEANUP_SECRET: ${{ secrets.FINDIT_MEDIA_CLEANUP_WORKER_SECRET }}
+          LISTING_EXPIRY_SECRET: ${{ secrets.FINDIT_LISTING_EXPIRY_WORKER_SECRET }}
+          RECOMMENDATION_SECRET: ${{ secrets.FINDIT_RECOMMENDATION_WORKER_SECRET }}
+          TOUR_CLEANUP_SECRET: ${{ secrets.FINDIT_TOUR_CLEANUP_WORKER_SECRET }}
+          TOUR_CACHE_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
+          TOUR_OBSERVABILITY_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
+          NOTIFICATION_FANOUT_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
+          EMAIL_DISPATCH_TOKEN: ${{ secrets.FINDIT_EMAIL_DISPATCH_TOKEN }}
+          FINDIT_TOURS_WORKERS_ENABLED: ${{ vars.FINDIT_TOURS_WORKERS_ENABLED }}
+          FINDIT_RECOMMENDATION_WORKERS_ENABLED: ${{ vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED }}
+          FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: ${{ vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED }}
+          FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED: ${{ vars.FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED }}
+        run: |
+          set -euo pipefail
+          post_worker() {
+            local path="$1"
+            local token="$2"
+            local body="$3"
+            test -n "$token"
+            curl --fail-with-body --silent --show-error --retry 2 --retry-all-errors --max-time 45 \
+              --request POST \
+              --header "apikey: ${SUPABASE_ANON_KEY}" \
+              --header "Authorization: Bearer ${token}" \
+              --header "Content-Type: application/json" \
+              --data "$body" \
+              "${SUPABASE_URL}/functions/v1/${path}"
+          }
+
+          post_worker media-lifecycle-cleanup "$MEDIA_CLEANUP_SECRET" '{}'
+          post_worker listing-expiry-worker "$LISTING_EXPIRY_SECRET" '{}'
+
+          if [[ "${FINDIT_RECOMMENDATION_WORKERS_ENABLED:-false}" == "true" ]]; then
+            post_worker recommendation-maintenance "$RECOMMENDATION_SECRET" '{"mode":"projection","projectionLimit":200,"projectionMaxAttempts":8}'
+            post_worker recommendation-maintenance "$RECOMMENDATION_SECRET" '{"mode":"maintenance","retentionLimit":5000}'
+          fi
+
+          if [[ "${FINDIT_TOURS_WORKERS_ENABLED:-false}" == "true" ]]; then
+            post_worker tour-lifecycle-cleanup "$TOUR_CLEANUP_SECRET" '{"batchSize":20}'
+            post_worker tour-cache-invalidation "$TOUR_CACHE_SECRET" '{"batchSize":100}'
+            post_worker tour-observability-monitor "$TOUR_OBSERVABILITY_SECRET" '{}'
+          fi
+
+          if [[ "${FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED:-false}" == "true" ]]; then
+            post_worker essential-notification-fanout "$NOTIFICATION_FANOUT_SECRET" '{"jobLimit":10,"recipientLimit":200}'
+          fi
+
+          if [[ "${FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED:-false}" == "true" ]]; then
+            post_worker transactional-email-dispatch "$EMAIL_DISPATCH_TOKEN" '{"limit":25}'
+          fi
+  tour-processing:
+    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: cloudflare-production
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Normalize locked dependency metadata
+        run: node ./scripts/normalize-package-lock.mjs --write
+
+      - name: Use Node.js 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --include=dev --ignore-scripts
+
+      - name: Install media toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+
+      - name: Process due production Peeks
+        env:
+          FINDIT_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          FINDIT_SUPABASE_SECRET_KEY: ${{ secrets.FINDIT_SUPABASE_SECRET_KEY }}
+          FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
+        run: npm run run:tours-processor -- --batch-size 5
