@@ -412,8 +412,21 @@ export async function signInWithOAuth(provider, redirectPath = '/') {
 }
 
 export async function signOut(redirectUrl) {
-  const { error } = await supabase.auth.signOut({ scope: 'global' });
-  if (error) throw error;
+  let globalSignOutError = null;
+  try {
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    globalSignOutError = error || null;
+  } catch (error) {
+    globalSignOutError = error;
+  }
+
+  // An installed PWA can resume with a cached session while Supabase is
+  // unreachable (for example, while a paused staging project is being
+  // restored). Clearing only the local project-scoped session lets the user
+  // reopen the public app without pretending that the server-side session was
+  // revoked. When connectivity returns, a fresh sign-in is still required.
+  if (globalSignOutError) await discardInvalidLocalSession();
+
   if (redirectUrl) window.location.href = appUrl(redirectUrl);
 }
 
