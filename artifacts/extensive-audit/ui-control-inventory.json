@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-13T11:51:25.656Z",
+  "generatedAt": "2026-08-14T00:59:27.494Z",
   "sourceFiles": 343,
   "pageModules": 40,
-  "directControlDeclarations": 743,
-  "pageExpandedControlInstances": 1212,
+  "directControlDeclarations": 744,
+  "pageExpandedControlInstances": 1236,
   "byElement": {
     "AlertDialog": 13,
-    "Button": 255,
+    "Button": 256,
     "Checkbox": 1,
     "Dialog": 20,
     "DropdownMenuTrigger": 2,
@@ -81,8 +81,8 @@
     {
       "page": "Home.jsx",
       "directControls": 3,
-      "expandedControls": 32,
-      "localModulesInClosure": 67
+      "expandedControls": 56,
+      "localModulesInClosure": 95
     },
     {
       "page": "Inquiries.jsx",
@@ -2216,9 +2216,9 @@
     {
       "file": "src\\components\\discover\\HomePeekRail.jsx",
       "page": "",
-      "line": 83,
+      "line": 127,
       "element": "Button",
-      "name": "Retry",
+      "name": "Retry Peeks",
       "type": "button",
       "handler": "() => feed.refetch()",
       "destination": "",
@@ -2227,7 +2227,18 @@
     {
       "file": "src\\components\\discover\\HomePeekRail.jsx",
       "page": "",
-      "line": 93,
+      "line": 152,
+      "element": "Button",
+      "name": "Retry",
+      "type": "button",
+      "handler": "() => { feed.refetch(); fallback.refetch(); }",
+      "destination": "",
+      "disabled": ""
+    },
+    {
+      "file": "src\\components\\discover\\HomePeekRail.jsx",
+      "page": "",
+      "line": 162,
       "element": "Link",
       "name": "No local Peeks yet Browse every available Peek.",
       "type": "",
@@ -2238,7 +2249,7 @@
     {
       "file": "src\\components\\discover\\HomePeekRail.jsx",
       "page": "",
-      "line": 109,
+      "line": 178,
       "element": "Link",
       "name": "See all",
       "type": "",
@@ -2249,7 +2260,7 @@
     {
       "file": "src\\components\\discover\\HomePeekRail.jsx",
       "page": "",
-      "line": 116,
+      "line": 185,
       "element": "Link",
       "name": "`Open ${item.title}`",
       "type": "",
