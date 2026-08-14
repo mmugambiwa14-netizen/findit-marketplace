@@ -18,10 +18,9 @@ concurrency:
 jobs:
   deploy:
     if: inputs.confirmation == 'DEPLOY'
-    # Temporary publication bridge: this is restored to ubuntu-slim after the
-    # staging deployment completes because the repository currently has no
-    # GitHub-hosted runner available to execute the workflow.
-    runs-on: [self-hosted, codex-staging, Windows]
+    # Keep the deployment on GitHub-hosted infrastructure after the one-off
+    # staging publication bridge has completed.
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     environment:
       name: cloudflare-staging
