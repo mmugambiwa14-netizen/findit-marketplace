@@ -18,9 +18,9 @@ concurrency:
 jobs:
   deploy:
     if: inputs.confirmation == 'DEPLOY'
-    # Temporary bridge for the isolated staging publication when the hosted
-    # runner pool is unavailable. Restore the hosted label after publication.
-    runs-on: [self-hosted, codex-staging, Windows]
+    # Keep the deployment on GitHub-hosted infrastructure after the one-off
+    # staging publication bridge has completed.
+    runs-on: ubuntu-slim
     timeout-minutes: 15
     environment:
       name: cloudflare-staging
