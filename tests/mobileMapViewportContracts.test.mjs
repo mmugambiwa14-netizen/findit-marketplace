@@ -33,7 +33,7 @@ test('mobile navigation stays centered and contained by the viewport', () => {
   assert.match(indexCss, /--findit-nav-height: 3\.25rem/);
   assert.match(viewport, /\.findit-mobile-nav[\s\S]*bottom: 0;[\s\S]*left: 50%;[\s\S]*width: min\(500px, calc\(100% - 1\.25rem\)\);[\s\S]*transform: translateX\(-50%\)/);
   assert.match(viewport, /\.findit-mobile-nav \.clay-nav[\s\S]*height: calc\(var\(--findit-nav-height\) \+ env\(safe-area-inset-bottom\)\);[\s\S]*padding-bottom: env\(safe-area-inset-bottom\);/);
-  assert.match(viewport, /\.findit-mobile-nav-clearance[\s\S]*padding-bottom: calc\(var\(--findit-nav-height\) \+ max\(0\.75rem, env\(safe-area-inset-bottom\)\)\);/);
+  assert.match(viewport, /\.findit-mobile-nav-clearance[\s\S]*padding-bottom: calc\(var\(--findit-nav-height\) \+ max\(\.75rem, env\(safe-area-inset-bottom\)\)\);/);
 });
 
 test('map zoom and pan stay inside a stable map-only viewport', () => {
