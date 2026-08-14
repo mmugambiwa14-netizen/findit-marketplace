@@ -19,6 +19,6 @@ test('Discover keeps the location sheet open until a city is selected', () => {
 test('the Discover location sheet remains scrollable above mobile navigation', () => {
   assert.match(discoverHeader, /max-h-\[calc\(100dvh-0\.75rem\)\]/);
   assert.match(discoverHeader, /touch-pan-y overflow-y-auto overscroll-contain/);
-  assert.match(bottomNav, /bottom-2\.5 z-40 md:hidden/);
+  assert.match(bottomNav, /findit-mobile-nav fixed bottom-0 z-40 md:hidden/);
   assert.doesNotMatch(bottomNav, /z-\[1000\]/);
 });
