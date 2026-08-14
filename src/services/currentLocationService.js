@@ -1,4 +1,5 @@
 import { getNearestMarketplacePlace } from '@/services/locationsService';
+import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 
 const GEOLOCATION_TIMEOUT_MS = 12_000;
 const LOOKUP_TIMEOUT_MS = 12_000;
@@ -38,7 +39,9 @@ export async function resolveCurrentMarketplaceLocation({ consentGranted = false
     latitude: Number(position.coords.latitude),
     longitude: Number(position.coords.longitude),
   }));
-  if (!resolved) throw new Error('CURRENT_LOCATION_OUTSIDE_SUPPORTED_MARKET');
+  if (!resolved || String(resolved.country_code || '').toUpperCase() !== LAUNCH_COUNTRY_CODE) {
+    throw new Error('CURRENT_LOCATION_OUTSIDE_SUPPORTED_MARKET');
+  }
 
   return Object.freeze({
     country: resolved.country_id,
@@ -58,7 +61,7 @@ export function currentLocationErrorMessage(error) {
     case 'GEOLOCATION_CONSENT_REQUIRED':
       return 'Choose Allow once before FindIt asks your browser for location access.';
     case 'GEOLOCATION_PERMISSION_DENIED':
-      return 'Location access was declined. You can still choose any country and place manually.';
+      return 'Location access was declined. You can still choose a Zimbabwe place manually.';
     case 'GEOLOCATION_UNSUPPORTED':
       return 'This browser cannot provide your current location. Choose a place manually.';
     case 'GEOLOCATION_TIMEOUT':
@@ -67,7 +70,7 @@ export function currentLocationErrorMessage(error) {
     case 'LOCATION_LOOKUP_TIMEOUT':
       return 'Location matching took too long. Try again or choose a place manually.';
     case 'CURRENT_LOCATION_OUTSIDE_SUPPORTED_MARKET':
-      return 'That position is outside FindIt’s supported Sub-Saharan markets. Choose a country and place manually.';
+      return 'That position is outside the Zimbabwe marketplace. Choose a Zimbabwe place manually.';
     default:
       return 'We could not match your position to a registered place. Choose it manually instead.';
   }

@@ -28,7 +28,7 @@ export function LocationPermissionDialog({ open, onOpenChange, onAllow }) {
               Your coordinates are sent to FindIt’s location service for this lookup, but are not added to your profile or saved in this browser. Only the suggested public country, region, and place may be remembered on this device, and you can change or clear them.
             </span>
             <span className="block text-xs">
-              This never locks your search. You can change countries at any time—for example, browse Botswana while you are in Zambia.
+              This never saves your coordinates. PeekaListing currently serves Zimbabwe marketplace locations, which you can choose manually if your device is elsewhere.
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
