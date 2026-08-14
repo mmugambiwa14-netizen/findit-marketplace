@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { featureFlags } from '@/lib/featureFlags';
 import { useCurrency } from '@/lib/CurrencyContext';
+import ListingCard from '@/components/listings/ListingCard';
+import { getPublicHomeListings } from '@/services/publicListingsService';
 import { getPublicTourFeedPage, publicTourDetailPath } from '@/services/listingToursService';
 import { listingTourQueryKeys } from '@/services/listingTourQueryKeys';
 import { Skeleton, SkeletonRegion } from '@/components/ui/skeleton';
@@ -41,6 +43,23 @@ function PeekSkeleton() {
   );
 }
 
+function ListingFallbackSkeleton() {
+  return (
+    <SkeletonRegion className="flex gap-3 overflow-hidden pb-1" label="Loading latest listings">
+      {[1, 2].map((item) => (
+        <div key={item} className="clay-card w-[17.5rem] shrink-0 overflow-hidden rounded-2xl">
+          <Skeleton className="aspect-[4/3] rounded-none" />
+          <div className="space-y-2 p-3">
+            <Skeleton className="h-4 w-3/5" />
+            <Skeleton className="h-4 w-11/12" />
+            <Skeleton className="h-3 w-2/5" />
+          </div>
+        </div>
+      ))}
+    </SkeletonRegion>
+  );
+}
+
 export default function HomePeekRail({ location }) {
   const { format } = useCurrency();
   const request = useMemo(() => ({
@@ -55,6 +74,13 @@ export default function HomePeekRail({ location }) {
     enabled: featureFlags.tours,
     staleTime: 60_000,
     retry: false,
+  });
+  const fallback = useQuery({
+    queryKey: ['public-home-listings-fallback', request.location],
+    queryFn: () => getPublicHomeListings({ location: request.location, limit: 4 }),
+    enabled: featureFlags.tours && feed.isError,
+    staleTime: 60_000,
+    retry: 1,
   });
 
   if (!featureFlags.tours) return null;
@@ -74,13 +100,56 @@ export default function HomePeekRail({ location }) {
 
   const items = feed.data?.items || [];
   if (feed.isError) {
+    const fallbackItems = fallback.data?.items || [];
+    if (fallback.isLoading) {
+      return (
+        <section className="mt-7" aria-labelledby="home-recommended-title">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <h2 id="home-recommended-title" className="findit-section-title">Latest listings</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">Peeks are temporarily unavailable; loading marketplace listings.</p>
+            </div>
+          </div>
+          <ListingFallbackSkeleton />
+        </section>
+      );
+    }
+
+    if (fallbackItems.length > 0) {
+      const listingScope = fallback.data?.locationMatched ? 'near you' : 'in Zimbabwe';
+      return (
+        <section className="mt-7" aria-labelledby="home-recommended-title">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <h2 id="home-recommended-title" className="findit-section-title">Latest listings {listingScope}</h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">Peeks are temporarily unavailable. The marketplace is still available.</p>
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={() => feed.refetch()}>
+              <RefreshCw className="h-3.5 w-3.5" />Retry Peeks
+            </Button>
+          </div>
+          <div className="flex snap-x gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {fallbackItems.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                type={listing.kind}
+                layout="recommendation"
+                className="w-[17.5rem] shrink-0"
+              />
+            ))}
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section className="mt-7" aria-labelledby="home-recommended-title">
         <h2 id="home-recommended-title" className="findit-section-title">Peeks near you</h2>
         <div className="locked-list-row mt-3 flex items-center gap-3 p-3.5">
           <span className="locked-icon-tile h-10 w-10"><VideoOff className="h-4 w-4" /></span>
-          <div className="min-w-0 flex-1"><p className="text-sm font-bold">Peeks did not load</p><p className="mt-0.5 text-xs text-muted-foreground">Your location is still selected.</p></div>
-          <Button type="button" size="sm" variant="outline" onClick={() => feed.refetch()}><RefreshCw className="h-3.5 w-3.5" />Retry</Button>
+          <div className="min-w-0 flex-1"><p className="text-sm font-bold">Peeks and listings did not load</p><p className="mt-0.5 text-xs text-muted-foreground">Your location is still selected. Try again when your connection is stable.</p></div>
+          <Button type="button" size="sm" variant="outline" onClick={() => { feed.refetch(); fallback.refetch(); }}><RefreshCw className="h-3.5 w-3.5" />Retry</Button>
         </div>
       </section>
     );

@@ -1,5 +1,6 @@
 import {
   findLatestAvailableListings,
+  findLatestAvailableMarketplaceListings,
   findPublicListingById,
   findPublicListingsByIds,
   findPublicListingTitleSuggestions,
@@ -21,6 +22,7 @@ import {
 
 const MAX_HOME_RESULTS = 24;
 const MAX_RECOMMENDATION_RESULTS = 24;
+const HOME_LISTING_KINDS = Object.freeze(['property', 'car', 'machinery']);
 
 function normalizeListingIds(listingIds) {
   if (!Array.isArray(listingIds)) return [];
@@ -70,6 +72,59 @@ export async function getLatestPublicListings(kind, limit) {
   }
   const rows = await findLatestAvailableListings(kind, normalizeLimit(limit));
   return enrichPublicListingCards(rows);
+}
+
+function locationMatches(listing, location) {
+  const term = String(location || '').trim().toLowerCase();
+  if (!term) return false;
+  return [listing?.public_location_label, listing?.location_id, listing?.city]
+    .filter(Boolean)
+    .some((value) => String(value).toLowerCase().includes(term));
+}
+
+/**
+ * Supplies a small, real-data home rail when the optional Peek feed is
+ * temporarily unavailable. The fallback is intentionally a public listing
+ * read, not a fixture or a second source of marketplace data.
+ */
+export async function getPublicHomeListings({ location = '', limit = 4 } = {}) {
+  const requestedLimit = normalizeLimit(limit);
+
+  if (localPreviewListingsEnabled()) {
+    const rows = HOME_LISTING_KINDS
+      .flatMap((kind) => filterLocalPreviewListings({
+        kind,
+        query: '',
+        category: '',
+        locationId: '',
+        minPrice: 0,
+        maxPrice: Number.MAX_SAFE_INTEGER,
+        minBedrooms: null,
+        brand: '',
+        condition: '',
+        fuelType: '',
+        transmission: '',
+        sort: 'newest',
+      }))
+      .sort((left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime())
+      .slice(0, MAX_HOME_RESULTS);
+    const listings = await attachPublicTourSummaries(rows.map(mapPublicListing), 'listing');
+    const local = listings.filter((listing) => locationMatches(listing, location));
+    return {
+      items: (local.length ? [...local, ...listings.filter((listing) => !local.includes(listing))] : listings)
+        .slice(0, requestedLimit),
+      locationMatched: local.length > 0,
+    };
+  }
+
+  const rows = await findLatestAvailableMarketplaceListings(MAX_HOME_RESULTS);
+  const listings = await enrichPublicListingCards(rows);
+  const local = listings.filter((listing) => locationMatches(listing, location));
+  return {
+    items: (local.length ? [...local, ...listings.filter((listing) => !local.includes(listing))] : listings)
+      .slice(0, requestedLimit),
+    locationMatched: local.length > 0,
+  };
 }
 
 export async function getPublicListing(kind, id) {

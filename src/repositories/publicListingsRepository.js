@@ -88,6 +88,31 @@ export async function findLatestAvailableListings(kind, limit) {
   return data ?? [];
 }
 
+/**
+ * Returns one bounded cross-category public listing page for home fallbacks.
+ * This deliberately stays in the public repository boundary so a temporary
+ * Peek outage can fall back to the same RLS- and status-filtered data that the
+ * marketplace uses everywhere else.
+ */
+export async function findLatestAvailableMarketplaceListings(limit) {
+  const { data, error } = await supabase
+    .from('listings')
+    .select(PUBLIC_LISTING_SELECT)
+    .eq('country_code', LAUNCH_COUNTRY_CODE)
+    .in('status', ['available', 'under_offer'])
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    const repositoryError = new Error('Unable to load public marketplace listings');
+    repositoryError.cause = error;
+    throw repositoryError;
+  }
+
+  return data ?? [];
+}
+
 export async function findSavedListingsByIds(listingIds) {
   if (!listingIds.length) return [];
   const { data, error } = await supabase
