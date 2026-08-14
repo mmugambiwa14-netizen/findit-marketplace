@@ -40,8 +40,13 @@ jobs:
           FINDIT_RECOMMENDATION_WORKERS_ENABLED: ${{ vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED }}
           FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: ${{ vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED }}
           FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED: ${{ vars.FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED }}
+          SCHEDULE: ${{ github.event.schedule || '' }}
         run: |
           set -euo pipefail
+          is_schedule() {
+            [[ -z "$SCHEDULE" || "$SCHEDULE" == "$1" ]]
+          }
+
           post_worker() {
             local path="$1"
             local token="$2"
@@ -56,25 +61,36 @@ jobs:
               "${SUPABASE_URL}/functions/v1/${path}"
           }
 
-          post_worker media-lifecycle-cleanup "$MEDIA_CLEANUP_SECRET" '{}'
-          post_worker listing-expiry-worker "$LISTING_EXPIRY_SECRET" '{}'
+          if is_schedule '17 * * * *'; then
+            post_worker media-lifecycle-cleanup "$MEDIA_CLEANUP_SECRET" '{}'
+          fi
 
-          if [[ "${FINDIT_RECOMMENDATION_WORKERS_ENABLED:-false}" == "true" ]]; then
+          if is_schedule '23 2 * * *'; then
+            post_worker listing-expiry-worker "$LISTING_EXPIRY_SECRET" '{}'
+          fi
+
+          if [[ "${FINDIT_RECOMMENDATION_WORKERS_ENABLED:-false}" == "true" ]] && is_schedule '*/5 * * * *'; then
             post_worker recommendation-maintenance "$RECOMMENDATION_SECRET" '{"mode":"projection","projectionLimit":200,"projectionMaxAttempts":8}'
+          fi
+
+          if [[ "${FINDIT_RECOMMENDATION_WORKERS_ENABLED:-false}" == "true" ]] && is_schedule '11 3 * * *'; then
             post_worker recommendation-maintenance "$RECOMMENDATION_SECRET" '{"mode":"maintenance","retentionLimit":5000}'
           fi
 
-          if [[ "${FINDIT_TOURS_WORKERS_ENABLED:-false}" == "true" ]]; then
+          if [[ "${FINDIT_TOURS_WORKERS_ENABLED:-false}" == "true" ]] && is_schedule '37 * * * *'; then
             post_worker tour-lifecycle-cleanup "$TOUR_CLEANUP_SECRET" '{"batchSize":20}'
+          fi
+
+          if [[ "${FINDIT_TOURS_WORKERS_ENABLED:-false}" == "true" ]] && is_schedule '*/10 * * * *'; then
             post_worker tour-cache-invalidation "$TOUR_CACHE_SECRET" '{"batchSize":100}'
             post_worker tour-observability-monitor "$TOUR_OBSERVABILITY_SECRET" '{}'
           fi
 
-          if [[ "${FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED:-false}" == "true" ]]; then
+          if [[ "${FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED:-false}" == "true" ]] && is_schedule '*/5 * * * *'; then
             post_worker essential-notification-fanout "$NOTIFICATION_FANOUT_SECRET" '{"jobLimit":10,"recipientLimit":200}'
           fi
 
-          if [[ "${FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED:-false}" == "true" ]]; then
+          if [[ "${FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED:-false}" == "true" ]] && is_schedule '*/5 * * * *'; then
             post_worker transactional-email-dispatch "$EMAIL_DISPATCH_TOKEN" '{"limit":25}'
           fi
   tour-processing:
