@@ -53,9 +53,7 @@ body {
   bottom: 0;
   left: 50%;
   width: min(500px, calc(100% - 1.25rem));
-  box-sizing: border-box;
   transform: translateX(-50%);
-  padding-bottom: 0;
 }
 
 /* The nav floats over photos and video thumbnails, so translucent dark-on-dark
