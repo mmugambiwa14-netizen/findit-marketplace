@@ -1,9 +1,12 @@
 /* PeekaListing Web Push handlers. Loaded by the stamped service worker. */
 
 const STAGING_HOST_PREFIXES = ['peekalisting-stagi', 'findit-marketplace-stagi'];
+const CANONICAL_STAGING_HOST = 'staging.peekalisting.com';
 
 function isStagingOrigin() {
-  return STAGING_HOST_PREFIXES.some((prefix) => self.location.hostname.startsWith(prefix));
+  const hostname = String(self.location.hostname || '').toLowerCase();
+  return hostname === CANONICAL_STAGING_HOST
+    || STAGING_HOST_PREFIXES.some((prefix) => hostname.startsWith(prefix));
 }
 
 self.addEventListener('install', (event) => {
