@@ -221,6 +221,6 @@ revoke all on function public.submit_support_request(text, text, text, text) fro
 revoke all on function public.admin_support_request_rows(text, text, text, integer, integer) from public;
 revoke all on function public.admin_resolve_support_request(uuid, text) from public;
 
-grant execute on function public.submit_support_request(text, text, text, text) to anon, authenticated;
+grant execute on function public.submit_support_request(text, text, text, text) to anon, authenticated, service_role;
 grant execute on function public.admin_support_request_rows(text, text, text, integer, integer) to authenticated;
 grant execute on function public.admin_resolve_support_request(uuid, text) to authenticated;

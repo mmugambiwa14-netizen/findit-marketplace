@@ -422,6 +422,30 @@ select extensions.is(
 );
 
 select extensions.ok(
+  not exists (
+    select 1
+    from pg_partition_tree('public.recommendation_events'::regclass) as partition_tree
+    join pg_class as relation
+      on relation.oid = partition_tree.relid
+    where partition_tree.isleaf
+      and not relation.relrowsecurity
+  ),
+  'every recommendation event leaf partition has RLS enabled'
+);
+select extensions.ok(
+  not exists (
+    select 1
+    from pg_partition_tree('public.recommendation_events'::regclass) as partition_tree
+    where partition_tree.isleaf
+      and (
+        has_table_privilege('anon', partition_tree.relid, 'SELECT, INSERT, UPDATE, DELETE')
+        or has_table_privilege('authenticated', partition_tree.relid, 'SELECT, INSERT, UPDATE, DELETE')
+      )
+  ),
+  'browser roles have no direct DML privileges on recommendation event leaf partitions'
+);
+
+select extensions.ok(
   has_function_privilege('anon', 'public.record_recommendation_event(text,uuid,uuid,uuid,uuid,text,text,jsonb)', 'EXECUTE'),
   'guest has only bounded event ingestion'
 );

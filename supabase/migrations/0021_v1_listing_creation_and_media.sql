@@ -127,7 +127,7 @@ returns boolean as $$
 $$ language sql stable security definer set search_path = public;
 
 revoke all on function public.has_valid_listing_upload_intent(text) from public;
-grant execute on function public.has_valid_listing_upload_intent(text) to authenticated;
+grant execute on function public.has_valid_listing_upload_intent(text) to authenticated, service_role;
 
 create policy "listing_image_validated_insert" on storage.objects
   for insert to authenticated with check (

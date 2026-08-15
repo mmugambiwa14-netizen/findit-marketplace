@@ -258,9 +258,9 @@ revoke all on function public.notification_unread_count() from public;
 revoke all on function public.mark_notification_read(uuid) from public;
 revoke all on function public.mark_all_notifications_read() from public;
 grant execute on function public.notification_rows(text, boolean, integer, integer) to authenticated;
-grant execute on function public.notification_unread_count() to authenticated;
-grant execute on function public.mark_notification_read(uuid) to authenticated;
-grant execute on function public.mark_all_notifications_read() to authenticated;
+grant execute on function public.notification_unread_count() to authenticated, service_role;
+grant execute on function public.mark_notification_read(uuid) to authenticated, service_role;
+grant execute on function public.mark_all_notifications_read() to authenticated, service_role;
 
 create or replace function public.set_listing_expiry_defaults()
 returns trigger as $$

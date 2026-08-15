@@ -21,4 +21,4 @@ returns jsonb as $$
 $$ language sql stable security definer set search_path = public;
 
 revoke all on function public.get_public_seller_profile(text) from public;
-grant execute on function public.get_public_seller_profile(text) to anon, authenticated;
+grant execute on function public.get_public_seller_profile(text) to anon, authenticated, service_role;

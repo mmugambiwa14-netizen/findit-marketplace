@@ -304,11 +304,11 @@ revoke all on function public.personalized_recommendation_service_v1(uuid, text,
   from public, anon, authenticated;
 
 grant execute on function public.get_my_recommendation_personalization_v1()
-  to authenticated;
+  to service_role, authenticated;
 grant execute on function public.set_my_recommendation_personalization_v1(boolean)
-  to authenticated;
+  to service_role, authenticated;
 grant execute on function public.clear_my_recommendation_personalization_data_v1()
-  to authenticated;
+  to service_role, authenticated;
 grant execute on function public.personalized_recommendation_service_v1(uuid, text, integer)
   to service_role;
 

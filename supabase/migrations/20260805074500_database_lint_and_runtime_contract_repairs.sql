@@ -128,6 +128,7 @@ begin
   );
   execute format('alter table public.%I enable row level security', partition_name);
   execute format('revoke all on table public.%I from public, anon, authenticated', partition_name);
+  execute format('grant select, insert, update, delete on table public.%I to service_role', partition_name);
 
   execute $sql$
     insert into public.recommendation_events (

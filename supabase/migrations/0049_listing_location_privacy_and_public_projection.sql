@@ -233,7 +233,7 @@ as $$
 $$;
 
 revoke all on function public.can_read_listing_context(uuid, uuid, timestamptz) from public;
-grant execute on function public.can_read_listing_context(uuid, uuid, timestamptz) to anon, authenticated;
+grant execute on function public.can_read_listing_context(uuid, uuid, timestamptz) to anon, authenticated, service_role;
 
 drop policy if exists "listings_public_read_available" on public.listings;
 create policy "listings_public_read_available" on public.listings

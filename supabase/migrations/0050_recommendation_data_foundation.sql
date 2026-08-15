@@ -72,6 +72,8 @@ create table if not exists public.recommendation_events (
 create table if not exists public.recommendation_events_default
   partition of public.recommendation_events default;
 
+grant select, insert, update, delete on table public.recommendation_events_default to service_role;
+
 create table if not exists public.recommendation_cache (
   cache_key text primary key,
   service_name text not null,

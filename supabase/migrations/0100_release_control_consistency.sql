@@ -6,8 +6,10 @@
 do $migration$
 declare
   service_count integer;
+  rpc_service_count integer;
   recommendation_configuration jsonb;
   maps_configuration jsonb;
+  rpc_target record;
 begin
   -- Migration 0059 creates the complete policy catalog with every service
   -- disabled. This migration is the reviewed release-control activation point,
@@ -124,6 +126,43 @@ begin
 
   if not has_table_privilege('service_role', 'public.recommendation_events_default', 'SELECT, INSERT, UPDATE, DELETE') then
     raise exception '0100 unexpectedly removed service_role access to recommendation_events_default';
+  end if;
+
+  -- Supabase CLI role snapshots no longer seed the historical service-role
+  -- function defaults used when the 0101 catalog fingerprint was certified.
+  -- Restate the exact 53 server execution paths. The four recommendation
+  -- administration functions below are intentionally authenticated-admin only.
+  for rpc_target in
+    select function_record.oid::regprocedure::text as signature
+    from pg_proc function_record
+    join pg_namespace function_schema on function_schema.oid = function_record.pronamespace
+    where function_schema.nspname = 'public'
+      and function_record.prokind = 'f'
+      and function_record.prosecdef
+      and has_function_privilege('authenticated', function_record.oid, 'EXECUTE')
+      and function_record.proname not in (
+        'admin_purge_recommendation_service_cache_v1',
+        'admin_recommendation_analytics_v1',
+        'admin_update_recommendation_service_policy_v1',
+        'admin_upsert_recommendation_context_rule_v1'
+      )
+    order by function_record.proname, pg_get_function_identity_arguments(function_record.oid)
+  loop
+    execute format('grant execute on function %s to service_role', rpc_target.signature);
+  end loop;
+
+  select count(*)::integer
+  into rpc_service_count
+  from pg_proc function_record
+  join pg_namespace function_schema on function_schema.oid = function_record.pronamespace
+  where function_schema.nspname = 'public'
+    and function_record.prokind = 'f'
+    and function_record.prosecdef
+    and has_function_privilege('authenticated', function_record.oid, 'EXECUTE')
+    and has_function_privilege('service_role', function_record.oid, 'EXECUTE');
+
+  if rpc_service_count <> 53 then
+    raise exception '0100 expected 53 service-role authenticated RPC paths, found %', rpc_service_count;
   end if;
 
   if (select configuration ->> 'renderer' from public.marketplace_operational_controls where control_key = 'maps') <> 'maplibre-gl'

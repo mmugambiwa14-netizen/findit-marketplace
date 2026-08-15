@@ -256,7 +256,7 @@ end;
 $$;
 
 revoke all on function public.record_recommendation_event(text, uuid, uuid, uuid, uuid, text, text, jsonb) from public;
-grant execute on function public.record_recommendation_event(text, uuid, uuid, uuid, uuid, text, text, jsonb) to anon, authenticated;
+grant execute on function public.record_recommendation_event(text, uuid, uuid, uuid, uuid, text, text, jsonb) to anon, authenticated, service_role;
 
 create or replace function public.refresh_recommendation_popularity_daily(p_metric_date date default current_date - 1)
 returns integer

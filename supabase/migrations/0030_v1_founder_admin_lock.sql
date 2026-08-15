@@ -106,6 +106,12 @@ returns boolean as $$
   select public.is_admin();
 $$ language sql stable security definer set search_path = public, extensions;
 
+-- Restate the browser/server grants without revoking the functions' standard
+-- PUBLIC/owner ACL. This yields the same locked pre-0088 fingerprint whether
+-- Supabase supplies the grants through default privileges or not.
+grant execute on function public.is_admin() to anon, authenticated, service_role;
+grant execute on function public.is_super_admin() to anon, authenticated, service_role;
+
 -- Keep the function signature for old clients and rollback compatibility, but
 -- remove application-level role delegation. Direct postgres sessions can still
 -- exercise the historical path in transactional database tests.

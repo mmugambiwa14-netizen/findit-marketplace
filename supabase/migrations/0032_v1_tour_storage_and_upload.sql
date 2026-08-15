@@ -81,7 +81,7 @@ returns boolean as $$
 $$ language sql stable security definer set search_path = public;
 
 revoke all on function public.has_active_tour_upload_intent(text) from public, anon;
-grant execute on function public.has_active_tour_upload_intent(text) to authenticated;
+grant execute on function public.has_active_tour_upload_intent(text) to authenticated, service_role;
 
 create policy "tour_source_authorized_insert" on storage.objects
   for insert to authenticated with check (

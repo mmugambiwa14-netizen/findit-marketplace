@@ -48,7 +48,7 @@ end;
 $$;
 
 revoke all on function public.record_marketplace_view(text, uuid) from public;
-grant execute on function public.record_marketplace_view(text, uuid) to anon, authenticated;
+grant execute on function public.record_marketplace_view(text, uuid) to anon, authenticated, service_role;
 
 comment on function public.record_marketplace_view(text, uuid) is
   'Increments a visible marketplace item view through a trusted boundary; clients deduplicate per browser session and owner views are excluded.';

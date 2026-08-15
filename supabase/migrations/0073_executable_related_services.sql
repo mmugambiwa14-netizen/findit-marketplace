@@ -353,7 +353,7 @@ revoke all on function public.record_recommended_service_event_v1(
 ) from public, anon, authenticated;
 grant execute on function public.record_recommended_service_event_v1(
   text, uuid, uuid, uuid, text, text, jsonb
-) to anon, authenticated;
+) to service_role, anon, authenticated;
 
 create or replace function public.validate_recommendation_event_subject_state()
 returns trigger

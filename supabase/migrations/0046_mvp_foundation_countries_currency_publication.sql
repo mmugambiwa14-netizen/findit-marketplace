@@ -312,6 +312,13 @@ as $$
   );
 $$;
 
+-- Restate grants expected by the later private-helper migration. Granting
+-- without an ACL reset preserves the standard PUBLIC/owner entries and their
+-- canonical ordering on both older and current Supabase images.
+grant execute on function public.is_country_browsable(text) to anon, authenticated, service_role;
+grant execute on function public.is_country_publishable(text) to anon, authenticated, service_role;
+grant execute on function public.is_supported_listing_currency(text, text) to anon, authenticated, service_role;
+
 create or replace function public.create_v1_listing_submission(
   p_submission_key uuid,
   p_listing jsonb,

@@ -220,7 +220,7 @@ end;
 $$;
 
 revoke all on function public.public_listing_search_page(text, text, text, text, numeric, numeric, integer, text, text, text, text, text, text, uuid, integer) from public;
-grant execute on function public.public_listing_search_page(text, text, text, text, numeric, numeric, integer, text, text, text, text, text, text, uuid, integer) to anon, authenticated;
+grant execute on function public.public_listing_search_page(text, text, text, text, numeric, numeric, integer, text, text, text, text, text, text, uuid, integer) to anon, authenticated, service_role;
 
 comment on function public.public_listing_search_page(text, text, text, text, numeric, numeric, integer, text, text, text, text, text, text, uuid, integer) is
   'Public bounded listing read model. Returns limit+1 rows for keyset traversal and never executes an exact count.';

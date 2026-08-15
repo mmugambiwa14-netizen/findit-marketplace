@@ -30,8 +30,8 @@ test('personalization is explicit, default off, owner scoped, and independently 
     migration,
     /grant\s+(?:insert|update|delete|all)[\s\S]{0,100}recommendation_personalization_preferences[\s\S]{0,40}to authenticated/i,
   );
-  assert.match(migration, /grant execute on function public\.set_my_recommendation_personalization_v1\(boolean\)[\s\S]{0,60}to authenticated/);
-  assert.match(migration, /grant execute on function public\.clear_my_recommendation_personalization_data_v1\(\)[\s\S]{0,60}to authenticated/);
+  assert.match(migration, /grant execute on function public\.set_my_recommendation_personalization_v1\(boolean\)[\s\S]{0,60}to service_role, authenticated/);
+  assert.match(migration, /grant execute on function public\.clear_my_recommendation_personalization_data_v1\(\)[\s\S]{0,60}to service_role, authenticated/);
 });
 
 test('ranking uses only bounded first-party signals recorded after opt-in', () => {
