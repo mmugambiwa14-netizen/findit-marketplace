@@ -42,3 +42,9 @@ test('canonical staging automatically promotes its worker after installation', (
   assert.match(pushWorker, /hostname === CANONICAL_STAGING_HOST/);
   assert.match(pushWorker, /event\.waitUntil\(self\.skipWaiting\(\)\)/);
 });
+
+test('service-worker updates are checked before the waiting prompt can be missed', () => {
+  assert.match(source, /registration\.addEventListener\('updatefound'/);
+  assert.match(source, /watchInstallingWorker\(registration\.installing\)/);
+  assert.match(source, /await registration\.update\(\)/);
+});

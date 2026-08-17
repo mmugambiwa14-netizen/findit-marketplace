@@ -141,25 +141,12 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
     return null;
   }
 
-  // Staging is an operational test surface. Force a byte check on startup and
-  // immediately activate a waiting staging build so installed iOS PWAs cannot
-  // remain pinned to an obsolete JavaScript bundle.
-  if (stagingLikeOrigin()) {
-    try { await registration.update(); } catch { /* best effort */ }
-    activateWaitingStagingWorker();
-  }
-
   bindControllerChange();
 
-  // A worker already waiting means the user loaded the page with an update
-  // pending from a previous visit.
-  if (registration.waiting && navigator.serviceWorker.controller) {
-    if (!activateWaitingStagingWorker()) onUpdateReady?.();
-  }
-
-  registration.addEventListener('updatefound', () => {
-    const installing = registration.installing;
-    if (!installing) return;
+  const watchedInstallers = new WeakSet();
+  const watchInstallingWorker = (installing) => {
+    if (!installing || watchedInstallers.has(installing)) return;
+    watchedInstallers.add(installing);
     installing.addEventListener('statechange', () => {
       if (installing.state !== 'installed') return;
       if (navigator.serviceWorker.controller) {
@@ -168,7 +155,31 @@ export async function registerServiceWorker({ onUpdateReady, onReady } = {}) {
         onReady?.();
       }
     });
+  };
+
+  // Attach the update listener before forcing the byte check. Registering an
+  // update can begin installation synchronously; attaching it afterwards can
+  // miss the only updatefound event and leave an installed PWA on its old
+  // bundle with no visible recovery action.
+  registration.addEventListener('updatefound', () => {
+    watchInstallingWorker(registration.installing);
   });
+  watchInstallingWorker(registration.installing);
+
+  // Always check once on app startup. The browser normally schedules checks,
+  // but installed PWAs can stay open for days and should not wait for the
+  // browser's implementation-specific interval before discovering a release.
+  try { await registration.update(); } catch { /* best effort */ }
+
+  // Staging is an operational test surface. Activate its waiting worker so
+  // the canonical staging PWA cannot remain pinned to an obsolete bundle.
+  activateWaitingStagingWorker();
+
+  // A worker already waiting means the user loaded the page with an update
+  // pending from a previous visit.
+  if (registration.waiting && navigator.serviceWorker.controller) {
+    if (!activateWaitingStagingWorker()) onUpdateReady?.();
+  }
 
   return registration;
 }
