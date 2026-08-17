@@ -41,5 +41,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // OAuth callbacks are completed explicitly by authService. PKCE keeps the
+    // verifier in the same-origin storage that is shared by the PWA and its
+    // temporary browser window, instead of relying on a timing-sensitive
+    // implicit-flow hash callback.
+    flowType: 'pkce',
   },
 });
