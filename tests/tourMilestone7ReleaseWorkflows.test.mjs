@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [releaseWorkflow, acceptanceWorkflow, previewWorkflow, validator] = await Promise.all([
+const [releaseWorkflow, acceptanceWorkflow, previewWorkflow, productionWorkflow, validator] = await Promise.all([
   read('.github/workflows/release-candidate-gates.yml'),
   read('.github/workflows/tours-staging-acceptance.yml'),
   read('.github/workflows/peekalisting-preview.yml'),
+  read('.github/workflows/deploy-production-pages.yml'),
   read('scripts/validate-env.mjs'),
 ]);
 
@@ -96,4 +97,14 @@ test('preview access cannot be enabled without the complete backend worker bound
   assert.match(validator, /Tour browser or preview access cannot be enabled unless TOURS_BACKEND_ENABLED is true/);
   assert.match(validator, /FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET/);
   assert.match(validator, /FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED must be true for production essential notifications/);
+});
+
+test('production deployment passes all enabled Tour worker secrets into environment validation', () => {
+  for (const name of [
+    'FINDIT_TOUR_CLEANUP_WORKER_SECRET',
+    'FINDIT_TOUR_CACHE_WORKER_SECRET',
+    'FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET',
+  ]) {
+    assert.match(productionWorkflow, new RegExp(`${name}: \\\${\\\{ secrets\\.${name} \\\}\\\}`));
+  }
 });
