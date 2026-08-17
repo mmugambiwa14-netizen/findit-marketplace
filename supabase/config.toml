@@ -272,37 +272,37 @@ content_path = "./supabase/templates/reauthentication.html"
 [auth.email.notification.password_changed]
 enabled = true
 subject = "Your PeekaListing password was changed"
-content_path = "./templates/password_changed_notification.html"
+content_path = "./supabase/templates/password_changed_notification.html"
 
 [auth.email.notification.email_changed]
 enabled = true
 subject = "Your PeekaListing email was changed"
-content_path = "./templates/email_changed_notification.html"
+content_path = "./supabase/templates/email_changed_notification.html"
 
 [auth.email.notification.phone_changed]
 enabled = true
 subject = "Your PeekaListing phone number was changed"
-content_path = "./templates/phone_changed_notification.html"
+content_path = "./supabase/templates/phone_changed_notification.html"
 
 [auth.email.notification.identity_linked]
 enabled = true
 subject = "A sign-in method was added to your PeekaListing account"
-content_path = "./templates/identity_linked_notification.html"
+content_path = "./supabase/templates/identity_linked_notification.html"
 
 [auth.email.notification.identity_unlinked]
 enabled = true
 subject = "A sign-in method was removed from your PeekaListing account"
-content_path = "./templates/identity_unlinked_notification.html"
+content_path = "./supabase/templates/identity_unlinked_notification.html"
 
 [auth.email.notification.mfa_factor_enrolled]
 enabled = true
 subject = "A verification method was added to your PeekaListing account"
-content_path = "./templates/mfa_factor_enrolled_notification.html"
+content_path = "./supabase/templates/mfa_factor_enrolled_notification.html"
 
 [auth.email.notification.mfa_factor_unenrolled]
 enabled = true
 subject = "A verification method was removed from your PeekaListing account"
-content_path = "./templates/mfa_factor_unenrolled_notification.html"
+content_path = "./supabase/templates/mfa_factor_unenrolled_notification.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
