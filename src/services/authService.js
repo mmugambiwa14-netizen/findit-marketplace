@@ -193,6 +193,51 @@ function validOAuthSessionPayload(session) {
   );
 }
 
+function oauthCallbackCode() {
+  try {
+    return new URL(window.location.href).searchParams.get('code') || '';
+  } catch {
+    return '';
+  }
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+// Supabase's URL detection and PKCE exchange happen asynchronously while the
+// callback route is already rendering.  Reading the session once here races
+// that exchange in slower PWAs and leaves the user on the generic OAuth error
+// screen.  Prefer the SDK's detected session, explicitly exchange a callback
+// code when necessary, then allow a short bounded window for the SDK to finish
+// publishing the session.  This is deliberately bounded: a broken provider
+// must never leave the callback route spinning forever.
+async function getOAuthCallbackSession() {
+  let session = await getSession();
+  if (session) return session;
+
+  const code = oauthCallbackCode();
+  let exchangeError = null;
+  if (code) {
+    try {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) exchangeError = error;
+      if (data?.session) return data.session;
+    } catch (error) {
+      exchangeError = error;
+    }
+  }
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    await wait(250);
+    session = await getSession();
+    if (session) return session;
+  }
+
+  if (exchangeError) throw exchangeError;
+  throw new Error('Google sign-in did not return a session.');
+}
+
 async function setOAuthSessionFromPayload(session) {
   if (!validOAuthSessionPayload(session)) throw new Error('The sign-in provider returned an incomplete session.');
   const { data, error } = await supabase.auth.setSession({
@@ -301,8 +346,7 @@ export async function completeOAuthCallback({ bridgeId = '', returnTo = '/' } = 
   }
 
   try {
-    const session = await getSession();
-    if (!session) throw new Error('Google sign-in did not return a session.');
+    const session = await getOAuthCallbackSession();
     if (bridgeId) {
       const bridged = postOAuthBridgeMessage({
         type: 'session',
