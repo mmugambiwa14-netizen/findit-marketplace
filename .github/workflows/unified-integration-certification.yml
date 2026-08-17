@@ -56,15 +56,10 @@ jobs:
       TOURS_BACKEND_ENABLED: "true"
       FINDIT_TOURS_WORKERS_ENABLED: "true"
       FINDIT_TOUR_PROCESSOR_MODE: github-actions
-      FINDIT_TOUR_CLEANUP_WORKER_SECRET: release-validation-cleanup-secret
-      FINDIT_TOUR_CACHE_WORKER_SECRET: release-validation-cache-secret
-      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: release-validation-observability-secret
       FINDIT_TOURS_RELEASE_ACCEPTED: "true"
       FINDIT_TOURS_ACCEPTANCE_ID: tour-acceptance-ci-build-validation-0001
       FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
-      FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: release-validation-fanout-secret
       FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"
-      FINDIT_RECOMMENDATION_WORKER_SECRET: release-validation-recommendation-secret
     steps:
       - name: Check out exact integration head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -75,6 +70,20 @@ jobs:
         with:
           node-version: 24
           cache: npm
+
+      - name: Generate ephemeral validation secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in \
+            FINDIT_TOUR_CLEANUP_WORKER_SECRET \
+            FINDIT_TOUR_CACHE_WORKER_SECRET \
+            FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET \
+            FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET \
+            FINDIT_RECOMMENDATION_WORKER_SECRET; do
+            value="$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")"
+            echo "${name}=${value}" >> "${GITHUB_ENV}"
+          done
       - name: Use Deno for Edge Function checks
         uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
         with:

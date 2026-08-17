@@ -1,10 +1,12 @@
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile, access } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
 
 const root = process.cwd();
 const results = [];
+const validationSecret = () => randomBytes(32).toString('hex');
 
 function run(name, command, args, options = {}) {
   const startedAt = Date.now();
@@ -106,9 +108,9 @@ const productionBase = {
   VITE_FEATURE_PREVIEW_FIXTURES: 'false',
   VITE_PREVIEW_AUTH_BYPASS: 'false',
   FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
-  FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: 'release-notification-fanout-secret',
+  FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: validationSecret(),
   FINDIT_RECOMMENDATION_WORKERS_ENABLED: 'true',
-  FINDIT_RECOMMENDATION_WORKER_SECRET: 'release-recommendation-worker-secret',
+  FINDIT_RECOMMENDATION_WORKER_SECRET: validationSecret(),
 };
 
 try {
@@ -141,9 +143,9 @@ try {
       FINDIT_TOURS_ACCEPTANCE_ID: 'tour-acceptance-2026-07-27-staging-001',
       FINDIT_TOUR_PROCESSOR_MODE: 'github-actions',
       FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
-      FINDIT_TOUR_CLEANUP_WORKER_SECRET: 'release-cleanup-secret',
-      FINDIT_TOUR_CACHE_WORKER_SECRET: 'release-cache-secret',
-      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: 'release-observability-secret',
+      FINDIT_TOUR_CLEANUP_WORKER_SECRET: validationSecret(),
+      FINDIT_TOUR_CACHE_WORKER_SECRET: validationSecret(),
+      FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: validationSecret(),
     },
   });
 

@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -6,6 +7,7 @@ const root = process.cwd();
 const outputDirectory = resolve(root, 'artifacts/extensive-audit');
 const startedAt = new Date().toISOString();
 const gates = [];
+const validationSecret = randomBytes(32).toString('hex');
 
 function runGate(name, command, args, options = {}) {
   const started = Date.now();
@@ -50,7 +52,7 @@ const productionEnv = {
   TOURS_BACKEND_ENABLED: 'false',
   FINDIT_TOURS_RELEASE_ACCEPTED: 'false',
   FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
-  FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: 'audit-runtime-notification-worker-secret',
+  FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: validationSecret,
   VITE_FEATURE_PAYMENTS: 'false',
   VITE_FEATURE_SUBSCRIPTIONS: 'false',
   VITE_FEATURE_ESCROW: 'false',

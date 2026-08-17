@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
 import { collectActiveV1SourceGraph } from '../scripts/lib/activeV1SourceGraph.mjs';
 import { featureFlags } from '../src/lib/featureFlags.js';
 
 const projectRoot = resolve(import.meta.dirname, '..');
+const testWorkerSecret = randomBytes(16).toString('hex');
 const [appSource, packageSource] = await Promise.all([
   readFile(new URL('../src/App.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../package.json', import.meta.url), 'utf8'),
@@ -71,7 +73,7 @@ const releaseEnvironment = {
   TOURS_BACKEND_ENABLED: 'false',
   FINDIT_TOURS_RELEASE_ACCEPTED: 'false',
   FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
-  FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: 'release-gate-worker-secret',
+  FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: testWorkerSecret,
 };
 
 function validateRelease(overrides = {}) {
