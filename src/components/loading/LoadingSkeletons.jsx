@@ -187,7 +187,7 @@ export function ConversationListSkeleton({ rows = 7 }) {
 
 export function ConversationThreadSkeleton() {
   return (
-    <SkeletonRegion label="Loading conversation" className="fixed inset-0 z-30 flex h-[100dvh] flex-col overflow-hidden bg-background">
+    <SkeletonRegion label="Loading conversation" className="fixed inset-0 z-30 flex h-[var(--findit-viewport-height,100dvh)] flex-col overflow-hidden bg-background">
       <div className="flex min-h-[76px] items-center gap-3 border-b border-border px-4 py-3">
         <Skeleton className="h-11 w-11 rounded-full" />
         <Skeleton className="h-11 w-11 rounded-2xl" />

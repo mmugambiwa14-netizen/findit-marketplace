@@ -94,14 +94,17 @@ export default function Tours() {
     });
   }, [feed, items, requestedTourId]);
 
+  // setSearchParams closes over the query string of the render that created it,
+  // and returning the value it hands in does not cancel the navigation. Deciding
+  // inside the updater therefore re-navigates to a stale snapshot and discards
+  // params written since, which used to undo the category switch below. Read the
+  // live query string and only navigate when the id actually has to change.
   useEffect(() => {
     if (!activeTourId) return;
-    setParams((current) => {
-      if (current.get('peek') === activeTourId) return current;
-      const next = new URLSearchParams(current);
-      next.set('peek', activeTourId);
-      return next;
-    }, { replace: true });
+    const current = new URLSearchParams(window.location.search);
+    if (current.get('peek') === activeTourId) return;
+    current.set('peek', activeTourId);
+    setParams(current, { replace: true });
   }, [activeTourId, setParams]);
 
   useEffect(() => {
@@ -149,7 +152,10 @@ export default function Tours() {
     if (nextCategory === 'all') next.delete('category'); else next.set('category', nextCategory);
     next.delete('peek');
     setParams(next, { replace: true });
-    restoredTourRef.current = null;
+    // Renders between this call and the router committing the new query string
+    // still report the outgoing peek id. Mark it restored so the restore effect
+    // cannot re-activate the slide we are navigating away from.
+    restoredTourRef.current = requestedTourId;
     setActiveTourId(null);
     feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   };

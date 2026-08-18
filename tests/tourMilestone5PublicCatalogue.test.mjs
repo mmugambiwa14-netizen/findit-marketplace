@@ -115,7 +115,11 @@ test('feed filters, active Peek and pagination survive canonical navigation', ()
   assert.match(page, /useSearchParams/);
   assert.match(page, /requestedCategory = params\.get\('category'\)/);
   assert.match(page, /requestedTourId = params\.get\('peek'\)/);
-  assert.match(page, /next\.set\('peek', activeTourId\)/);
+  // Mirrored from the live query string, not from the setSearchParams updater
+  // argument: that argument is a snapshot of an earlier render, so writing it
+  // back discarded the category the user had just selected.
+  assert.match(page, /current\.set\('peek', activeTourId\)/);
+  assert.match(page, /new URLSearchParams\(window\.location\.search\)/);
   assert.match(page, /MAX_RESTORE_PAGES/);
   assert.match(page, /feed\.fetchNextPage\(\)/);
   assert.match(page, /listingTourQueryKeys\.publicFeed\(filters\)/);

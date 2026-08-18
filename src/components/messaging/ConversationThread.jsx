@@ -222,7 +222,11 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   const submitMessage = () => { if (text.trim() && !sendMutation.isPending) sendMutation.mutate(); };
 
   return (
-    <section className="fixed inset-0 z-30 flex h-[100dvh] flex-col overflow-hidden bg-background">
+    // 100dvh does not shrink when the on-screen keyboard opens, which left the
+    // composer and its send button stranded behind the keyboard for the whole
+    // time a user was typing. documentBootstrap keeps --findit-viewport-height
+    // on visualViewport.height, so the panel tracks the space actually visible.
+    <section className="fixed inset-0 z-30 flex h-[var(--findit-viewport-height,100dvh)] flex-col overflow-hidden bg-background">
       <header className="safe-area-top shrink-0 border-b border-border/80 bg-card/95 backdrop-blur-xl">
         <div className="mx-auto max-w-3xl space-y-2 px-3 pb-2 pt-1.5">
           <div className="flex items-center gap-2">

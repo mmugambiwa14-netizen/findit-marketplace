@@ -5,7 +5,11 @@ import test from 'node:test';
 const thread = await readFile(new URL('../src/components/messaging/ConversationThread.jsx', import.meta.url), 'utf8');
 
 test('conversation chrome stays pinned while only messages scroll', () => {
-  assert.match(thread, /fixed inset-0 z-30 flex h-\[100dvh\] flex-col overflow-hidden/);
+  // The panel must track the visible viewport rather than 100dvh: dvh does not
+  // shrink for the on-screen keyboard, which strands the composer and its send
+  // button behind it while the user is typing.
+  assert.match(thread, /fixed inset-0 z-30 flex h-\[var\(--findit-viewport-height,100dvh\)\] flex-col overflow-hidden/);
+  assert.doesNotMatch(thread, /flex h-\[100dvh\] flex-col/);
   assert.match(thread, /<header[\s\S]*safe-area-top/);
   assert.match(thread, /<main ref=\{scrollRef\} className="findit-scroll-region min-h-0 flex-1 overflow-y-auto/);
   assert.match(thread, /<footer className="shrink-0[^"]*pb-\[max\(0\.75rem,env\(safe-area-inset-bottom\)\)\]/);
