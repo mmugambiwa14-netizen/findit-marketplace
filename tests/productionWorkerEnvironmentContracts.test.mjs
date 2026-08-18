@@ -24,4 +24,6 @@ test('production worker feature flags are evaluated after the environment is att
     maintenance,
     /group:\s*findit-production-maintenance-workers[\s\S]*?cancel-in-progress:\s*true/,
   );
+  assert.doesNotMatch(maintenance, /apt-get\s+(?:update|install)/);
+  assert.match(maintenance, /command -v ffmpeg[\s\S]*?ffmpeg -version/);
 });
