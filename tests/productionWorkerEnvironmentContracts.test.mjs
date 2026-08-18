@@ -20,4 +20,8 @@ test('production worker feature flags are evaluated after the environment is att
   assert.match(push, /Web Push delivery is disabled for this environment/);
   assert.match(maintenance, /environment:\s*cloudflare-production-workers/);
   assert.match(push, /environment:\s*cloudflare-production-workers/);
+  assert.match(
+    maintenance,
+    /group:\s*findit-production-maintenance-workers[\s\S]*?cancel-in-progress:\s*true/,
+  );
 });

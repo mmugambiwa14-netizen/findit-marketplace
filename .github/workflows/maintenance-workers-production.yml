@@ -15,7 +15,9 @@ permissions:
 
 concurrency:
   group: findit-production-maintenance-workers
-  cancel-in-progress: false
+  # These jobs use leases/idempotent RPCs. A newer scheduled run should replace
+  # a stale queued run instead of waiting behind it indefinitely.
+  cancel-in-progress: true
 
 jobs:
   http-workers:
@@ -34,8 +36,6 @@ jobs:
           TOUR_CACHE_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
           TOUR_OBSERVABILITY_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
           NOTIFICATION_FANOUT_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
-          # The production environment-secret API is intermittently unavailable;
-          # use the production-only encrypted repository secret until it recovers.
           EMAIL_DISPATCH_TOKEN: ${{ secrets.FINDIT_EMAIL_DISPATCH_TOKEN_PRODUCTION || secrets.FINDIT_EMAIL_DISPATCH_TOKEN }}
           FINDIT_TOURS_WORKERS_ENABLED: ${{ vars.FINDIT_TOURS_WORKERS_ENABLED }}
           FINDIT_RECOMMENDATION_WORKERS_ENABLED: ${{ vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED }}
