@@ -16,7 +16,7 @@ jobs:
   deliver:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    environment: cloudflare-production
+    environment: cloudflare-production-workers
     steps:
       - name: Validate required configuration
         env:
