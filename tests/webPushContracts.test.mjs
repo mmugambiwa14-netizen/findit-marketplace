@@ -23,10 +23,20 @@ test('browser receives only public VAPID configuration and production stays envi
   assert.match(env, /^VITE_WEB_PUSH_PUBLIC_KEY=/m);
   assert.doesNotMatch(env, /^VITE_.*PRIVATE.*VAPID/im);
   assert.match(service, /VITE_WEB_PUSH_PUBLIC_KEY/);
-  assert.match(service, /STAGING_PROJECT_REF/);
-  assert.match(service, /STAGING_PUBLIC_VAPID_KEY/);
-  assert.match(service, /supabaseUrl\.includes\(STAGING_PROJECT_REF\)/);
+  assert.match(service, /PUSH_VAPID_KEY_STORAGE/);
+  assert.match(service, /rememberedVapidKey/);
+  assert.match(service, /subscription\.unsubscribe/);
   assert.doesNotMatch(service, /WEB_PUSH_PRIVATE_KEY/);
+});
+
+test('staging has an isolated scheduled dispatcher and receives only public VAPID configuration', async () => {
+  const workflow = await read('.github/workflows/web-push-delivery-staging.yml');
+  assert.match(workflow, /environment: cloudflare-staging/);
+  assert.match(workflow, /cron: '\*\/5 \* \* \* \*'/);
+  assert.match(workflow, /FINDIT_PUSH_DISPATCH_TOKEN/);
+  assert.match(workflow, /FINDIT_SUPABASE_ANON_KEY/);
+  assert.match(workflow, /VITE_SUPABASE_URL/);
+  assert.doesNotMatch(workflow, /WEB_PUSH_PRIVATE_KEY/);
 });
 
 test('service worker implements user-visible push and safe click routing', async () => {
