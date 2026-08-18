@@ -19,7 +19,6 @@ concurrency:
 
 jobs:
   http-workers:
-    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true' || vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED == 'true' || vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED == 'true' || vars.FINDIT_TRANSACTIONAL_EMAIL_WORKERS_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: cloudflare-production
@@ -96,7 +95,6 @@ jobs:
             post_worker transactional-email-dispatch "$EMAIL_DISPATCH_TOKEN" '{"limit":25}'
           fi
   tour-processing:
-    if: vars.FINDIT_TOURS_WORKERS_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: cloudflare-production
@@ -126,4 +124,10 @@ jobs:
           FINDIT_SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
           FINDIT_SUPABASE_SECRET_KEY: ${{ secrets.FINDIT_SUPABASE_SECRET_KEY }}
           FINDIT_EXPECTED_PROJECT_REF: ${{ vars.FINDIT_EXPECTED_PROJECT_REF }}
-        run: npm run run:tours-processor -- --batch-size 5
+          FINDIT_TOURS_WORKERS_ENABLED: ${{ vars.FINDIT_TOURS_WORKERS_ENABLED }}
+        run: |
+          if [[ "${FINDIT_TOURS_WORKERS_ENABLED:-false}" != "true" ]]; then
+            echo 'Tour processing is disabled for this environment.'
+            exit 0
+          fi
+          npm run run:tours-processor -- --batch-size 5
