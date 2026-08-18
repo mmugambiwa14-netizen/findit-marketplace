@@ -42,14 +42,14 @@ jobs:
             local name="$1"
             local value="$2"
             test -n "$value"
-            printf '%s' "$value" | gh secret set "$name" --env cloudflare-production-workers --body - >/dev/null
+            printf '%s' "$value" | gh secret set "$name" --repo mmugambiwa14-netizen/findit-marketplace --env cloudflare-production-workers --body - >/dev/null
           }
 
           set_variable() {
             local name="$1"
             local value="$2"
             test -n "$value"
-            gh variable set "$name" --env cloudflare-production-workers --body "$value" >/dev/null
+            gh variable set "$name" --repo mmugambiwa14-netizen/findit-marketplace --env cloudflare-production-workers --body "$value" >/dev/null
           }
 
           set_secret FINDIT_EMAIL_DISPATCH_TOKEN "$FINDIT_EMAIL_DISPATCH_TOKEN"
