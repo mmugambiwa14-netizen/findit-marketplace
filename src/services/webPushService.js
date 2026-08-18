@@ -1,19 +1,38 @@
 import { supabase } from '@/lib/supabaseClient';
+import { readStoredString, removeStoredValue, writeStoredString } from '@/lib/browserStorage';
 
-const STAGING_PROJECT_REF = 'bwgklpxoetrrkutottdb';
-const STAGING_PUBLIC_VAPID_KEY = 'BLuirAxWgQ7PVQ2EyEORk_oSeN2N5jwwxBQjIM_5UrdHQmGoGFLZ_0zyDNcRQ0fInqZdgcH6_efeFy6tu478xJ4';
+const PUSH_VAPID_KEY_STORAGE = 'peekalisting:push:vapid-key';
 
 function configuredPublicKey() {
   const explicit = String(import.meta.env.VITE_WEB_PUSH_PUBLIC_KEY || '').trim();
-  if (explicit) return explicit;
-  const supabaseUrl = String(import.meta.env.VITE_SUPABASE_URL || '').trim();
-  return supabaseUrl.includes(STAGING_PROJECT_REF) ? STAGING_PUBLIC_VAPID_KEY : '';
+  return explicit;
 }
 
 function applicationServerKey() {
   const value = configuredPublicKey();
   if (!value) throw new Error('Web Push is not configured for this deployment.');
   return value;
+}
+
+function rememberedVapidKey() {
+  return readStoredString('local', PUSH_VAPID_KEY_STORAGE, '') || '';
+}
+
+function rememberVapidKey(value) {
+  writeStoredString('local', PUSH_VAPID_KEY_STORAGE, value);
+}
+
+function forgetVapidKey() {
+  removeStoredValue('local', PUSH_VAPID_KEY_STORAGE);
+}
+
+async function disableSubscriptionBestEffort(endpoint) {
+  try {
+    await supabase.rpc('disable_web_push_subscription', { p_endpoint: endpoint });
+  } catch {
+    // The browser subscription can still be replaced if the old account or
+    // endpoint is no longer available to the current authenticated session.
+  }
 }
 
 function urlBase64ToUint8Array(value) {
@@ -52,7 +71,12 @@ export function webPushSupport() {
 export async function getCurrentPushSubscription() {
   if (!webPushSupport().supported) return null;
   const registration = await navigator.serviceWorker.ready;
-  return registration.pushManager.getSubscription();
+  const subscription = await registration.pushManager.getSubscription();
+  const currentKey = configuredPublicKey();
+  // Treat a subscription created with a previous deployment key as inactive
+  // in Settings. The next explicit enable action will replace it safely.
+  if (subscription && currentKey && rememberedVapidKey() !== currentKey) return null;
+  return subscription;
 }
 
 export async function enableWebPush() {
@@ -70,10 +94,22 @@ export async function enableWebPush() {
 
   const registration = await navigator.serviceWorker.ready;
   let subscription = await registration.pushManager.getSubscription();
+  const currentKey = applicationServerKey();
+
+  // A PushSubscription is bound to the VAPID public key used to create it.
+  // During a controlled key rotation, or after storage was cleared, replace
+  // the old browser subscription before registering the new one. This keeps
+  // background delivery working instead of leaving a stale endpoint behind.
+  if (subscription && rememberedVapidKey() !== currentKey) {
+    await disableSubscriptionBestEffort(subscription.endpoint);
+    await subscription.unsubscribe().catch(() => false);
+    subscription = null;
+  }
+
   if (!subscription) {
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(applicationServerKey()),
+      applicationServerKey: urlBase64ToUint8Array(currentKey),
     });
   }
 
@@ -94,6 +130,7 @@ export async function enableWebPush() {
     await subscription.unsubscribe().catch(() => false);
     throw error;
   }
+  rememberVapidKey(currentKey);
   return subscription;
 }
 
@@ -106,6 +143,7 @@ export async function disableWebPush() {
   });
   if (error) throw error;
   await subscription.unsubscribe();
+  forgetVapidKey();
 }
 
 export async function getWebPushPreferences() {
