@@ -36,7 +36,7 @@ jobs:
           TOUR_CACHE_SECRET: ${{ secrets.FINDIT_TOUR_CACHE_WORKER_SECRET }}
           TOUR_OBSERVABILITY_SECRET: ${{ secrets.FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET }}
           NOTIFICATION_FANOUT_SECRET: ${{ secrets.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET }}
-          EMAIL_DISPATCH_TOKEN: ${{ secrets.FINDIT_EMAIL_DISPATCH_TOKEN_PRODUCTION || secrets.FINDIT_EMAIL_DISPATCH_TOKEN }}
+          EMAIL_DISPATCH_TOKEN: ${{ secrets.FINDIT_EMAIL_DISPATCH_TOKEN }}
           FINDIT_TOURS_WORKERS_ENABLED: ${{ vars.FINDIT_TOURS_WORKERS_ENABLED }}
           FINDIT_RECOMMENDATION_WORKERS_ENABLED: ${{ vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED }}
           FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: ${{ vars.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED }}
@@ -114,8 +114,11 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --include=dev --ignore-scripts
 
-      - name: Verify media toolchain
+      - name: Install media toolchain
         run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            timeout 180 sudo apt-get install --yes --no-install-recommends ffmpeg
+          fi
           command -v ffmpeg
           ffmpeg -version | head -n 1
 
