@@ -430,6 +430,9 @@ export async function signInWithOAuth(provider, redirectPath = '/') {
         redirectTo: popup && !popup.closed
           ? buildOAuthCallbackUrl(bridgeId, redirectPath)
           : buildFullWindowOAuthCallbackUrl(redirectPath),
+        // Never silently reuse the last Google account. The person signing
+        // in must explicitly choose which Google account should continue.
+        queryParams: provider === 'google' ? { prompt: 'select_account' } : undefined,
         skipBrowserRedirect: true,
       },
     });
