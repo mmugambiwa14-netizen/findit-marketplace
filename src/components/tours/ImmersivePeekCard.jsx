@@ -179,7 +179,10 @@ export default function ImmersivePeekCard({ item, active, autoplay, index, total
         <span className="rounded-full border border-white/15 bg-black/35 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] backdrop-blur-md">{peekLabel(item)}</span>
       </div>
 
-      {!playing && (
+      {/* The failure panel sits above this button, so rendering both would leave
+          an enabled play control that cannot be clicked. "Try again" in that
+          panel is the recovery action while playback is failed. */}
+      {!playing && !failed && (
         <button type="button" onClick={togglePlayback} disabled={loading} className="absolute left-1/2 top-[43%] z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-black/45 backdrop-blur-lg" aria-label="Play Peek">
           {loading ? <RotateCcw className="h-6 w-6 animate-spin" /> : <Play className="ml-1 h-7 w-7 fill-current" />}
         </button>

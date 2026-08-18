@@ -79,9 +79,12 @@ export default function ImageLightbox({
             zoomed ? "overflow-auto" : "flex items-center justify-center overflow-hidden",
           )}
         >
-          <img
-            src={images[safeIndex]}
-            alt={`${title}, photo ${safeIndex + 1} of ${total}`}
+          {/* Zoom is a real control rather than a click handler on the image so
+              it is reachable by keyboard and announced to assistive tech. */}
+          <button
+            type="button"
+            aria-label={zoomed ? "Zoom out of photo" : "Zoom into photo"}
+            aria-pressed={zoomed}
             onClick={() => {
               if (swipedRef.current) {
                 swipedRef.current = false;
@@ -89,15 +92,29 @@ export default function ImageLightbox({
               }
               setZoomed((value) => !value);
             }}
-            loading="eager"
-            decoding="async"
             className={cn(
-              "select-none",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+              // Unzoomed the button must take the full frame, otherwise the
+              // image's max-height resolves against an auto-height parent and
+              // stops being constrained to the viewport.
               zoomed
-                ? "h-auto w-auto max-w-none cursor-zoom-out"
-                : "max-h-full max-w-full cursor-zoom-in object-contain",
+                ? "block cursor-zoom-out"
+                : "flex h-full w-full cursor-zoom-in items-center justify-center",
             )}
-          />
+          >
+            <img
+              src={images[safeIndex]}
+              alt={`${title}, photo ${safeIndex + 1} of ${total}`}
+              loading="eager"
+              decoding="async"
+              className={cn(
+                "select-none",
+                zoomed
+                  ? "h-auto w-auto max-w-none"
+                  : "max-h-full max-w-full object-contain",
+              )}
+            />
+          </button>
           {total > 1 && <span className="sr-only">Swipe left or right to view another photo.</span>}
         </div>
 

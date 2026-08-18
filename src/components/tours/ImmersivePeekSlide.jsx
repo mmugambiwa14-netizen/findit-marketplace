@@ -248,7 +248,10 @@ export default function ImmersivePeekSlide({
 
       <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/0 to-black/95" aria-hidden="true" />
 
-      {!playing && (
+      {/* The failure panel sits above this button, so rendering both would leave
+          an enabled play control that cannot be clicked. "Try again" in that
+          panel is the recovery action while playback is failed. */}
+      {!playing && !failed && (
         <button type="button" onClick={togglePlayback} disabled={loading} className="absolute left-1/2 top-[43%] z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/35 shadow-2xl backdrop-blur-sm active:scale-95" aria-label="Play Peek">
           {loading ? <RotateCcw className="h-5 w-5 animate-spin" /> : <Play className="ml-0.5 h-6 w-6 fill-current" />}
         </button>
