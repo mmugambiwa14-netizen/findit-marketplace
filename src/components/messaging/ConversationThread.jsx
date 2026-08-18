@@ -19,6 +19,7 @@ import { useTimeAgo } from '@/hooks/useTimeAgo';
 import { useCurrency } from '@/lib/CurrencyContext';
 import { cn } from '@/lib/utils';
 import { ConversationThreadSkeleton } from '@/components/loading/LoadingSkeletons';
+import { userFacingError } from '@/lib/userFacingErrors';
 import {
   getMessageConversationMetadata,
   getMessageThreadPage,
@@ -59,6 +60,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('scam');
   const [reportDetails, setReportDetails] = useState('');
+  const [sendError, setSendError] = useState('');
 
   useEffect(() => {
     firstScrollRef.current = true;
@@ -69,6 +71,7 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     setBlockOpen(false);
     setReportOpen(false);
     setReportDetails('');
+    setSendError('');
   }, [conversationId]);
 
   const conversationQuery = useQuery({
@@ -174,14 +177,43 @@ export default function ConversationThread({ conversationId, currentUser, onBack
 
   const sendMutation = useMutation(/** @type {import('@tanstack/react-query').UseMutationOptions<string, Error, string>} */ ({
     mutationFn: (body) => sendConversationMessage(conversationId, body),
-    onSuccess: async () => {
+    onSuccess: async (messageId, body) => {
       setText('');
+      setSendError('');
       scrollAfterSendRef.current = true;
-      await queryClient.refetchQueries({ queryKey: ['message-thread-tail', conversationId], exact: true, type: 'active' });
+      queryClient.setQueryData(['message-thread', conversationId], (currentValue) => {
+        const current = /** @type {any} */ (currentValue);
+        if (!current?.pages?.length) return current;
+        const firstPage = current.pages[0];
+        const currentItems = Array.isArray(firstPage?.items) ? firstPage.items : [];
+        if (currentItems.some((item) => item.message_id === messageId)) return current;
+        return {
+          ...current,
+          pages: [{
+            ...firstPage,
+            items: [...currentItems, {
+              message_id: messageId,
+              sender_id: currentUser.id,
+              body,
+              created_at: new Date().toISOString(),
+            }],
+          }, ...current.pages.slice(1)],
+        };
+      });
+      try {
+        await queryClient.refetchQueries({ queryKey: ['message-thread-tail', conversationId], exact: true, type: 'active' });
+      } catch {
+        // The optimistic message remains visible; the bounded tail poll will
+        // reconcile the thread when the backend is reachable again.
+      }
       queryClient.invalidateQueries({ queryKey: ['message-conversation-metadata', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
     },
-    onError: (error) => toast.error(error?.message || 'Unable to send the message'),
+    onError: (error) => {
+      const nextError = userFacingError(error?.cause ?? error, 'We could not send your message. Please try again.');
+      setSendError(nextError);
+      toast.error(nextError);
+    },
   }));
 
   const blockMutation = useMutation({
@@ -222,7 +254,12 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   const submitMessage = (event) => {
     event.preventDefault();
     const body = text.trim();
-    if (!body || sendMutation.isPending) return;
+    if (!body) {
+      setSendError('Write a message before sending.');
+      return;
+    }
+    if (sendMutation.isPending) return;
+    setSendError('');
     sendMutation.mutate(body);
   };
 
@@ -289,12 +326,13 @@ export default function ConversationThread({ conversationId, currentUser, onBack
       <footer className="shrink-0 border-t border-border/80 bg-card px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
         <div className="mx-auto max-w-3xl">
           {conversation.can_send ? (
-            <form onSubmit={submitMessage} className="flex items-end gap-2">
+            <form onSubmit={submitMessage} noValidate className="flex items-end gap-2">
               <label htmlFor="conversation-message" className="sr-only">Message</label>
               <Textarea id="conversation-message" value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={1} maxLength={2000} enterKeyHint="send" placeholder="Write a message" className="min-h-11 max-h-28 flex-1 resize-none rounded-2xl" />
-              <Button type="submit" size="icon" className="h-11 w-11 shrink-0" disabled={!text.trim() || sendMutation.isPending} aria-label="Send message">{sendMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Send className="h-4 w-4" />}</Button>
+              <Button type="button" onClick={submitMessage} size="icon" className="h-11 w-11 shrink-0" disabled={sendMutation.isPending} aria-label="Send message">{sendMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Send className="h-4 w-4" />}</Button>
             </form>
           ) : <p className="rounded-lg bg-muted p-3 text-center text-sm text-muted-foreground">{conversation.is_blocked ? 'This conversation is blocked. Message history remains available.' : 'This conversation is closed.'}</p>}
+          {sendError && conversation.can_send && <p role="alert" className="mt-2 text-center text-sm font-medium text-destructive">{sendError}</p>}
         </div>
       </footer>
 
