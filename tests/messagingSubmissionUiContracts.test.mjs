@@ -12,7 +12,8 @@ test('listing message dialog submits the exact trimmed body through a real form'
   assert.match(dialog, /const body = message\.trim\(\)/);
   assert.match(dialog, /mutation\.mutate\(body\)/);
   assert.match(dialog, /<form onSubmit=\{submitMessage\}/);
-  assert.match(dialog, /<Button type="submit"/);
+  assert.match(dialog, /<Button type="button" onClick=\{submitMessage\}/);
+  assert.match(dialog, /role="alert"/);
 });
 
 test('conversation thread submit is form-backed and keeps Enter-to-send consistent with the button', () => {
@@ -21,5 +22,6 @@ test('conversation thread submit is form-backed and keeps Enter-to-send consiste
   assert.match(thread, /sendMutation\.mutate\(body\)/);
   assert.match(thread, /<form onSubmit=\{submitMessage\}/);
   assert.match(thread, /event\.currentTarget\.form\?\.requestSubmit\(\)/);
-  assert.match(thread, /<Button type="submit"[^>]*aria-label="Send message"/);
+  assert.match(thread, /<Button type="button" onClick=\{submitMessage\}[^>]*aria-label="Send message"/);
+  assert.match(thread, /role="alert"/);
 });
