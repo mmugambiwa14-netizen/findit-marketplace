@@ -21,7 +21,7 @@ jobs:
   http-workers:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment: cloudflare-production
+    environment: cloudflare-production-workers
     steps:
       - name: Run bounded production maintenance calls
         env:
@@ -97,7 +97,7 @@ jobs:
   tour-processing:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: cloudflare-production
+    environment: cloudflare-production-workers
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
