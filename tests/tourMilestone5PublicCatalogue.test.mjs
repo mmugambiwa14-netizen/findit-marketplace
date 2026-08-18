@@ -112,10 +112,14 @@ test('playback is thumbnail-first, explicit, low-data aware and resilient', () =
 });
 
 test('feed filters, active Peek and pagination survive canonical navigation', () => {
-  assert.match(page, /useSearchParams/);
+  assert.match(page, /useLocation/);
+  assert.match(page, /useNavigate/);
+  assert.match(page, /navigate\(\{ pathname: location\.pathname, search:/);
   assert.match(page, /requestedCategory = params\.get\('category'\)/);
   assert.match(page, /requestedTourId = params\.get\('peek'\)/);
   assert.match(page, /next\.set\('peek', activeTourId\)/);
+  assert.match(page, /next\.delete\('peek'\)/);
+  assert.match(page, /aria-pressed=\{category === value\}/);
   assert.match(page, /MAX_RESTORE_PAGES/);
   assert.match(page, /feed\.fetchNextPage\(\)/);
   assert.match(page, /listingTourQueryKeys\.publicFeed\(filters\)/);

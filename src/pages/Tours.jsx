@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { Loader2, RefreshCw, Settings2, WifiOff } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import BrandLogo from '@/components/BrandLogo';
 import BackButton from '@/components/layout/BackButton';
 import NotificationBell from '@/components/layout/NotificationBell';
@@ -32,7 +32,9 @@ const CATEGORY_OPTIONS = [
 
 export default function Tours() {
   const { user } = useAuth();
-  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const requestedCategory = params.get('category') || 'all';
   const requestedTourId = params.get('peek') || null;
   const category = VALID_CATEGORIES.has(requestedCategory) ? requestedCategory : 'all';
@@ -96,13 +98,11 @@ export default function Tours() {
 
   useEffect(() => {
     if (!activeTourId) return;
-    setParams((current) => {
-      if (current.get('peek') === activeTourId) return current;
-      const next = new URLSearchParams(current);
-      next.set('peek', activeTourId);
-      return next;
-    }, { replace: true });
-  }, [activeTourId, setParams]);
+    if (params.get('peek') === activeTourId) return;
+    const next = new URLSearchParams(params);
+    next.set('peek', activeTourId);
+    navigate({ pathname: location.pathname, search: `?${next.toString()}` }, { replace: true });
+  }, [activeTourId, location.pathname, navigate, params]);
 
   useEffect(() => {
     if (activeIndex < 0 || activeIndex < items.length - 2 || !feed.hasNextPage || feed.isFetchingNextPage) return;
@@ -148,10 +148,10 @@ export default function Tours() {
     const next = new URLSearchParams(params);
     if (nextCategory === 'all') next.delete('category'); else next.set('category', nextCategory);
     next.delete('peek');
-    setParams(next, { replace: true });
     restoredTourRef.current = null;
     setActiveTourId(null);
-    feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    navigate({ pathname: location.pathname, search: next.toString() ? `?${next.toString()}` : '' }, { replace: true });
+    requestAnimationFrame(() => feedRef.current?.scrollTo({ top: 0, behavior: 'smooth' }));
   };
 
   return (
@@ -192,6 +192,7 @@ export default function Tours() {
               key={value}
               type="button"
               onClick={() => changeCategory(value)}
+              aria-pressed={category === value}
               className={`h-[var(--findit-control-height-sm)] shrink-0 rounded-full px-3 text-xs font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.65)] ${category === value ? 'bg-white text-black' : 'text-white'}`}
             >
               {label}

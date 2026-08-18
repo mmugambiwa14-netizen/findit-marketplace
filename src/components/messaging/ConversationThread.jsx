@@ -172,8 +172,8 @@ export default function ConversationThread({ conversationId, currentUser, onBack
     }
   }, [messages.length]);
 
-  const sendMutation = useMutation({
-    mutationFn: () => sendConversationMessage(conversationId, text),
+  const sendMutation = useMutation(/** @type {import('@tanstack/react-query').UseMutationOptions<string, Error, string>} */ ({
+    mutationFn: (body) => sendConversationMessage(conversationId, body),
     onSuccess: async () => {
       setText('');
       scrollAfterSendRef.current = true;
@@ -181,8 +181,8 @@ export default function ConversationThread({ conversationId, currentUser, onBack
       queryClient.invalidateQueries({ queryKey: ['message-conversation-metadata', conversationId] });
       queryClient.invalidateQueries({ queryKey: ['message-inbox'] });
     },
-    onError: (error) => toast.error(error.message),
-  });
+    onError: (error) => toast.error(error?.message || 'Unable to send the message'),
+  }));
 
   const blockMutation = useMutation({
     mutationFn: (/** @type {boolean} */ blocked) => setConversationBlocked({ conversationId, blocked }),
@@ -219,7 +219,12 @@ export default function ConversationThread({ conversationId, currentUser, onBack
   if (!conversationQuery.data) return <div className="mx-auto max-w-lg px-4 py-16 text-center"><h1 className="text-xl font-semibold">Conversation not found</h1><Button type="button" variant="outline" className="mt-5" onClick={onBack}>Back to messages</Button></div>;
 
   const conversation = conversationQuery.data;
-  const submitMessage = () => { if (text.trim() && !sendMutation.isPending) sendMutation.mutate(); };
+  const submitMessage = (event) => {
+    event.preventDefault();
+    const body = text.trim();
+    if (!body || sendMutation.isPending) return;
+    sendMutation.mutate(body);
+  };
 
   return (
     <section className="fixed inset-0 z-30 flex h-[100dvh] flex-col overflow-hidden bg-background">
@@ -284,11 +289,11 @@ export default function ConversationThread({ conversationId, currentUser, onBack
       <footer className="shrink-0 border-t border-border/80 bg-card px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
         <div className="mx-auto max-w-3xl">
           {conversation.can_send ? (
-            <div className="flex items-end gap-2">
+            <form onSubmit={submitMessage} className="flex items-end gap-2">
               <label htmlFor="conversation-message" className="sr-only">Message</label>
-              <Textarea id="conversation-message" value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); submitMessage(); } }} rows={1} maxLength={2000} enterKeyHint="send" placeholder="Write a message" className="min-h-11 max-h-28 flex-1 resize-none rounded-2xl" />
-              <Button type="button" size="icon" className="h-11 w-11 shrink-0" disabled={!text.trim() || sendMutation.isPending} onClick={submitMessage} aria-label="Send message">{sendMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Send className="h-4 w-4" />}</Button>
-            </div>
+              <Textarea id="conversation-message" value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} rows={1} maxLength={2000} enterKeyHint="send" placeholder="Write a message" className="min-h-11 max-h-28 flex-1 resize-none rounded-2xl" />
+              <Button type="submit" size="icon" className="h-11 w-11 shrink-0" disabled={!text.trim() || sendMutation.isPending} aria-label="Send message">{sendMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Send className="h-4 w-4" />}</Button>
+            </form>
           ) : <p className="rounded-lg bg-muted p-3 text-center text-sm text-muted-foreground">{conversation.is_blocked ? 'This conversation is blocked. Message history remains available.' : 'This conversation is closed.'}</p>}
         </div>
       </footer>
