@@ -3,7 +3,7 @@ begin;
 -- Keep the browser-facing RPC callable by anonymous visitors without exposing
 -- a SECURITY DEFINER function in the public schema. The implementation remains
 -- private and is reached only through this SECURITY INVOKER wrapper.
-create or replace function private.record_public_tour_view_impl(
+create or replace function private.record_public_tour_view(
   p_tour_id uuid,
   p_viewer_key uuid
 )
@@ -65,9 +65,9 @@ begin
 end;
 $function$;
 
-revoke all on function private.record_public_tour_view_impl(uuid, uuid)
+revoke all on function private.record_public_tour_view(uuid, uuid)
   from public, anon, authenticated, service_role;
-grant execute on function private.record_public_tour_view_impl(uuid, uuid)
+grant execute on function private.record_public_tour_view(uuid, uuid)
   to anon, authenticated, service_role;
 
 create or replace function public.record_public_tour_view(
@@ -79,9 +79,9 @@ language sql
 volatile
 security invoker
 set search_path = ''
-as $function$
+  as $function$
   select *
-  from private.record_public_tour_view_impl(p_tour_id, p_viewer_key);
+  from private.record_public_tour_view(p_tour_id, p_viewer_key);
 $function$;
 
 revoke all on function public.record_public_tour_view(uuid, uuid)
@@ -90,6 +90,6 @@ grant execute on function public.record_public_tour_view(uuid, uuid)
   to anon, authenticated;
 
 comment on function public.record_public_tour_view(uuid, uuid) is
-  'Public invoker wrapper for the private, rate-limited Peek view implementation; the legacy client viewer key is ignored.';
+  'findit:20260805073000-authenticated-boundary';
 
 commit;

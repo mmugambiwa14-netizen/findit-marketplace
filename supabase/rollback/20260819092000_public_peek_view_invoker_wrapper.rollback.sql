@@ -1,9 +1,60 @@
 begin;
 
-drop function if exists private.record_public_tour_view_impl(uuid, uuid);
+-- Restore the private implementation that existed before this migration.
+create or replace function private.record_public_tour_view(
+  p_tour_id uuid,
+  p_viewer_key uuid
+)
+returns table(recorded boolean, view_count bigint)
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $function$
+declare
+  v_inserted_count integer := 0;
+begin
+  if p_tour_id is null or p_viewer_key is null then
+    raise exception 'invalid Peek view' using errcode = '22023';
+  end if;
 
--- Restore the immediately preceding rate-limited implementation.
-create or replace function public.record_public_tour_view(p_tour_id uuid, p_viewer_key uuid)
+  if not exists (
+    select 1
+    from public.listing_tours t
+    where t.id = p_tour_id
+      and t.status = 'ready'
+      and t.moderation_status = 'approved'
+      and t.deleted_at is null
+      and t.removed_at is null
+      and t.published_at is not null
+      and public.is_tour_public_eligible(t.id)
+  ) then
+    raise exception 'Peek is unavailable' using errcode = 'P0002';
+  end if;
+
+  insert into public.tour_view_events(tour_id, viewer_key, viewer_id)
+  values (p_tour_id, p_viewer_key, auth.uid())
+  on conflict (tour_id, viewer_key, viewed_on) do nothing;
+  get diagnostics v_inserted_count = row_count;
+
+  return query
+  select v_inserted_count = 1,
+         (select count(*)::bigint
+          from public.tour_view_events v
+          where v.tour_id = p_tour_id);
+end;
+$function$;
+
+revoke all on function private.record_public_tour_view(uuid, uuid)
+  from public, anon, authenticated, service_role;
+grant execute on function private.record_public_tour_view(uuid, uuid)
+  to anon, authenticated, service_role;
+
+-- Restore the immediately preceding public rate-limited implementation.
+create or replace function public.record_public_tour_view(
+  p_tour_id uuid,
+  p_viewer_key uuid
+)
 returns table(recorded boolean, view_count bigint)
 language plpgsql
 volatile
@@ -60,8 +111,12 @@ begin
 end;
 $function$;
 
-revoke all on function public.record_public_tour_view(uuid, uuid) from public;
+revoke all on function public.record_public_tour_view(uuid, uuid)
+  from public;
 grant execute on function public.record_public_tour_view(uuid, uuid)
   to anon, authenticated;
+
+comment on function public.record_public_tour_view(uuid, uuid) is
+  'Records at most one daily Peek view per server-derived authenticated user or gateway subject; the legacy client viewer key is ignored.';
 
 commit;
