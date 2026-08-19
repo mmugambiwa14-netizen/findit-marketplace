@@ -65,9 +65,10 @@ export default defineConfig(({ command, mode }) => ({
   },
   // Note: splitting node_modules into a separate vendor chunk was measured and
   // deliberately rejected. It shrinks the entry chunk but breaks scope-hoisting
-  // between application and vendor code, taking the initial payload from
-  // 589 KB raw / 173 KB gzip to 752 KB / 218 KB -- worse for every first-time
-  // visitor. Reducing what the shell imports is the real fix, not re-chunking.
+  // between application and vendor code, taking the initial payload from the
+  // current ~737 KB raw / ~219 KB gzip closure to a larger payload. The build
+  // budget measures that awaited bootstrap closure; reducing what the shell
+  // imports remains the real optimization, not hiding bytes in vendor chunks.
   plugins: [
     react(),
     copyFirstPartyPublicAssets(),

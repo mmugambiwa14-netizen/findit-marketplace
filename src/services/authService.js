@@ -160,16 +160,10 @@ function buildFullWindowOAuthCallbackUrl(returnTo) {
 }
 
 function shouldUseOAuthPopup() {
-  try {
-    const standalone = Boolean(window.navigator.standalone)
-      || Boolean(window.matchMedia?.('(display-mode: standalone)').matches)
-      || Boolean(window.matchMedia?.('(display-mode: minimal-ui)').matches);
-    const touchDevice = Boolean(window.matchMedia?.('(pointer: coarse)').matches);
-    const narrowViewport = Boolean(window.matchMedia?.('(max-width: 767px)').matches);
-    return !standalone && !touchDevice && !narrowViewport;
-  } catch {
-    return false;
-  }
+  // The installed PWA and embedded browsers cannot reliably share an opener
+  // window. Use the full-window PKCE flow everywhere; it also preserves the
+  // explicit Google account chooser without an unreachable popup bridge.
+  return false;
 }
 
 function readOAuthCallbackError() {

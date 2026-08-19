@@ -1,0 +1,31 @@
+const MAX_BODY_BYTES = 16_000;
+
+function safeText(value, maximum) {
+  return String(value ?? '')
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .trim()
+    .slice(0, maximum);
+}
+
+export async function onRequestPost(context) {
+  const contentLength = Number(context.request.headers.get('content-length') || 0);
+  if (contentLength > MAX_BODY_BYTES) return new Response(null, { status: 413 });
+  let report = {};
+  try {
+    const body = await context.request.text();
+    if (new TextEncoder().encode(body).byteLength > MAX_BODY_BYTES) return new Response(null, { status: 413 });
+    report = JSON.parse(body);
+  } catch {
+    return new Response(null, { status: 400 });
+  }
+  const value = report['csp-report'] || report.body || report;
+  console.warn(JSON.stringify({
+    kind: 'csp_violation',
+    documentUri: safeText(value['document-uri'] || value.documentURL, 400),
+    blockedUri: safeText(value['blocked-uri'] || value.blockedURL, 400),
+    violatedDirective: safeText(value['violated-directive'] || value.effectiveDirective, 180),
+    sourceFile: safeText(value['source-file'] || value.sourceFile, 400),
+    lineNumber: safeText(value['line-number'] || value.lineNumber, 30),
+  }));
+  return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store, max-age=0' } });
+}

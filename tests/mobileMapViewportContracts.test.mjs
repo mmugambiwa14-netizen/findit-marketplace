@@ -42,12 +42,9 @@ test('map zoom and pan stay inside a stable map-only viewport', () => {
   assert.match(design, /\.findit-discover-map[\s\S]*overscroll-behavior: contain;/);
 });
 
-test('mobile and standalone OAuth never strand the app in an about:blank popup', () => {
+test('OAuth uses the reliable full-window flow for every browser context', () => {
   assert.match(authService, /function shouldUseOAuthPopup\(\)/);
-  assert.match(authService, /display-mode: standalone/);
-  assert.match(authService, /pointer: coarse/);
-  assert.match(authService, /max-width: 767px/);
-  assert.match(authService, /if \(usePopup\)/);
+  assert.match(authService, /function shouldUseOAuthPopup\(\)[\s\S]*return false/);
   assert.match(authService, /buildFullWindowOAuthCallbackUrl\(redirectPath\)/);
   assert.match(oauthCallback, /bridgeId \? 'This window will close automatically\.' : 'Returning you to PeekaListing\.'/);
 });

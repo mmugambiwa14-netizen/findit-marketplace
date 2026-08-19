@@ -18,6 +18,32 @@ function rememberedVapidKey() {
   return readStoredString('local', PUSH_VAPID_KEY_STORAGE, '') || '';
 }
 
+function toBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// The browser is the authoritative record of which VAPID key a subscription was
+// created with. The remembered key is only a fallback for engines that do not
+// expose PushSubscriptionOptions.applicationServerKey, and a cleared or
+// unavailable store must never make a live subscription look absent -- that
+// would strand the user with notifications they can no longer switch off.
+function subscriptionUsesCurrentKey(subscription, currentKey) {
+  if (!subscription || !currentKey) return true;
+  const advertised = subscription.options?.applicationServerKey;
+  if (advertised) {
+    try {
+      return toBase64Url(advertised) === currentKey;
+    } catch {
+      // fall through to the remembered key
+    }
+  }
+  const remembered = rememberedVapidKey();
+  return remembered ? remembered === currentKey : true;
+}
+
 function rememberVapidKey(value) {
   writeStoredString('local', PUSH_VAPID_KEY_STORAGE, value);
 }
@@ -72,10 +98,9 @@ export async function getCurrentPushSubscription() {
   if (!webPushSupport().supported) return null;
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.getSubscription();
-  const currentKey = configuredPublicKey();
   // Treat a subscription created with a previous deployment key as inactive
   // in Settings. The next explicit enable action will replace it safely.
-  if (subscription && currentKey && rememberedVapidKey() !== currentKey) return null;
+  if (!subscriptionUsesCurrentKey(subscription, configuredPublicKey())) return null;
   return subscription;
 }
 
@@ -100,7 +125,7 @@ export async function enableWebPush() {
   // During a controlled key rotation, or after storage was cleared, replace
   // the old browser subscription before registering the new one. This keeps
   // background delivery working instead of leaving a stale endpoint behind.
-  if (subscription && rememberedVapidKey() !== currentKey) {
+  if (subscription && !subscriptionUsesCurrentKey(subscription, currentKey)) {
     await disableSubscriptionBestEffort(subscription.endpoint);
     await subscription.unsubscribe().catch(() => false);
     subscription = null;
@@ -135,8 +160,16 @@ export async function enableWebPush() {
 }
 
 export async function disableWebPush() {
-  const subscription = await getCurrentPushSubscription();
-  if (!subscription) return;
+  if (!webPushSupport().supported) return;
+  const registration = await navigator.serviceWorker.ready;
+  // Disable whatever this browser actually holds, not the key-filtered view.
+  // A subscription created under a previous key still delivers, so hiding it
+  // from Settings must not also make it impossible to turn off.
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) {
+    forgetVapidKey();
+    return;
+  }
 
   const { error } = await supabase.rpc('disable_web_push_subscription', {
     p_endpoint: subscription.endpoint,

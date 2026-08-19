@@ -120,7 +120,24 @@ failUnless(
   'CSP may allow inline styling only through style-src-attr for runtime geometry and theme state',
 );
 failUnless(directives.get('connect-src')?.includes('https://api.maptiler.com'), 'CSP must allow MapTiler API requests');
-failUnless(directives.get('connect-src')?.includes('https://*.supabase.co'), 'CSP must allow Supabase HTTPS requests');
+for (const projectRef of ['bwgklpxoetrrkutottdb', 'jvbpxnfxkptuexgssplj']) {
+  failUnless(
+    directives.get('connect-src')?.includes(`https://${projectRef}.supabase.co`),
+    `CSP must allow Supabase HTTPS requests for ${projectRef}`,
+  );
+  failUnless(
+    directives.get('connect-src')?.includes(`wss://${projectRef}.supabase.co`),
+    `CSP must allow Supabase Realtime requests for ${projectRef}`,
+  );
+  failUnless(
+    directives.get('img-src')?.includes(`https://${projectRef}.supabase.co`),
+    `CSP must allow Supabase media images for ${projectRef}`,
+  );
+  failUnless(
+    directives.get('media-src')?.includes(`https://${projectRef}.supabase.co`),
+    `CSP must allow Supabase media playback for ${projectRef}`,
+  );
+}
 failUnless(directives.get('worker-src')?.includes('blob:'), 'current MapLibre runtime requires blob workers');
 failUnless(csp.includes('upgrade-insecure-requests'), 'CSP must upgrade insecure requests');
 failUnless(!csp.includes('http:'), 'CSP must not allow clear-text HTTP sources');

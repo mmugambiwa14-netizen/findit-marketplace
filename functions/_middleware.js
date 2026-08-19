@@ -32,6 +32,19 @@ function safeHttpsUrl(value) {
   }
 }
 
+function trustedSupabaseImageUrl(value, env) {
+  const candidate = safeHttpsUrl(value);
+  const config = supabaseConfig(env);
+  if (!candidate || !config) return null;
+  try {
+    const parsed = new URL(candidate);
+    const origin = new URL(config.url).origin;
+    return parsed.origin === origin && parsed.pathname.startsWith('/storage/v1/') ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 function firstPhoto(record) {
   const candidate = Array.isArray(record?.photos) ? record.photos[0] : null;
   if (typeof candidate === 'string') return candidate;
@@ -110,9 +123,9 @@ async function signStoragePhoto(context, kind, photo) {
     });
     if (!response.ok) return null;
     const payload = await response.json();
-    if (safeHttpsUrl(payload?.signedUrl)) return payload.signedUrl;
+    if (trustedSupabaseImageUrl(payload?.signedUrl, context.env)) return payload.signedUrl;
     if (typeof payload?.signedURL !== 'string' || !payload.signedURL.startsWith('/object/sign/')) return null;
-    return safeHttpsUrl(`${config.url}/storage/v1${payload.signedURL}`);
+    return trustedSupabaseImageUrl(`${config.url}/storage/v1${payload.signedURL}`, context.env);
   } catch {
     return null;
   }
@@ -124,6 +137,9 @@ function fallbackImage(requestUrl) {
 
 function metadataImage(record, kind, id, requestUrl) {
   const photo = firstPhoto(record);
+  // Keep legacy external thumbnails usable for social previews. The actual
+  // /share-image redirect below remains storage-origin-only, so this cannot
+  // become an open redirect.
   const publicImage = safeHttpsUrl(photo);
   if (publicImage) return publicImage;
   if (trustedStoragePhoto(kind, photo)) {
@@ -193,7 +209,10 @@ function renderMetadata(html, metadata) {
 async function serveShareImage(context, kind, id, requestUrl) {
   const record = await fetchPublicRecord(context, kind, id);
   const photo = firstPhoto(record);
-  const destination = safeHttpsUrl(photo) || await signStoragePhoto(context, kind, photo);
+  // Never redirect a share URL to an arbitrary legacy HTTPS value. A row may
+  // predate the storage-only write boundary, so use the first-party Supabase
+  // storage origin or the local fallback image only.
+  const destination = trustedSupabaseImageUrl(photo, context.env) || await signStoragePhoto(context, kind, photo);
   const target = destination || fallbackImage(requestUrl);
   return new Response(null, {
     status: 302,
