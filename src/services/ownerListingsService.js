@@ -2,14 +2,13 @@ import {
   deleteOwnerListingRow,
   countOwnerListingRows,
   findOwnerListingNotes,
-  findOwnerListings,
+  findOwnerListingsPage,
   updateOwnerListingRow,
 } from '@/repositories/ownerListingsRepository';
 import { mapPublicListing } from '@/services/listingMappers';
 import { hydrateListingImages, removeStagedListingImage, replaceListingMedia } from '@/services/listingCreationService';
 import {
   normalizeOwnerListingIdentity,
-  normalizeOwnerListingLimit,
   normalizeOwnerListingsPageRequest,
   normalizeOwnerListingUpdate,
   normalizeOwnerId,
@@ -60,16 +59,11 @@ async function enrichOwnerRows(rows) {
 
 export async function getOwnerListingsPage(ownerId, input = {}) {
   const request = normalizeOwnerListingsPageRequest(ownerId, input);
-  const page = createKeysetPage(await findOwnerListings(request), request.limit);
+  const page = createKeysetPage(await findOwnerListingsPage(request), request.limit);
   return {
     items: (await enrichOwnerRows(page.items)).map(mapPublicListing),
     nextCursor: page.nextCursor,
   };
-}
-
-export async function getOwnerListings(ownerId, limit = 30) {
-  normalizeOwnerListingLimit(Math.min(Number(limit) || 30, 200));
-  return (await getOwnerListingsPage(ownerId, { limit })).items;
 }
 
 export async function getOwnerListingsCount(ownerId) {

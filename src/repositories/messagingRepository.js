@@ -27,15 +27,6 @@ export function insertConversationMessage(conversationId, body) {
   }, 'Unable to send the message');
 }
 
-export function findMessageInbox(request, signal) {
-  return rpc('message_inbox', {
-    p_query: request.query,
-    p_unread_only: request.unreadOnly,
-    p_limit: request.limit,
-    p_offset: request.offset,
-  }, 'Unable to load messages', signal);
-}
-
 export function findMessageUnreadCount(signal) {
   return rpc('message_unread_count', {}, 'Unable to load unread message count', signal);
 }

@@ -14,7 +14,7 @@ const pages = [
   '../src/pages/admin/AdminReports.jsx',
   '../src/pages/admin/AdminAuditLog.jsx',
   '../src/components/admin/SupportRequestInbox.jsx',
-  '../src/components/admin/AdminTourQueue.jsx',
+  '../src/pages/admin/AdminPeeks.jsx',
 ].map((path) => readFileSync(new URL(path, import.meta.url), 'utf8')).join('\n');
 
 const pageFunctions = [

@@ -171,10 +171,6 @@ export async function getPublicServicesPage(request = {}) {
   };
 }
 
-export async function getPublicServices(request = {}) {
-  return (await getPublicServicesPage(request)).items;
-}
-
 export async function getPublicService(id) {
   const service = await mapService(await findPublicServiceById(normalizeServiceId(id)));
   if (!service) return null;
@@ -204,10 +200,6 @@ export async function getOwnerServicesPage(providerId, request = {}) {
     items: await attachServiceTaxonomyPresentation(services),
     nextCursor: page.nextCursor,
   };
-}
-
-export async function getOwnerServices(providerId, limit = 30) {
-  return (await getOwnerServicesPage(providerId, { limit })).items;
 }
 
 export async function createService(input, provider, uploads = []) {

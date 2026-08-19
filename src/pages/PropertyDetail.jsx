@@ -27,6 +27,7 @@ import {
 import { GuestPromptSheet } from "@/components/auth/GuestPromptSheet";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
+import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { useAuth } from "@/lib/AuthContext";
 import { getCategoryLabel } from "@/lib/constants";
 import { useCurrency } from "@/lib/CurrencyContext";
@@ -55,6 +56,7 @@ export default function PropertyDetail() {
     staleTime: 1000 * 60 * 5,
   });
   const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
+  useMarketplaceView("listing", id, "property", Boolean(property));
 
   useEffect(() => {
     if (!property) return;

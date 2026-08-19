@@ -15,11 +15,9 @@ function requireId(value, label) {
   }
   return value.trim();
 }
-
 export function getFavourite(userId, listingId) {
   return findFavourite(requireId(userId, 'User id'), requireId(listingId, 'Listing id'));
 }
-
 export function getFavouriteIds(userId, listingIds) {
   requireId(userId, 'User id');
   const ids = Array.isArray(listingIds)
@@ -55,8 +53,4 @@ export async function getFavouriteListingsPage(userId, input = {}) {
     items: page.items.map((row) => byId.get(row.listing_id)).filter(Boolean),
     nextCursor: page.nextCursor,
   };
-}
-
-export async function getFavouriteListings(userId, limit = 30) {
-  return (await getFavouriteListingsPage(userId, { limit })).items;
 }

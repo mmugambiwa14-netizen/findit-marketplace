@@ -1,44 +1,5 @@
 import { getCurrencyConfig } from "@/lib/marketConfig";
 
-export const ZIMBABWE_LOCATIONS = {
-  "Harare": {
-    suburbs: ["Avondale", "Borrowdale", "Mount Pleasant", "Highlands", "Greendale", "Mabelreign", "Waterfalls", "Glen Norah", "Budiriro", "Hatfield", "Eastlea", "Belvedere", "Arcadia", "Marlborough", "Emerald Hill", "Chisipite", "Greystone Park", "Vainona", "Bluff Hill", "Tynwald", "Glen View", "Mbare", "Epworth", "Ruwa"]
-  },
-  "Bulawayo": {
-    suburbs: ["Hillside", "Suburbs", "Kumalo", "Burnside", "Matsheumhlope", "Morningside", "Waterford", "Riverside", "Luveve", "Nkulumane", "Entumbane", "Pumula", "Emganwini"]
-  },
-  "Mutare": {
-    suburbs: ["Murambi", "Dangamvura", "Sakubva", "Chikanga", "Fairbridge Park", "Palmerston", "Utopia"]
-  },
-  "Gweru": {
-    suburbs: ["Ascot", "Mkoba", "Senga", "Ivene", "Southdowns", "Ridgemont"]
-  },
-  "Masvingo": {
-    suburbs: ["Rhodene", "Target Kopje", "Mucheke", "Rujeko", "Eastvale"]
-  },
-  "Victoria Falls": {
-    suburbs: ["Town Centre", "Chinotimba", "Mkhosana"]
-  },
-  "Chinhoyi": {
-    suburbs: ["Gadzema", "Chikonohono", "Hunyani Hills", "Cold Stream"]
-  },
-  "Marondera": {
-    suburbs: ["Dombotombo", "Cherutombo", "Rudhaka"]
-  },
-  "Kadoma": {
-    suburbs: ["Rimuka", "Waverly", "Eiffel Flats"]
-  },
-  "Kariba": {
-    suburbs: ["Heights", "Mahombekombe", "Nyamhunga"]
-  }
-};
-
-export const PROVINCES = [
-  "Harare", "Bulawayo", "Manicaland", "Mashonaland Central",
-  "Mashonaland East", "Mashonaland West", "Masvingo",
-  "Matabeleland North", "Matabeleland South", "Midlands"
-];
-
 export const PROPERTY_CATEGORIES = [
   // Residential
   { value: "house_sale", label: "House for Sale", group: "Residential" },
@@ -172,26 +133,6 @@ export const MACHINERY_CATEGORIES = [
   { value: "machinery_other", label: "Other Machinery" },
 ];
 
-export const LEGAL_PRACTICE_AREAS = [
-  { value: "property_conveyancing", label: "Property Conveyancing" },
-  { value: "title_search", label: "Title Search & Verification" },
-  { value: "sale_agreement_drafting", label: "Sale Agreement Drafting" },
-  { value: "property_dispute", label: "Property Dispute Resolution" },
-  { value: "estate_planning", label: "Estate Planning & Wills" },
-  { value: "company_registration", label: "Company Registration" },
-  { value: "contract_review", label: "Contract Review" },
-  { value: "tax_clearance", label: "Tax Clearance / ZIMRA" },
-  { value: "notary_services", label: "Notary Services" },
-];
-
-export const PRACTITIONER_TYPES = [
-  { value: "lawyer", label: "Lawyer" },
-  { value: "conveyancer", label: "Licensed Conveyancer" },
-  { value: "estate_agent_qualified", label: "Qualified Estate Agent" },
-  { value: "tax_practitioner", label: "Tax Practitioner" },
-  { value: "notary_public", label: "Notary Public" },
-];
-
 export const CAR_MAKES = [
   "Abarth", "AC", "Acura", "Agrale", "Alfa Romeo", "Alpina", "Alpine", "Alvis", "AMC",
   "Ariel", "Arrinera", "Ascari", "Aston Martin", "Auburn", "Audi", "Austin", "Austin Healey",
@@ -249,12 +190,6 @@ export const TRANSMISSIONS = [
   { value: "automatic", label: "Automatic" },
   { value: "cvt", label: "CVT" },
   { value: "semi_auto", label: "Semi-Automatic" },
-];
-
-export const COLORS = [
-  "White", "Black", "Silver", "Grey", "Red", "Blue", "Green",
-  "Brown", "Gold", "Orange", "Maroon", "Beige", "Yellow",
-  "Purple", "Pink", "Champagne", "Bronze", "Navy", "Teal", "Burgundy"
 ];
 
 export const COUNTRY_CODES = [
@@ -458,7 +393,7 @@ export const COUNTRY_CODES = [
 
 export const DEFAULT_COUNTRY_CODE = { code: "+263", country: "Zimbabwe" };
 
-export const LISTING_NUMBER_PREFIXES = {
+const LISTING_NUMBER_PREFIXES = {
   house_sale: "HS", house_rent: "HR", apartment_sale: "AS", apartment_rent: "AR",
   bnb: "BN", townhouse: "TS", serviced_apartment: "SA", commercial_plot: "CS",
   land_sale: "LD", venue: "EV",

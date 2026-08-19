@@ -94,7 +94,7 @@ test('thin card search keeps public coordinates and excludes detail-only payload
 test('public listing reads always preserve enquiry-eligible status filtering', async () => {
   const source = await repositorySource();
   const latest = functionBody(source, 'findLatestAvailableListings', 'findSavedListingsByIds');
-  const recommended = functionBody(source, 'findPublicListingsByIds', 'findPublicListings');
+  const recommended = functionBody(source, 'findPublicListingsByIds', null);
   const seller = functionBody(source, 'findPublicSellerListings', null);
 
   for (const body of [latest, recommended, seller]) {

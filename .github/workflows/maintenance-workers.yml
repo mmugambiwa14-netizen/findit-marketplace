@@ -56,6 +56,27 @@ jobs:
             --data '{}' \
             "${SUPABASE_URL}/functions/v1/listing-expiry-worker"
 
+  platform-maintenance:
+    if: vars.FINDIT_PLATFORM_MAINTENANCE_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '17 * * * *')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: staging-tours
+    steps:
+      - name: Run bounded platform maintenance RPCs
+        env:
+          SUPABASE_URL: ${{ vars.FINDIT_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.FINDIT_SUPABASE_ANON_KEY }}
+          WORKER_SECRET: ${{ secrets.FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET }}
+        run: |
+          test -n "${WORKER_SECRET}" || { echo "FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET is not configured"; exit 1; }
+          curl --fail-with-body --silent --show-error --retry 2 --retry-all-errors --max-time 45 \
+            --request POST \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${WORKER_SECRET}" \
+            --header "Content-Type: application/json" \
+            --data '{"limit":100}' \
+            "${SUPABASE_URL}/functions/v1/platform-maintenance"
+
   recommendation-projection:
     if: vars.FINDIT_RECOMMENDATION_WORKERS_ENABLED == 'true' && (github.event_name == 'workflow_dispatch' || github.event.schedule == '*/5 * * * *')
     runs-on: ubuntu-latest

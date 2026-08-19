@@ -27,6 +27,7 @@ import {
 } from "@/components/listings/ListingDetailTabs";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
+import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { useAuth } from "@/lib/AuthContext";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { getListingPlaceholder } from "@/lib/listingPlaceholders";
@@ -49,6 +50,7 @@ export default function CarDetail() {
 
   const { data: car, isLoading, error, refetch } = useQuery({ queryKey: ["car", id], queryFn: () => getPublicListing("car", id), enabled: Boolean(id), staleTime: 300000 });
   const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
+  useMarketplaceView("listing", id, "car", Boolean(car));
 
   useEffect(() => {
     if (!car) return;

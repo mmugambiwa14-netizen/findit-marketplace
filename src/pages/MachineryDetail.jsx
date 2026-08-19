@@ -27,6 +27,7 @@ import {
 } from "@/components/listings/ListingDetailTabs";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useListingFavourite } from "@/hooks/useListingFavourite";
+import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { useAuth } from "@/lib/AuthContext";
 import { getMachineryLabel } from "@/lib/constants";
 import { useCurrency } from "@/lib/CurrencyContext";
@@ -50,6 +51,7 @@ export default function MachineryDetail() {
 
   const { data: item, isLoading, error, refetch } = useQuery({ queryKey: ["machinery", id], queryFn: () => getPublicListing("machinery", id), enabled: Boolean(id), staleTime: 300000 });
   const { isSaved, isSaving, toggle: toggleSave } = useListingFavourite({ userId: user?.id, listingId: id, queryClient, guard });
+  useMarketplaceView("listing", id, "machinery", Boolean(item));
 
   useEffect(() => {
     if (!item) return;

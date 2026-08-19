@@ -23,6 +23,7 @@ import {
 import { ContactBar, DetailError, DetailLoading, DetailMissing, SafetyPanel } from "@/components/listings/ListingDetailLayout";
 import { useGuestGuard } from "@/hooks/useGuestGuard";
 import { useServiceFavourite } from "@/hooks/useServiceFavourite";
+import { useMarketplaceView } from "@/hooks/useMarketplaceView";
 import { useAuth } from "@/lib/AuthContext";
 import { useCurrency } from "@/lib/CurrencyContext";
 import { goBackOrHome } from "@/lib/navigation";
@@ -44,6 +45,7 @@ export default function ServiceDetail() {
     queryFn: () => getPublicService(id),
     enabled: Boolean(id),
   });
+  useMarketplaceView("service", id, "service", Boolean(service));
 
   useEffect(() => {
     if (!service) return;

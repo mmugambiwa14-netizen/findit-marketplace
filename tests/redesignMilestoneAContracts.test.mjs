@@ -74,7 +74,7 @@ test('canonical navigation and compatibility routes are present', () => {
 });
 
 test('Search keeps its service boundary and is decomposed into focused UI components', () => {
-  assert.match(search, /searchPublicListings/);
+  assert.match(search, /searchPublicListingsPage/);
   for (const component of ['CategoryResultsHeader', 'SearchToolbar', 'ActiveFilterChips', 'FilterSheet', 'SortSheet', 'ListingResults']) {
     assert.match(search, new RegExp(component));
   }

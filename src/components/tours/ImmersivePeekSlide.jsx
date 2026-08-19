@@ -17,6 +17,7 @@ import TourReportDialog from '@/components/tours/TourReportDialog';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { useCurrency } from '@/lib/CurrencyContext';
+import { useImmediatePeekView } from '@/hooks/useImmediatePeekView';
 import { cn } from '@/lib/utils';
 import { addFavourite, removeFavourite } from '@/services/favouritesService';
 import { getPublicTourPlayback, publicTourDetailPath } from '@/services/listingToursService';
@@ -72,9 +73,17 @@ export default function ImmersivePeekSlide({
   const canRequestPeek = !isOwner && listingOnly;
   const poster = item.thumbnailUrl || item.coverImageUrl || undefined;
   const requestPath = `${detailPath}${detailPath.includes('?') ? '&' : '?'}requestPeek=1`;
+  const { recordView } = useImmediatePeekView({
+    tourId: item.tourId,
+    initialCount: item.viewCount ?? item.views ?? 0,
+    enabled: active && nearby,
+  });
 
   useEffect(() => setSaved(isSaved), [isSaved]);
   useEffect(() => setMuted(muteByDefault), [muteByDefault]);
+  useEffect(() => {
+    if (active && nearby) void recordView();
+  }, [active, nearby, recordView]);
 
   useEffect(() => {
     const node = rootRef.current;

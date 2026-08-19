@@ -14,9 +14,7 @@ const [
   contracts,
   queryKeys,
   page,
-  card,
-  header,
-  chips,
+  slide,
   app,
   invalidation,
   config,
@@ -32,9 +30,7 @@ const [
   read('src/services/listingTourContracts.js'),
   read('src/services/listingTourQueryKeys.js'),
   read('src/pages/Tours.jsx'),
-  read('src/components/tours/TourCard.jsx'),
-  read('src/components/tours/TourCatalogueHeader.jsx'),
-  read('src/components/tours/TourCategoryChips.jsx'),
+  read('src/components/tours/ImmersivePeekSlide.jsx'),
   read('src/App.jsx'),
   read('src/lib/canonicalQueryInvalidation.js'),
   read('supabase/config.toml'),
@@ -98,17 +94,12 @@ test('catalogue UI is immersive but remains marketplace-focused', () => {
 });
 
 test('playback is thumbnail-first, explicit, low-data aware and resilient', () => {
-  assert.match(card, /onClick=\{loadPlayback\}/);
-  assert.match(card, /getPublicTourPlayback/);
-  assert.match(card, /poster=\{item\.thumbnailUrl/);
-  assert.match(card, /navigator\['connection'\]\?\.saveData/);
-  assert.match(card, /preload=.*'none'.*'metadata'/);
-  assert.match(card, /muted/);
-  assert.match(card, /onError=\{\(\) => \{ setPlayback\(null\); setPlaybackError\(true\); \}\}/);
-  assert.match(card, /expiresAt > Date\.now\(\) \+ 10_000/);
-  assert.match(card, /Peek playback failed/);
-  assert.match(card, /writeStoredString\('session', playbackKey/);
-  assert.match(card, /readStoredString\('session', playbackKey/);
+  assert.match(slide, /onClick=\{togglePlayback\}/);
+  assert.match(slide, /getPublicTourPlayback/);
+  assert.match(slide, /poster=\{poster\}/);
+  assert.match(slide, /preload=\{nearby \? 'metadata' : 'none'\}/);
+  assert.match(slide, /muted=\{muted\}/);
+  assert.match(slide, /This Peek is temporarily unavailable/);
 });
 
 test('feed filters, active Peek and pagination survive canonical navigation', () => {
@@ -166,7 +157,7 @@ test('feed contracts reject unsafe asset URLs and invalid prices', () => {
   assert.match(contracts, /function boundedHttpUrl/);
   assert.match(contracts, /parsed\.protocol === 'https:' \|\| parsed\.protocol === 'http:'/);
   assert.match(contracts, /Tour feed price is invalid/);
-  assert.match(card, /disabled=\{saving\}/);
+  assert.match(slide, /disabled=\{saving\}/);
 });
 
 test('executable feed contracts normalize safe rows and reject poisoned fields', () => {

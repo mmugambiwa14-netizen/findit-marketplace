@@ -1,6 +1,5 @@
 import {
   fetchAdminAuditLog,
-  fetchAdminCategories,
   fetchAdminDashboardStats,
   fetchAdminMarketplace,
   fetchAdminNotificationFanoutHealth,
@@ -12,13 +11,10 @@ import {
   fetchAdminTourQueue,
   fetchAdminTourReviewMetadata,
   fetchAdminUsers,
-  insertAdminCategory,
-  mutateAdminCategory,
   mutateAdminMarketplace,
   mutateAdminReport,
   mutateAdminSupportRequest,
   mutateAdminTour,
-  mutateAdminUserRole,
   mutateAdminUserStatus,
   purgeAdminRecommendationCache,
 } from '@/repositories/adminRepository';
@@ -31,12 +27,9 @@ import {
   normalizeAdminTourDecision,
   normalizeAdminTourQueueRequest,
   normalizeAdminUsersRequest,
-  normalizeCategoryCreate,
-  normalizeCategoryUpdate,
   normalizeMarketplaceModeration,
   normalizeReportDecision,
   normalizeSupportResolution,
-  normalizeUserRoleChange,
   normalizeUserStatusChange,
   normalizeAdminId,
 } from '@/services/adminContracts';
@@ -67,7 +60,6 @@ export async function getAdminUsers(request) {
   return { ...result, items: result.items.map((item) => ({ ...item, listing_count: Number(item.listing_count ?? 0), service_count: Number(item.service_count ?? 0) })) };
 }
 
-export function setAdminUserRole(input) { return mutateAdminUserRole(normalizeUserRoleChange(input)); }
 export function setAdminUserStatus(input) { return mutateAdminUserStatus(normalizeUserStatusChange(input)); }
 
 export async function getAdminReports(request) {
@@ -106,14 +98,6 @@ export async function getAdminAuditLog(request) {
   const normalized = normalizeAdminAuditRequest(request);
   return page(await fetchAdminAuditLog(normalized), normalized.limit, chronologicalCursor);
 }
-
-export async function getAdminCategories() {
-  const rows = await fetchAdminCategories();
-  return (rows ?? []).map((row) => ({ ...row, listing_count: Number(row.listing_count ?? 0) }));
-}
-
-export function addAdminCategory(input) { return insertAdminCategory(normalizeCategoryCreate(input)); }
-export function updateAdminCategory(input) { return mutateAdminCategory(normalizeCategoryUpdate(input)); }
 
 function numericRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};

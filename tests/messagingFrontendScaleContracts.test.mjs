@@ -25,7 +25,6 @@ test('messaging inbox signs listing covers once per bounded page instead of once
   assert.match(service, /photos: value\?\.listing_photo \? \[value\.listing_photo\] : \[\]/);
   assert.match(service, /await hydrateListingCardImages\(rows\.map/);
   assert.match(service, /items: await hydrateConversationListings\(pageRows, signal\)/);
-  assert.match(service, /items: await hydrateConversationListings\(rows \?\? \[\], signal\)/);
   assert.doesNotMatch(service, /resolveListingImages/);
   assert.doesNotMatch(service, /Promise\.all\([^)]*map\(hydrateConversationListing\)/s);
 
@@ -43,7 +42,7 @@ test('TanStack cancellation reaches every active messaging read RPC', () => {
   assert.match(repository, /function rpc\(name, params, message, signal\)/);
   assert.match(repository, /if \(signal\) query = query\.abortSignal\(signal\)/);
   for (const signature of [
-    'findMessageInbox(request, signal)',
+    'findMessageInboxPage(request, signal)',
     'findMessageConversation(conversationId, signal)',
     'findMessageInboxPage(request, signal)',
     'findMessageThreadPage(request, signal)',

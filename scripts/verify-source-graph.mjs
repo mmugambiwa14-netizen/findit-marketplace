@@ -1,6 +1,6 @@
 import { access, readdir, readFile } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const root = process.cwd();
@@ -53,10 +53,11 @@ async function resolveLocalImport(file, specifier) {
 
   for (const extension of resolutionExtensions) {
     const candidate = `${base}${extension}`;
-    if (await exists(candidate)) return true;
+    if (await exists(candidate)) return candidate;
   }
   for (const extension of resolutionExtensions.slice(1)) {
-    if (await exists(join(base, `index${extension}`))) return true;
+    const candidate = join(base, `index${extension}`);
+    if (await exists(candidate)) return candidate;
   }
   return false;
 }
@@ -71,6 +72,7 @@ files.sort();
 
 const parseFailures = [];
 const unresolved = [];
+const localEdges = new Map(files.map((file) => [file, []]));
 for (const file of files) {
   const source = await readFile(file, 'utf8');
   const kind = file.endsWith('.tsx') ? ts.ScriptKind.TSX
@@ -92,8 +94,42 @@ for (const file of files) {
     for (const match of source.matchAll(pattern)) specifiers.add(match[1]);
   }
   for (const specifier of specifiers) {
-    if (!(await resolveLocalImport(file, specifier))) unresolved.push(`${file}: ${specifier}`);
+    const resolved = await resolveLocalImport(file, specifier);
+    if (!resolved) {
+      unresolved.push(`${file}: ${specifier}`);
+    } else if (resolved !== true && localEdges.has(file) && localEdges.has(resolved)) {
+      localEdges.get(file).push(resolved);
+    }
   }
+}
+
+const srcRoot = resolve(root, 'src');
+const isWithin = (file, parent) => {
+  const pathFromParent = relative(parent, file);
+  return pathFromParent === '' || (!pathFromParent.startsWith('..') && !isAbsolute(pathFromParent));
+};
+const runtimeFiles = files.filter((file) => isWithin(file, srcRoot));
+const runtimeRoots = [
+  resolve(root, 'src/main.jsx'),
+  resolve(root, 'src/documentBootstrap.js'),
+];
+const intentionalRuntimeExceptions = new Set([
+  resolve(root, 'src/domain/peekThreads/ranking.js'),
+  resolve(root, 'src/types/runtime-extensions.d.ts'),
+]);
+const reachableRuntime = new Set();
+const runtimeQueue = runtimeRoots.filter((file) => localEdges.has(file));
+while (runtimeQueue.length > 0) {
+  const file = runtimeQueue.shift();
+  if (reachableRuntime.has(file)) continue;
+  reachableRuntime.add(file);
+  for (const dependency of localEdges.get(file) || []) {
+    if (isWithin(dependency, srcRoot) && !reachableRuntime.has(dependency)) runtimeQueue.push(dependency);
+  }
+}
+const orphanRuntime = runtimeFiles.filter((file) => !reachableRuntime.has(file) && !intentionalRuntimeExceptions.has(file));
+if (orphanRuntime.length) {
+  unresolved.push(...orphanRuntime.map((file) => `${file}: not reachable from the runtime entry roots`));
 }
 
 if (parseFailures.length || unresolved.length) {
@@ -108,4 +144,4 @@ if (parseFailures.length || unresolved.length) {
   process.exit(1);
 }
 
-console.log(`Source graph verification passed: ${files.length} modules parsed, 0 unresolved local imports.`);
+console.log(`Source graph verification passed: ${files.length} modules parsed, ${reachableRuntime.size} runtime modules reachable, 0 unresolved local imports.`);

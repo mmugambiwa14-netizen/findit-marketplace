@@ -12,15 +12,6 @@ async function rpc(name, parameters, message, signal) {
   return data;
 }
 
-export function findNotifications(request, signal) {
-  return rpc('notification_rows', {
-    p_event_type: request.eventType,
-    p_unread_only: request.unreadOnly,
-    p_limit: request.limit,
-    p_offset: request.offset,
-  }, 'Unable to load notifications', signal);
-}
-
 export function findNotificationsPage(request, signal) {
   return rpc('notification_rows_page', {
     p_event_type: request.eventType,

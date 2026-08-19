@@ -1,4 +1,4 @@
-export const COUNTRY_STATES = Object.freeze({
+const COUNTRY_STATES = Object.freeze({
   ACTIVE: 'active',
   BROWSE_ONLY: 'browse_only',
   UNAVAILABLE: 'unavailable',
@@ -9,12 +9,7 @@ export const LAUNCH_COUNTRY_CODE = 'ZW';
 // Longitude/latitude pairs used by MapLibre. Public map exploration stays
 // within the launch market while retaining the country data elsewhere.
 export const ZIMBABWE_MAP_CENTER = Object.freeze([29.1549, -19.0154]);
-export const ZIMBABWE_MAP_BOUNDS = Object.freeze([
-  Object.freeze([25.15, -22.45]),
-  Object.freeze([33.10, -15.45]),
-]);
-
-export const COUNTRY_CONFIGS = Object.freeze({
+const COUNTRY_CONFIGS = Object.freeze({
   ZW: Object.freeze({
     code: 'ZW',
     name: 'Zimbabwe',
@@ -37,7 +32,7 @@ export const LISTING_CURRENCIES = Object.freeze([
   { code: 'ZAR', name: 'South African Rand', symbol: 'R' },
 ]);
 
-export function getCountryConfig(countryCode = LAUNCH_COUNTRY_CODE) {
+function getCountryConfig(countryCode = LAUNCH_COUNTRY_CODE) {
   return COUNTRY_CONFIGS[String(countryCode || '').toUpperCase()] ?? COUNTRY_CONFIGS[LAUNCH_COUNTRY_CODE];
 }
 
@@ -48,8 +43,4 @@ export function getSupportedListingCurrencies(countryCode = LAUNCH_COUNTRY_CODE)
 
 export function getCurrencyConfig(code = 'USD') {
   return LISTING_CURRENCIES.find((currency) => currency.code === code) ?? LISTING_CURRENCIES[0];
-}
-
-export function isSupportedListingCurrency(code, countryCode = LAUNCH_COUNTRY_CODE) {
-  return getCountryConfig(countryCode).supportedListingCurrencies.includes(String(code || '').toUpperCase());
 }
