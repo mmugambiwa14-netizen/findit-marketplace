@@ -228,7 +228,7 @@ export default function TourCard({ item, active, onActivate, isSaved = false, on
                 aria-label={liked ? 'Remove from saved' : 'Save listing'}
                 aria-pressed={liked}
                 disabled={saving}
-                className={cn('absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md', liked && 'text-red-400')}
+                className={cn('absolute bottom-3 right-3 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white backdrop-blur-md', liked && 'text-red-400')}
               >
                 <Heart className={cn('h-5 w-5', liked && 'fill-current')} />
               </button>

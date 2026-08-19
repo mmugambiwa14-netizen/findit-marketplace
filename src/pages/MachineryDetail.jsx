@@ -68,7 +68,7 @@ export default function MachineryDetail() {
     <div className="findit-screen pb-24">
       <PeekRequestIntentHandler />
       <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')}/>
-      <main className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={item.photos} title={item.title} fallbackImage={placeholderMachinery} tour={item.tour || null} tourActionLabel="Take a Peek" tourOwnerId={item.seller_id} parentType="listing" parentId={item.id} className="md:mt-4 md:rounded-3xl md:border" />
           <ListingMediaActions onShare={() => shareListing("machinery", item)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
@@ -132,7 +132,7 @@ export default function MachineryDetail() {
           </ListingTabSection>
 
         </ListingDetailTabs>
-      </main>
+      </div>
       <ContactBar><ContactButtons listing={item} type="machinery" /></ContactBar>
       <GuestPromptSheet open={guestOpen} onClose={closeGuest} action={guestAction} />
     </div>

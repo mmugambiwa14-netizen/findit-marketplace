@@ -44,7 +44,7 @@ function legalDisplayText(document, text) {
 
 function LegalHub() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:py-10">
+    <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:py-10">
       <Link to="/" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to PeekaListing
@@ -68,7 +68,7 @@ function LegalHub() {
           </Link>
         ))}
       </section>
-    </main>
+    </div>
   );
 }
 

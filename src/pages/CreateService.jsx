@@ -355,7 +355,7 @@ export default function CreateService() {
   if (publishedService) {
     return (
       <div className="min-h-screen bg-background px-4 py-10">
-        <main className="mx-auto max-w-lg space-y-5 rounded-2xl border border-border bg-card p-5 sm:p-7">
+        <div className="mx-auto max-w-lg space-y-5 rounded-2xl border border-border bg-card p-5 sm:p-7">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-7 w-7 shrink-0 text-success" />
             <div>
@@ -379,7 +379,7 @@ export default function CreateService() {
           <Button type="button" variant="outline" className="h-11 w-full rounded-xl" onClick={continueWithoutPublishedTour} disabled={retryingTour || discardingTour}>
             {discardingTour ? <><Loader2 className="animate-spin" />Discarding unfinished Peek...</> : 'Continue without Peek'}
           </Button>
-        </main>
+        </div>
       </div>
     );
   }

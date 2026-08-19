@@ -28,7 +28,7 @@ export default function ToursPlaceholder() {
         </div>
       </header>
 
-      <main className="page-shell max-w-5xl">
+      <div className="page-shell max-w-5xl">
         <section className="relative overflow-hidden rounded-3xl border border-border bg-card px-5 py-10 sm:px-10 sm:py-14">
           <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/10 blur-3xl" aria-hidden="true" />
           <div className="relative max-w-2xl">
@@ -56,7 +56,7 @@ export default function ToursPlaceholder() {
             ))}
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

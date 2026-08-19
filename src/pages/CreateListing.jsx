@@ -260,13 +260,13 @@ export default function CreateListing() {
   return <div className="min-h-screen bg-background pb-16">
     <StepProgress currentStep={step} onSaveDraft={saveDraft} />
     {step === 1 && <div className="mx-auto max-w-[680px] px-4 pt-4"><button type="button" onClick={() => isDirty ? setConfirmation('exit-draft') : goBackOrHome(navigate, '/')} className="flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Exit</button></div>}
-    <main className="mx-auto max-w-[680px] px-4 py-4">
+    <div className="mx-auto max-w-[680px] px-4 py-4">
       {step === 1 && <Step1Category formData={formData} update={update} onContinue={() => setStep(2)} />}
       {step === 2 && <ListingDetailsStep formData={formData} update={update} onBack={() => setStep(1)} onContinue={() => setStep(3)} />}
       {step === 3 && <ListingLocationStep formData={formData} update={update} onBack={() => setStep(2)} onContinue={() => setStep(4)} />}
       {step === 4 && <ListingMediaContactStep formData={formData} update={update} media={media} setMedia={setMedia} tourDraft={tourDraft} setTourDraft={setTourDraft} onBack={() => setStep(3)} onContinue={() => setStep(5)} />}
       {step === 5 && <ListingReviewStep formData={formData} media={media} tourDraft={tourDraft} locationName={locationName} onBack={() => setStep(4)} onSubmit={submit} submitting={submitting} submissionProgress={submissionProgress} />}
-    </main>
+    </div>
     <CreateListingConfirmation
       mode={confirmation}
       busy={false}

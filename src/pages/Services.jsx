@@ -136,7 +136,7 @@ export default function Services() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-semibold">Results</h2>
@@ -176,7 +176,7 @@ export default function Services() {
             {!hasNextPage && services.length > 0 && <p className="mt-6 text-center text-xs text-muted-foreground">You have reached the end of these results.</p>}
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }

@@ -67,7 +67,7 @@ export default function CarDetail() {
     <div className="findit-screen pb-24">
       <PeekRequestIntentHandler />
       <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')} />
-      <main className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={car.photos} title={car.title} fallbackImage={placeholderCar} tour={car.tour || null} tourActionLabel="Take a Peek" tourOwnerId={car.seller_id} parentType="listing" parentId={car.id} className="md:mt-4 md:rounded-3xl md:border" />
           <ListingMediaActions onShare={() => shareListing("car", car)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
@@ -126,7 +126,7 @@ export default function CarDetail() {
           </ListingTabSection>
 
         </ListingDetailTabs>
-      </main>
+      </div>
       <ContactBar><ContactButtons listing={car} type="car" /></ContactBar>
       <GuestPromptSheet open={guestOpen} onClose={closeGuest} action={guestAction} />
     </div>

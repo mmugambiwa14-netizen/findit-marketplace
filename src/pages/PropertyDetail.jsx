@@ -74,7 +74,7 @@ export default function PropertyDetail() {
     <div className="findit-screen pb-24">
       <PeekRequestIntentHandler />
       <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')} />
-      <main className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={property.photos} title={property.title} fallbackImage={placeholderProperty} tour={property.tour || null} tourActionLabel="Take a Peek" tourOwnerId={property.seller_id} parentType="listing" parentId={property.id} className="md:mt-4 md:rounded-3xl md:border" />
           <ListingMediaActions onShare={() => shareListing("property", property)} onSave={toggleSave} isSaved={isSaved} isSaving={isSaving} />
@@ -132,7 +132,7 @@ export default function PropertyDetail() {
           </ListingTabSection>
 
         </ListingDetailTabs>
-      </main>
+      </div>
       <ContactBar><ContactButtons listing={property} type="property" /></ContactBar>
       <GuestPromptSheet open={guestOpen} onClose={closeGuest} action={guestAction} />
     </div>

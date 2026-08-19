@@ -66,7 +66,7 @@ export default function BusinessProfiles() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <div className="mx-auto max-w-3xl px-4 py-6">
         {profileQuery.isLoading ? (
           <Card><CardContent className="p-5 sm:p-6"><FormSkeleton fields={6} label="Loading business profile" /></CardContent></Card>
         ) : profileQuery.error ? (
@@ -118,7 +118,7 @@ export default function BusinessProfiles() {
             </CardContent>
           </Card>
         )}
-      </main>
+      </div>
     </div>
   );
 }

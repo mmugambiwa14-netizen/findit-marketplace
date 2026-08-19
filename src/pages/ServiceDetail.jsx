@@ -90,7 +90,7 @@ export default function ServiceDetail() {
     <div className="findit-screen pb-24">
       <PeekRequestIntentHandler />
       <ListingDetailActions onBack={() => goBackOrHome(navigate, '/')} />
-      <main className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl">
         <div className="relative">
           <ListingMediaViewer photos={service.photos} title={service.title} fallbackImage={null} tour={service.tour || null} tourActionLabel="Take a Peek" tourOwnerId={service.provider_id} parentType="service" parentId={service.id} className="md:mt-4 md:rounded-3xl md:border" />
           <ListingMediaActions onShare={shareService} onSave={serviceFavourite.toggle} isSaved={serviceFavourite.isSaved} isSaving={serviceFavourite.isSaving} />
@@ -143,7 +143,7 @@ export default function ServiceDetail() {
             <ListingSeller name={service.provider_name || "PeekaListing service provider"} sellerId={service.provider_id} joinedAt={service.provider_joined_at} activeListingCount={service.provider_active_listing_count} roleLabel="Provider" profileLabel="View provider profile" actions={<ContactButtons listing={service} type="service" placement="browse" />} />
           </ListingTabSection>
         </ListingDetailTabs>
-      </main>
+      </div>
       <ContactBar><ContactButtons listing={service} type="service" /></ContactBar>
       <GuestPromptSheet open={guestOpen} onClose={closeGuest} action={guestAction} />
     </div>

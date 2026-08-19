@@ -125,7 +125,7 @@ export default function PublicBusinessProfile() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-5xl space-y-8 px-4 py-7">
+      <div className="mx-auto max-w-5xl space-y-8 px-4 py-7">
         <section aria-labelledby="business-inventory-heading">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div><h2 id="business-inventory-heading" className="text-xl font-bold">{dealer ? 'Vehicle inventory' : 'Listings'}</h2><p className="mt-1 text-sm text-muted-foreground">Showing {inventory.length} active {inventory.length === 1 ? 'listing' : 'listings'}</p></div>
@@ -150,7 +150,7 @@ export default function PublicBusinessProfile() {
             {servicePages.hasNextPage && <div className="mt-5 flex justify-center"><Button type="button" variant="outline" className="min-w-48" disabled={servicePages.isFetchingNextPage} onClick={() => servicePages.fetchNextPage()}>{servicePages.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more services'}</Button></div>}
           </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }
