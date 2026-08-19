@@ -1,0 +1,9 @@
+{
+  "workflow": "Deploy canonical PeekaListing staging",
+  "run_id": "32215763155",
+  "run_number": "330",
+  "conclusion": "success",
+  "head_sha": "680cf6f407cbf95025160430116f8eaf7196306a",
+  "run_url": "https://github.com/mmugambiwa14-netizen/findit-marketplace/actions/runs/32215763155",
+  "canonical_url": "https://staging.peekalisting.com"
+}
