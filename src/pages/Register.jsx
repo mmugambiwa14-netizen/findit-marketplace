@@ -239,7 +239,7 @@ export default function Register() {
               required
             />
           </div>
-          <p id="register-password-requirements" className="text-xs text-muted-foreground">Use at least 10 characters with lowercase, uppercase and a number.</p>
+          <p id="register-password-requirements" className="text-xs text-muted-foreground">Use at least 10 characters with lowercase, uppercase, a number and a symbol.</p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm">Confirm Password</Label>

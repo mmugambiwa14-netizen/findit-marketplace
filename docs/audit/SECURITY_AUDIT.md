@@ -1,199 +1,115 @@
 # Security Audit
 
-Static audit of the local tree. No secret value is reproduced in this document.
-No remote service was contacted.
+Static source audit. No secret value is reproduced in this document.
+
+Updated: 2026-08-10
 
 ## Result
 
 **No Critical findings. No exposed secret material.**
 
-The application-security posture is materially better than typical for a
-pre-launch project. The controls below were verified against source, not taken
-from existing documentation.
+The controls below are verified against source and release contracts rather than inferred from UI behavior.
 
 ## Secret handling
 
 | Check | Result |
 |---|---|
-| `.env` present on disk | **No** — only `.env.example` |
-| `.gitignore` covers `.env`, `.env.*`, negates `!.env.example` | **Yes** |
-| Service-role key referenced anywhere in `src/` | **No** |
-| Hard-coded token / API key / private key in `src/` | **No** |
+| `.env` committed | **No** — only `.env.example` |
+| `.gitignore` covers `.env` and `.env.*` | **Yes** |
+| Service-role key referenced in `src/` | **No** |
+| Hard-coded private token/key in `src/` | **No** |
 | Privileged value behind a `VITE_` prefix | **No** |
-| Secret printed by any script | **No** — worker scripts compare, never echo |
+| Worker secret printed by runtime scripts | **No** |
 
-All 19 `VITE_*` variables consumed by `src/` are non-secret by construction:
-the project URL, the anon publishable key, two auth-provider booleans and 15
-feature flags. Server-only material (`FINDIT_*_WORKER_SECRET`,
-`TOUR_PROCESSOR_SECRET`, `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET`) is referenced
-only through `Deno.env.get` inside Edge Functions or `env(...)` indirection in
-`config.toml`, never inlined.
+The Supabase browser publishable/anon key is intentionally public and is not an authorization credential. Privileged server material remains behind server/Edge Function environment variables.
 
-`.env.example` explicitly warns against placing a service-role key in a `VITE_`
-variable, and `README.md` repeats it.
-
-**S-01 (Informational)** — `supabase/config.toml` contains a Google OAuth
-**client id** in plaintext. Client ids are public by design and are exposed to
-every browser during the OAuth redirect; this is not a leak. The paired secret
-is correctly `env(...)`-indirected. *No action required; noted to preempt
-misreporting.* *Blocks: nothing.*
+**S-01 (Informational)** — the Google OAuth client id in `supabase/config.toml` is public by design. The paired client secret remains environment-indirected.
 
 ## Injection and unsafe rendering
 
 | Vector | Result |
 |---|---|
-| `dangerouslySetInnerHTML` | **0 occurrences** |
+| `dangerouslySetInnerHTML` | **0** |
 | `innerHTML` / `outerHTML` | **0** |
 | `eval` / `new Function` | **0** |
-| String-concatenated SQL in client code | **0** — all access is via the SDK or RPCs |
-| Dynamic SQL in migrations | Confined to `do $$` blocks with literal identifiers |
+| String-concatenated client SQL | **0** |
 
-Stored XSS is structurally prevented: user content reaches the DOM only as React
-text children. There is no HTML-rendering path for user input anywhere in the
-tree.
-
-SQL injection is prevented by parameterised RPC arguments; the 116
-`SECURITY DEFINER` functions all pin `search_path`, closing the
-function-shadowing escalation route.
+User content is rendered through React text nodes. Database writes use the Supabase SDK/RPC boundary, and privileged database functions pin their search path.
 
 ## Authentication and authorization
 
-- Session handling is delegated to `@supabase/supabase-js` with
-  `persistSession`, `autoRefreshToken` and `detectSessionInUrl`.
-- `supabaseClient.js` **throws at module load** if `VITE_SUPABASE_URL` or
-  `VITE_SUPABASE_ANON_KEY` is absent, and validates the URL protocol. The app
-  cannot silently start against an unconfigured or non-HTTP backend.
-- `ProtectedRoute` gates authenticated and `requiredRole="admin"` routes, but is
-  presentation only — every admin RPC independently enforces `is_admin()` in the
-  database (see DATABASE_AND_RLS_AUDIT.md). **Authorization is not
-  UI-state-dependent.**
-- Admin identity is bound to a SHA-256 of the founder's normalised email
-  (`0030`), not a literal address; `is_founder_identity()` is revoked from
-  `public`, `anon` and `authenticated`.
-- Password policy in `config.toml`: minimum length 10,
-  `lower_upper_letters_digits`, refresh-token rotation on, reuse interval 10s,
-  anonymous sign-in **disabled**, manual identity linking **disabled**.
-- Account recovery uses Supabase's native recovery flow with a dedicated
-  template; `ResetPassword.jsx` handles the temporary recovery session
-  explicitly rather than leaving it ambient.
+- Browser sessions use Supabase Auth with refresh-token rotation.
+- Missing Supabase browser configuration fails closed at module load.
+- Route guards are presentation only; sensitive database operations independently authorize the caller through RLS/RPC checks.
+- Anonymous sign-in and manual identity linking are disabled.
+- Email confirmation is required.
+- Passwords require at least 10 characters plus lowercase, uppercase, a number and a symbol in source/local Auth configuration and client validation.
+- Password-change reauthentication is enabled in source configuration and is a required field in hosted Auth certification.
+- Interactive account password changes also verify the current password in the application before calling `updateUser`.
+- Password recovery requires a genuine Supabase recovery session and closes that recovery session after a successful reset where possible.
 
-**No authentication bypass, IDOR or missing ownership check was identified.**
-Ownership is enforced by RLS predicates rather than by client-supplied ids.
+No client-only admin authorization, plaintext password handling, IDOR, or missing owner predicate is accepted by the release contracts.
 
 ## Edge Function hardening
 
-`_shared/tour-runtime.ts` centralises the request guard, and every tour function
-routes responses through its `json()` helper, so the controls apply uniformly:
+Shared Edge Function guards enforce:
 
-- **Strict origin allow-list.** `Access-Control-Allow-Origin` is echoed *only*
-  when the request origin is in `FINDIT_ALLOWED_ORIGINS`. **No wildcard `*`
-  appears in any function.**
-- **Security headers on every response**: `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy: no-referrer`, `Cache-Control: no-store`, `Vary: Origin`.
-- **Method allow-list** (`POST`/`OPTIONS`), **content-type enforcement**
-  (`application/json`), and a **64 KiB request-body cap** — rejecting oversized
-  bodies before parsing.
-- **Constant-time secret comparison** (`constantTimeEqual`) for all worker
-  endpoints, preventing timing oracles on `FINDIT_*_WORKER_SECRET`.
-- **HMAC with timestamp** (`x-findit-signature`, `x-findit-timestamp`) on the
-  external `tour-processing-callback`, so the processor callback cannot be
-  forged or replayed indefinitely.
+- exact-origin CORS rather than `*`;
+- method and content-type allow lists;
+- bounded request bodies;
+- no-store/nosniff/referrer security headers;
+- constant-time worker-secret comparison;
+- timestamped HMAC verification for external processing callbacks.
 
-Every `verify_jwt = false` function performs a stronger check of its own — a
-worker secret, an HMAC signature, or a `SECURITY DEFINER` eligibility RPC.
-**No function is genuinely unauthenticated.**
+Endpoints with gateway JWT verification disabled enforce their own stronger worker-secret, HMAC, eligibility, or user-context boundary.
 
-**S-02 (Informational, F-12)** — `DEFAULT_ORIGINS` falls back to
-`http://127.0.0.1:5173,http://localhost:5173` when `FINDIT_ALLOWED_ORIGINS` is
-unset. This is **fail-closed** — a misconfigured production deployment blocks
-browser calls rather than accepting any origin, which is the right default. It
-is a deployment prerequisite, not a vulnerability.
-*Blocks: production yes (must be set).*
+**S-02 (Informational)** — development origin fallbacks are localhost-only and therefore fail closed in a misconfigured hosted deployment. Hosted deployment must set the exact allowed origins.
 
 ## File upload safety
 
-- Uploads never go directly to storage from the browser. The client requests an
-  **intent** (`tour-upload-intent`, `listing-image-upload`), the server validates
-  and records it, and only then is a scoped signed URL issued.
-- Filenames pass through `safeFilename()`; storage paths are derived
-  server-side and owner-scoped. **Path traversal is not reachable** — the client
-  never supplies a storage key.
-- Content type and byte size are enforced three times: bucket definition,
-  Edge Function validation, and a database CHECK constraint on the intent row.
-- `_shared/trusted-image.ts` performs image sanitisation, covered by
-  `tests/trustedImageSanitization.test.mjs`.
+- Browser uploads require a server-validated upload intent.
+- Storage keys are server-derived and owner-scoped.
+- Filename normalization prevents path traversal.
+- MIME type and byte size are enforced at multiple boundaries.
+- Listing/marketplace image buckets are private and limited to approved image MIME types and 5 MiB per object.
+- Trusted-image sanitization is contract-tested.
+- Upload-intent creation is rate limited by the shared abuse-budget system.
 
 ## Rate limiting and abuse resistance
 
-`config.toml` sets auth rate limits (sign-in/sign-up 30 per 5 min, token refresh
-150 per 5 min, OTP verification 30 per 5 min, email 20/hour). These are
-Supabase-native and apply per IP.
+Supabase Auth provides IP-based limits for sign-in/sign-up, refresh, OTP verification, email and SMS operations.
 
-**S-03 (Medium)** — application-level mutations (listing creation, report
-submission, message send, tour upload intent) rely on Supabase's platform limits
-and per-row constraints rather than an explicit per-user quota. Constraints do
-bound some abuse (`conversations_one_buyer_per_listing` prevents thread
-flooding against a single listing), but there is no global "N listings per user
-per hour" control. Enumeration is limited by RLS, and error bodies are
-structured codes (`origin_not_allowed`, `request_too_large`) rather than raw
-database errors, so no schema detail leaks.
+Application mutations use a database-backed token-bucket limiter in the private schema. Subjects are persisted only as SHA-256 digests, and limiter internals are not directly executable by browser roles. Existing budgets cover messages, support requests, upload intents, contact reveal events, Peek Requests, reports, business applications and managed-listing requests.
 
-*Evidence:* no rate-limit logic in `src/services/*` or the non-worker Edge
-Functions beyond input validation.
-*Impact:* a determined authenticated user could generate bulk content faster
-than a human, raising moderation and storage cost. Not a data-exposure risk.
-*Correction:* add per-user, per-window counters in the existing
-`SECURITY DEFINER` mutation RPCs, where the check cannot be bypassed.
-*Blocks: GitHub no, fresh Supabase no, staging no, production — recommended before public launch.*
+**S-03 (Resolved 2026-08-10)** — owner-controlled writes that were not covered by the original rollout are now protected by the same atomic limiter:
 
-## Logging
+- listing creation: burst and daily budgets;
+- substantive listing edits: burst and daily budgets;
+- service creation: burst and daily budgets;
+- substantive service edits: burst and daily budgets;
+- supporting an existing Peek Request: burst and daily budgets;
+- profile edits: hourly and daily budgets.
 
-No `console.log` of tokens, session objects, emails or passwords was found in
-`src/`. Edge Functions log correlation IDs and bounded error codes
-(`error.message.slice(0, 120)`), not payloads. `shouldSample()` keeps
-observability output bounded.
+The triggers are actor-aware: they apply only when the authenticated user owns the affected row. Background/service/admin writes are not accidentally treated as seller activity. Passive listing/service view counters are excluded from edit budgets. High sustained ceilings preserve legitimate dealership/business ingestion while still preventing unbounded automated abuse.
 
-## Dependency vulnerabilities
+## Logging and error exposure
 
-`npm audit` — 8 high severity, in two clusters:
+Application and Edge Function logging avoids passwords, access tokens, session objects and whole request payloads. Public errors use bounded error messages/codes rather than stack traces or raw database details.
 
-**S-04 (Low, F-06)** — `react-router` 7.12.0–8.2.0, advisory
-GHSA-qwww-vcr4-c8h2: "RSC Mode CSRF Bypass Allows Action Execution Before 400
-Response". Installed: `react-router-dom` 7.18.1 (a runtime dependency).
-*Actual impact:* **low**. The advisory concerns React Server Components mode.
-This application is a client-rendered Vite SPA using `BrowserRouter` with no RSC,
-no server actions and no framework data router, so the vulnerable path is not
-reachable. It nevertheless fails any CI step running `npm audit`.
-*Correction:* upgrade when a fixed 7.x is published. **Do not run
-`npm audit fix --force`** — it downgrades to 7.11.0, a breaking change.
-*Blocks: nothing today; revisit before production.*
+## Dependency security
 
-**S-05 (Low, F-07)** — `brace-expansion` ≤5.0.7 DoS (GHSA-mh99-v99m-4gvg),
-reached only through `eslint` → `minimatch` → `@eslint/config-array` and
-`eslint-plugin-react`. **Dev-only; not in the production bundle.**
-*Correction:* upgrade ESLint when a non-breaking fix lands.
-*Blocks: nothing.*
+The release pipeline runs the production dependency audit and generated-bundle security checks. Dependency advisories must be assessed against reachable runtime paths rather than fixed with unsafe forced downgrades. The release gate remains authoritative for the current dependency state.
 
 ## Destructive operations
 
-Admin destructive actions (`remove` on listings/services, user ban) all require
-a 3–1000 character reason via `require_admin_reason()`, are wrapped in
-`select … for update`, and are recorded in `audit_logs` with before/after
-snapshots. Report rows are detached (`set listing_id = null`) before a listing
-delete rather than cascade-destroyed, preserving the moderation trail.
+Admin destructive actions require a reason, lock the affected row where appropriate and record auditable before/after state. User reports do not automatically remove content; takedown requires moderation action.
 
-`audit:product-surface` reports **0 findings**, including no `window.confirm`
-usage — destructive UI actions use the application dialog system.
+## Summary
 
-## Summary table
-
-| ID | Severity | Finding | Blocks production |
+| ID | Severity | Finding | Status |
 |---|---|---|---|
-| S-01 | Info | OAuth client id in `config.toml` (public by design) | No |
-| S-02 | Info | CORS defaults to localhost when unset (fail-closed) | Yes — must configure |
-| S-03 | Medium | No application-level per-user rate limiting | Recommended |
-| S-04 | Low | `react-router` advisory, RSC path not exercised | No |
-| S-05 | Low | `brace-expansion` advisory, dev-only | No |
+| S-01 | Info | Public OAuth client id in source | Expected |
+| S-02 | Info | Localhost-only CORS fallback when allowed origins are absent | Fail-closed / deployment-configured |
+| S-03 | Medium | Missing application mutation rate limiting | **Resolved** |
 
-Nothing here blocks GitHub import or connection to a fresh Supabase development
-project.
+Credential-dependent hosted controls such as CAPTCHA, leaked-password checking, custom SMTP and provider settings remain verified through the exact-target Management API preflight rather than assumed from repository source.

@@ -196,6 +196,20 @@ export function evaluateHostedAuthConfig(config, environment = process.env) {
 
   compareBoolean({
     config,
+    keys: ['security_update_password_require_reauthentication'],
+    expected: readExpectedBoolean(
+      environment,
+      'FINDIT_EXPECT_PASSWORD_REAUTHENTICATION',
+      problems,
+      production,
+    ),
+    label: 'passwordChangeReauthentication',
+    problems,
+    summary,
+  });
+
+  compareBoolean({
+    config,
     keys: ['password_hibp_enabled'],
     expected: readExpectedBoolean(environment, 'FINDIT_EXPECT_LEAKED_PASSWORD_PROTECTION', problems, production),
     label: 'leakedPasswordProtection',
