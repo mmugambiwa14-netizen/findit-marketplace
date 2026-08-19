@@ -60,6 +60,7 @@ jobs:
       FINDIT_TOURS_ACCEPTANCE_ID: "tour-acceptance-ci-build-validation-0001"
       FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: "true"
       FINDIT_RECOMMENDATION_WORKERS_ENABLED: "true"
+      FINDIT_PLATFORM_MAINTENANCE_WORKERS_ENABLED: "true"
 
     steps:
       - name: Check out repository
@@ -83,7 +84,8 @@ jobs:
             FINDIT_TOUR_CACHE_WORKER_SECRET \
             FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET \
             FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET \
-            FINDIT_RECOMMENDATION_WORKER_SECRET; do
+            FINDIT_RECOMMENDATION_WORKER_SECRET \
+            FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET; do
             value="$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")"
             echo "${name}=${value}" >> "${GITHUB_ENV}"
           done
