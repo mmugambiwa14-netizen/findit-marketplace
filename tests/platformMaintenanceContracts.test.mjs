@@ -49,5 +49,5 @@ test('staging and production schedules carry the platform maintenance secret bou
 });
 
 test('the disposable email hook is enabled in local Auth configuration', () => {
-  assert.match(config, /\[auth\.hook\.before_user_created\][\s\S]*?enabled = true[\s\S]*?before-user-created-hook/);
+  assert.match(config, /\[auth\.hook\.before_user_created\][\s\S]*?enabled = true[\s\S]*?pg-functions:\/\/postgres\/public\/before_user_created_hook/);
 });
