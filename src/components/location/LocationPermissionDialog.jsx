@@ -21,11 +21,11 @@ export function LocationPermissionDialog({ open, onOpenChange, onAllow }) {
           <AlertDialogTitle>Use your location once?</AlertDialogTitle>
           <AlertDialogDescription className="space-y-3 text-left leading-6">
             <span className="block">
-              FindIt will ask your browser for your device location and use it once to suggest your country, province or state, and nearest registered place.
+              PeekaListing will ask your browser for your device location and use it once to suggest your country, province or state, and nearest registered place.
             </span>
             <span className="flex items-start gap-2 rounded-xl border border-border bg-surface-secondary p-3 text-xs text-foreground">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-              Your coordinates are sent to FindIt’s location service for this lookup, but are not added to your profile or saved in this browser. Only the suggested public country, region, and place may be remembered on this device, and you can change or clear them.
+              Your coordinates are sent to PeekaListing’s location service for this lookup, but are not added to your profile or saved in this browser. Only the suggested public country, region, and place may be remembered on this device, and you can change or clear them.
             </span>
             <span className="block text-xs">
               This never saves your coordinates. PeekaListing currently serves Zimbabwe marketplace locations, which you can choose manually if your device is elsewhere.

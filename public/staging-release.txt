@@ -1,4 +1,4 @@
-FindIt staging release
+PeekaListing staging release
 Canonical source: main
 Curated verified-business marketplace flow included.
 Cloudflare Pages staging deploys only through the protected staging workflow.

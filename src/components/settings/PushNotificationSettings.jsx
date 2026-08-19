@@ -128,17 +128,31 @@ export default function PushNotificationSettings() {
       <div className="space-y-2 rounded-xl border border-border bg-card p-3">
         <div><p className="text-sm font-medium">Push categories</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">Choose which marketplace activity can appear as push notifications. Essential account and security updates remain enabled.</p></div>
         {CATEGORIES.map(([key, label, description]) => (
-          <div key={key} className="flex items-center justify-between gap-4 border-t border-border/70 pt-2 first:border-0 first:pt-0">
-            <div><p className="text-sm">{label}</p><p className="text-xs text-muted-foreground">{description}</p></div>
+          <fieldset
+            key={key}
+            className="flex min-h-11 cursor-pointer items-center justify-between gap-4 border-t border-border/70 pt-2 first:border-0 first:pt-0"
+            onClick={(event) => {
+              if (event.target instanceof Element && event.target.closest('[role="switch"]')) return;
+              if (savingPreference === null) void togglePreference(key, !preferences[key]);
+            }}
+          >
+            <legend className="sr-only">{label} push notifications</legend>
+            <span><span className="block text-sm">{label}</span><span className="block text-xs text-muted-foreground">{description}</span></span>
             <Switch checked={preferences[key]} disabled={savingPreference !== null} onCheckedChange={(enabled) => togglePreference(key, enabled)} aria-label={`${label} push notifications`} />
-          </div>
+          </fieldset>
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-3 py-3">
+      <fieldset
+        className="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-xl border border-border bg-card px-3 py-3"
+        onClick={(event) => {
+          if (!(event.target instanceof Element && event.target.closest('[role="switch"]'))) void toggleSound(!soundEnabled);
+        }}
+      >
+        <legend className="sr-only">In-app notification sound</legend>
         <div className="flex min-w-0 items-start gap-3"><Volume2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><div><p className="text-sm font-medium">In-app notification sound</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">Play the PeekaListing tone while the app is open. Background notification sound is controlled by your device.</p></div></div>
         <Switch checked={soundEnabled} onCheckedChange={toggleSound} aria-label="In-app notification sound" />
-      </div>
+      </fieldset>
     </div>
   );
 }

@@ -29,7 +29,7 @@ const CONTACT_DISCLOSURE_REPLACEMENTS = new Map([
     'Contact methods you enable for a listing, such as phone, WhatsApp, and email. PeekaListing does not display the full phone number or email address in the listing interface. After an authenticated buyer deliberately confirms an external contact action, the selected detail is provided to the buyer’s phone, WhatsApp, or email application and may be visible there.',
   ],
   [
-    'Anything you publish is public. Listings, service offerings, business profiles, seller display names, reviews you write, and the contact details you attach to a listing are visible to anyone who visits FindIt, including people without an account. They may be copied, cached, or indexed by search engines, and FindIt cannot retrieve copies that others have already made.',
+    'Anything you publish is public. Listings, service offerings, business profiles, seller display names, reviews you write, and the contact details you attach to a listing are visible to anyone who visits PeekaListing, including people without an account. They may be copied, cached, or indexed by search engines, and PeekaListing cannot retrieve copies that others have already made.',
     'Listings, service offerings, business profiles, seller display names, and reviews you publish may be visible to anyone who visits PeekaListing and may be copied, cached, or indexed. Listing phone numbers and email addresses are not displayed publicly in PeekaListing. They are disclosed only to an authenticated buyer who deliberately confirms that they want to open an external phone, WhatsApp, or email application.',
   ],
   [

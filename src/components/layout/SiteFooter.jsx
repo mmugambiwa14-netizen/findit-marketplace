@@ -21,11 +21,11 @@ export default function SiteFooter({ compact = false }) {
         </div>
         <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Legal and support">
           {LEGAL_LINKS.map(([path, label]) => (
-            <Link key={path} to={path} className="hover:text-foreground hover:underline">
+            <Link key={path} to={path} className="inline-flex min-h-11 items-center hover:text-foreground hover:underline">
               {label}
             </Link>
           ))}
-          <Link to="/help" className="hover:text-foreground hover:underline">
+          <Link to="/help" className="inline-flex min-h-11 items-center hover:text-foreground hover:underline">
             Help &amp; safety
           </Link>
         </nav>

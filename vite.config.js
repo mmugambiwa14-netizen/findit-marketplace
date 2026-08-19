@@ -31,6 +31,31 @@ function copyFirstPartyPublicAssets() {
   };
 }
 
+function preloadBootstrapChunks() {
+  return {
+    name: 'preload-bootstrap-chunks',
+    enforce: 'post',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const bootstrapChunks = Object.values(bundle)
+        .filter((item) => item.type === 'chunk')
+        .filter((item) => /[\\/]src[\\/](?:App\.jsx|components[\\/]AppErrorBoundary\.jsx)$/.test(item.facadeModuleId)
+          || item.name === 'App'
+          || item.name === 'AppErrorBoundary'
+          || /^assets[\\/]App-[^/]+\.js$/.test(item.fileName)
+          || Object.keys(item.modules || {}).some((moduleId) => /[\\/]src[\\/]App\.jsx$/.test(moduleId)))
+        .map((item) => item.fileName);
+      const html = bundle['index.html'];
+      if (!bootstrapChunks.length || !html || html.type !== 'asset' || typeof html.source !== 'string') return;
+      const base = (process.env.VITE_BASE_PATH || '/').replace(/\/?$/, '/');
+      const tags = bootstrapChunks
+        .map((fileName) => `<link rel="modulepreload" href="${base}assets/${fileName.replace(/^assets\//, '')}">`)
+        .join('');
+      html.source = html.source.replace('</head>', `${tags}</head>`);
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => ({
   // Cloudflare Pages and the custom domain are rooted at "/" unless a deploy
@@ -72,5 +97,6 @@ export default defineConfig(({ command, mode }) => ({
   plugins: [
     react(),
     copyFirstPartyPublicAssets(),
+    preloadBootstrapChunks(),
   ]
 }));

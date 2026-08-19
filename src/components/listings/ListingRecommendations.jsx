@@ -31,7 +31,7 @@ const SERVICE_DEFINITIONS = Object.freeze({
   related_services_service: { title: 'Useful services', description: 'Providers related to this listing.', icon: Wrench, load: getRelatedServices },
   related_products_service: { title: 'You may also need', description: 'Listings that complement this item.', icon: Sparkles, load: getRelatedProducts },
   nearby_service: { title: 'Nearby options', description: 'Available listings around the same area.', icon: MapPinned, load: getNearbyListings },
-  recently_listed_service: { title: 'Fresh listings', description: 'Recently published across FindIt.', icon: History, load: getRecentlyListed },
+  recently_listed_service: { title: 'Fresh listings', description: 'Recently published across PeekaListing.', icon: History, load: getRecentlyListed },
   personalized_recommendation_service: { title: 'Picked for you', description: 'Shaped by your optional recommendation preference.', icon: Sparkles, load: getPersonalizedRecommendations },
 });
 

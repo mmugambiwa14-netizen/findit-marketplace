@@ -81,7 +81,7 @@ export default function ListingMediaContactStep({ formData, update, media, setMe
       <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/8 p-3">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div>
-          <p className="text-sm font-semibold">Your contact details stay hidden in FindIt</p>
+          <p className="text-sm font-semibold">Your contact details stay hidden in PeekaListing</p>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">Buyers see only the contact methods you enable. Your phone number or email address becomes visible only after they choose to open their phone, WhatsApp, or email app.</p>
         </div>
       </div>

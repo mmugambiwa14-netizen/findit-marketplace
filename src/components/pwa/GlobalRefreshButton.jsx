@@ -17,7 +17,7 @@ export default function GlobalRefreshButton({ inline = false, desktop = false, c
       await refreshApp();
     } catch {
       setRefreshing(false);
-      toast.error('Could not refresh FindIt. Check your connection and try again.');
+      toast.error('Could not refresh PeekaListing. Check your connection and try again.');
     }
   };
 
@@ -26,8 +26,8 @@ export default function GlobalRefreshButton({ inline = false, desktop = false, c
       type="button"
       onClick={handleRefresh}
       disabled={refreshing}
-      aria-label="Refresh FindIt"
-      title="Refresh FindIt"
+      aria-label="Refresh PeekaListing"
+      title="Refresh PeekaListing"
       className={cn(
         'relative flex h-[var(--findit-icon-button-size)] w-[var(--findit-icon-button-size)] shrink-0 items-center justify-center rounded-[var(--findit-control-radius)] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-wait disabled:opacity-70',
         className,

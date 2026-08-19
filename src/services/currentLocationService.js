@@ -59,7 +59,7 @@ export async function resolveCurrentMarketplaceLocation({ consentGranted = false
 export function currentLocationErrorMessage(error) {
   switch (error?.message) {
     case 'GEOLOCATION_CONSENT_REQUIRED':
-      return 'Choose Allow once before FindIt asks your browser for location access.';
+      return 'Choose Allow once before PeekaListing asks your browser for location access.';
     case 'GEOLOCATION_PERMISSION_DENIED':
       return 'Location access was declined. You can still choose a Zimbabwe place manually.';
     case 'GEOLOCATION_UNSUPPORTED':

@@ -71,8 +71,8 @@ function publicRecordUrl(config, kind, id) {
   const service = kind === 'service';
   const endpoint = new URL(`/rest/v1/${service ? 'services' : 'listings'}`, config.url);
   endpoint.searchParams.set('select', service
-    ? 'id,title,description,photos,price,currency,location_name'
-    : 'id,kind,title,description,photos,price,currency,public_location_label');
+    ? 'id,title,description,photos,price,currency,location_name,status'
+    : 'id,kind,title,description,photos,price,currency,public_location_label,status');
   endpoint.searchParams.set('id', `eq.${id}`);
   endpoint.searchParams.set('country_code', 'eq.ZW');
   endpoint.searchParams.set('status', service ? 'eq.active' : 'in.(available,under_offer)');
@@ -174,7 +174,42 @@ function listingMetadata(record, kind, id, requestUrl) {
     summary: summary || DEFAULT_SUMMARY,
     image: metadataImage(record, kind, id, requestUrl),
     canonical: `${requestUrl.origin}/${kind}/${id}`,
+    price: record?.price != null && Number.isFinite(Number(record.price)) ? Number(record.price) : null,
+    currency: cleanText(record?.currency || 'USD', 3).toUpperCase(),
+    availability: record?.status === 'sold' ? 'SoldOut' : record?.status === 'rented' ? 'SoldOut' : 'InStock',
   };
+}
+
+function structuredData(metadata, kind) {
+  const data = kind === 'service'
+    ? {
+      '@context': 'https://schema.org',
+      '@type': 'Service',
+      name: metadata.title,
+      description: metadata.summary,
+      image: metadata.image,
+      url: metadata.canonical,
+      areaServed: 'Zimbabwe',
+    }
+    : {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: metadata.title,
+      description: metadata.summary,
+      image: metadata.image,
+      url: metadata.canonical,
+      offers: metadata.price === null ? undefined : {
+        '@type': 'Offer',
+        price: metadata.price,
+        priceCurrency: metadata.currency,
+        availability: `https://schema.org/${metadata.availability}`,
+        url: metadata.canonical,
+      },
+    };
+  return JSON.stringify(data, (_key, value) => value === undefined ? undefined : value)
+    .replaceAll('<', '\\u003c')
+    .replaceAll('>', '\\u003e')
+    .replaceAll('&', '\\u0026');
 }
 
 function removeGenericShareMetadata(html) {
@@ -201,6 +236,7 @@ function renderMetadata(html, metadata) {
     `<meta name="twitter:description" content="${escapeHtml(metadata.summary)}">`,
     `<meta name="twitter:image" content="${escapeHtml(metadata.image)}">`,
     `<link rel="canonical" href="${escapeHtml(metadata.canonical)}">`,
+    `<script type="application/ld+json">${structuredData(metadata, metadata.canonical.split('/')[3] || 'property')}</script>`,
   ].join('');
   const cleaned = removeGenericShareMetadata(html);
   return cleaned.includes('</head>') ? cleaned.replace('</head>', `${tags}</head>`) : cleaned;

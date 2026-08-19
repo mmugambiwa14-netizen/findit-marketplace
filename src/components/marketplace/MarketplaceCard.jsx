@@ -85,8 +85,8 @@ export default function MarketplaceCard({
           aria-label={save.active ? 'Remove from saved' : 'Save item'}
           aria-pressed={save.active}
           className={cn(
-            'absolute right-2.5 top-2.5 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white shadow-lg backdrop-blur-md hover:scale-105 focus-visible:ring-offset-0 active:scale-95',
-            recommendationLayout && 'h-9 w-9',
+            'absolute right-2.5 top-2.5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/60 text-white shadow-lg backdrop-blur-md hover:scale-105 focus-visible:ring-offset-0 active:scale-95',
+            recommendationLayout && 'h-11 w-11',
           )}
         >
           <Heart className={cn('h-[18px] w-[18px]', save.active && 'fill-destructive text-destructive')} />

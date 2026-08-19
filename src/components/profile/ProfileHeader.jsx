@@ -22,7 +22,7 @@ export default function ProfileHeader({ user }) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h1 className="truncate text-xl font-black tracking-tight">{user?.full_name || 'FindIt user'}</h1>
+              <h1 className="truncate text-xl font-black tracking-tight">{user?.full_name || 'PeekaListing user'}</h1>
               {user?.phone_verified && <CheckCircle2 className="h-4 w-4 shrink-0 fill-primary text-background" aria-label="Verified phone" />}
             </div>
             <p className="mt-1 flex items-center gap-1.5 truncate text-xs text-muted-foreground"><Mail className="h-3.5 w-3.5 shrink-0" />{user?.email}</p>

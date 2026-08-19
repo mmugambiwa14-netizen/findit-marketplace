@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = () => {
     // Base44's redirectToLogin() sent the user to Base44's own hosted login
-    // page. There is no such hosted page anymore -- FindIt has its own
+    // page. There is no such hosted page anymore -- PeekaListing has its own
     // /login route (src/pages/Login.jsx), so this is a real (necessary)
     // behavior change, not an oversight: it's part of what "replace login"
     // means once Base44 no longer hosts auth pages.

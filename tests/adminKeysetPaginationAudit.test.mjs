@@ -41,7 +41,8 @@ test('admin search treats SQL wildcard characters literally', () => {
 });
 
 test('active admin repositories and pages use cursors without totals or offsets', () => {
-  for (const name of pageFunctions.slice(0, 5)) assert.match(repository, new RegExp(name));
+  for (const name of pageFunctions.slice(0, 4)) assert.match(repository, new RegExp(name));
+  assert.match(repository, /admin_unified_audit_activity_page|admin_audit_rows_page/);
   assert.match(tourRepository, /admin_tour_queue_page/);
   assert.doesNotMatch(`${repository}\n${tourRepository}\n${pages}`, /p_offset|offset:\s*\(|totalPages|data\.total/);
   assert.match(pages, /useCursorStack/g);

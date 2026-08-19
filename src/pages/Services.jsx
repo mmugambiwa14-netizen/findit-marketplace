@@ -137,12 +137,12 @@ export default function Services() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <h2 className="text-lg font-semibold">Results</h2>
             {isLoading ? <Skeleton className="mt-1 h-4 w-32" /> : <p className="text-sm text-muted-foreground">Showing {services.length} service{services.length === 1 ? '' : 's'}</p>}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end">
             {featureFlags.maps && (
               <div className="flex items-center rounded-xl border border-border bg-card p-1" role="group" aria-label="Service result view">
                 <button type="button" onClick={() => setView('list')} aria-pressed={!showMap} className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold ${!showMap ? 'bg-primary/12 text-primary' : 'text-muted-foreground'}`}><List className="h-4 w-4" />List</button>

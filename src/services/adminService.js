@@ -7,6 +7,7 @@ import {
   fetchAdminOperationalHealth,
   fetchAdminReports,
   fetchAdminRecommendationAnalytics,
+  fetchAdminRecommendationConfiguration,
   fetchAdminSupportRequests,
   fetchAdminTourQueue,
   fetchAdminTourReviewMetadata,
@@ -19,6 +20,7 @@ import {
   mutateAdminTour,
   mutateAdminUserRole,
   mutateAdminUserStatus,
+  purgeAdminRecommendationCache,
 } from '@/repositories/adminRepository';
 import {
   normalizeAdminAuditRequest,
@@ -146,3 +148,6 @@ export async function getAdminRecommendationAnalytics(days = 30) {
   const data = await fetchAdminRecommendationAnalytics(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
   return { contractVersion: Number(data?.contractVersion ?? 1), startDate: data?.startDate ?? null, endDate: data?.endDate ?? null, generatedAt: data?.generatedAt ?? null, summary: normalizeAnalyticsMetric(data?.summary), services: Array.isArray(data?.services) ? data.services.map(normalizeAnalyticsMetric) : [], days: Array.isArray(data?.days) ? data.days.map(normalizeAnalyticsMetric) : [] };
 }
+
+export function getAdminRecommendationConfiguration() { return fetchAdminRecommendationConfiguration(); }
+export function purgeAdminRecommendationServiceCache(serviceName, subjectListingId = null) { return purgeAdminRecommendationCache(serviceName, subjectListingId); }

@@ -18,7 +18,7 @@ export default function ToursPlaceholder() {
           <div className="flex min-w-0 items-center gap-2">
             <BackButton className="-ml-2" fallback="/" label="Back to Discover" />
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">FindIt Peek</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">PeekaListing Peek</p>
               <h1 className="mt-1 truncate text-xl font-bold">A clearer way to inspect listings</h1>
             </div>
           </div>

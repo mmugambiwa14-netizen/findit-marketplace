@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, FolderTree, Store, Users } from 'lucide-react';
 import AdminOperationalHealth from '@/components/admin/AdminOperationalHealth';
 import AdminRecommendationAnalytics from '@/components/admin/AdminRecommendationAnalytics';
+import AdminRecommendationConfiguration from '@/components/admin/AdminRecommendationConfiguration';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   getAdminDashboardStats,
@@ -74,6 +75,8 @@ export default function AdminDashboard() {
           isLoading={recommendationAnalytics.isLoading}
           error={recommendationAnalytics.error}
         />
+
+        <AdminRecommendationConfiguration />
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>

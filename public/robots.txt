@@ -1,4 +1,4 @@
-# FindIt Marketplace
+# PeekaListing Marketplace
 #
 # Public marketplace pages are crawlable. Authenticated, user-specific and
 # moderation surfaces are excluded -- they hold no server-rendered content
@@ -34,3 +34,5 @@ Disallow: /reset-password
 # Public marketplace surfaces remain crawlable:
 #   /  /search  /services  /property/*  /car/*  /machinery/*  /service/*
 #   /seller/*  /dealer/*  /business/*  /faqs  /help  /legal
+
+Sitemap: https://peekalisting.com/sitemap.xml

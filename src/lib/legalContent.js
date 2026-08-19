@@ -13,14 +13,14 @@ export const LEGAL_REVIEW_DATE = '30 July 2026';
 export const legalDocuments = {
   privacy: {
     title: 'Privacy Policy',
-    summary: 'What information FindIt collects, why we collect it, who can see it, how long we keep it, and the choices and rights you have.',
+    summary: 'What information PeekaListing collects, why we collect it, who can see it, how long we keep it, and the choices and rights you have.',
     sections: [
       {
         title: '1. About this policy',
         paragraphs: [
-          'This policy explains how FindIt handles personal information. It applies to everyone who uses the marketplace: visitors who browse without an account, registered buyers and sellers, service providers, business-profile owners, and administrators.',
-          'FindIt is operated by [TO BE COMPLETED: operator legal name], registered at [TO BE COMPLETED: registered address]. Privacy questions and data-rights requests can be sent to [TO BE COMPLETED: privacy contact email] or submitted through Contact Support in the application.',
-          'FindIt is a marketplace. It provides tools to publish offers, search, evaluate listings, and contact other users. FindIt is not a party to the transactions users arrange between themselves.',
+          'This policy explains how PeekaListing handles personal information. It applies to everyone who uses the marketplace: visitors who browse without an account, registered buyers and sellers, service providers, business-profile owners, and administrators.',
+          'PeekaListing is operated by [TO BE COMPLETED: operator legal name], registered at [TO BE COMPLETED: registered address]. Privacy questions and data-rights requests can be sent to [TO BE COMPLETED: privacy contact email] or submitted through Contact Support in the application.',
+          'PeekaListing is a marketplace. It provides tools to publish offers, search, evaluate listings, and contact other users. PeekaListing is not a party to the transactions users arrange between themselves.',
           'This is a working policy draft prepared for founder and legal review. The operator’s legal name, registered address, privacy contact details, and confirmed retention periods must be completed, and the whole document reviewed by a qualified lawyer, before public launch.',
         ],
       },
@@ -37,7 +37,7 @@ export const legalDocuments = {
       {
         title: '3. Identity verification information',
         paragraphs: [
-          'If you request verification, FindIt collects the identity document you upload, a trade or business document where relevant, and a selfie image used to check that the document belongs to you. We also store the name, email address, and phone number read from those documents, and the values confirmed by a reviewer.',
+          'If you request verification, PeekaListing collects the identity document you upload, a trade or business document where relevant, and a selfie image used to check that the document belongs to you. We also store the name, email address, and phone number read from those documents, and the values confirmed by a reviewer.',
           'This is sensitive information and is treated accordingly. It is used only to confirm identity, to reduce fraud and impersonation, and to keep a record that a verification decision was made. It is not published, is not shown to other users, is not used for advertising, and is not used to personalise what you see.',
           'Verification is optional. If you do not request verification, none of this information is collected. Where a verification request is rejected, we retain the decision and its reason so the outcome can be reviewed or appealed.',
         ],
@@ -83,14 +83,14 @@ export const legalDocuments = {
       {
         title: '8. Personalisation and your consent',
         paragraphs: [
-          'Personalised recommendations are optional and consent-based. FindIt records whether you have enabled personalisation, the version of the consent you agreed to, and when you turned it on or off, so that a change in what we ask for does not silently carry over an old agreement.',
-          'If you turn personalisation off, FindIt stops using your activity to tailor recommendations to you. You will still see listings ordered by general relevance, recency, and popularity, which does not depend on your personal history.',
+          'Personalised recommendations are optional and consent-based. PeekaListing records whether you have enabled personalisation, the version of the consent you agreed to, and when you turned it on or off, so that a change in what we ask for does not silently carry over an old agreement.',
+          'If you turn personalisation off, PeekaListing stops using your activity to tailor recommendations to you. You will still see listings ordered by general relevance, recency, and popularity, which does not depend on your personal history.',
         ],
       },
       {
         title: '9. What other people can see',
         paragraphs: [
-          'Anything you publish is public. Listings, service offerings, business profiles, seller display names, reviews you write, and the contact details you attach to a listing are visible to anyone who visits FindIt, including people without an account. They may be copied, cached, or indexed by search engines, and FindIt cannot retrieve copies that others have already made.',
+          'Anything you publish is public. Listings, service offerings, business profiles, seller display names, reviews you write, and the contact details you attach to a listing are visible to anyone who visits PeekaListing, including people without an account. They may be copied, cached, or indexed by search engines, and PeekaListing cannot retrieve copies that others have already made.',
           'Your email address is not published unless you choose to display it on a listing or business profile. Your precise address, your identity documents, your selfie, your saved listings, your support requests, and your verification status details are never published.',
         ],
       },
@@ -128,7 +128,7 @@ export const legalDocuments = {
       {
         title: '13. Children',
         paragraphs: [
-          'FindIt is not intended for children. You must be at least 18 years old to create an account, publish a listing, or transact through the marketplace. If we learn that an account belongs to someone under 18, we will close it and delete the associated personal information.',
+          'PeekaListing is not intended for children. You must be at least 18 years old to create an account, publish a listing, or transact through the marketplace. If we learn that an account belongs to someone under 18, we will close it and delete the associated personal information.',
         ],
       },
       {
@@ -148,7 +148,7 @@ export const legalDocuments = {
   },
   'data-protection': {
     title: 'Data Protection Statement',
-    summary: 'The operating principles and concrete technical controls FindIt uses to protect marketplace data, and how to raise a data request or report an incident.',
+    summary: 'The operating principles and concrete technical controls PeekaListing uses to protect marketplace data, and how to raise a data request or report an incident.',
     sections: [
       {
         title: '1. Protection principles',
@@ -200,27 +200,27 @@ export const legalDocuments = {
       {
         title: '7. Scope of this statement',
         paragraphs: [
-          'This statement is an operational baseline. It does not replace country-specific notices, consent wording, age rules, tax obligations, or legal advice, and it does not itself constitute legal advice. Local requirements must be reviewed before FindIt operates in an additional country.',
+          'This statement is an operational baseline. It does not replace country-specific notices, consent wording, age rules, tax obligations, or legal advice, and it does not itself constitute legal advice. Local requirements must be reviewed before PeekaListing operates in an additional country.',
         ],
       },
     ],
   },
   terms: {
     title: 'Terms of Use',
-    summary: 'The rules for using FindIt: your account, what you may publish, how transactions work, and the limits of our responsibility.',
+    summary: 'The rules for using PeekaListing: your account, what you may publish, how transactions work, and the limits of our responsibility.',
     sections: [
       {
         title: '1. Agreement and operator',
         paragraphs: [
-          'These terms are an agreement between you and [TO BE COMPLETED: operator legal name], registered at [TO BE COMPLETED: registered address], which operates FindIt. By using FindIt you accept these terms. If you do not accept them, do not use the service.',
+          'These terms are an agreement between you and [TO BE COMPLETED: operator legal name], registered at [TO BE COMPLETED: registered address], which operates PeekaListing. By using PeekaListing you accept these terms. If you do not accept them, do not use the service.',
           'These terms are governed by the laws of Zimbabwe, and the courts of Zimbabwe have jurisdiction over disputes arising from them. This does not remove any protection available to you under the mandatory law of the country where you live.',
         ],
       },
       {
         title: '2. Our role in the marketplace',
         paragraphs: [
-          'FindIt provides tools to discover, advertise, evaluate, and make contact. FindIt is not the buyer, the seller, an agent, a broker, an insurer, an escrow provider, a payment processor, or a guarantor in any transaction, and does not take custody of goods or funds.',
-          'FindIt does not verify the accuracy of listings, the condition or ownership of items, or the identity of every user. Verified status, where shown, means a document check was performed at a point in time. It is not a guarantee of honesty, quality, solvency, or performance.',
+          'PeekaListing provides tools to discover, advertise, evaluate, and make contact. PeekaListing is not the buyer, the seller, an agent, a broker, an insurer, an escrow provider, a payment processor, or a guarantor in any transaction, and does not take custody of goods or funds.',
+          'PeekaListing does not verify the accuracy of listings, the condition or ownership of items, or the identity of every user. Verified status, where shown, means a document check was performed at a point in time. It is not a guarantee of honesty, quality, solvency, or performance.',
           'You are responsible for deciding whether an offer and a counterparty are suitable, and for meeting any legal obligations that apply to your own dealings, including licensing, tax, and consumer-protection requirements.',
         ],
       },
@@ -264,45 +264,45 @@ export const legalDocuments = {
       {
         title: '6. Transactions and safety',
         paragraphs: [
-          'Transactions are arranged directly between users. Inspect before you pay, confirm ownership and authority to sell, keep records, and use traceable payment and communication methods. Never send money merely because a listing appears on FindIt.',
+          'Transactions are arranged directly between users. Inspect before you pay, confirm ownership and authority to sell, keep records, and use traceable payment and communication methods. Never send money merely because a listing appears on PeekaListing.',
           'Meet in public places where possible, tell someone where you are going, and take particular care with high-value, regulated, or remotely arranged transactions. Seek independent professional advice where the amount or the risk justifies it.',
-          'Payment, escrow, and subscription features are not currently offered through FindIt. Any funds you exchange are exchanged outside the platform and at your own risk.',
+          'Payment, escrow, and subscription features are not currently offered through PeekaListing. Any funds you exchange are exchanged outside the platform and at your own risk.',
         ],
       },
       {
         title: '7. Your content and the licence you grant',
         paragraphs: [
-          'You keep ownership of the content you submit. You grant FindIt a non-exclusive, worldwide, royalty-free licence to host, store, reproduce, resize, transcode, display, and distribute that content for the purpose of operating and promoting the marketplace. For video, this expressly includes processing it into playback formats and generating thumbnails.',
+          'You keep ownership of the content you submit. You grant PeekaListing a non-exclusive, worldwide, royalty-free licence to host, store, reproduce, resize, transcode, display, and distribute that content for the purpose of operating and promoting the marketplace. For video, this expressly includes processing it into playback formats and generating thumbnails.',
           'This licence lasts while your content is published and for the limited retention period afterwards described in the Privacy Policy. You confirm that you hold the rights necessary to grant it.',
-          'If you believe content on FindIt infringes your rights, contact us through Contact Support with enough detail to identify the content and your claim.',
+          'If you believe content on PeekaListing infringes your rights, contact us through Contact Support with enough detail to identify the content and your claim.',
         ],
       },
       {
         title: '8. Moderation and enforcement',
         paragraphs: [
-          'FindIt may review, limit, reject, or remove content, and may restrict or close accounts, where these terms or the Community and Marketplace Rules are breached or where there is risk to users or the service. Uploaded video is reviewed before it is shown publicly.',
+          'PeekaListing may review, limit, reject, or remove content, and may restrict or close accounts, where these terms or the Community and Marketplace Rules are breached or where there is risk to users or the service. Uploaded video is reviewed before it is shown publicly.',
           'We aim to act proportionately and to record the reason for a decision. If you believe a decision about your account or content was wrong, you may ask for it to be reviewed through Contact Support.',
         ],
       },
       {
         title: '9. Availability and liability',
         paragraphs: [
-          'FindIt is provided on an as-is and as-available basis. We do not guarantee uninterrupted availability, that listings are accurate, that a counterparty will perform, or that the service is fit for a particular purpose.',
-          'To the fullest extent permitted by law, FindIt is not liable for indirect or consequential loss, loss of profit, loss of data, or loss arising from a transaction or dealing between users. Nothing in these terms excludes liability that cannot lawfully be excluded, including liability for death or personal injury caused by negligence, or for fraud.',
+          'PeekaListing is provided on an as-is and as-available basis. We do not guarantee uninterrupted availability, that listings are accurate, that a counterparty will perform, or that the service is fit for a particular purpose.',
+          'To the fullest extent permitted by law, PeekaListing is not liable for indirect or consequential loss, loss of profit, loss of data, or loss arising from a transaction or dealing between users. Nothing in these terms excludes liability that cannot lawfully be excluded, including liability for death or personal injury caused by negligence, or for fraud.',
           '[TO BE COMPLETED: confirm whether an aggregate liability cap is to be stated, and its amount, with legal advice.]',
         ],
       },
       {
         title: '10. Disputes',
         paragraphs: [
-          'Disputes between users about a transaction are between those users. FindIt is not an arbitrator and cannot compel a refund, a delivery, or a return.',
-          'If you have a dispute with FindIt itself, contact us first through Contact Support so we can try to resolve it directly. If it cannot be resolved within a reasonable period, it may be referred to the courts of Zimbabwe. [TO BE COMPLETED: confirm whether a mediation or arbitration step should precede litigation.]',
+          'Disputes between users about a transaction are between those users. PeekaListing is not an arbitrator and cannot compel a refund, a delivery, or a return.',
+          'If you have a dispute with PeekaListing itself, contact us first through Contact Support so we can try to resolve it directly. If it cannot be resolved within a reasonable period, it may be referred to the courts of Zimbabwe. [TO BE COMPLETED: confirm whether a mediation or arbitration step should precede litigation.]',
         ],
       },
       {
         title: '11. Changes and contact',
         paragraphs: [
-          'We may update these terms as the service develops. Material changes will be notified in the application before they take effect, and the review date at the top of this page will be updated. Continuing to use FindIt after a change takes effect means you accept the updated terms.',
+          'We may update these terms as the service develops. Material changes will be notified in the application before they take effect, and the review date at the top of this page will be updated. Continuing to use PeekaListing after a change takes effect means you accept the updated terms.',
           'Questions about these terms may be submitted through Contact Support.',
         ],
       },
@@ -310,12 +310,12 @@ export const legalDocuments = {
   },
   cookies: {
     title: 'Cookie Policy',
-    summary: 'FindIt does not use tracking or advertising cookies. This page explains the browser storage it does use, and why.',
+    summary: 'PeekaListing does not use tracking or advertising cookies. This page explains the browser storage it does use, and why.',
     sections: [
       {
-        title: '1. FindIt uses browser storage rather than tracking cookies',
+        title: '1. PeekaListing uses browser storage rather than tracking cookies',
         paragraphs: [
-          'FindIt does not set advertising cookies, does not use cross-site tracking pixels, and does not share browsing behaviour with advertising networks.',
+          'PeekaListing does not set advertising cookies, does not use cross-site tracking pixels, and does not share browsing behaviour with advertising networks.',
           'Instead the application uses your browser’s own local and session storage to keep you signed in and to remember your preferences. Unlike cookies, these values are not transmitted with every request to the server; they stay in your browser and are read by the application when it loads.',
           'Our hosting and infrastructure providers may set strictly necessary cookies of their own to route requests and protect the service from abuse.',
         ],
@@ -339,7 +339,7 @@ export const legalDocuments = {
       {
         title: '4. Measurement storage',
         paragraphs: [
-          'If you are not signed in, FindIt generates a random session identifier and keeps it in session storage for the current browser tab. It is attached to interaction events -- such as viewing a listing or watching a Peek -- so that recommendations and popularity ordering work for visitors without an account.',
+          'If you are not signed in, PeekaListing generates a random session identifier and keeps it in session storage for the current browser tab. It is attached to interaction events -- such as viewing a listing or watching a Peek -- so that recommendations and popularity ordering work for visitors without an account.',
           'This identifier is random. It is not derived from your device, is not shared with third parties, is not used to build an advertising profile, and is discarded when you close the tab.',
         ],
       },
@@ -348,14 +348,14 @@ export const legalDocuments = {
         paragraphs: [
           'You can clear browser storage or block cookies at any time through your browser settings. Doing so will sign you out and reset your saved preferences, and some account features will not work without essential storage.',
           'You can turn off personalised recommendations in the application without clearing anything. See section 8 of the Privacy Policy.',
-          'If FindIt ever introduces non-essential analytics or marketing technology, it will be described here and placed behind a consent choice before it is switched on.',
+          'If PeekaListing ever introduces non-essential analytics or marketing technology, it will be described here and placed behind a consent choice before it is switched on.',
         ],
       },
     ],
   },
   'community-guidelines': {
     title: 'Community and Marketplace Rules',
-    summary: 'The behaviour and content standards that keep FindIt useful, honest, and safer for everyone.',
+    summary: 'The behaviour and content standards that keep PeekaListing useful, honest, and safer for everyone.',
     sections: [
       {
         title: 'Be accurate',
@@ -395,7 +395,7 @@ export const legalDocuments = {
       {
         title: 'Enforcement',
         paragraphs: [
-          'Depending on severity and history, FindIt may edit or remove content, limit features, suspend or close an account, preserve evidence, or refer a matter to the appropriate authorities.',
+          'Depending on severity and history, PeekaListing may edit or remove content, limit features, suspend or close an account, preserve evidence, or refer a matter to the appropriate authorities.',
           'Decisions should be proportionate and recorded. If you believe a decision about you was wrong, you may ask for it to be reviewed through Contact Support.',
         ],
       },

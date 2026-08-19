@@ -22,7 +22,7 @@ export default function UsersTable({ users, currentUserId, onStatusChange, onBan
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] text-sm">
+        <table className="admin-data-table w-full min-w-[900px] text-sm">
           <thead><tr className="border-b bg-muted/30 text-left"><th className="p-3">User</th><th className="p-3">Contact</th><th className="p-3">Adverts</th><th className="p-3">Role</th><th className="p-3">Status</th><th className="p-3">Joined</th><th className="p-3">Actions</th></tr></thead>
           <tbody>
             {users.length === 0 ? <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No users match these filters.</td></tr> : users.map((user) => (

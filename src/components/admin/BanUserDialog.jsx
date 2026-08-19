@@ -42,7 +42,7 @@ export default function BanUserDialog({ open, onOpenChange, user, onConfirm, isL
         <DialogHeader>
           <DialogTitle>Ban account</DialogTitle>
           <DialogDescription>
-            Temporarily block {user?.full_name || 'this user'} from using FindIt.
+            Temporarily block {user?.full_name || 'this user'} from using PeekaListing.
           </DialogDescription>
         </DialogHeader>
 
