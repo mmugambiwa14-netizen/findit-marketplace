@@ -40,6 +40,11 @@ test('disabled or unsupported providers cannot reach Supabase Auth', () => {
   assert.match(authSource, /setOAuthSessionFromPayload\(message\.session\)/);
 });
 
+test('desktop OAuth popup keeps the opener bridge reachable', () => {
+  assert.match(authSource, /popup=yes,width=520,height=720,resizable=yes,scrollbars=yes/);
+  assert.doesNotMatch(authSource, /popup=yes,width=520,height=720[^']*noopener/);
+});
+
 test('Login and Register hide unavailable OAuth providers', () => {
   for (const source of [loginSource, registerSource]) {
     assert.match(source, /oauthProviders\.google &&/);
