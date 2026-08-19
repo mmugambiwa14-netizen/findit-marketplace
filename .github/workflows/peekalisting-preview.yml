@@ -100,6 +100,12 @@ jobs:
             *bwgklpxoetrrkutottdb*) ;;
             *) echo "::error::Canonical staging is not bound to FindIt Staging Supabase"; exit 1 ;;
           esac
+          # The browser bundle no longer carries a hardcoded staging VAPID key,
+          # so an unset variable ships a build where background push is silently
+          # unavailable and Settings reports "not configured".
+          if [ -z "${VITE_WEB_PUSH_PUBLIC_KEY:-}" ]; then
+            echo "::warning::VITE_WEB_PUSH_PUBLIC_KEY is not set for the cloudflare-staging environment; background Web Push will be unavailable in this build."
+          fi
 
       - name: Normalize locked dependency metadata
         run: node ./scripts/normalize-package-lock.mjs --write

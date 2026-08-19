@@ -40,12 +40,17 @@ test('browser and PWA metadata identify PeekaListing', async () => {
 
 test('startup and push fallbacks never expose the former product name', async () => {
   const startup = await read('src/main.jsx');
+  // public/sw.js owns push rendering; public/push-sw.js carries the subscription
+  // lifecycle only. The branded fallbacks therefore belong to the worker, and
+  // push-sw.js is asserted to render nothing so the two cannot drift apart.
+  const worker = await read('public/sw.js');
   const push = await read('public/push-sw.js');
   assert.match(startup, /PeekaListing startup failed/);
   assert.match(startup, /PeekaListing preview could not start/);
   assert.doesNotMatch(startup, /FindIt/);
-  assert.match(push, /title: 'PeekaListing'/);
-  assert.match(push, /peekalisting-binoculars\.svg/);
+  assert.match(worker, /'PeekaListing update'/);
+  assert.match(worker, /peekalisting-binoculars\.svg/);
+  assert.doesNotMatch(push, /showNotification/);
 });
 
 test('live user-facing surfaces never expose the former product name', async () => {

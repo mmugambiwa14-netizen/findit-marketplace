@@ -33,15 +33,37 @@ function safeText(value, fallback, max) {
   const text = typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g, ' ').trim() : '';
   return (text || fallback).slice(0, max);
 }
-function safeAppUrl(path) {
-  const candidate = typeof path === 'string' ? path.trim() : '';
-  const safePath = candidate.startsWith('/') && !candidate.startsWith('//') && !candidate.includes('://')
-    ? candidate
-    : '/notifications';
+function scopeBasePath() {
   const scope = new URL(self.registration.scope);
-  const basePath = scope.pathname.endsWith('/') ? scope.pathname.slice(0, -1) : scope.pathname;
+  return scope.pathname.endsWith('/') ? scope.pathname.slice(0, -1) : scope.pathname;
+}
+
+/* Normalises a push link to a scope-relative app path. Notifications carry this
+ * path -- never a resolved href -- so that a click can re-validate it. An
+ * absolute same-origin href is still accepted so notifications left in the tray
+ * by an earlier build keep deep linking instead of falling back. */
+function safeAppPath(path) {
+  const candidate = typeof path === 'string' ? path.trim() : '';
+  if (candidate.startsWith('/') && !candidate.startsWith('//') && !candidate.includes('://')) return candidate;
+  try {
+    const resolved = new URL(candidate);
+    const scope = new URL(self.registration.scope);
+    if (resolved.origin !== scope.origin) return '/notifications';
+    const basePath = scopeBasePath();
+    const pathname = basePath && resolved.pathname.startsWith(basePath)
+      ? resolved.pathname.slice(basePath.length)
+      : resolved.pathname;
+    return `${pathname || '/'}${resolved.search}${resolved.hash}`;
+  } catch {
+    return '/notifications';
+  }
+}
+
+function safeAppUrl(path) {
+  const safePath = safeAppPath(path);
+  const scope = new URL(self.registration.scope);
   const normalized = safePath === '/' ? '' : safePath;
-  return new URL(`${basePath}${normalized}` || '/', scope.origin).href;
+  return new URL(`${scopeBasePath()}${normalized}` || '/', scope.origin).href;
 }
 
 async function trimCache(cacheName, maxEntries) {
@@ -98,7 +120,7 @@ self.addEventListener('push', (event) => {
       renotify: false,
       silent: false,
       timestamp: Number(new Date(payload.timestamp || Date.now())) || Date.now(),
-      data: { notificationId, link: safeAppUrl(link), type: safeText(payload.type, 'account_update', 80) },
+      data: { notificationId, link: safeAppPath(link), type: safeText(payload.type, 'account_update', 80) },
     });
   })());
 });

@@ -1,4 +1,10 @@
-/* PeekaListing Web Push handlers. Loaded by the stamped service worker. */
+/* PeekaListing push subscription lifecycle. Loaded by the stamped service worker.
+ *
+ * Push rendering and notification click routing live in public/sw.js and must
+ * NOT be duplicated here. Both files execute in the same worker scope, so a
+ * second 'push' or 'notificationclick' listener registered here would show a
+ * competing notification and race the click routing to the wrong destination.
+ */
 
 const STAGING_HOST_PREFIXES = ['peekalisting-stagi', 'findit-marketplace-stagi'];
 const CANONICAL_STAGING_HOST = 'staging.peekalisting.com';
@@ -12,55 +18,6 @@ function isStagingOrigin() {
 self.addEventListener('install', (event) => {
   if (!isStagingOrigin()) return;
   event.waitUntil(self.skipWaiting());
-});
-
-function safePushPayload(event) {
-  try {
-    return event.data?.json() || {};
-  } catch {
-    return { title: 'PeekaListing', body: event.data?.text() || 'You have a new update.' };
-  }
-}
-
-self.addEventListener('push', (event) => {
-  const payload = safePushPayload(event);
-  const title = String(payload.title || 'PeekaListing');
-  const options = {
-    body: String(payload.body || payload.message || 'You have a new update.'),
-    icon: payload.icon || '/brand/peekalisting-binoculars.svg',
-    badge: payload.badge || '/brand/peekalisting-binoculars.svg',
-    tag: payload.tag || payload.alertId || undefined,
-    renotify: Boolean(payload.renotify),
-    requireInteraction: Boolean(payload.requireInteraction),
-    data: {
-      url: payload.url || payload.link || '/notifications',
-      alertId: payload.alertId || null,
-      type: payload.type || 'account',
-    },
-  };
-
-  event.waitUntil((async () => {
-    await self.registration.showNotification(title, options);
-    if (Number.isFinite(payload.badgeCount) && self.registration.setAppBadge) {
-      await self.registration.setAppBadge(Math.max(0, Number(payload.badgeCount)));
-    }
-  })());
-});
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  const target = new URL(event.notification.data?.url || '/notifications', self.location.origin).href;
-
-  event.waitUntil((async () => {
-    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const existing = windows.find((client) => new URL(client.url).origin === self.location.origin);
-    if (existing) {
-      await existing.focus();
-      if ('navigate' in existing) await existing.navigate(target);
-      return;
-    }
-    await self.clients.openWindow(target);
-  })());
 });
 
 self.addEventListener('pushsubscriptionchange', (event) => {
