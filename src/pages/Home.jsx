@@ -11,6 +11,7 @@ import HomePeekRail from '@/components/discover/HomePeekRail';
 import BrandLogo from '@/components/BrandLogo';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
+import './home-redesign.css';
 
 const LOCATION_STORAGE_KEY = 'findit.discover-location';
 const DISCOVER_VIEWS = [

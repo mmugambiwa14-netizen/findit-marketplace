@@ -1,0 +1,262 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
+
+/* A visual skin for the existing Discover page. This file intentionally does
+ * not add, remove, or reposition any application content. */
+.findit-screen:has(> .findit-hero-panel) {
+  --background: 42 31% 97%;
+  --foreground: 164 27% 15%;
+  --surface-secondary: 42 24% 93%;
+  --surface-raised: 0 0% 100%;
+  --card: 0 0% 100%;
+  --card-foreground: 164 27% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 164 27% 15%;
+  --primary: 163 43% 37%;
+  --primary-hover: 163 47% 29%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 42 24% 93%;
+  --secondary-foreground: 164 27% 15%;
+  --muted: 42 24% 93%;
+  --muted-foreground: 161 12% 43%;
+  --accent: 151 34% 90%;
+  --accent-foreground: 164 35% 24%;
+  --border: 157 17% 83%;
+  --border-strong: 157 18% 73%;
+  --input: 157 18% 76%;
+  --ring: 163 43% 37%;
+  --clay-shadow-dark: 163 19% 24%;
+  min-height: 100dvh;
+  overflow: hidden;
+  color: hsl(var(--foreground));
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  background:
+    radial-gradient(circle at 86% -4%, hsl(153 38% 87% / .8), transparent 29rem),
+    radial-gradient(circle at 5% 54%, hsl(37 55% 91% / .58), transparent 25rem),
+    hsl(var(--background));
+}
+
+.dark .findit-screen:has(> .findit-hero-panel) {
+  --background: 164 20% 8%;
+  --foreground: 42 33% 95%;
+  --surface-secondary: 164 18% 12%;
+  --surface-raised: 164 17% 17%;
+  --card: 164 18% 13%;
+  --card-foreground: 42 33% 95%;
+  --popover: 164 17% 16%;
+  --popover-foreground: 42 33% 95%;
+  --primary: 157 55% 58%;
+  --primary-hover: 157 59% 66%;
+  --accent: 157 28% 21%;
+  --accent-foreground: 157 55% 84%;
+  --border: 157 19% 24%;
+  --border-strong: 157 18% 33%;
+  --input: 157 18% 30%;
+  --ring: 157 55% 58%;
+  --clay-shadow-dark: 164 45% 3%;
+  background:
+    radial-gradient(circle at 86% -4%, hsl(153 35% 20% / .72), transparent 29rem),
+    hsl(var(--background));
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel {
+  position: relative;
+  isolation: isolate;
+  padding-top: 1.25rem;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel::before {
+  position: absolute;
+  z-index: -1;
+  top: 3.5rem;
+  right: 1rem;
+  left: 1rem;
+  height: 18rem;
+  border-radius: 2rem;
+  background: linear-gradient(135deg, #153e32, #214e3e 58%, #19352c);
+  box-shadow: 0 25px 60px hsl(164 35% 17% / .18);
+  content: '';
+}
+
+.dark .findit-screen:has(> .findit-hero-panel) .findit-hero-panel::before {
+  background: linear-gradient(135deg, hsl(164 30% 18%), hsl(164 30% 12%));
+  box-shadow: 0 25px 60px hsl(164 45% 2% / .35);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel > section[aria-labelledby='discover-heading'] {
+  padding: 2.7rem clamp(1.2rem, 5vw, 3.8rem) 1.8rem;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .findit-overline {
+  color: hsl(151 57% 77%);
+  font-size: .68rem;
+  letter-spacing: .16em;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .fluid-display {
+  max-width: 680px;
+  color: #f2f8f1;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(2.4rem, 5.6vw, 4.3rem);
+  font-weight: 600;
+  letter-spacing: -.06em;
+  line-height: .98;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel section[aria-labelledby='discover-heading'] p:last-child {
+  color: #b5cfc0;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel > div:has(> form) {
+  padding: .8rem clamp(.8rem, 3vw, 1.15rem) 1.1rem;
+  border: 1px solid hsl(151 37% 82% / .23);
+  border-radius: 0 0 1.65rem 1.65rem;
+  background: #153e32;
+  box-shadow: 0 24px 48px hsl(164 35% 17% / .18);
+}
+
+.dark .findit-screen:has(> .findit-hero-panel) .findit-hero-panel > div:has(> form) {
+  background: hsl(164 30% 15%);
+  border-color: hsl(var(--border));
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .locked-control {
+  border-color: hsl(151 38% 87% / .23);
+  color: #f2f8f1;
+  background: hsl(164 33% 9% / .44);
+  box-shadow: inset 0 1px hsl(0 0% 100% / .08), 0 12px 26px hsl(164 35% 5% / .15);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .locked-control:hover {
+  border-color: hsl(151 54% 75% / .55);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel input,
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel input::placeholder {
+  color: #f2f8f1;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel input::placeholder {
+  color: #9db8aa;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .clay-button {
+  color: #123025;
+  background: linear-gradient(135deg, #d3f0dc, #a9ddbd);
+  box-shadow: 0 9px 22px hsl(151 54% 70% / .2), inset 0 1px hsl(0 0% 100% / .65);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .clay-button:hover {
+  background: linear-gradient(135deg, #e2f8e8, #b8e8c9);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .fluid-segmented-control {
+  border-color: hsl(151 38% 87% / .23);
+  background: hsl(164 33% 9% / .38);
+  box-shadow: inset 0 1px hsl(0 0% 100% / .07), 0 9px 20px hsl(164 35% 5% / .14);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .fluid-segmented-indicator {
+  background: #b7e7c9;
+  box-shadow: 0 5px 17px hsl(151 54% 70% / .2);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .fluid-segmented-control button {
+  color: #b4cbbd;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .fluid-segmented-control button[aria-pressed='true'] {
+  color: #123025;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel > main {
+  padding-top: .4rem;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel > main .fluid-section-title,
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel > main .findit-section-title {
+  color: hsl(var(--foreground));
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 600;
+  letter-spacing: -.045em;
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel > main .findit-overline {
+  color: hsl(var(--primary));
+}
+
+.findit-screen:has(> .findit-hero-panel) .locked-category-card {
+  min-height: 156px;
+  border-color: hsl(var(--border));
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, hsl(var(--surface-raised) / .98), hsl(var(--card)) 54%, hsl(var(--card)));
+  box-shadow: inset 0 1px hsl(0 0% 100% / .5), 0 12px 30px hsl(var(--clay-shadow-dark) / .11);
+}
+
+.findit-screen:has(> .findit-hero-panel) .locked-category-card:hover {
+  border-color: hsl(var(--primary) / .52);
+  box-shadow: inset 0 1px hsl(0 0% 100% / .6), 0 18px 36px hsl(var(--clay-shadow-dark) / .16);
+}
+
+.findit-screen:has(> .findit-hero-panel) .locked-category-card .locked-icon-tile {
+  border-color: hsl(var(--primary) / .28);
+  background: linear-gradient(145deg, hsl(var(--accent) / .95), hsl(var(--primary) / .08));
+  box-shadow: inset 0 1px hsl(0 0% 100% / .7), 0 8px 18px hsl(var(--primary) / .12);
+}
+
+.findit-screen:has(> .findit-hero-panel) .locked-category-card > div[aria-hidden='true']:first-of-type {
+  background: linear-gradient(90deg, hsl(var(--card)) 0%, hsl(var(--card)) 34%, hsl(var(--card) / .8) 52%, hsl(var(--card) / .08) 100%);
+}
+
+.findit-screen:has(> .findit-hero-panel) .locked-map-panel,
+.findit-screen:has(> .findit-hero-panel) .locked-list-row,
+.findit-screen:has(> .findit-hero-panel) .clay-card {
+  border-color: hsl(var(--border));
+  border-radius: 1.25rem;
+  box-shadow: inset 0 1px hsl(0 0% 100% / .42), 0 12px 30px hsl(var(--clay-shadow-dark) / .1);
+}
+
+.findit-screen:has(> .findit-hero-panel) .locked-list-row,
+.findit-screen:has(> .findit-hero-panel) .clay-card {
+  background: linear-gradient(145deg, hsl(var(--surface-raised) / .98), hsl(var(--card)) 56%);
+}
+
+.findit-screen:has(> .findit-hero-panel) .locked-icon-tile {
+  border-color: hsl(var(--primary) / .28);
+}
+
+.findit-screen:has(> .findit-hero-panel) .findit-hero-panel .text-primary {
+  color: hsl(var(--primary));
+}
+
+@media (max-width: 767px) {
+  .findit-screen:has(> .findit-hero-panel) .findit-hero-panel {
+    padding-top: .7rem;
+  }
+
+  .findit-screen:has(> .findit-hero-panel) .findit-hero-panel::before {
+    top: .45rem;
+    right: .5rem;
+    left: .5rem;
+    height: 13rem;
+    border-radius: 1.35rem;
+  }
+
+  .findit-screen:has(> .findit-hero-panel) .findit-hero-panel > header {
+    color: #f2f8f1;
+  }
+
+  .findit-screen:has(> .findit-hero-panel) .findit-hero-panel > div:has(> form) {
+    padding: .65rem .7rem .85rem;
+    border-radius: 1.35rem;
+  }
+
+  .findit-screen:has(> .findit-hero-panel) .findit-hero-panel .locked-control {
+    border-radius: 1rem;
+  }
+
+  .findit-screen:has(> .findit-hero-panel) .locked-category-card {
+    min-height: 132px;
+    border-radius: 1rem;
+  }
+}
