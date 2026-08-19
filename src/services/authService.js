@@ -410,7 +410,10 @@ export async function signInWithOAuth(provider, redirectPath = '/') {
       popup = window.open(
         'about:blank',
         'peekalisting-oauth',
-        'popup=yes,width=520,height=720,resizable=yes,scrollbars=yes,noopener,noreferrer',
+        // The callback bridge needs an opener reference so the OAuth popup
+        // can hand the authenticated result back to this tab. The bridge
+        // validates the exact origin and message envelope before accepting it.
+        'popup=yes,width=520,height=720,resizable=yes,scrollbars=yes',
       );
     } catch {
       popup = null;

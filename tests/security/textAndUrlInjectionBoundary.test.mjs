@@ -64,6 +64,15 @@ test('external window openings must explicitly prevent opener access', async () 
     const source = await readFile(file, 'utf8');
     const openCalls = source.match(/window\.open\([^;]+\);?/g) ?? [];
     for (const call of openCalls) {
+      // The OAuth bridge intentionally retains the opener: it starts at
+      // about:blank, navigates only to the provider URL returned by Supabase,
+      // and accepts callback data only after exact-origin/envelope validation.
+      // All other new windows must remain opener-isolated.
+      if (/window\.open\(\s*['"]about:blank['"]\s*,\s*['"]peekalisting-oauth['"]/.test(call)) {
+        assert.match(source, /waitForOAuthBridge/);
+        assert.match(source, /event\.origin/);
+        continue;
+      }
       if (!/noopener/.test(call) || !/noreferrer/.test(call)) {
         unsafe.push(`${relative(new URL('../../', import.meta.url).pathname, file.pathname)}: ${call.slice(0, 120)}`);
       }
