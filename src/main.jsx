@@ -4,6 +4,7 @@ import '@/index.css'
 import '@/findit-locked-design.css'
 import '@/pwa-viewport.css'
 import '@/fluid-ui.css'
+import { installClientErrorMonitoring, reportClientError } from '@/lib/errorMonitoring'
 
 const rootElement = document.getElementById('root')
 
@@ -12,6 +13,7 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement)
+installClientErrorMonitoring()
 
 function StartupFailure() {
   return (
@@ -47,6 +49,7 @@ async function bootstrap() {
     )
   } catch (error) {
     console.error('PeekaListing application bootstrap failed:', error)
+    reportClientError(error, 'bootstrap')
     root.render(<StartupFailure />)
   }
 }

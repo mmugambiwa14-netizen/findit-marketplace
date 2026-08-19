@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { GuestBanner } from '@/components/auth/GuestPromptSheet';
 import ActiveConversationAutoScroll from '@/components/messaging/ActiveConversationAutoScroll';
@@ -71,6 +72,14 @@ function isListingDetailRoute(pathname) {
 export default function AppLayout() {
   const location = useLocation();
   const { user } = useAuth();
+
+  useEffect(() => {
+    const main = document.getElementById('main-content');
+    if (!main) return undefined;
+    const focusMain = () => main.focus({ preventScroll: true });
+    const frame = window.requestAnimationFrame(focusMain);
+    return () => window.cancelAnimationFrame(frame);
+  }, [location.pathname]);
   const selfContained = SELF_CONTAINED_ROUTES.some((route) => matchesRoute(location.pathname, route));
   const isDiscoverHome = location.pathname === '/';
   const showMobileNav = MOBILE_NAV_ROUTES.has(location.pathname);
@@ -98,6 +107,9 @@ export default function AppLayout() {
           showMobileNav && 'findit-mobile-nav-clearance',
         )}
       >
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {document.title}
+        </div>
         <PeekRequestIntentHandler />
         <Outlet />
         {isDiscoverHome && <div className="md:hidden"><SiteFooter compact /></div>}

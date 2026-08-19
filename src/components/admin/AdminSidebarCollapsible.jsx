@@ -21,7 +21,7 @@ export default function AdminSidebarCollapsible({ mobileOpen = false, onMobileOp
       'w-[min(88vw,22rem)]',
     )}>
       <div className="flex min-h-16 items-center justify-between border-b border-sidebar-border px-4 pt-[env(safe-area-inset-top)]">
-        <Link to="/admin" aria-label="FindIt admin overview"><BrandLogo showWordmark={!isCollapsed} markClassName="h-8 w-8" wordmarkClassName="text-lg" /></Link>
+        <Link to="/admin" aria-label="PeekaListing admin overview"><BrandLogo showWordmark={!isCollapsed} markClassName="h-8 w-8" wordmarkClassName="text-lg" /></Link>
         <button type="button" onClick={() => onMobileOpenChange?.(false)} className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-sidebar-accent sm:hidden" aria-label="Close admin navigation"><X className="h-5 w-5" /></button>
         <button type="button" onClick={() => setIsCollapsed((value) => !value)} className="hidden h-9 w-9 items-center justify-center rounded-xl hover:bg-sidebar-accent sm:flex" aria-label={isCollapsed ? 'Expand admin navigation' : 'Collapse admin navigation'}>
           {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}

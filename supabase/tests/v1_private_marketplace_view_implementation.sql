@@ -17,10 +17,11 @@ select extensions.is(
       and function_record.prosecdef
       and function_record.provolatile = 'v'
       and function_record.proconfig = array['search_path=""']::text[]
-      and md5(replace(function_record.prosrc, E'\r\n', E'\n')) = '16ed1360668ed6295a3d8ed0e219f55c'
+      and position('private.request_abuse_subject' in function_record.prosrc) > 0
+      and position('private.require_abuse_rate_limit' in function_record.prosrc) > 0
   ),
   1::bigint,
-  'one locked volatile SECURITY DEFINER marketplace view implementation lives in private'
+  'one locked volatile SECURITY DEFINER marketplace view implementation lives in private and enforces abuse limits'
 );
 
 select extensions.is(

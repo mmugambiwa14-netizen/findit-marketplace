@@ -17,7 +17,8 @@ test('Cloudflare deployment config owns SPA fallback and security headers', () =
   assert.match(csp, /object-src 'none'/);
   assert.match(csp, /frame-ancestors 'none'/);
   assert.match(csp, /https:\/\/api\.maptiler\.com/);
-  assert.match(csp, /https:\/\/\*\.supabase\.co/);
+  assert.match(csp, /https:\/\/bwgklpxoetrrkutottdb\.supabase\.co/);
+  assert.match(csp, /https:\/\/jvbpxnfxkptuexgssplj\.supabase\.co/);
   assert.match(csp, /style-src-attr 'unsafe-inline'/);
   assert.doesNotMatch(csp, /script-src[^;]*'unsafe-inline'/);
   assert.doesNotMatch(csp, /script-src[^;]*'unsafe-eval'/);
