@@ -51,6 +51,8 @@ test('owner terminal-state and managed-review migrations preserve private RPC bo
   assert.match(lifecycle, /'sold'/);
   assert.match(lifecycle, /'rented'/);
   assert.match(lifecycle, /public\.is_country_publishable\(coalesce\(listing_row\.country_code, 'ZW'\)\)/);
+  assert.match(lifecycle, /grant execute on function private\.owner_transition_listing\(uuid, text\) to authenticated, service_role/i);
+  assert.match(lifecycle, /findit:0101-authenticated-boundary/);
   assert.match(managed, /record_admin_action/);
   assert.match(managed, /before_row/);
   assert.match(managed, /after_row/);

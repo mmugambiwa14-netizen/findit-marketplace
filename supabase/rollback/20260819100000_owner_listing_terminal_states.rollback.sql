@@ -31,6 +31,7 @@ begin
 end;
 $$;
 revoke all on function private.owner_transition_listing(uuid, text) from public, anon, authenticated, service_role;
+grant execute on function private.owner_transition_listing(uuid, text) to authenticated, service_role;
 
 create or replace function public.owner_transition_listing(
   p_listing_id uuid,
@@ -46,4 +47,5 @@ as $$
 $$;
 
 revoke all on function public.owner_transition_listing(uuid, text) from public, anon;
-grant execute on function public.owner_transition_listing(uuid, text) to authenticated;
+grant execute on function public.owner_transition_listing(uuid, text) to authenticated, service_role;
+comment on function public.owner_transition_listing(uuid, text) is 'findit:0101-authenticated-boundary';

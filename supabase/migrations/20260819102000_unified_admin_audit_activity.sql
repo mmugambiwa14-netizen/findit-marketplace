@@ -98,8 +98,8 @@ begin
     from public.recommendation_configuration_audit a
     left join public.users u on u.id = a.actor_id
   ), filtered as (
-    select * from activity
-    where (p_target_type = 'all' or target_record_type = p_target_type)
+    select activity.* from activity
+    where (p_target_type = 'all' or activity.target_record_type = p_target_type)
       and (
         normalized_query = ''
         or coalesce(admin_email, '') ilike '%' || escaped_query || '%' escape E'\\'
@@ -108,7 +108,7 @@ begin
         or coalesce(reason, '') ilike '%' || escaped_query || '%' escape E'\\'
         or coalesce(result, '') ilike '%' || escaped_query || '%' escape E'\\'
       )
-      and (p_cursor_at is null or (created_at, audit_id) < (p_cursor_at, p_cursor_id))
+      and (p_cursor_at is null or (activity.created_at, activity.audit_id) < (p_cursor_at, p_cursor_id))
   )
   select
     filtered.audit_id,
