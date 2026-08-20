@@ -18,9 +18,13 @@ select extensions.is(
       union all
       select 1
       where position(
-        '#variable_conflict use_column'
+        'q.parent_title'
         in (select p.prosrc from pg_proc p where p.oid = 'private.admin_tour_queue(text,text,integer,integer)'::regprocedure::oid)
       ) > 0
+        and position(
+          'q.owner_name'
+          in (select p.prosrc from pg_proc p where p.oid = 'private.admin_tour_queue(text,text,integer,integer)'::regprocedure::oid)
+        ) > 0
       union all
       select 1
       where position(
@@ -49,12 +53,19 @@ select extensions.is(
       'private.apply_pending_response_peek_binding()'::regprocedure
     ]) as targets(function_oid)
     join pg_proc p on p.oid = targets.function_oid::oid
-    where position('''system''' in p.prosrc) > 0
-      and position('''info''' in p.prosrc) = 0
-      and position('''peek_request_answered''' in p.prosrc) > 0
+      where (
+        p.oid = 'private.bind_response_peek(uuid,uuid[])'::regprocedure
+        and position('''status_change''::public.alert_type' in p.prosrc) > 0
+        and position('''peek_request_answered''' in p.prosrc) > 0
+      )
+      or (
+        p.oid = 'private.apply_pending_response_peek_binding()'::regprocedure
+        and position('''system''' in p.prosrc) > 0
+        and position('''peek_request_answered''' in p.prosrc) > 0
+      )
   ),
   2::bigint,
-  'both Response Peek notification paths use the valid system alert type and accepted event'
+  'both Response Peek notification paths use valid alert types and the accepted event'
 );
 
 select extensions.ok(
