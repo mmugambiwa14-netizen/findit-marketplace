@@ -101,6 +101,8 @@ test('schema-backed category values and numeric constraints are enforced', () =>
 
 test('owners cannot invoke invented or destructive listing actions', () => {
   assert.deepEqual(normalizeOwnerListingAction(LOCATION_ID, 'pause'), { listingId: LOCATION_ID, action: 'pause' });
+  assert.deepEqual(normalizeOwnerListingAction(LOCATION_ID, 'sold'), { listingId: LOCATION_ID, action: 'sold' });
+  assert.deepEqual(normalizeOwnerListingAction(LOCATION_ID, 'rented'), { listingId: LOCATION_ID, action: 'rented' });
   for (const action of ['delete', 'approve', 'publish', 'purge', 'all']) {
     assert.throws(() => normalizeOwnerListingAction(LOCATION_ID, action), /Listing action is invalid/);
   }

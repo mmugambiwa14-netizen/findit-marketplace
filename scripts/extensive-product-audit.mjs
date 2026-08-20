@@ -8,6 +8,15 @@ const outputDirectory = resolve(root, 'artifacts/extensive-audit');
 const startedAt = new Date().toISOString();
 const gates = [];
 const validationSecret = randomBytes(32).toString('hex');
+// Batch files cannot be spawned directly by Node's spawnSync on Windows
+// (EINVAL). Invoke npm's CLI through the current Node executable so the
+// certification runner behaves the same on every platform.
+const npmCommand = process.platform === 'win32'
+  ? process.execPath
+  : 'npm';
+const npmPrefixArgs = process.platform === 'win32'
+  ? [resolve(process.execPath, '..', 'node_modules', 'npm', 'bin', 'npm-cli.js')]
+  : [];
 
 function runGate(name, command, args, options = {}) {
   const started = Date.now();
@@ -17,7 +26,7 @@ function runGate(name, command, args, options = {}) {
     env: { ...process.env, ...(options.env ?? {}) },
     maxBuffer: 32 * 1024 * 1024,
   });
-  const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
+  const output = `${result.stdout ?? ''}${result.stderr ?? ''}${result.error ? `\n${result.error.code ?? 'spawn_error'}: ${result.error.message}` : ''}`.trim();
   const gate = {
     name,
     command: [command, ...args].join(' '),
@@ -36,23 +45,42 @@ function runGate(name, command, args, options = {}) {
 const productionEnv = {
   NODE_ENV: 'production',
   VITE_MODE: 'production',
-  VITE_SUPABASE_URL: 'https://audit-runtime.supabase.co',
+  VITE_SUPABASE_URL: 'https://jvbpxnfxkptuexgssplj.supabase.co',
   VITE_SUPABASE_ANON_KEY: 'audit-runtime-public-anon-key-0123456789',
+  FINDIT_EXPECTED_PROJECT_REF: 'jvbpxnfxkptuexgssplj',
   VITE_FEATURE_BUSINESS_PROFILES: 'true',
   VITE_FEATURE_MESSAGING: 'true',
   VITE_FEATURE_ESSENTIAL_NOTIFICATIONS: 'true',
   VITE_AUTH_GOOGLE_ENABLED: 'true',
   VITE_FEATURE_GOOGLE_OAUTH: 'true',
-  VITE_FEATURE_INTERNATIONAL_LISTING: 'true',
+  VITE_FEATURE_MAPS: 'true',
+  VITE_MAPTILER_PUBLIC_KEY: 'audit-public-maptiler-key',
+  VITE_MAPTILER_STYLE_ID: 'streets-v4',
   VITE_FEATURE_MANUAL_LOCATION: 'true',
   VITE_FEATURE_CURRENT_LOCATION: 'true',
   VITE_FEATURE_REPORTING: 'true',
-  VITE_FEATURE_TOURS: 'false',
+  VITE_FEATURE_CURRENCY_CONVERSION: 'false',
+  VITE_FEATURE_PHONE_VERIFICATION: 'false',
+  VITE_FEATURE_INTERNATIONAL_LISTING: 'false',
+  VITE_FEATURE_SERVICE_RADIUS: 'false',
+  VITE_FEATURE_TOURS: 'true',
   VITE_FEATURE_TOURS_PREVIEW: 'false',
-  TOURS_BACKEND_ENABLED: 'false',
-  FINDIT_TOURS_RELEASE_ACCEPTED: 'false',
+  VITE_FEATURE_PREVIEW_FIXTURES: 'false',
+  VITE_PREVIEW_AUTH_BYPASS: 'false',
+  TOURS_BACKEND_ENABLED: 'true',
+  FINDIT_TOURS_RELEASE_ACCEPTED: 'true',
+  FINDIT_TOURS_ACCEPTANCE_ID: 'tour-acceptance-audit-20260820',
+  FINDIT_TOURS_WORKERS_ENABLED: 'true',
+  FINDIT_TOUR_PROCESSOR_MODE: 'github-actions',
+  FINDIT_TOUR_CLEANUP_WORKER_SECRET: validationSecret,
+  FINDIT_TOUR_CACHE_WORKER_SECRET: validationSecret,
+  FINDIT_TOUR_OBSERVABILITY_WORKER_SECRET: validationSecret,
   FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED: 'true',
   FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET: validationSecret,
+  FINDIT_PLATFORM_MAINTENANCE_WORKERS_ENABLED: 'true',
+  FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET: validationSecret,
+  FINDIT_RECOMMENDATION_WORKERS_ENABLED: 'true',
+  FINDIT_RECOMMENDATION_WORKER_SECRET: validationSecret,
   VITE_FEATURE_PAYMENTS: 'false',
   VITE_FEATURE_SUBSCRIPTIONS: 'false',
   VITE_FEATURE_ESCROW: 'false',
@@ -75,27 +103,20 @@ runGate('Base44 elimination', process.execPath, ['./scripts/verify-base44-elimin
 runGate('product route and control surface', process.execPath, ['./scripts/audit-product-surface.mjs']);
 runGate('expanded UI control surface', process.execPath, ['./scripts/audit-ui-surface.mjs']);
 runGate('closed production environment', process.execPath, ['./scripts/validate-env.mjs'], { env: productionEnv });
+runGate('lint', npmCommand, [...npmPrefixArgs, 'run', 'lint']);
+runGate('active typecheck', npmCommand, [...npmPrefixArgs, 'run', 'typecheck:active']);
+runGate('production build', npmCommand, [...npmPrefixArgs, 'run', 'build'], { env: productionEnv });
 
 const blocked = [
   {
-    name: 'fresh dependency installation',
-    status: 'blocked',
-    reason: 'Package registry access is unavailable in the audit environment; the existing node_modules directory is incomplete and was not trusted.',
-  },
-  {
-    name: 'installed ESLint, TypeScript and Vite build',
-    status: 'blocked',
-    reason: 'These gates require a successful locked dependency installation.',
-  },
-  {
     name: 'browser-driven interaction execution',
     status: 'blocked',
-    reason: 'The app cannot be served without the installed Vite/React dependency tree.',
+    reason: 'The browser-control backend is unavailable in this execution environment. Cloudflare staging HTTP/PWA/security/Supabase verification passed separately, but interactive browser, standalone-PWA and real-device OAuth acceptance still require a browser session.',
   },
   {
-    name: 'live Supabase, RLS, storage, email and worker execution',
+    name: 'hosted Auth provider preflight',
     status: 'blocked',
-    reason: 'No authorized staging Supabase runtime or deployment credentials are available in this environment.',
+    reason: 'The read-only Supabase Management API Auth preflight requires a process-only management token, and the hosted Before User Created hook still requires the Supabase Auth Hooks dashboard toggle. Database function/grant setup is complete in staging and production.',
   },
 ];
 

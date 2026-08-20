@@ -1,30 +1,30 @@
 {
-  "generatedAt": "2026-08-19T05:45:56.876Z",
+  "generatedAt": "2026-08-20T16:11:18.648Z",
   "scope": {
-    "sourceModules": 343,
+    "sourceModules": 333,
     "routedPatterns": 48,
     "pageModules": 40,
-    "uniqueControlInstances": 777,
-    "pageExpandedControlInstances": 1219
+    "uniqueControlInstances": 738,
+    "pageExpandedControlInstances": 1226
   },
   "controlsByElement": {
     "a": 8,
     "AlertDialog": 13,
-    "button": 129,
-    "Button": 269,
+    "button": 114,
+    "Button": 257,
     "Checkbox": 1,
-    "Dialog": 22,
+    "Dialog": 20,
     "DropdownMenuTrigger": 2,
     "form": 15,
-    "Input": 103,
-    "Link": 97,
+    "Input": 100,
+    "Link": 93,
     "PopoverTrigger": 1,
-    "Select": 31,
-    "SelectTrigger": 31,
+    "Select": 30,
+    "SelectTrigger": 30,
     "Sheet": 5,
     "Switch": 12,
     "TabsTrigger": 4,
-    "Textarea": 34
+    "Textarea": 33
   },
   "routes": [
     {
