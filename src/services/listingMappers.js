@@ -10,7 +10,7 @@ function one(value) {
 
 /**
  * Adapts the normalized Supabase listing row to the stable UI shape currently
- * consumed by FindIt's listing cards. Keeping this translation here lets the
+ * consumed by PeekaListing's listing cards. Keeping this translation here lets the
  * UI move one vertical slice at a time without leaking database details.
  */
 export function mapPublicListing(row) {

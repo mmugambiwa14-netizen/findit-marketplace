@@ -64,7 +64,7 @@ export default function Profile() {
         )}
 
         <div className="px-4 pt-2">
-          <button type="button" onClick={handleLogout} className="locked-control flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-destructive/25 text-sm font-bold text-destructive hover:bg-destructive/8"><LogOut className="h-4.5 w-4.5" />Log out</button>
+          <button type="button" onClick={handleLogout} className="locked-control flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-destructive/25 text-sm font-bold text-destructive hover:bg-destructive/8"><LogOut className="h-4.5 w-4.5" />Sign out</button>
         </div>
       </div>
     </div>
@@ -84,7 +84,7 @@ function ProfileLink({ icon: Icon, label, description, to, badge = null }) {
   return (
     <Link to={to} className="group flex min-h-[72px] items-center gap-3 px-4 py-3 transition hover:bg-primary/[0.045]">
       <span className="locked-icon-tile h-10 w-10"><Icon className="h-5 w-5" /></span>
-      <span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-sm font-bold">{label}{badge && <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-primary">{badge}</span>}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{description}</span></span>
+      <span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-sm font-bold">{label}{badge && <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-primary">{badge}</span>}</span><span className="mt-0.5 block line-clamp-2 text-xs text-muted-foreground">{description}</span></span>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
     </Link>
   );

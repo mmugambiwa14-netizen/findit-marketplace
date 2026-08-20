@@ -43,7 +43,7 @@ test('public listing Search propagates cancellation through the thin keyset RPC 
 });
 
 test('listing and location suggestion reads are independently abortable', () => {
-  const serviceBlock = between(service, 'export async function getPublicSearchSuggestions', 'export const searchPublicListings');
+  const serviceBlock = service.slice(service.indexOf('export async function getPublicSearchSuggestions'));
   assert.match(serviceBlock, /findPublicListingTitleSuggestions\(normalized\.kind, normalized\.query, 5, signal\)/);
   assert.match(serviceBlock, /findActiveLocationSuggestions\(normalized\.query, \{ signal \}\)/);
   assert.match(serviceBlock, /await Promise\.all\(\[/);

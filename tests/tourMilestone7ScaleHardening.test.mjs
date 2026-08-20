@@ -226,6 +226,9 @@ test('source graph and release certification are executable package gates', () =
   assert.equal(pkg.scripts['test:tours-observability-local'], 'node ./scripts/tours-observability-smoke-local.mjs');
   assert.equal(pkg.scripts['certify:release-candidate'], 'node ./scripts/tours-release-certification.mjs');
   assert.match(sourceGraph, /TypeScript parser is unavailable/);
+  assert.match(sourceGraph, /runtimeRoots/);
+  assert.match(sourceGraph, /intentionalRuntimeExceptions/);
+  assert.match(sourceGraph, /not reachable from the runtime entry roots/);
   assert.match(sourceGraph, /0 unresolved local imports/);
   assert.match(certification, /milestone-7-release-certification\.json/);
   assert.match(certification, /conditionally-passed/);

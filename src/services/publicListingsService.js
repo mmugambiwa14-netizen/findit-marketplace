@@ -40,7 +40,6 @@ function normalizeListingIds(listingIds) {
   }
   return unique;
 }
-
 function normalizeLimit(limit) {
   if (!Number.isInteger(limit) || limit < 1 || limit > MAX_HOME_RESULTS) {
     throw new RangeError(`Listing limit must be between 1 and ${MAX_HOME_RESULTS}`);
@@ -234,5 +233,3 @@ export async function getPublicSearchSuggestions(kind, query, { signal } = {}) {
   throwIfAborted(signal);
   return { listings, locations };
 }
-
-export const searchPublicListings = searchPublicListingsPage;

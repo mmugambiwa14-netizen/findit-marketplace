@@ -5,7 +5,9 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:_[a-z0-9]+)*$/;
 const KINDS = new Set(['property', 'car', 'machinery']);
 const ASSET_OFFER_TYPES = new Set(['sale', 'rent']);
 const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const OWNER_ACTIONS = new Set(['submit', 'pause', 'resume', 'unavailable']);
+// Keep the browser contract aligned with the terminal states exposed by the
+// owner UI and enforced by owner_transition_listing in the database.
+const OWNER_ACTIONS = new Set(['submit', 'pause', 'resume', 'unavailable', 'sold', 'rented']);
 const SUPPORTED_CURRENCIES = new Set(['USD', 'ZWL', 'ZAR']);
 
 function text(value, label, min, max, { optional = false } = {}) {

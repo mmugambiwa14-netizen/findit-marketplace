@@ -1,24 +1,22 @@
 import {
   fetchAdminAuditLog,
-  fetchAdminCategories,
   fetchAdminDashboardStats,
   fetchAdminMarketplace,
   fetchAdminNotificationFanoutHealth,
   fetchAdminOperationalHealth,
   fetchAdminReports,
   fetchAdminRecommendationAnalytics,
+  fetchAdminRecommendationConfiguration,
   fetchAdminSupportRequests,
   fetchAdminTourQueue,
   fetchAdminTourReviewMetadata,
   fetchAdminUsers,
-  insertAdminCategory,
-  mutateAdminCategory,
   mutateAdminMarketplace,
   mutateAdminReport,
   mutateAdminSupportRequest,
   mutateAdminTour,
-  mutateAdminUserRole,
   mutateAdminUserStatus,
+  purgeAdminRecommendationCache,
 } from '@/repositories/adminRepository';
 import {
   normalizeAdminAuditRequest,
@@ -29,12 +27,9 @@ import {
   normalizeAdminTourDecision,
   normalizeAdminTourQueueRequest,
   normalizeAdminUsersRequest,
-  normalizeCategoryCreate,
-  normalizeCategoryUpdate,
   normalizeMarketplaceModeration,
   normalizeReportDecision,
   normalizeSupportResolution,
-  normalizeUserRoleChange,
   normalizeUserStatusChange,
   normalizeAdminId,
 } from '@/services/adminContracts';
@@ -65,7 +60,6 @@ export async function getAdminUsers(request) {
   return { ...result, items: result.items.map((item) => ({ ...item, listing_count: Number(item.listing_count ?? 0), service_count: Number(item.service_count ?? 0) })) };
 }
 
-export function setAdminUserRole(input) { return mutateAdminUserRole(normalizeUserRoleChange(input)); }
 export function setAdminUserStatus(input) { return mutateAdminUserStatus(normalizeUserStatusChange(input)); }
 
 export async function getAdminReports(request) {
@@ -105,14 +99,6 @@ export async function getAdminAuditLog(request) {
   return page(await fetchAdminAuditLog(normalized), normalized.limit, chronologicalCursor);
 }
 
-export async function getAdminCategories() {
-  const rows = await fetchAdminCategories();
-  return (rows ?? []).map((row) => ({ ...row, listing_count: Number(row.listing_count ?? 0) }));
-}
-
-export function addAdminCategory(input) { return insertAdminCategory(normalizeCategoryCreate(input)); }
-export function updateAdminCategory(input) { return mutateAdminCategory(normalizeCategoryUpdate(input)); }
-
 function numericRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, Number(item ?? 0)]));
@@ -146,3 +132,6 @@ export async function getAdminRecommendationAnalytics(days = 30) {
   const data = await fetchAdminRecommendationAnalytics(start.toISOString().slice(0, 10), end.toISOString().slice(0, 10));
   return { contractVersion: Number(data?.contractVersion ?? 1), startDate: data?.startDate ?? null, endDate: data?.endDate ?? null, generatedAt: data?.generatedAt ?? null, summary: normalizeAnalyticsMetric(data?.summary), services: Array.isArray(data?.services) ? data.services.map(normalizeAnalyticsMetric) : [], days: Array.isArray(data?.days) ? data.days.map(normalizeAnalyticsMetric) : [] };
 }
+
+export function getAdminRecommendationConfiguration() { return fetchAdminRecommendationConfiguration(); }
+export function purgeAdminRecommendationServiceCache(serviceName, subjectListingId = null) { return purgeAdminRecommendationCache(serviceName, subjectListingId); }

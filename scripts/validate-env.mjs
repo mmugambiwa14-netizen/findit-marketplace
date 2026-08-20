@@ -75,6 +75,7 @@ for (const name of [
   'FINDIT_TOURS_RELEASE_ACCEPTED',
   'FINDIT_TOURS_WORKERS_ENABLED',
   'FINDIT_RECOMMENDATION_WORKERS_ENABLED',
+  'FINDIT_PLATFORM_MAINTENANCE_WORKERS_ENABLED',
 ]) {
   if (env[name] !== undefined && env[name] !== '' && !['true', 'false'].includes(env[name])) {
     problems.push(`${name} must be exactly true or false`);
@@ -136,6 +137,9 @@ if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED === 'true' && !env.FINDIT
 }
 if (env.FINDIT_RECOMMENDATION_WORKERS_ENABLED === 'true' && !env.FINDIT_RECOMMENDATION_WORKER_SECRET?.trim()) {
   problems.push('FINDIT_RECOMMENDATION_WORKER_SECRET is required when recommendation workers are enabled');
+}
+if (env.FINDIT_PLATFORM_MAINTENANCE_WORKERS_ENABLED === 'true' && !env.FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET?.trim()) {
+  problems.push('FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET is required when platform maintenance workers are enabled');
 }
 
 const requiredMvpLaunchFlags = [
@@ -208,6 +212,12 @@ if (mode === 'production') {
 
   if (env.FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED !== 'true') {
     problems.push('FINDIT_ESSENTIAL_NOTIFICATIONS_WORKERS_ENABLED must be true for production essential notifications');
+  }
+  if (env.FINDIT_PLATFORM_MAINTENANCE_WORKERS_ENABLED !== 'true') {
+    problems.push('FINDIT_PLATFORM_MAINTENANCE_WORKERS_ENABLED must be true for production maintenance');
+  }
+  if (!env.FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET?.trim()) {
+    problems.push('FINDIT_PLATFORM_MAINTENANCE_WORKER_SECRET is required for production maintenance');
   }
   if (!env.FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET?.trim()) {
     problems.push('FINDIT_NOTIFICATION_FANOUT_WORKER_SECRET is required for production essential notifications');

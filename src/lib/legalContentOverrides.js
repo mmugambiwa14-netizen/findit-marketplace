@@ -1,5 +1,5 @@
 function currentBrand(paragraph) {
-  return typeof paragraph === 'string' ? paragraph.replaceAll('FindIt', 'PeekaListing') : paragraph;
+  return paragraph;
 }
 
 export function legalParagraph(document, paragraph) {

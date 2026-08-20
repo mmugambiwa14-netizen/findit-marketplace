@@ -147,45 +147,8 @@ export async function findPublicListingsByIds(listingIds, signal) {
   return data ?? [];
 }
 
-const SEARCH_SORTS = {
-  newest: { column: 'created_at', ascending: false },
-  price_asc: { column: 'native_price', ascending: true },
-  price_desc: { column: 'native_price', ascending: false },
-  most_viewed: { column: 'views', ascending: false },
-};
-
 function escapeLikePattern(value) {
   return value.replace(/[\\%_]/g, '\\$&');
-}
-
-// Retained only for rollback-compatible older clients. The active Search page
-// uses findPublicListingsPage and never requests this exact-count offset path.
-export async function findPublicListings(request) {
-  assertKind(request.kind);
-  const detailSelect = DETAIL_SELECT_BY_KIND[request.kind];
-  const sort = SEARCH_SORTS[request.sort];
-  const from = (request.page - 1) * request.pageSize;
-  const to = from + request.pageSize - 1;
-  let query = supabase
-    .from('listings')
-    .select(`id, kind, seller_id, seller_name, title, description, price, currency, native_price, native_currency, photos, category, listing_type, status, views, created_at, updated_at, location:locations!listings_location_id_fkey(id, name, type), ${detailSelect}`, { count: 'exact' })
-    .eq('kind', request.kind)
-    .eq('country_code', request.countryCode)
-    .in('status', ['available', 'under_offer']);
-
-  if (request.currency) {
-    query = query.eq('native_currency', request.currency);
-    if (request.minPrice !== null) query = query.gte('native_price', request.minPrice);
-    if (request.maxPrice !== null) query = query.lte('native_price', request.maxPrice);
-  }
-  if (request.query) query = query.ilike('title', `%${escapeLikePattern(request.query)}%`);
-
-  const { data, error, count } = await query
-    .order(sort.column, { ascending: sort.ascending })
-    .order('id', { ascending: sort.ascending })
-    .range(from, to);
-  if (error) throw Object.assign(new Error('Unable to search public listings'), { cause: error });
-  return { rows: data ?? [], count: count ?? 0 };
 }
 
 /**

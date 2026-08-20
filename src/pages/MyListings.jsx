@@ -107,7 +107,7 @@ export default function MyListings() {
   const draftListings = allListings.filter(l => ["draft", "rejected"].includes(l.status));
   const pendingListings = allListings.filter(l => l.status === "pending_review");
   const activeListings = allListings.filter(l => ["available", "under_offer", "rented", "paused"].includes(l.status));
-  const expiredListings = allListings.filter(l => ["expired", "unavailable"].includes(l.status));
+  const expiredListings = allListings.filter(l => ["expired", "unavailable", "sold"].includes(l.status));
   const requestDelete = (listing) => setDeleteCandidate(listing);
 
   const confirmDelete = () => {
@@ -201,6 +201,8 @@ export default function MyListings() {
               onPause={listing.status === 'paused' ? undefined : () => changeListingStatus.mutate({ id: listing.id, action: 'pause', successMessage: 'Listing paused' })}
               onResume={listing.status === 'paused' ? () => changeListingStatus.mutate({ id: listing.id, action: 'resume', successMessage: 'Listing is live again' }) : undefined}
               onUnavailable={() => changeListingStatus.mutate({ id: listing.id, action: 'unavailable', successMessage: 'Listing marked unavailable' })}
+              onSold={['available', 'under_offer', 'paused'].includes(listing.status) ? () => changeListingStatus.mutate({ id: listing.id, action: 'sold', successMessage: 'Listing marked sold' }) : undefined}
+              onRented={['available', 'under_offer', 'paused'].includes(listing.status) ? () => changeListingStatus.mutate({ id: listing.id, action: 'rented', successMessage: 'Listing marked rented' }) : undefined}
             />
           ))}
 
@@ -278,10 +280,12 @@ export default function MyListings() {
  *   onPublish?: () => void,
  *   onPause?: () => void,
  *   onResume?: () => void,
- *   onUnavailable?: () => void
+ *   onUnavailable?: () => void,
+ *   onSold?: () => void,
+ *   onRented?: () => void
  * }} props
  */
-function ListingRow({ listing, onDelete, onRenew, onEdit, onPublish, onPause, onResume, onUnavailable }) {
+function ListingRow({ listing, onDelete, onRenew, onEdit, onPublish, onPause, onResume, onUnavailable, onSold, onRented }) {
   const photo = listing.photos?.[0] || (listing._type === "property" ? placeholderProperty : placeholderCar);
   const link = listing._type === "property" ? `/property/${listing.id}` : listing._type === "car" ? `/car/${listing.id}` : `/machinery/${listing.id}`;
   const timeAgo = useTimeAgo(listing.created_date);
@@ -319,6 +323,8 @@ function ListingRow({ listing, onDelete, onRenew, onEdit, onPublish, onPause, on
               {onPause && <DropdownMenuItem onClick={onPause}><Pause className="mr-2 h-4 w-4" />Pause</DropdownMenuItem>}
               {onResume && <DropdownMenuItem onClick={onResume}><Play className="mr-2 h-4 w-4" />Resume</DropdownMenuItem>}
               {onUnavailable && <DropdownMenuItem onClick={onUnavailable}><Ban className="mr-2 h-4 w-4" />Mark unavailable</DropdownMenuItem>}
+              {onSold && <DropdownMenuItem onClick={onSold}>Mark sold</DropdownMenuItem>}
+              {onRented && <DropdownMenuItem onClick={onRented}>Mark rented</DropdownMenuItem>}
               <DropdownMenuItem className="text-destructive" onClick={onDelete}>
                 <Trash2 className="w-4 h-4 mr-2" /> Delete
               </DropdownMenuItem>

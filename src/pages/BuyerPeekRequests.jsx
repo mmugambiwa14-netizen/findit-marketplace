@@ -32,7 +32,7 @@ export default function BuyerPeekRequests() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-4">
+      <div className="mx-auto max-w-4xl px-4 py-4">
         <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border border-border bg-surface-secondary p-1.5" role="tablist" aria-label="Peek Request workspace">
           <button
             type="button"
@@ -68,7 +68,7 @@ export default function BuyerPeekRequests() {
             <SellerPeekRequestsQueueLive />
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

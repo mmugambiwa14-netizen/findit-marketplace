@@ -6,7 +6,7 @@ export async function queueResponsePeekBinding(tourId, requestId) {
     p_request_id: requestId,
   });
   if (error) {
-    const failure = new Error('The Response Peek uploaded, but FindIt could not attach it to the buyer request.');
+    const failure = new Error('The Response Peek uploaded, but PeekaListing could not attach it to the buyer request.');
     failure.cause = error;
     throw failure;
   }

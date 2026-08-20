@@ -20,9 +20,9 @@ const [
   contracts,
   reportDialog,
   reportAction,
-  tourCard,
+  peekSlide,
   mediaViewer,
-  adminQueue,
+  adminPeeks,
   adminReports,
   adminAudit,
   packageJson,
@@ -38,9 +38,9 @@ const [
   read('src/services/listingTourContracts.js'),
   read('src/components/tours/TourReportDialog.jsx'),
   read('src/components/tours/TourReportAction.jsx'),
-  read('src/components/tours/TourCard.jsx'),
+  read('src/components/tours/ImmersivePeekSlide.jsx'),
   read('src/components/listings/ListingMediaViewer.jsx'),
-  read('src/components/admin/AdminTourQueue.jsx'),
+  read('src/pages/admin/AdminPeeks.jsx'),
   read('src/pages/admin/AdminReports.jsx'),
   read('src/pages/admin/AdminAuditLog.jsx'),
   read('package.json'),
@@ -100,7 +100,8 @@ test('public users can report the video from catalogue and detail playback', () 
   assert.match(reportDialog, /duplicate_content/);
   assert.match(reportDialog, /reportListingTour/);
   assert.match(reportAction, /GuestPromptSheet/);
-  assert.match(tourCard, /Report Peek/);
+  assert.match(peekSlide, /TourReportDialog/);
+  assert.match(peekSlide, /setReportOpen\(true\)/);
   assert.match(mediaViewer, /TourReportAction/);
   assert.match(mediaViewer, /setTourReported\(true\)/);
 });
@@ -128,24 +129,22 @@ test('admin review media uses a short-lived signed boundary and never exposes so
   assert.match(smoke, /non-admin cannot obtain moderation media/);
 });
 
-test('founder queue covers pending, reported, failed, rejected and approved Tours', () => {
-  for (const status of ['pending', 'reported', 'failed', 'rejected', 'approved', 'all']) {
-    assert.match(adminQueue, new RegExp(`value="${status}"`));
+test('founder queue covers processing and moderation states with reasoned decisions', () => {
+  for (const status of ['pending', 'processing', 'ready', 'failed', 'rejected', 'approved', 'published', 'all']) {
+    assert.match(adminPeeks, new RegExp(`'${status}'`));
   }
-  assert.match(adminQueue, /Approve/);
-  assert.match(adminQueue, /Reject/);
-  assert.match(adminQueue, /Restore/);
-  assert.match(adminQueue, /Remove Tour/);
-  assert.match(adminQueue, /Processing failure/);
-  assert.match(adminQueue, /View parent|Parent/);
+  assert.match(adminPeeks, /Approve/);
+  assert.match(adminPeeks, /Reject/);
+  assert.match(adminPeeks, /Decision reason/);
+  assert.match(adminPeeks, /parent_path/);
   assert.match(migration, /owner_rejected_tour_count bigint/);
   assert.match(migration, /latest_report_id uuid/);
 });
 
-test('repeat-offender suspension remains manual, reasoned and audited', () => {
-  assert.match(adminQueue, /setAdminUserStatus/);
-  assert.match(adminQueue, /status: 'suspended'/);
-  assert.match(adminQueue, /Account suspension remains a manual, reasoned admin action/);
+test('repeat-offender context remains manual, reasoned and audited', () => {
+  assert.match(adminPeeks, /owner_rejected_tour_count/);
+  assert.match(adminPeeks, /previous rejection/);
+  assert.match(adminPeeks, /Decision reason/);
   assert.match(migration, /record_admin_action\([\s\S]*'tour_report\.'/);
   assert.match(priorModeration, /record_admin_action\([\s\S]*'tour_approved'/);
   assert.match(priorModeration, /record_admin_action\([\s\S]*'tour_rejected'/);
@@ -156,7 +155,7 @@ test('repeat-offender suspension remains manual, reasoned and audited', () => {
 
 test('moderation remains deterministic and contains no external AI dependency', () => {
   assert.match(migration, /manual Tour reporting|manual/i);
-  assert.doesNotMatch(`${migration}\n${edgeFunction}\n${adminQueue}`, /openai|anthropic|gemini|computer vision|ai moderation/i);
+  assert.doesNotMatch(`${migration}\n${edgeFunction}\n${adminPeeks}`, /openai|anthropic|gemini|computer vision|ai moderation/i);
   assert.match(priorModeration, /No external AI moderation is introduced/);
 });
 

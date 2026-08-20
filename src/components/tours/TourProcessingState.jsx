@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle2, Clock3, Loader2, ShieldCheck } from 'lucid
 const STATE = {
   upload_authorized: { icon: Loader2, label: 'Upload started', detail: 'The upload has not been confirmed yet.', spin: true },
   uploaded: { icon: Clock3, label: 'Queued for processing', detail: 'The source video is private while processing starts.' },
-  processing: { icon: Loader2, label: 'Processing Peek', detail: 'FindIt is validating the video and preparing 720p playback.', spin: true },
+  processing: { icon: Loader2, label: 'Processing Peek', detail: 'PeekaListing is validating the video and preparing 720p playback.', spin: true },
   ready: { icon: ShieldCheck, label: 'Processing complete', detail: 'The Peek will appear when it is active and the parent remains public.' },
 };
 

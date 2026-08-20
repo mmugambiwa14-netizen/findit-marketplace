@@ -374,7 +374,7 @@ export default function Search() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
         {!query && recentSearches.length > 0 && (
           <section className="mb-5 rounded-2xl border border-border bg-card p-4" aria-labelledby="recent-searches-title">
             <div className="flex items-center justify-between gap-3">
@@ -407,7 +407,7 @@ export default function Search() {
           viewMode={viewMode}
           onViewModeChange={updateViewMode}
         />
-      </main>
+      </div>
 
       <FilterSheet
         open={filtersOpen}

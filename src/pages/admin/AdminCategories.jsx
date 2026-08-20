@@ -17,6 +17,7 @@ import {
   updateAdminTaxonomyNode,
 } from '@/services/taxonomyAdminService';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { AdminMobileList, AdminMobileRecord } from '@/components/admin/AdminMobileRecord';
 
 const emptyCreate = {
   parentId: '',
@@ -211,7 +212,7 @@ export default function AdminCategories() {
               const rows = categories.filter((category) => category.marketplaceKind === root.marketplaceKind && category.id !== root.id);
               return (
                 <Card key={root.id}>
-                  <CardHeader className="flex-row items-center justify-between space-y-0">
+                  <CardHeader className="flex-col items-stretch justify-between gap-3 space-y-0 sm:flex-row sm:items-center">
                     <div>
                       <CardTitle className="flex items-center gap-2"><LockKeyhole className="h-4 w-4 text-muted-foreground" />{root.displayLabel}</CardTitle>
                       <p className="mt-1 font-mono text-xs text-muted-foreground">{root.stableSlug} · {root.marketplaceKind}</p>
@@ -222,7 +223,27 @@ export default function AdminCategories() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="overflow-x-auto">
+                    <AdminMobileList label={`${root.displayLabel} taxonomy nodes`}>
+                      {rows.length === 0 ? (
+                        <p className="rounded-lg border p-4 text-sm text-muted-foreground">No child nodes.</p>
+                      ) : rows.map((category) => (
+                        <AdminMobileRecord
+                          key={category.id}
+                          heading={category.displayLabel}
+                          summary={category.pathLabels.length > 2 ? category.pathLabels.slice(1, -1).join(' / ') : category.description}
+                          badges={<><Badge variant="outline">{category.nodeType}</Badge><Badge variant={stateVariant(category)}>{nodeState(category)}</Badge></>}
+                          fields={[
+                            { label: 'Stable slug', value: category.stableSlug, wide: true },
+                            { label: 'Current slug', value: category.canonicalSlug, wide: true },
+                            { label: 'Postable', value: category.isPostable ? 'Yes' : 'No' },
+                            { label: 'Adverts', value: category.descendantListingCount },
+                            { label: 'Markets', value: category.marketAvailability.length ? category.marketAvailability.join(', ') : 'All', wide: true },
+                          ]}
+                          actions={<Button className="min-h-11 w-full" variant="outline" onClick={() => openEdit(category)}>Edit {category.displayLabel}</Button>}
+                        />
+                      ))}
+                    </AdminMobileList>
+                    <div className="hidden overflow-x-auto md:block">
                       <table className="w-full min-w-[980px] text-sm">
                         <thead><tr className="border-b text-left"><th className="py-2">Node</th><th className="py-2">Stable slug</th><th className="py-2">Current slug</th><th className="py-2">Type</th><th className="py-2">Postable</th><th className="py-2">Adverts</th><th className="py-2">Markets</th><th className="py-2">State</th><th className="py-2 text-right">Action</th></tr></thead>
                         <tbody>

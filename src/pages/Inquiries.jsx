@@ -71,7 +71,7 @@ export default function Inquiries() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-5">
+      <div className="mx-auto max-w-3xl px-4 py-5">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -98,7 +98,7 @@ export default function Inquiries() {
             {inboxQuery.hasNextPage && <div className="pt-3 text-center"><Button type="button" variant="outline" className="clay-control" disabled={inboxQuery.isFetchingNextPage} onClick={() => inboxQuery.fetchNextPage()}>{inboxQuery.isFetchingNextPage ? <><Loader2 className="h-4 w-4 animate-spin" /> Loading</> : 'Load more chats'}</Button></div>}
           </section>
         )}
-      </main>
+      </div>
     </div>
   );
 }

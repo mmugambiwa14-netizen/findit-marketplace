@@ -87,7 +87,7 @@ export default function Home() {
           </div>
         </div>
 
-        <main className="mt-5 md:mt-7">
+        <div className="mt-5 md:mt-7">
           {view === 'map' && featureFlags.maps ? (
             <DiscoverMapView location={location} />
           ) : (
@@ -103,7 +103,7 @@ export default function Home() {
             </section>
           )}
           <HomePeekRail location={location} />
-        </main>
+        </div>
       </div>
     </div>
   );

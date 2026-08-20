@@ -1,6 +1,5 @@
 import {
   findMessageConversation,
-  findMessageInbox,
   findMessageInboxPage,
   findMessageThread,
   findMessageThreadPage,
@@ -16,7 +15,6 @@ import {
   normalizeConversationReport,
   normalizeMessageBody,
   normalizeMessageInboxPageRequest,
-  normalizeMessageInboxRequest,
   normalizeMessageThreadPageRequest,
   normalizeMessagingId,
 } from '@/services/messagingContracts';
@@ -67,18 +65,6 @@ export async function startListingConversation(listingId, message) {
     normalizeMessagingId(listingId, 'Listing'),
     normalizeMessageBody(message),
   );
-}
-
-export async function getMessageInbox(input, signal) {
-  const request = normalizeMessageInboxRequest(input);
-  const rows = await findMessageInbox(request, signal);
-  throwIfAborted(signal);
-  return {
-    items: await hydrateConversationListings(rows ?? [], signal),
-    total: Number(rows?.[0]?.total_count ?? 0),
-    limit: request.limit,
-    offset: request.offset,
-  };
 }
 
 export async function getUnreadMessageCount(signal) {

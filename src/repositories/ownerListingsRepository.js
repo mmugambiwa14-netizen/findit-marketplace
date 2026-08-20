@@ -50,7 +50,7 @@ function repositoryFailure(message, error) {
   return failure;
 }
 
-export async function findOwnerListings(request) {
+export async function findOwnerListingsPage(request) {
   let query = supabase
     .from('listings')
     .select(OWNER_LISTING_SELECT)

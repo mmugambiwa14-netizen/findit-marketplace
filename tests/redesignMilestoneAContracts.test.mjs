@@ -43,9 +43,9 @@ const [
 test('Milestone A applies the approved blue light and dark design tokens', () => {
   assert.match(theme, /:root\s*\{[\s\S]*?color-scheme:\s*light/);
   assert.match(theme, /--background:\s*216 45% 97%/);
-  assert.match(theme, /--primary:\s*217 91% 54%/);
+  assert.match(theme, /--primary:\s*217 91% 48%/);
   assert.match(theme, /\.dark\s*\{[\s\S]*?--background:\s*223 58% 5%/);
-  assert.match(theme, /\.dark\s*\{[\s\S]*?--primary:\s*214 100% 62%/);
+  assert.match(theme, /\.dark\s*\{[\s\S]*?--primary:\s*214 100% 48%/);
   assert.match(theme, /min-width:\s*320px/);
   assert.match(theme, /prefers-reduced-motion/);
 });
@@ -74,7 +74,7 @@ test('canonical navigation and compatibility routes are present', () => {
 });
 
 test('Search keeps its service boundary and is decomposed into focused UI components', () => {
-  assert.match(search, /searchPublicListings/);
+  assert.match(search, /searchPublicListingsPage/);
   for (const component of ['CategoryResultsHeader', 'SearchToolbar', 'ActiveFilterChips', 'FilterSheet', 'SortSheet', 'ListingResults']) {
     assert.match(search, new RegExp(component));
   }

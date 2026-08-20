@@ -75,7 +75,7 @@ export default function DeleteAccountSection({ user }) {
               <div className="mb-1 flex h-11 w-11 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                 <AlertTriangle className="h-5 w-5" />
               </div>
-              <AlertDialogTitle>Delete your FindIt account?</AlertDialogTitle>
+              <AlertDialogTitle>Delete your PeekaListing account?</AlertDialogTitle>
               <AlertDialogDescription className="space-y-2">
                 <span className="block">You will be signed out on every device. Your listings, services, profile and contact methods will no longer be public.</span>
                 <span className="block font-medium text-foreground">This cannot be undone.</span>

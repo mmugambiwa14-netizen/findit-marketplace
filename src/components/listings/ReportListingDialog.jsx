@@ -41,7 +41,7 @@ export default function ReportListingDialog({ listing, listingType }) {
     onSuccess: () => {
       setSubmitted(true);
       queryClient.invalidateQueries({ queryKey: ["report-check", listing?.id, user?.id] });
-      toast.success("Report submitted. Thank you for helping keep FindIt safe.");
+      toast.success("Report submitted. Thank you for helping keep PeekaListing safe.");
     },
     onError: () => toast.error("Failed to submit report. Please try again."),
   });

@@ -11,7 +11,7 @@ function ApprovedServicePublisher() {
   if (approved) return <CreateService />;
 
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4">
+    <div className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4">
       <section className="clay-card w-full rounded-2xl p-6 text-center">
         <ShieldAlert className="mx-auto h-10 w-10 text-primary" />
         <h1 className="mt-4 text-2xl font-black">Services publishing is not approved</h1>
@@ -20,7 +20,7 @@ function ApprovedServicePublisher() {
         </p>
         <Button className="mt-5" asChild><Link to="/post">Return to approved categories</Link></Button>
       </section>
-    </main>
+    </div>
   );
 }
 

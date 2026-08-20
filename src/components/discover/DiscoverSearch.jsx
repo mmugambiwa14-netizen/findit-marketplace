@@ -30,7 +30,7 @@ export default function DiscoverSearch({ location }) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder="Search properties, cars, services..."
-        aria-label="Search FindIt"
+        aria-label="Search PeekaListing"
         maxLength={100}
         className="locked-control h-14 rounded-[1.15rem] border-border/85 bg-card/80 pl-11 pr-4 text-base placeholder:text-muted-foreground/80 md:text-sm sm:pr-28"
       />

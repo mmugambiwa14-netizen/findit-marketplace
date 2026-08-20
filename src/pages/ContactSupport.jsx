@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -56,7 +56,7 @@ export default function ContactSupport() {
 
   if (confirmation) {
     return (
-      <main className="min-h-screen bg-background px-4 py-10">
+      <div className="min-h-screen bg-background px-4 py-10">
         <Card className="mx-auto max-w-xl">
           <CardContent className="space-y-5 pt-8 text-center" aria-live="polite">
             <CheckCircle2 className="mx-auto h-11 w-11 text-emerald-600" aria-hidden="true" />
@@ -70,24 +70,24 @@ export default function ContactSupport() {
               {confirmation.referenceId}
             </p>
             <p className="text-sm text-muted-foreground">
-              FindIt is operated by a small team. Safety issues are prioritised, but this is not an emergency service.
+              PeekaListing is operated by a small team. Safety issues are prioritised, but this is not an emergency service.
             </p>
             <Button onClick={() => navigate('/help')}>Back to Help &amp; Safety</Button>
           </CardContent>
         </Card>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6">
+    <div className="min-h-screen bg-background px-4 py-6">
       <div className="mx-auto max-w-2xl">
         <Button variant="ghost" className="mb-3 -ml-2 gap-2" onClick={() => navigate('/help')}>
           <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Help &amp; Safety
         </Button>
         <Card>
           <CardHeader>
-            <CardTitle>Contact Support</CardTitle>
+            <h1 className="font-semibold leading-tight tracking-tight">Contact Support</h1>
             <p className="text-sm text-muted-foreground">
               Tell us what happened and include the most useful details. Do not send passwords, payment details, or identity documents.
             </p>
@@ -156,6 +156,6 @@ export default function ContactSupport() {
           </CardContent>
         </Card>
       </div>
-    </main>
+    </div>
   );
 }

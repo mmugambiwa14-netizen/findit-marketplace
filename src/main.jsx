@@ -41,7 +41,6 @@ async function bootstrap() {
       import('@/App.jsx'),
       import('@/components/AppErrorBoundary.jsx'),
     ])
-
     root.render(
       <AppErrorBoundary>
         <App />
@@ -54,4 +53,4 @@ async function bootstrap() {
   }
 }
 
-bootstrap()
+void bootstrap()

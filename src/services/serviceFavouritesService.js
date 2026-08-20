@@ -12,11 +12,9 @@ function requireId(value, label) {
   if (typeof value !== 'string' || !value.trim()) throw new TypeError(`${label} is required`);
   return value.trim();
 }
-
 export function getServiceFavourite(userId, serviceId) {
   return findServiceFavourite(requireId(userId, 'User id'), requireId(serviceId, 'Service id'));
 }
-
 export function getServiceFavouriteIds(userId, serviceIds) {
   requireId(userId, 'User id');
   const ids = Array.isArray(serviceIds)
@@ -52,8 +50,4 @@ export async function getFavouriteServicesPage(userId, input = {}) {
     items: page.items.map((row) => byId.get(row.service_id)).filter(Boolean),
     nextCursor: page.nextCursor,
   };
-}
-
-export async function getFavouriteServices(userId, limit = 30) {
-  return (await getFavouriteServicesPage(userId, { limit })).items;
 }

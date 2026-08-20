@@ -36,8 +36,8 @@ function assertMapLibreRuntime(runtime) {
   return runtime;
 }
 
-export function mapTilerPublicKey() { return browserEnv('VITE_MAPTILER_PUBLIC_KEY'); }
-export function mapTilerStyleId() { return browserEnv('VITE_MAPTILER_STYLE_ID') || 'streets-v4'; }
+function mapTilerPublicKey() { return browserEnv('VITE_MAPTILER_PUBLIC_KEY'); }
+function mapTilerStyleId() { return browserEnv('VITE_MAPTILER_STYLE_ID') || 'streets-v4'; }
 export function mapProviderConfigured() { return true; }
 
 export function mapTilerStyleUrl() {
@@ -108,11 +108,3 @@ export async function reverseGeocodeMapTiler({ latitude, longitude, signal } = {
   if (!payload || !Array.isArray(payload.features)) throw new Error('MAP_PROVIDER_INVALID_RESPONSE');
   return payload.features;
 }
-
-export const mapProviderContract = Object.freeze({
-  renderer: 'maplibre-gl',
-  rendererVersion: MAPLIBRE_VERSION,
-  primaryTileProvider: 'maptiler-cloud',
-  fallbackTileProvider: 'openfreemap',
-  geocoder: 'maptiler-geocoding',
-});

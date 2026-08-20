@@ -186,7 +186,7 @@ export const SERVICE_FIELDS = Object.freeze([
     id: 'booking_preference', label: 'How to book', input: 'select',
     section: 'availability', order: 50,
     options: [
-      { value: 'call', label: 'Call' }, { value: 'message', label: 'Message on FindIt' },
+      { value: 'call', label: 'Call' }, { value: 'message', label: 'Message on PeekaListing' },
       { value: 'whatsapp', label: 'WhatsApp' }, { value: 'quote_first', label: 'Request a quote first' },
     ],
     filterable: true,

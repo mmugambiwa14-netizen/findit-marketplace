@@ -24,7 +24,7 @@ export default function AdminLayout() {
             <span className="ml-auto rounded-full bg-destructive/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-destructive">Admin</span>
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <main className="min-h-full"><Outlet /></main>
+            <div className="admin-surface min-h-full"><Outlet /></div>
             <SiteFooter compact />
           </div>
         </div>

@@ -91,8 +91,10 @@ test('recognizes only generated listing-image storage paths', () => {
   assert.equal(isTrustedListingImagePath(`${ownerId}/../secret.jpg`), false);
 });
 
-test('owner state transitions expose only the V1 action vocabulary', () => {
+test('owner state transitions expose the supported action vocabulary', () => {
   assert.deepEqual(normalizeOwnerListingAction(imageId, 'submit'), { listingId: imageId, action: 'submit' });
+  assert.deepEqual(normalizeOwnerListingAction(imageId, 'sold'), { listingId: imageId, action: 'sold' });
+  assert.deepEqual(normalizeOwnerListingAction(imageId, 'rented'), { listingId: imageId, action: 'rented' });
   assert.throws(() => normalizeOwnerListingAction(imageId, 'publish'), /Listing action/);
 });
 

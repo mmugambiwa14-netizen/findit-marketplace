@@ -68,7 +68,7 @@ export default function BottomNav() {
                       {count > 0 && <span aria-hidden="true" className="absolute -right-2.5 -top-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold leading-none text-primary-foreground ring-2 ring-card">{count > 99 ? '99+' : count}</span>}
                     </span>
                   )}
-                  <span className={cn('max-w-full truncate text-[var(--findit-nav-label-size)] font-semibold leading-none tracking-[-0.01em]', item.prominent && '-mt-0.5', isActive && !item.prominent && 'font-bold text-primary')}>{item.label}</span>
+                   <span className={cn('max-w-full whitespace-nowrap text-[var(--findit-nav-label-size)] font-semibold leading-none tracking-[-0.02em]', item.prominent && '-mt-0.5', isActive && !item.prominent && 'font-bold text-primary')}>{item.label}</span>
                 </Link>
               </Pressable>
             );

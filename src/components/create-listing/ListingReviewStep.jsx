@@ -68,7 +68,7 @@ export default function ListingReviewStep({
             Optional Peek selected
           </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            FindIt creates the listing first, uploads the video, then processes it separately. A Peek failure will not remove or block the listing.
+            PeekaListing creates the listing first, uploads the video, then processes it separately. A Peek failure will not remove or block the listing.
           </p>
         </div>
       )}
@@ -81,7 +81,7 @@ export default function ListingReviewStep({
           <div>
             <p className="text-sm font-semibold">Published after technical checks</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              FindIt checks required fields, location, currency, ownership and media before publishing. Reports are reviewed after content is live.
+            PeekaListing checks required fields, location, currency, ownership and media before publishing. Reports are reviewed after content is live.
             </p>
           </div>
         </div>

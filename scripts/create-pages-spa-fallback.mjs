@@ -23,7 +23,7 @@ export function renderPagesFallback(basePathInput) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
-    <title>Opening FindIt</title>
+    <title>Opening PeekaListing</title>
   </head>
   <body>
     <script>

@@ -217,7 +217,7 @@ export default function Tours() {
           <div><h1 className="text-xl font-bold">No Peeks here yet</h1><p className="mt-2 text-sm text-white/60">Try another category.</p></div>
         </div>
       ) : (
-        <main ref={feedRef} className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain" aria-label="Full-screen Peeks feed">
+        <div ref={feedRef} className="h-full snap-y snap-mandatory overflow-y-auto overscroll-contain" role="region" aria-label="Full-screen Peeks feed">
           {items.map((item, index) => (
             <ImmersivePeekSlide
               key={item.tourId}
@@ -233,7 +233,7 @@ export default function Tours() {
             />
           ))}
           {feed.isFetchingNextPage && <div className="flex h-20 snap-start items-center justify-center bg-black"><Loader2 className="h-5 w-5 animate-spin text-blue-400" /></div>}
-        </main>
+        </div>
       )}
 
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>

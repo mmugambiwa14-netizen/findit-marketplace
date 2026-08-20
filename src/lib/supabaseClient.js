@@ -21,7 +21,7 @@ const missingVariables = [
 
 if (missingVariables.length > 0) {
   throw new Error(
-    `FindIt configuration error: missing ${missingVariables.join(', ')}`
+    `PeekaListing configuration error: missing ${missingVariables.join(', ')}`
   );
 }
 
@@ -32,7 +32,7 @@ try {
   }
 } catch {
   throw new Error(
-    'FindIt configuration error: VITE_SUPABASE_URL must be a valid HTTP(S) URL'
+    'PeekaListing configuration error: VITE_SUPABASE_URL must be a valid HTTP(S) URL'
   );
 }
 
