@@ -15,7 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import useDebouncedValue from '@/hooks/useDebouncedValue';
 import { getAdminMarketplace, moderateAdminMarketplace } from '@/services/adminService';
 import { useCursorStack } from '@/hooks/useCursorStack';
-import { TableRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { ListRowsSkeleton, TableRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { AdminMobileList, AdminMobileRecord } from '@/components/admin/AdminMobileRecord';
 
 const PAGE_SIZE = 25;
 const itemPath = (item) => item.item_kind === 'service' ? `/service/${item.item_id}` : `/${item.item_kind}/${item.item_id}`;
@@ -26,16 +27,17 @@ function maskEmail(value) {
   return `${name.slice(0, 2)}${name.length > 2 ? '***' : ''}@${domain}`;
 }
 
-function ModerationActions({ item, decide }) {
+function ModerationActions({ item, decide, mobile = false }) {
   const isProduct = item.item_kind !== 'service';
   const isLive = ['available', 'active', 'under_offer', 'rented'].includes(item.status);
   const canApprove = isProduct ? item.status === 'pending_review' : item.status === 'paused';
   const canReject = isProduct && item.status === 'pending_review';
-  return <div className="flex gap-1">
-    {isLive && <Button size="sm" variant="outline" onClick={() => decide(item, 'pause')}><Pause className="mr-1 h-3.5 w-3.5" />Pause</Button>}
-    {canApprove && <Button size="sm" variant="outline" onClick={() => decide(item, 'publish')}><Play className="mr-1 h-3.5 w-3.5" />{isProduct ? 'Approve' : 'Publish'}</Button>}
-    {canReject && <Button size="sm" variant="outline" onClick={() => decide(item, 'reject')}><ShieldX className="mr-1 h-3.5 w-3.5" />Reject</Button>}
-    <Button size="sm" variant="destructive" onClick={() => decide(item, 'remove')}><Trash2 className="h-3.5 w-3.5" /><span className="sr-only">Remove</span></Button>
+  const className = mobile ? 'min-h-11 flex-1' : undefined;
+  return <div className="flex w-full flex-wrap gap-2">
+    {isLive && <Button className={className} size="sm" variant="outline" onClick={() => decide(item, 'pause')}><Pause className="mr-1 h-3.5 w-3.5" />Pause</Button>}
+    {canApprove && <Button className={className} size="sm" variant="outline" onClick={() => decide(item, 'publish')}><Play className="mr-1 h-3.5 w-3.5" />{isProduct ? 'Approve' : 'Publish'}</Button>}
+    {canReject && <Button className={className} size="sm" variant="outline" onClick={() => decide(item, 'reject')}><ShieldX className="mr-1 h-3.5 w-3.5" />Reject</Button>}
+    <Button className={className} size="sm" variant="destructive" onClick={() => decide(item, 'remove')}><Trash2 className="mr-1 h-3.5 w-3.5" />Remove</Button>
   </div>;
 }
 
@@ -75,7 +77,13 @@ export default function AdminListings() {
       <Select value={status} onValueChange={(value) => { setStatus(value); pagination.reset(); }}><SelectTrigger aria-label="Filter adverts by status"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="pending_review">Pending product review</SelectItem><SelectItem value="available">Published products</SelectItem><SelectItem value="rejected">Rejected products</SelectItem><SelectItem value="paused">Paused adverts</SelectItem><SelectItem value="unavailable">Unavailable products</SelectItem><SelectItem value="active">Active services</SelectItem><SelectItem value="sold">Sold</SelectItem><SelectItem value="rented">Rented</SelectItem><SelectItem value="expired">Expired</SelectItem></SelectContent></Select>
     </CardContent></Card>
     {error && <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive"><p>{error.message}</p>{error.correlationId && <p className="mt-1 text-xs">Reference: {error.correlationId}</p>}<Button className="mt-3" size="sm" variant="outline" onClick={() => refetch()}>Try again</Button></div>}
-    <Card className="overflow-hidden"><div className="overflow-x-auto"><table className="w-full min-w-[880px] text-sm"><thead><tr className="border-b bg-muted/30 text-left"><th className="p-3">Advert</th><th className="p-3">Type</th><th className="p-3">Price</th><th className="p-3">Owner</th><th className="p-3">Status</th><th className="p-3">Reports</th><th className="p-3">Actions</th></tr></thead><tbody>
+    <AdminMobileList label="Marketplace moderation records">
+      {isLoading ? <Card className="p-4"><ListRowsSkeleton rows={5} label="Loading marketplace" /></Card> : data.items.length === 0 ? <Card className="p-6 text-center text-sm text-muted-foreground">No adverts match these filters.</Card> : data.items.map((item) => {
+        const isLive = ['available', 'active', 'under_offer', 'rented'].includes(item.status);
+        return <AdminMobileRecord key={`${item.item_kind}-${item.item_id}`} heading={<Link className="inline-flex max-w-full items-center gap-1 hover:text-primary hover:underline" to={itemPath(item)} target="_blank" rel="noopener noreferrer"><span className="line-clamp-2">{item.title}</span><ExternalLink className="h-3.5 w-3.5 shrink-0" /></Link>} summary={item.category || 'Uncategorised'} badges={<Badge variant={isLive ? 'default' : 'secondary'}>{item.status.replace('_', ' ')}</Badge>} fields={[{ label: 'Type', value: item.item_kind === 'car' ? 'Vehicle' : item.item_kind }, { label: 'Price', value: item.price == null ? 'Contact' : `${item.currency} ${item.price.toLocaleString()}` }, { label: 'Owner', value: item.owner_name || 'Unknown', wide: true }, { label: 'Owner email', value: maskEmail(item.owner_email), wide: true }, { label: 'Reports', value: item.report_count }]} actions={<ModerationActions item={item} decide={openDecision} mobile />} />;
+      })}
+    </AdminMobileList>
+    <Card className="hidden overflow-hidden md:block"><div className="overflow-x-auto"><table className="w-full min-w-[880px] text-sm"><thead><tr className="border-b bg-muted/30 text-left"><th className="p-3">Advert</th><th className="p-3">Type</th><th className="p-3">Price</th><th className="p-3">Owner</th><th className="p-3">Status</th><th className="p-3">Reports</th><th className="p-3">Actions</th></tr></thead><tbody>
       {isLoading ? <TableRowsSkeleton columns={7} label="Loading marketplace" /> : data.items.length === 0 ? <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No adverts match these filters.</td></tr> : data.items.map((item) => { const isLive = ['available', 'active', 'under_offer', 'rented'].includes(item.status); return <tr key={`${item.item_kind}-${item.item_id}`} className="border-b last:border-0"><td className="max-w-64 p-3 font-medium"><Link className="inline-flex items-center gap-1 hover:text-primary hover:underline" to={itemPath(item)} target="_blank" rel="noopener noreferrer">{item.title}<ExternalLink className="h-3 w-3" /></Link><p className="truncate text-xs text-muted-foreground">{item.category || 'Uncategorised'}</p></td><td className="p-3 capitalize">{item.item_kind === 'car' ? 'Vehicle' : item.item_kind}</td><td className="p-3">{item.price == null ? 'Contact' : `${item.currency} ${item.price.toLocaleString()}`}</td><td className="p-3"><p>{item.owner_name || 'Unknown'}</p><p className="text-xs text-muted-foreground">{maskEmail(item.owner_email)}</p></td><td className="p-3"><Badge variant={isLive ? 'default' : 'secondary'}>{item.status.replace('_', ' ')}</Badge></td><td className="p-3">{item.report_count}</td><td className="p-3"><ModerationActions item={item} decide={openDecision} /></td></tr>; })}
     </tbody></table></div></Card>
     <CursorPager pageNumber={pagination.pageNumber} itemCount={data.items.length} itemLabel="records" canGoBack={pagination.canGoBack} canGoForward={Boolean(data.nextCursor)} onBack={pagination.back} onForward={() => pagination.forward(data.nextCursor)} />

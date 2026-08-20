@@ -51,7 +51,6 @@ test('share URLs retain only the stable listing reference', async () => {
   assert.doesNotMatch(contact, /sharePayload\.imageUrl\].*join/);
   assert.match(contact, /WhatsApp reads the listing-specific Open Graph card/);
 });
-
 test('Cloudflare replaces generic metadata with one authoritative public listing card', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
@@ -146,4 +145,52 @@ test('Functions deployment config accepts only publishable or anonymous Supabase
   const source = renderPagesRuntimeConfig('https://example.supabase.co', 'sb_publishable_browser_safe');
   assert.match(source, /supabaseUrl: "https:\/\/example\.supabase\.co"/);
   assert.match(source, /supabasePublishableKey: "sb_publishable_browser_safe"/);
+});
+
+test('Cloudflare emits a cached production sitemap with live public marketplace records', async () => {
+  const originalFetch = globalThis.fetch;
+  const serviceId = 'c584f420-f91e-4a44-bdbc-c5aca5d66339';
+  globalThis.fetch = async (input) => {
+    const url = new URL(input);
+    if (url.pathname === '/rest/v1/listings') {
+      assert.equal(url.searchParams.get('country_code'), 'eq.ZW');
+      assert.equal(url.searchParams.get('status'), 'in.(available,under_offer)');
+      return Response.json([{ id: propertyId, kind: 'property', updated_at: '2026-08-19T12:00:00Z' }]);
+    }
+    if (url.pathname === '/rest/v1/services') {
+      assert.equal(url.searchParams.get('category'), 'neq.legal');
+      return Response.json([{ id: serviceId, updated_at: '2026-08-18T12:00:00Z' }]);
+    }
+    throw new Error('Unexpected request: ' + url);
+  };
+  try {
+    const response = await onRequest(pageContext('https://peekalisting.com/sitemap.xml'));
+    const xml = await response.text();
+    assert.equal(response.headers.get('content-type'), 'application/xml; charset=utf-8');
+    assert.match(response.headers.get('cache-control'), /s-maxage=3600/);
+    assert.match(xml, new RegExp('<loc>https://peekalisting\\.com/property/' + propertyId + '</loc>'));
+    assert.match(xml, new RegExp('<loc>https://peekalisting\\.com/service/' + serviceId + '</loc>'));
+    assert.match(xml, /<lastmod>2026-08-19T12:00:00\.000Z<\/lastmod>/);
+    assert.doesNotMatch(xml, /staging\.peekalisting/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Cloudflare noindexes staging and private routes while enriching public production pages', async () => {
+  const staging = await onRequest(pageContext('https://staging.peekalisting.com/services'));
+  const stagingHtml = await staging.text();
+  assert.equal(staging.headers.get('x-robots-tag'), 'noindex, nofollow');
+  assert.match(stagingHtml, /<meta name="robots" content="noindex, nofollow">/);
+  assert.match(stagingHtml, /<title>Find services in Zimbabwe \| PeekaListing<\/title>/);
+
+  const privatePage = await onRequest(pageContext('https://peekalisting.com/settings'));
+  assert.equal(privatePage.headers.get('x-robots-tag'), 'noindex, nofollow');
+
+  const home = await onRequest(pageContext('https://www.peekalisting.com/'));
+  const homeHtml = await home.text();
+  assert.equal(home.headers.get('x-robots-tag'), null);
+  assert.match(homeHtml, /<link rel="canonical" href="https:\/\/peekalisting\.com\/">/);
+  assert.match(homeHtml, /"@type":"SearchAction"/);
+  assert.match(homeHtml, /https:\/\/peekalisting\.com\/search\?q=\{search_term_string\}/);
 });

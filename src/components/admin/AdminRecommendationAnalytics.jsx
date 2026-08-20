@@ -2,6 +2,7 @@ import { BarChart3, MousePointerClick, View } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TableRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import { AdminMobileList, AdminMobileRecord } from '@/components/admin/AdminMobileRecord';
 
 const number = (value) => Number(value ?? 0).toLocaleString();
 const percent = (value) => `${(Number(value ?? 0) * 100).toFixed(1)}%`;
@@ -35,7 +36,25 @@ export default function AdminRecommendationAnalytics({ data, isLoading, error })
         <MetricCard icon={BarChart3} title="Open rate" value={percent(summary.clickThroughRate)} isLoading={isLoading} />
       </div>
 
-      <div className="overflow-x-auto border-y border-border">
+      <AdminMobileList label="Recommendation service metrics">
+        {isLoading ? (
+          <Card className="p-4"><Skeleton className="h-32 w-full" /></Card>
+        ) : services.length === 0 ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground">No recommendation delivery has been aggregated yet.</Card>
+        ) : services.map((service) => (
+          <AdminMobileRecord
+            key={service.service}
+            heading={serviceLabel(service.service)}
+            fields={[
+              { label: 'Impressions', value: number(service.impressions) },
+              { label: 'Opens', value: number(service.clicks) },
+              { label: 'Open rate', value: percent(service.clickThroughRate), wide: true },
+            ]}
+          />
+        ))}
+      </AdminMobileList>
+
+      <div className="hidden overflow-x-auto border-y border-border md:block">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">

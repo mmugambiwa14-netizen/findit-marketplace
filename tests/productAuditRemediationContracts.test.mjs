@@ -85,3 +85,26 @@ test('SEO and mobile audit remediations are wired', async () => {
   assert.match(admin, /admin-surface/);
   assert.match(support, /<h1[^>]*>Contact Support<\/h1>/);
 });
+
+test('mobile admin records keep critical actions visible without horizontal scrolling', async () => {
+  const [helper, users, listings, peeks, support, audit, taxonomy, recommendations] = await Promise.all([
+    read('src/components/admin/AdminMobileRecord.jsx'),
+    read('src/components/admin/UsersTable.jsx'),
+    read('src/pages/admin/AdminListings.jsx'),
+    read('src/pages/admin/AdminPeeks.jsx'),
+    read('src/pages/admin/AdminSupportRequests.jsx'),
+    read('src/pages/admin/AdminAuditLog.jsx'),
+    read('src/pages/admin/AdminCategories.jsx'),
+    read('src/components/admin/AdminRecommendationAnalytics.jsx'),
+  ]);
+  assert.match(helper, /md:hidden/);
+  assert.match(helper, /<dl/);
+  for (const source of [users, listings, peeks, support, audit, taxonomy, recommendations]) {
+    assert.match(source, /AdminMobile(?:List|Record)/);
+    assert.match(source, /hidden[^"']*md:block|md:block[^"']*hidden/);
+  }
+  assert.match(listings, /mobile[^}]*\}|mobile\s*\/>/);
+  assert.match(peeks, /Approve/);
+  assert.match(peeks, /Reject/);
+  assert.match(support, /Resolve request/);
+});
