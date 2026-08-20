@@ -1,0 +1,8 @@
+-- Runtime lint repairs are function-body replacements only. Restore them by
+-- replaying the canonical definitions from the preceding migrations in order:
+-- 0039_v1_tour_reporting_and_admin.sql,
+-- 20260809213000_report_review_before_takedown.sql,
+-- 0123_response_peek_binding_and_notifications.sql, and
+-- 20260819102000_unified_admin_audit_activity.sql.
+-- No destructive rollback is issued automatically because doing so would
+-- reintroduce confirmed runtime defects.
