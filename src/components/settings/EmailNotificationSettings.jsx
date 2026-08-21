@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Mail, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getEmailNotificationPreferences, updateEmailNotificationPreferences } from '@/repositories/emailNotificationRepository';
+import InfoHint from '@/components/ui/info-hint';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
 const OPTIONS = [
@@ -30,12 +31,12 @@ export default function EmailNotificationSettings() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
-        <Mail className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
-        <div>
-          <p className="text-sm font-semibold">Essential email alerts</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">Important account events use one consistent, professional PeekaListing email template. You can choose which categories arrive by email.</p>
-        </div>
+      <div className="flex items-center gap-2">
+        <Mail className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <p className="text-sm font-semibold">Essential email alerts</p>
+        <InfoHint label="Essential email alerts">
+          <p>Important account events use one consistent, professional PeekaListing email template. You can choose which categories arrive by email.</p>
+        </InfoHint>
       </div>
 
       {query.isLoading ? <ListRowsSkeleton rows={4} showThumbnail={false} label="Loading email preferences" /> : query.error ? <p className="text-sm text-destructive" role="alert">Email preferences are temporarily unavailable.</p> : (

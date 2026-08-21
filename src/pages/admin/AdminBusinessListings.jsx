@@ -4,6 +4,7 @@ import { Camera, CheckCircle2, Loader2, Store, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import InfoHint, { LabelWithHint } from '@/components/ui/info-hint';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -258,7 +259,11 @@ export default function AdminBusinessListings() {
 
           {account && acceptedRequests.length > 0 ? (
             <div>
-              <Label htmlFor="managed-request">Accepted managed listing request (optional)</Label>
+              <LabelWithHint
+                htmlFor="managed-request"
+                hintLabel="Managed listing request"
+                hint={<p>Publishing against a request marks it published, and lets you publish a category the account is not approved for.</p>}
+              >Accepted managed listing request (optional)</LabelWithHint>
               <select
                 id="managed-request"
                 className="mt-1 h-11 w-full rounded-xl border border-input bg-surface-secondary px-3.5"
@@ -270,9 +275,7 @@ export default function AdminBusinessListings() {
                   <option key={row.id} value={row.id}>{row.owner_name} · {row.category} · {row.city}</option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Publishing against a request marks it published and lets you publish a category the account is not approved for.
-              </p>
+
             </div>
           ) : null}
 
@@ -294,8 +297,13 @@ export default function AdminBusinessListings() {
       {step === 2 ? (
         <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
           <div>
-            <h2 className="text-xl font-bold">What is being advertised?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Only categories this business may publish in are offered.</p>
+            <div className="flex items-center">
+              <h2 className="text-xl font-bold">What is being advertised?</h2>
+              <InfoHint label="Available categories">
+                <p>Only categories this business may publish in are offered.</p>
+              </InfoHint>
+            </div>
+
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
             {publishableKinds.map(([key, fallbackLabel]) => (
@@ -364,10 +372,13 @@ export default function AdminBusinessListings() {
       {step === 5 ? (
         <section className="space-y-5 rounded-2xl border border-border bg-card p-5">
           <div>
-            <h2 className="text-xl font-bold">Photos and contact</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              You upload the photographs; the published listing shows the contact details the business wants buyers to use.
-            </p>
+            <div className="flex items-center">
+              <h2 className="text-xl font-bold">Photos and contact</h2>
+              <InfoHint label="Photos and contact">
+                <p>You upload the photographs; the published listing shows the contact details the business wants buyers to use.</p>
+                <p>At least one contact method is required.</p>
+              </InfoHint>
+            </div>
           </div>
 
           <label className="flex min-h-32 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/20 p-6 text-center hover:border-primary/50">
@@ -416,7 +427,6 @@ export default function AdminBusinessListings() {
               <Input id="admin-contact-email" type="email" maxLength={254} className="mt-1"
                 value={formData.contact_email || ''} onChange={(event) => update('contact_email', event.target.value)} />
             </div>
-            <p className="text-xs text-muted-foreground">At least one contact method is required.</p>
           </div>
 
           <StepNav
@@ -451,11 +461,14 @@ export default function AdminBusinessListings() {
           </dl>
 
           <div>
-            <Label htmlFor="publish-reason">Why is PeekaListing publishing this?</Label>
+            <LabelWithHint
+              htmlFor="publish-reason"
+              hintLabel="Publication reason"
+              hint={<p>Recorded in the admin audit log against this listing.</p>}
+            >Why is PeekaListing publishing this?</LabelWithHint>
             <Textarea id="publish-reason" className="mt-1" rows={3} required minLength={3} maxLength={1000}
               placeholder="Stock captured at the dealership on behalf of the onboarded business"
               value={reason} onChange={(event) => setReason(event.target.value)} />
-            <p className="mt-1 text-xs text-muted-foreground">Recorded in the audit log against this listing.</p>
           </div>
 
           <div className="flex flex-wrap gap-3">

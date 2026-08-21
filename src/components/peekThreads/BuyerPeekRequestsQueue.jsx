@@ -3,6 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { Camera, CheckCircle2, Clock3, Eye, Loader2, MessageSquareMore, RotateCcw, Users, XCircle } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import InfoHint from '@/components/ui/info-hint';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -354,7 +355,12 @@ export default function BuyerPeekRequestsQueue() {
       <Dialog open={Boolean(responseTarget)} onOpenChange={(open) => { if (!open) closeResponse(); }}>
         <DialogContent className="max-h-[calc(100dvh-max(1rem,env(safe-area-inset-top))-max(1rem,env(safe-area-inset-bottom)))] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Record Response Peek</DialogTitle>
+            <div className="flex items-center">
+              <DialogTitle>Record Response Peek</DialogTitle>
+              <InfoHint label="Recording a Response Peek">
+                <p>The accepted request stays open while the video uploads and processes. It becomes answered automatically as soon as processing finishes.</p>
+              </InfoHint>
+            </div>
             <DialogDescription>
               {responseTarget ? `Answer “${responseTarget.body}” for ${responseTarget.parentTitle}. PeekaListing attaches the video to this request automatically once it finishes processing.` : 'Record visual evidence for this buyer request.'}
             </DialogDescription>
@@ -373,7 +379,6 @@ export default function BuyerPeekRequestsQueue() {
             />
           )}
           {(bindingBusy || responseBusy) && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" />Finishing the Response Peek…</p>}
-          <p className="text-xs leading-5 text-muted-foreground">The accepted request stays open while the video uploads and processes. It becomes answered automatically as soon as processing finishes.</p>
         </DialogContent>
       </Dialog>
 

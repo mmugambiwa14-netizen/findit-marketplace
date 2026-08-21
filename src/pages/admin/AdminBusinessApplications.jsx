@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Building2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import InfoHint from '@/components/ui/info-hint';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -126,11 +127,16 @@ export default function AdminBusinessApplications() {
                 <Textarea id={`application-message-${application.application_id}`} rows={2} placeholder="Message required when requesting information or rejecting the application" value={messages[applicationKey] || ''} onChange={(event) => setMessages((current) => ({ ...current, [applicationKey]: event.target.value }))} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => actOnApplication(application.application_id, 'start_review')} disabled={busyKey === applicationKey}>Start review</Button>
-                  <Button onClick={() => actOnApplication(application.application_id, 'approve')} disabled={busyKey === applicationKey}>Approve application</Button>
+                  <span className="inline-flex items-center">
+                    <Button onClick={() => actOnApplication(application.application_id, 'approve')} disabled={busyKey === applicationKey}>Approve application</Button>
+                    <InfoHint label="Approve application">
+                      <p>Approving the application approves every category still awaiting a decision on it.</p>
+                    </InfoHint>
+                  </span>
                   <Button variant="outline" onClick={() => actOnApplication(application.application_id, 'request_information')} disabled={busyKey === applicationKey}>Request information</Button>
                   <Button variant="destructive" onClick={() => actOnApplication(application.application_id, 'reject')} disabled={busyKey === applicationKey}>Reject application</Button>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">Approving the application approves every category still awaiting a decision on it.</p>
+
               </div>
             </article>
           );

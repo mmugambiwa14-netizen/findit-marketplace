@@ -2,6 +2,7 @@ import { Children, isValidElement, useId, useMemo, useState } from 'react';
 import { ExternalLink, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AnimatedTabs } from '@/components/ui/animated-tabs';
+import InfoHint from '@/components/ui/info-hint';
 import { cn } from '@/lib/utils';
 import SearchResultsMap from '@/components/search/SearchResultsMap';
 
@@ -101,9 +102,11 @@ export function ListingDescription({ value }) {
   return (
     <div className="rounded-3xl border border-border/80 bg-card/90 p-5 shadow-sm sm:p-6">
       <div className="flex items-start justify-between gap-4 border-b border-border/70 pb-4">
-        <div>
+        <div className="flex items-center">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">About this listing</p>
-          <p className="mt-1 text-xs text-muted-foreground">The seller’s own description and important context.</p>
+          <InfoHint label="About this listing">
+            <p>The seller&apos;s own description and important context.</p>
+          </InfoHint>
         </div>
         <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold text-primary">Description</span>
       </div>

@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import InfoHint from '@/components/ui/info-hint';
 import StepNav from './StepNav';
 import { getSupportedListingCurrencies } from '@/lib/marketConfig';
 import {
@@ -279,18 +280,22 @@ export default function ListingDetailsStep({ formData, update, onBack, onContinu
       </div>
 
       <div className="flex items-center justify-between rounded-xl border bg-card p-3">
-        <div>
+        <div className="flex items-center">
           <p className="text-sm font-semibold">Price is negotiable</p>
-          <p className="text-xs text-muted-foreground">Buyers will see a clear negotiable label.</p>
+          <InfoHint label="Price is negotiable">
+            <p>Buyers will see a clear negotiable label on your listing.</p>
+          </InfoHint>
         </div>
         <Switch id="listing-negotiable" aria-label="Price is negotiable" checked={Boolean(formData.negotiable)} onCheckedChange={(value) => update('negotiable', value)} />
       </div>
 
       {sections.map(({ section, fields }) => (
         <section key={section} className="rounded-2xl border bg-card/45 p-4">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center">
             <h3 className="text-base font-bold">{SECTION_LABELS[section] || section}</h3>
-            <p className="mt-0.5 text-xs text-muted-foreground">Only fields relevant to this listing are shown.</p>
+            <InfoHint label={SECTION_LABELS[section] || section}>
+              <p>Only fields relevant to this listing are shown.</p>
+            </InfoHint>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {fields.map(renderField)}

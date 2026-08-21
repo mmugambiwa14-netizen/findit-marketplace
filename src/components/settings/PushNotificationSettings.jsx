@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BellRing, Loader2, Smartphone, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
+import InfoHint from '@/components/ui/info-hint';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
@@ -108,11 +109,11 @@ export default function PushNotificationSettings() {
     <div className="space-y-4">
       <div className="flex items-start gap-3">
         <span className="locked-icon-tile h-10 w-10 shrink-0"><Smartphone className="h-5 w-5" /></span>
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-1">
           <p className="text-sm font-semibold">Notifications outside PeekaListing</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Receive important message, Peek, listing, business and account alerts when the installed app is backgrounded or closed.
-          </p>
+          <InfoHint label="Notifications outside PeekaListing">
+            <p>Receive important message, Peek, listing, business and account alerts when the installed app is backgrounded or closed.</p>
+          </InfoHint>
         </div>
       </div>
 
@@ -126,7 +127,7 @@ export default function PushNotificationSettings() {
       </Button>
 
       <div className="space-y-2 rounded-xl border border-border bg-card p-3">
-        <div><p className="text-sm font-medium">Push categories</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">Choose which marketplace activity can appear as push notifications. Essential account and security updates remain enabled.</p></div>
+        <div className="flex items-center gap-1"><p className="text-sm font-medium">Push categories</p><InfoHint label="Push categories"><p>Choose which marketplace activity can appear as push notifications. Essential account and security updates remain enabled.</p></InfoHint></div>
         {CATEGORIES.map(([key, label, description]) => (
           <div key={key} className="flex items-center justify-between gap-4 border-t border-border/70 pt-2 first:border-0 first:pt-0">
             <div><p className="text-sm">{label}</p><p className="text-xs text-muted-foreground">{description}</p></div>
@@ -136,7 +137,7 @@ export default function PushNotificationSettings() {
       </div>
 
       <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-3 py-3">
-        <div className="flex min-w-0 items-start gap-3"><Volume2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><div><p className="text-sm font-medium">In-app notification sound</p><p className="mt-0.5 text-xs leading-5 text-muted-foreground">Play the PeekaListing tone while the app is open. Background notification sound is controlled by your device.</p></div></div>
+        <div className="flex min-w-0 items-start gap-3"><Volume2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><div className="flex items-center gap-1"><p className="text-sm font-medium">In-app notification sound</p><InfoHint label="In-app notification sound"><p>Play the PeekaListing tone while the app is open. Background notification sound is controlled by your device.</p></InfoHint></div></div>
         <Switch checked={soundEnabled} onCheckedChange={toggleSound} aria-label="In-app notification sound" />
       </div>
     </div>

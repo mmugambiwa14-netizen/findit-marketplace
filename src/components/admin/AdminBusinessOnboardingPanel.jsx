@@ -3,6 +3,7 @@ import { Building2, ChevronDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LabelWithHint } from '@/components/ui/info-hint';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import BusinessAccountPicker from '@/components/admin/BusinessAccountPicker';
@@ -195,10 +196,13 @@ export default function AdminBusinessOnboardingPanel({ onOnboarded }) {
                       value={form.socialUrl} onChange={(event) => update('socialUrl', event.target.value)} />
                   </div>
                   <div className="sm:col-span-2">
-                    <Label htmlFor="onboard-description">What the business sells</Label>
+                    <LabelWithHint
+                      htmlFor="onboard-description"
+                      hintLabel="What the business sells"
+                      hint={<p>At least 20 characters. This is what buyers read on the business profile.</p>}
+                    >What the business sells</LabelWithHint>
                     <Textarea id="onboard-description" className="mt-1" rows={3} required minLength={20} maxLength={3000}
                       value={form.description} onChange={(event) => update('description', event.target.value)} />
-                    <p className="mt-1 text-xs text-muted-foreground">At least 20 characters.</p>
                   </div>
                 </div>
               )}
@@ -226,11 +230,14 @@ export default function AdminBusinessOnboardingPanel({ onOnboarded }) {
               </fieldset>
 
               <div>
-                <Label htmlFor="onboard-note">Onboarding note</Label>
+                <LabelWithHint
+                  htmlFor="onboard-note"
+                  hintLabel="Onboarding note"
+                  hint={<p>Stored on the review record and the admin audit log.</p>}
+                >Onboarding note</LabelWithHint>
                 <Textarea id="onboard-note" className="mt-1" rows={2} maxLength={1000}
                   placeholder="How this business was verified, and by whom"
                   value={form.note} onChange={(event) => update('note', event.target.value)} />
-                <p className="mt-1 text-xs text-muted-foreground">Stored on the review record and the audit log.</p>
               </div>
 
               <div className="flex flex-wrap gap-2">

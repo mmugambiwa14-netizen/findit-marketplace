@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import InfoHint from '@/components/ui/info-hint';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,8 +118,10 @@ export default function SellerProfileFields({ user, onSaved }) {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Seller logo</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Use a clear logo or profile image. JPG, PNG, or WebP up to 5 MB.</p>
+          <div className="flex items-center">
+            <p className="text-sm font-semibold">Seller logo</p>
+            <InfoHint label="Seller logo"><p>Use a clear logo or profile image. JPG, PNG, or WebP up to 5 MB.</p></InfoHint>
+          </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" disabled={uploadingLogo || saving} onClick={() => logoInputRef.current?.click()}>
               {uploadingLogo ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Camera className="mr-1.5 h-4 w-4" />}

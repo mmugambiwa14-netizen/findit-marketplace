@@ -6,6 +6,7 @@ import { currentLocationErrorMessage, resolveCurrentMarketplaceLocation } from '
 import { featureFlags } from '@/lib/featureFlags';
 import { LAUNCH_COUNTRY_CODE } from '@/lib/marketConfig';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import InfoHint from '@/components/ui/info-hint';
 import { Label } from '@/components/ui/label';
 import { LocationPermissionDialog } from '@/components/location/LocationPermissionDialog';
 import { PlaceSearchCombobox } from '@/components/location/PlaceSearchCombobox';
@@ -172,9 +173,11 @@ export function HierarchicalLocationSelector({ value, onSelectLocation }) {
         <div className="rounded-2xl border border-primary/20 bg-primary/[0.04] p-3.5">
           <div className="mb-3 flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPinned className="h-4 w-4" aria-hidden="true" /></span>
-            <div>
+            <div className="flex items-center">
               <p className="text-sm font-semibold text-foreground">Start near you—or browse Zimbabwe</p>
-              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">Location only suggests a starting point. PeekaListing currently serves Zimbabwe marketplace locations.</p>
+              <InfoHint label="Choosing a location">
+                <p>Location only suggests a starting point. PeekaListing currently serves Zimbabwe marketplace locations.</p>
+              </InfoHint>
             </div>
           </div>
           <button

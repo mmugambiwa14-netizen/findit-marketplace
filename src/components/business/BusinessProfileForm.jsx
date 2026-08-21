@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Building2, Camera, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import InfoHint, { LabelWithHint } from '@/components/ui/info-hint';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -96,8 +97,10 @@ export default function BusinessProfileForm({ profile, onSubmit, onCancel, isPen
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">Business logo</p>
-          <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, or WebP · 5 MB maximum.</p>
+          <div className="flex items-center">
+            <p className="text-sm font-medium">Business logo</p>
+            <InfoHint label="Business logo"><p>JPG, PNG, or WebP, 5 MB maximum.</p></InfoHint>
+          </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <Button type="button" size="sm" variant="outline" disabled={uploadingLogo || isPending} onClick={() => logoInputRef.current?.click()}>
               {uploadingLogo ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Camera className="mr-1.5 h-4 w-4" />}
@@ -120,19 +123,25 @@ export default function BusinessProfileForm({ profile, onSubmit, onCancel, isPen
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="business-type">Profile type</Label>
+        <LabelWithHint
+          htmlFor="business-type"
+          hint={<p>Vehicle dealers receive a searchable vehicle inventory page. No special account role is created.</p>}
+        >Profile type</LabelWithHint>
         <Select value={form.business_type} onValueChange={(value) => set('business_type', value)}>
           <SelectTrigger id="business-type"><SelectValue /></SelectTrigger>
           <SelectContent>
             {BUSINESS_TYPES.map((type) => <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>)}
           </SelectContent>
         </Select>
-        <p className="text-xs text-muted-foreground">Vehicle dealers receive a searchable vehicle inventory page. No special account role is created.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="business-phone">Phone</Label>
+          <LabelWithHint
+            htmlFor="business-phone"
+            hintLabel="Business contact"
+            hint={<p>Provide at least one contact method so buyers can reach the business.</p>}
+          >Phone</LabelWithHint>
           <Input id="business-phone" type="tel" value={form.phone} onChange={(event) => set('phone', event.target.value)} maxLength={40} placeholder="+263 ..." />
         </div>
         <div className="space-y-2">
@@ -140,7 +149,6 @@ export default function BusinessProfileForm({ profile, onSubmit, onCancel, isPen
           <Input id="business-email" type="email" value={form.email} onChange={(event) => set('email', event.target.value)} maxLength={254} placeholder="hello@example.co.zw" />
         </div>
       </div>
-      <p className="-mt-3 text-xs text-muted-foreground">Provide at least one contact method.</p>
 
       <div className="space-y-2">
         <Label htmlFor="business-description">Description</Label>

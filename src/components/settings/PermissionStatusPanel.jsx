@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshCw, ShieldCheck } from 'lucide-react';
+import InfoHint from '@/components/ui/info-hint';
 import { Button } from '@/components/ui/button';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
 
@@ -52,9 +53,11 @@ export default function PermissionStatusPanel() {
     <div className="space-y-3">
       <div className="flex items-start gap-3">
         <span className="locked-icon-tile h-10 w-10 shrink-0"><ShieldCheck className="h-5 w-5" /></span>
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-1">
           <p className="text-sm font-semibold">Device permissions</p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">PeekaListing asks only when a feature needs access. You can change a blocked permission in your browser or device settings.</p>
+          <InfoHint label="Device permissions">
+            <p>PeekaListing asks only when a feature needs access. You can change a blocked permission in your browser or device settings.</p>
+          </InfoHint>
         </div>
         <Button type="button" variant="ghost" size="sm" className="min-h-10 shrink-0" onClick={() => void refresh()} disabled={checking} aria-label="Refresh permission status">
           <RefreshCw className={checking ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />

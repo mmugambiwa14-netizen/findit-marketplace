@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Compass, History, MapPinned, RefreshCw, Sparkles, Store, Wrench } from 'lucide-react';
+import InfoHint from '@/components/ui/info-hint';
 import { Button } from '@/components/ui/button';
 import ListingCard from '@/components/listings/ListingCard';
 import ServiceCard from '@/components/services/ServiceCard';
@@ -313,8 +314,12 @@ export default function ListingRecommendations({ subjectListingId }) {
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <p className="findit-overline">Keep comparing</p>
-          <h2 id="listing-recommendations-heading" className="mt-0.5 text-lg font-extrabold">More to explore</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Independent suggestions—this listing always loads first.</p>
+          <div className="flex items-center">
+            <h2 id="listing-recommendations-heading" className="mt-0.5 text-lg font-extrabold">More to explore</h2>
+            <InfoHint label="More to explore">
+              <p>Independent suggestions. This listing always loads first.</p>
+            </InfoHint>
+          </div>
         </div>
         {query.isFetching && !query.isLoading && (
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" role="status"><RefreshCw className="h-3.5 w-3.5 animate-spin" />Refreshing</span>
