@@ -73,14 +73,14 @@ const sourceEntries = await Promise.all(sourceFiles.map(async (path) => ({ path,
 
 test('the complete routed product surface is declared and has a fallback', () => {
   const routePatterns = [...app.matchAll(/<Route\b[\s\S]*?\bpath=["']([^"']+)["']/g)].map((match) => match[1]);
-  assert.equal(routePatterns.length, 48);
+  assert.equal(routePatterns.length, 49);
   assert.equal(routePatterns.filter((path) => path === '/peek').length, 1);
   for (const path of [
     '/', '/search', '/property/:id', '/car/:id', '/machinery/:id', '/services', '/service/:id',
     '/peek', '/tours', '/post', '/saved', '/chats', '/chats/:conversationId', '/profile', '/my-listings',
     '/my-services', '/peek-requests', '/settings', '/notifications', '/legal', '/admin', '/admin/listings',
     '/admin/peeks', '/admin/users', '/admin/reports', '/admin/support', '/admin/categories', '/admin/audit-log',
-    '/admin/business-applications', '/admin/managed-listings', '*',
+    '/admin/business-applications', '/admin/managed-listings', '/admin/business-listings', '*',
   ]) assert.ok(routePatterns.includes(path), `Missing route ${path}`);
   assert.match(app, /<Route path="\/create" element={<LegacyPathRedirect to="\/post" \/>}/);
   assert.match(app, /<Route path="\/messages\/:conversationId" element={<LegacyConversationRedirect \/>}/);

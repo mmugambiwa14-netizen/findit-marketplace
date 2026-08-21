@@ -36,6 +36,7 @@
     "test:recommendation-related-services-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_recommendation_related_services.sql --local",
     "test:recommendation-database-local": "npm run test:recommendation-foundation-local && npm run test:recommendation-projection-queue-local && npm run test:recommendation-eligibility-local && npm run test:recommendation-publication-local && npm run test:recommendation-services-local && npm run test:recommendation-operations-local && npm run test:recommendation-scale-local && npm run test:recommendation-personalization-local && npm run test:recommendation-analytics-local && npm run test:recommendation-related-services-local",
     "test:security-advisor-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_security_advisor_baseline.sql --local",
+    "test:admin-business-onboarding-local": "npx --yes supabase@2.84.2 test db supabase/tests/v1_admin_business_onboarding.sql --local",
     "test:recommendation-services-hosted": "node ./scripts/recommendation-services-smoke.mjs",
     "certify:recommendation-phase3-staging": "node ./scripts/recommendation-phase3-staging-certification.mjs",
     "certify:recommendation-phase7-staging": "node ./scripts/recommendation-phase7-staging-certification.mjs",

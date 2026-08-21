@@ -9,6 +9,7 @@ import {
   reviewBusinessCategory,
 } from '@/services/adminBusinessPublishingService';
 import { ListRowsSkeleton } from '@/components/loading/LoadingSkeletons';
+import AdminBusinessOnboardingPanel from '@/components/admin/AdminBusinessOnboardingPanel';
 
 const STATUS_OPTIONS = ['', 'submitted', 'reviewing', 'needs_information', 'approved', 'rejected'];
 
@@ -71,6 +72,8 @@ export default function AdminBusinessApplications() {
         <Button variant="outline" onClick={load} disabled={loading}><RefreshCw className={loading ? 'animate-spin' : ''} />Refresh</Button>
       </header>
 
+      <AdminBusinessOnboardingPanel onOnboarded={load} />
+
       <label className="block max-w-xs text-sm font-semibold">Status
         <select className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3" value={status} onChange={(event) => setStatus(event.target.value)}>
           {STATUS_OPTIONS.map((value) => <option key={value || 'all'} value={value}>{value ? value.replace('_', ' ') : 'All applications'}</option>)}
@@ -123,9 +126,11 @@ export default function AdminBusinessApplications() {
                 <Textarea id={`application-message-${application.application_id}`} rows={2} placeholder="Message required when requesting information or rejecting the application" value={messages[applicationKey] || ''} onChange={(event) => setMessages((current) => ({ ...current, [applicationKey]: event.target.value }))} />
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => actOnApplication(application.application_id, 'start_review')} disabled={busyKey === applicationKey}>Start review</Button>
+                  <Button onClick={() => actOnApplication(application.application_id, 'approve')} disabled={busyKey === applicationKey}>Approve application</Button>
                   <Button variant="outline" onClick={() => actOnApplication(application.application_id, 'request_information')} disabled={busyKey === applicationKey}>Request information</Button>
                   <Button variant="destructive" onClick={() => actOnApplication(application.application_id, 'reject')} disabled={busyKey === applicationKey}>Reject application</Button>
                 </div>
+                <p className="mt-2 text-xs text-muted-foreground">Approving the application approves every category still awaiting a decision on it.</p>
               </div>
             </article>
           );
