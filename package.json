@@ -153,7 +153,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.8.2",
     "vite": "^6.1.0",
-    "wrangler": "4.120.0"
+    "wrangler": "4.131.0"
   },
   "overrides": {
     "js-yaml": "4.3.1"
